@@ -1,5 +1,5 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="Global.asax.cs" company="Naos">
+// <copyright file="ApplicationPreload.cs" company="Naos">
 //   Copyright 2015 Naos
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
@@ -8,22 +8,15 @@
 
 namespace Naos.MessageBus.Hangfire.Handler
 {
-    using System;
-    using System.Web;
+    using System.Web.Hosting;
 
     /// <inheritdoc />
-    public class Global : HttpApplication
+    public class ApplicationPreload : IProcessHostPreloadClient
     {
         /// <inheritdoc />
-        protected void Application_Start(object sender, EventArgs e)
+        public void Preload(string[] parameters)
         {
             HangfireBootstrapper.Instance.Start();
-        }
-
-        /// <inheritdoc />
-        protected void Application_End(object sender, EventArgs e)
-        {
-            HangfireBootstrapper.Instance.Stop();
         }
     }
 }
