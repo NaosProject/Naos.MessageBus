@@ -60,14 +60,13 @@ namespace Naos.MessageBus.Hangfire.Handler
 
                 HostingEnvironment.RegisterObject(this);
 
-                var hangfireSettings = Settings.Get<HangfireSettings>();
-                var pollingTimeSpan = TimeSpan.FromMinutes(1);
+                var messageBusHandlerSettings = Settings.Get<MessageBusHandlerSettings>();
 
                 // setup DI
                 this.simpleInjectorContainer = new Container();
 
                 var files = Directory.GetFiles(
-                    hangfireSettings.HandlerAssemblyPath,
+                    messageBusHandlerSettings.HandlerAssemblyPath,
                     "*.dll",
                     SearchOption.AllDirectories);
 
@@ -94,13 +93,13 @@ namespace Naos.MessageBus.Hangfire.Handler
 
                 var options = new BackgroundJobServerOptions
                 {
-                    Queues = hangfireSettings.QueuesToMonitor.ToArray(),
-                    ServerName = hangfireSettings.ServerName,
-                    SchedulePollingInterval = pollingTimeSpan,
-                    WorkerCount = hangfireSettings.WorkerCount,
+                    Queues = messageBusHandlerSettings.QueuesToMonitor.ToArray(),
+                    ServerName = messageBusHandlerSettings.ServerName,
+                    SchedulePollingInterval = messageBusHandlerSettings.PollingTimeSpan,
+                    WorkerCount = messageBusHandlerSettings.WorkerCount,
                 };
 
-                GlobalConfiguration.Configuration.UseSqlServerStorage(hangfireSettings.PersistenceConnectionString);
+                GlobalConfiguration.Configuration.UseSqlServerStorage(messageBusHandlerSettings.PersistenceConnectionString);
                 this.backgroundJobServer = new BackgroundJobServer(options);
             }
         }

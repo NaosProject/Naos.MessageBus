@@ -43,6 +43,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="MessageBusHandlerSettings.cs" />
     <Compile Include="IDispatchMessages.cs" />
     <Compile Include="IHandleMessages.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

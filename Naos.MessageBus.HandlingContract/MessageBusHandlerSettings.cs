@@ -1,20 +1,21 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="HangfireSettings.cs" company="Naos">
+// <copyright file="MessageBusHandlerSettings.cs" company="Naos">
 //   Copyright 2015 Naos
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
-namespace Naos.MessageBus.Hangfire.Handler
+namespace Naos.MessageBus.HandlingContract
 {
+    using System;
     using System.Collections.Generic;
 
     /// <summary>
     /// Settings to use for Its.Configuration that contain all details to launch a BackgroundJob.
     /// </summary>
-    public class HangfireSettings
+    public class MessageBusHandlerSettings
     {
         /// <summary>
-        /// Gets or sets the connection string to the Hangfire Persistence.
+        /// Gets or sets the connection string to the message bus persistence.
         /// </summary>
         public string PersistenceConnectionString { get; set; }
 
@@ -24,7 +25,7 @@ namespace Naos.MessageBus.Hangfire.Handler
         public ICollection<string> QueuesToMonitor { get; set; }
 
         /// <summary>
-        /// Gets or sets the name of this worker to use for the Hangfire server.
+        /// Gets or sets the name of this worker host.
         /// </summary>
         public string ServerName { get; set; }
 
@@ -37,5 +38,10 @@ namespace Naos.MessageBus.Hangfire.Handler
         /// Gets or sets the path to load message handlers from.
         /// </summary>
         public string HandlerAssemblyPath { get; set; }
+
+        /// <summary>
+        /// Gets or sets the time to wait between checking for new messages.
+        /// </summary>
+        public TimeSpan PollingTimeSpan { get; set; }
     }
 }
