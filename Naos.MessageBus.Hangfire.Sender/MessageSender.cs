@@ -19,42 +19,55 @@ namespace Naos.MessageBus.Hangfire.Sender
     /// <inheritdoc />
     public class MessageSender : ISendMessages
     {
-        /// <inheritdoc />
-        public void Send(IMessage message)
+        /// <summary>
+        /// Initializes a new instance of the <see cref="MessageSender"/> class.
+        /// </summary>
+        /// <param name="messageBusPersistenceConnectionString">Connection string to the message bus persistence storage.</param>
+        public MessageSender(string messageBusPersistenceConnectionString)
         {
-            throw new NotImplementedException();
+            GlobalConfiguration.Configuration.UseSqlServerStorage(messageBusPersistenceConnectionString);
         }
 
         /// <inheritdoc />
-        public void Send(IMessage message, TimeSpan timeToWaitBeforeHandling)
+        public string Send(IMessage message, string queue)
         {
-            throw new NotImplementedException();
+            return this.SendRecurring(message, queue, Schedules.None);
         }
 
         /// <inheritdoc />
-        public void Send(IMessage message, DateTime dateTimeToPerform)
+        public string SendRecurring(IMessage message, string queue, Schedules recurringSchedule)
         {
-            throw new NotImplementedException();
-        }
-
-        /// <inheritdoc />
-        public void SendRecurring(IMessage message, Schedules recurringSchedule)
-        {
-            // enqueue something
-            var queueToPutIn = "specific-server-queue"; // or action specific queue (i.e. ScoreCalculatorEtlQueue)
             var client = new BackgroundJobClient();
             var state = new EnqueuedState
             {
-                Queue = queueToPutIn,
+                Queue = queue,
             };
 
-            Expression<Action<IDispatchMessages>> methodCall = _ => _.Dispatch(new TestMessage { Description = "We're backing up a specific server..." });
+            Expression<Action<IDispatchMessages>> methodCall = _ => _.Dispatch(message);
             var id =
                 client.Create<IDispatchMessages>(
                     methodCall,
                     state);
 
-            RecurringJob.AddOrUpdate(id, methodCall, Cron.Daily);
+            if (recurringSchedule != Schedules.None)
+            {
+                var cronExpression = GetCronExpressionFromSchedule(recurringSchedule);
+                RecurringJob.AddOrUpdate(id, methodCall, cronExpression);
+            }
+
+            return id;
+        }
+
+        private static Func<string> GetCronExpressionFromSchedule(Schedules schedule)
+        {
+            switch (schedule)
+            {
+                case Schedules.MidnightUTC:
+                    return Cron.Daily;
+                    break;
+                default:
+                    throw new NotSupportedException("Unsupported Schedule: " + schedule);
+            }
         }
     }
 

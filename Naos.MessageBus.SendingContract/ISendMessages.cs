@@ -19,27 +19,17 @@ namespace Naos.MessageBus.SendingContract
         /// Send a message that should be handled as soon as possible.
         /// </summary>
         /// <param name="message">Message to send.</param>
-        void Send(IMessage message);
-
-        /// <summary>
-        /// Send a message to be handled after the specified wait time.
-        /// </summary>
-        /// <param name="message">Message to send.</param>
-        /// <param name="timeToWaitBeforeHandling">Time to wait before handling message.</param>
-        void Send(IMessage message, TimeSpan timeToWaitBeforeHandling);
-
-        /// <summary>
-        /// Send a message to be handled at the specified date/time.
-        /// </summary>
-        /// <param name="message">Message to send.</param>
-        /// <param name="dateTimeToPerform">Date time to handle message on.</param>
-        void Send(IMessage message, DateTime dateTimeToPerform);
+        /// <param name="queue">Queue to add message to.</param>
+        /// <returns>ID of the scheduled message.</returns>
+        string Send(IMessage message, string queue);
 
         /// <summary>
         /// Sends a message to recur on a schedule.
         /// </summary>
         /// <param name="message">Message to send.</param>
+        /// <param name="queue">Queue to add message to.</param>
         /// <param name="recurringSchedule">Schedule the message should recur on.</param>
-        void SendRecurring(IMessage message, Schedules recurringSchedule);
+        /// <returns>ID of the scheduled message.</returns>
+        string SendRecurring(IMessage message, string queue, Schedules recurringSchedule);
     }
 }

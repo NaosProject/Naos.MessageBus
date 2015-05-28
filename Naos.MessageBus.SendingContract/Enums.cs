@@ -12,8 +12,13 @@ namespace Naos.MessageBus.SendingContract
     public enum Schedules
     {
         /// <summary>
+        /// No schedule is intended.
+        /// </summary>
+        None,
+
+        /// <summary>
         /// Sends a message every night.
         /// </summary>
-        Nightly,
+        MidnightUTC
     }
 }
