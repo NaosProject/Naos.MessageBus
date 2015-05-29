@@ -11,8 +11,8 @@
     <ProjectTypeGuids>{349c5851-65df-11da-9384-00065b846f21};{fae04ec0-301f-11d3-bf4b-00c04f79efbc}</ProjectTypeGuids>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Naos.MessageBus.Hangfire.Handler</RootNamespace>
-    <AssemblyName>Naos.MessageBus.Hangfire.Handler</AssemblyName>
+    <RootNamespace>Naos.MessageBus.Hangfire.Harness</RootNamespace>
+    <AssemblyName>Naos.MessageBus.Hangfire.Harness</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <MvcBuildViews>false</MvcBuildViews>
     <UseIISExpress>true</UseIISExpress>
@@ -30,7 +30,7 @@
     </DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-    <DocumentationFile>bin\Naos.MessageBus.Hangfire.Handler.XML</DocumentationFile>
+    <DocumentationFile>bin\Naos.MessageBus.Hangfire.Harness.XML</DocumentationFile>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -40,7 +40,7 @@
     </DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-    <DocumentationFile>bin\Naos.MessageBus.Hangfire.Handler.XML</DocumentationFile>
+    <DocumentationFile>bin\Naos.MessageBus.Hangfire.Harness.XML</DocumentationFile>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Hangfire.Core">

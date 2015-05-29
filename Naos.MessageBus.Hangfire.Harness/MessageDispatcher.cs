@@ -4,7 +4,7 @@
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
-namespace Naos.MessageBus.Hangfire.Handler
+namespace Naos.MessageBus.Hangfire.Harness
 {
     using Naos.MessageBus.DataContract;
     using Naos.MessageBus.HandlingContract;

@@ -6,7 +6,7 @@
 
 // This code was taken from http://hangfire.readthedocs.org/en/latest/deployment-to-production/making-aspnet-app-always-running.html
 
-namespace Naos.MessageBus.Hangfire.Handler
+namespace Naos.MessageBus.Hangfire.Harness
 {
     using System;
     using System.Collections.Generic;
@@ -60,13 +60,13 @@ namespace Naos.MessageBus.Hangfire.Handler
 
                 HostingEnvironment.RegisterObject(this);
 
-                var messageBusHandlerSettings = Settings.Get<MessageBusHandlerSettings>();
+                var messageBusHandlerSettings = Settings.Get<MessageBusHarnessSettings>();
+                var executorRoleSettings = (MessageBusHarnessRoleSettingsExecutor)messageBusHandlerSettings.RoleSettings;
 
-                // setup DI
                 this.simpleInjectorContainer = new Container();
 
                 var files = Directory.GetFiles(
-                    messageBusHandlerSettings.HandlerAssemblyPath,
+                    executorRoleSettings.HandlerAssemblyPath,
                     "*.dll",
                     SearchOption.AllDirectories);
 
@@ -93,10 +93,10 @@ namespace Naos.MessageBus.Hangfire.Handler
 
                 var options = new BackgroundJobServerOptions
                 {
-                    Queues = messageBusHandlerSettings.ChannelsToMonitor.ToArray(),
-                    ServerName = messageBusHandlerSettings.ServerName,
-                    SchedulePollingInterval = messageBusHandlerSettings.PollingTimeSpan,
-                    WorkerCount = messageBusHandlerSettings.WorkerCount,
+                    Queues = executorRoleSettings.ChannelsToMonitor.ToArray(),
+                    ServerName = Environment.MachineName,
+                    SchedulePollingInterval = executorRoleSettings.PollingTimeSpan,
+                    WorkerCount = executorRoleSettings.WorkerCount,
                 };
 
                 GlobalConfiguration.Configuration.UseSqlServerStorage(messageBusHandlerSettings.PersistenceConnectionString);
