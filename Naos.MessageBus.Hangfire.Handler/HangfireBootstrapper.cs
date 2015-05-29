@@ -93,7 +93,7 @@ namespace Naos.MessageBus.Hangfire.Handler
 
                 var options = new BackgroundJobServerOptions
                 {
-                    Queues = messageBusHandlerSettings.QueuesToMonitor.ToArray(),
+                    Queues = messageBusHandlerSettings.ChannelsToMonitor.ToArray(),
                     ServerName = messageBusHandlerSettings.ServerName,
                     SchedulePollingInterval = messageBusHandlerSettings.PollingTimeSpan,
                     WorkerCount = messageBusHandlerSettings.WorkerCount,

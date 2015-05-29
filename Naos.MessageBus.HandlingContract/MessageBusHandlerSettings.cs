@@ -20,9 +20,9 @@ namespace Naos.MessageBus.HandlingContract
         public string PersistenceConnectionString { get; set; }
 
         /// <summary>
-        /// Gets or sets the queues to monitor.
+        /// Gets or sets the channels to monitor.
         /// </summary>
-        public ICollection<string> QueuesToMonitor { get; set; }
+        public ICollection<string> ChannelsToMonitor { get; set; }
 
         /// <summary>
         /// Gets or sets the name of this worker host.

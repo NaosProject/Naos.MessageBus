@@ -6,8 +6,6 @@
 
 namespace Naos.MessageBus.SendingContract
 {
-    using System;
-
     using Naos.MessageBus.DataContract;
 
     /// <summary>
@@ -19,17 +17,17 @@ namespace Naos.MessageBus.SendingContract
         /// Send a message that should be handled as soon as possible.
         /// </summary>
         /// <param name="message">Message to send.</param>
-        /// <param name="queue">Queue to add message to.</param>
+        /// <param name="channel">Channel to send message to.</param>
         /// <returns>ID of the scheduled message.</returns>
-        string Send(IMessage message, string queue);
+        string Send(IMessage message, string channel);
 
         /// <summary>
         /// Sends a message to recur on a schedule.
         /// </summary>
         /// <param name="message">Message to send.</param>
-        /// <param name="queue">Queue to add message to.</param>
+        /// <param name="channel">Channel to send message to.</param>
         /// <param name="recurringSchedule">Schedule the message should recur on.</param>
         /// <returns>ID of the scheduled message.</returns>
-        string SendRecurring(IMessage message, string queue, Schedules recurringSchedule);
+        string SendRecurring(IMessage message, string channel, Schedules recurringSchedule);
     }
 }

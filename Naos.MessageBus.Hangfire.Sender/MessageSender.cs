@@ -29,18 +29,18 @@ namespace Naos.MessageBus.Hangfire.Sender
         }
 
         /// <inheritdoc />
-        public string Send(IMessage message, string queue)
+        public string Send(IMessage message, string channel)
         {
-            return this.SendRecurring(message, queue, Schedules.None);
+            return this.SendRecurring(message, channel, Schedules.None);
         }
 
         /// <inheritdoc />
-        public string SendRecurring(IMessage message, string queue, Schedules recurringSchedule)
+        public string SendRecurring(IMessage message, string channel, Schedules recurringSchedule)
         {
             var client = new BackgroundJobClient();
             var state = new EnqueuedState
             {
-                Queue = queue,
+                Queue = channel,
             };
 
             Expression<Action<IDispatchMessages>> methodCall = _ => _.Dispatch(message);
