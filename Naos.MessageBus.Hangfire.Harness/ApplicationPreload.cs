@@ -10,13 +10,25 @@ namespace Naos.MessageBus.Hangfire.Harness
 {
     using System.Web.Hosting;
 
+    using Its.Configuration;
+
+    using Naos.MessageBus.HandlingContract;
+
     /// <inheritdoc />
     public class ApplicationPreload : IProcessHostPreloadClient
     {
         /// <inheritdoc />
         public void Preload(string[] parameters)
         {
-            HangfireBootstrapper.Instance.Start();
+            var messageBusHandlerSettings = Settings.Get<MessageBusHarnessSettings>();
+            var executorRoleSettings = messageBusHandlerSettings.RoleSettings as MessageBusHarnessRoleSettingsExecutor;
+
+            if (executorRoleSettings != null)
+            {
+                HangfireBootstrapper.Instance.Start(
+                    messageBusHandlerSettings.PersistenceConnectionString,
+                    executorRoleSettings);
+            }
         }
     }
 }

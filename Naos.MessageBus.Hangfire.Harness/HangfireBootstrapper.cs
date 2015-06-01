@@ -47,7 +47,11 @@ namespace Naos.MessageBus.Hangfire.Harness
         /// <summary>
         /// Perform a start.
         /// </summary>
-        public void Start()
+        /// <param name="persistenceConnectionString">Connection string to hangfire persistence.</param>
+        /// <param name="executorRoleSettings">Executor role settings.</param>
+        public void Start(
+            string persistenceConnectionString,
+            MessageBusHarnessRoleSettingsExecutor executorRoleSettings)
         {
             lock (this.lockObject)
             {
@@ -59,9 +63,6 @@ namespace Naos.MessageBus.Hangfire.Harness
                 this.started = true;
 
                 HostingEnvironment.RegisterObject(this);
-
-                var messageBusHandlerSettings = Settings.Get<MessageBusHarnessSettings>();
-                var executorRoleSettings = (MessageBusHarnessRoleSettingsExecutor)messageBusHandlerSettings.RoleSettings;
 
                 this.simpleInjectorContainer = new Container();
 
@@ -89,17 +90,19 @@ namespace Naos.MessageBus.Hangfire.Harness
 
                 this.simpleInjectorContainer.Register<IDispatchMessages>(
                     () => new MessageDispatcher(this.simpleInjectorContainer));
-                GlobalConfiguration.Configuration.UseActivator(new SimpleInjectorJobActivator(this.simpleInjectorContainer));
+                GlobalConfiguration.Configuration.UseActivator(
+                    new SimpleInjectorJobActivator(this.simpleInjectorContainer));
 
                 var options = new BackgroundJobServerOptions
-                {
-                    Queues = executorRoleSettings.ChannelsToMonitor.ToArray(),
-                    ServerName = Environment.MachineName,
-                    SchedulePollingInterval = executorRoleSettings.PollingTimeSpan,
-                    WorkerCount = executorRoleSettings.WorkerCount,
-                };
+                                  {
+                                      Queues = executorRoleSettings.ChannelsToMonitor.ToArray(),
+                                      ServerName = Environment.MachineName,
+                                      SchedulePollingInterval =
+                                          executorRoleSettings.PollingTimeSpan,
+                                      WorkerCount = executorRoleSettings.WorkerCount,
+                                  };
 
-                GlobalConfiguration.Configuration.UseSqlServerStorage(messageBusHandlerSettings.PersistenceConnectionString);
+                GlobalConfiguration.Configuration.UseSqlServerStorage(persistenceConnectionString);
                 this.backgroundJobServer = new BackgroundJobServer(options);
             }
         }
@@ -111,12 +114,16 @@ namespace Naos.MessageBus.Hangfire.Harness
         {
             lock (this.lockObject)
             {
-                if (this.backgroundJobServer != null)
+                // this will have been set befor the object is registered or the background server is initialized.
+                if (this.started)
                 {
-                    this.backgroundJobServer.Dispose();
-                }
+                    if (this.backgroundJobServer != null)
+                    {
+                        this.backgroundJobServer.Dispose();
+                    }
 
-                HostingEnvironment.UnregisterObject(this);
+                    HostingEnvironment.UnregisterObject(this);
+                }
             }
         }
 

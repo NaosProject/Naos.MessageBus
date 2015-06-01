@@ -11,13 +11,25 @@ namespace Naos.MessageBus.Hangfire.Harness
     using System;
     using System.Web;
 
+    using Its.Configuration;
+
+    using Naos.MessageBus.HandlingContract;
+
     /// <inheritdoc />
     public class Global : HttpApplication
     {
         /// <inheritdoc />
         protected void Application_Start(object sender, EventArgs e)
         {
-            HangfireBootstrapper.Instance.Start();
+            var messageBusHandlerSettings = Settings.Get<MessageBusHarnessSettings>();
+            var executorRoleSettings = messageBusHandlerSettings.RoleSettings as MessageBusHarnessRoleSettingsExecutor;
+
+            if (executorRoleSettings != null)
+            {
+                HangfireBootstrapper.Instance.Start(
+                    messageBusHandlerSettings.PersistenceConnectionString,
+                    executorRoleSettings);
+            }
         }
 
         /// <inheritdoc />
