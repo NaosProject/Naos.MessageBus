@@ -36,6 +36,8 @@ namespace Naos.MessageBus.Hangfire.Harness
 
             if (hostRoleSettings != null)
             {
+                GlobalConfiguration.Configuration.UseSqlServerStorage(
+                    messageBusHandlerSettings.PersistenceConnectionString);
                 app.UseHangfireServer();
             }
         }
