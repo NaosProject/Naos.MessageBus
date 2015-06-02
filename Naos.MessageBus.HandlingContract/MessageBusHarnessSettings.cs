@@ -11,7 +11,7 @@ namespace Naos.MessageBus.HandlingContract
     using System.Runtime.Serialization;
 
     /// <summary>
-    /// Base class of the roles of a message bus harness.
+    /// Base class of the settings for the different roles of a message bus harness.
     /// </summary>
     [KnownType(typeof(MessageBusHarnessRoleSettingsHost))]
     [KnownType(typeof(MessageBusHarnessRoleSettingsExecutor))]
