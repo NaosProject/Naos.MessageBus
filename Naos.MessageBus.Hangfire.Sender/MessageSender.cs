@@ -64,7 +64,6 @@ namespace Naos.MessageBus.Hangfire.Sender
             {
                 case Schedules.MidnightUTC:
                     return Cron.Daily;
-                    break;
                 default:
                     throw new NotSupportedException("Unsupported Schedule: " + schedule);
             }
