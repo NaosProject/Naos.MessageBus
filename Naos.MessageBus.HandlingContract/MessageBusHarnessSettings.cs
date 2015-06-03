@@ -23,7 +23,11 @@ namespace Naos.MessageBus.HandlingContract
     /// Message bus harness settings specific to the host role.
     /// </summary>
     public class MessageBusHarnessRoleSettingsHost : MessageBusHarnessRoleSettingsBase
-    {  
+    {
+        /// <summary>
+        /// Gets or sets the server name to use.
+        /// </summary>
+        public string ServerName { get; set; }
     }
 
     /// <summary>

@@ -17,6 +17,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Naos.MessageBus.Console.Han
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Naos.MessageBus.DataContract.Test", "Naos.MessageBus.DataContract.Test\Naos.MessageBus.DataContract.Test.csproj", "{30FC06AC-0FA1-4ED8-813F-CC3EC66FB002}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Naos.MessageBus.Test", "Naos.MessageBus.Test\Naos.MessageBus.Test.csproj", "{407121BE-9DE5-4412-BF20-FBA7147F9B94}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -51,6 +53,10 @@ Global
 		{30FC06AC-0FA1-4ED8-813F-CC3EC66FB002}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{30FC06AC-0FA1-4ED8-813F-CC3EC66FB002}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{30FC06AC-0FA1-4ED8-813F-CC3EC66FB002}.Release|Any CPU.Build.0 = Release|Any CPU
+		{407121BE-9DE5-4412-BF20-FBA7147F9B94}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{407121BE-9DE5-4412-BF20-FBA7147F9B94}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{407121BE-9DE5-4412-BF20-FBA7147F9B94}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{407121BE-9DE5-4412-BF20-FBA7147F9B94}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

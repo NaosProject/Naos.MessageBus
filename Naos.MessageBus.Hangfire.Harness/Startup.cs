@@ -31,6 +31,7 @@ namespace Naos.MessageBus.Hangfire.Harness
         /// <param name="app">App builder to chain on.</param>
         public void Configuration(IAppBuilder app)
         {
+            Settings.Deserialize = Serializer.Deserialize;
             var messageBusHandlerSettings = Settings.Get<MessageBusHarnessSettings>();
             var hostRoleSettings = messageBusHandlerSettings.RoleSettings as MessageBusHarnessRoleSettingsHost;
 
@@ -38,7 +39,8 @@ namespace Naos.MessageBus.Hangfire.Harness
             {
                 GlobalConfiguration.Configuration.UseSqlServerStorage(
                     messageBusHandlerSettings.PersistenceConnectionString);
-                app.UseHangfireServer();
+                var options = new BackgroundJobServerOptions { ServerName = hostRoleSettings.ServerName };
+                app.UseHangfireServer(options);
             }
         }
     }

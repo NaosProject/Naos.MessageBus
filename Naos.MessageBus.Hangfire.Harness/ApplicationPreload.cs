@@ -20,6 +20,7 @@ namespace Naos.MessageBus.Hangfire.Harness
         /// <inheritdoc />
         public void Preload(string[] parameters)
         {
+            Settings.Deserialize = Serializer.Deserialize;
             var messageBusHandlerSettings = Settings.Get<MessageBusHarnessSettings>();
             var executorRoleSettings = messageBusHandlerSettings.RoleSettings as MessageBusHarnessRoleSettingsExecutor;
 
