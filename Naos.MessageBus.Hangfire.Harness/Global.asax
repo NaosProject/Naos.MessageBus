@@ -1,1 +1,1 @@
-﻿<%@ Application Codebehind="Global.asax.cs" Inherits="Naos.MessageBus.Hangfire.Harness.WebApiApplication" Language="C#" %>
+﻿<%@ Application Codebehind="Global.asax.cs" Inherits="Naos.MessageBus.Hangfire.Harness.Global" Language="C#" %>

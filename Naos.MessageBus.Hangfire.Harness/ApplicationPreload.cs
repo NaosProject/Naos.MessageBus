@@ -8,6 +8,8 @@
 
 namespace Naos.MessageBus.Hangfire.Harness
 {
+    using System;
+    using System.IO;
     using System.Web.Hosting;
 
     using Its.Configuration;
@@ -22,7 +24,8 @@ namespace Naos.MessageBus.Hangfire.Harness
         {
             Settings.Deserialize = Serializer.Deserialize;
             var messageBusHandlerSettings = Settings.Get<MessageBusHarnessSettings>();
-            var executorRoleSettings = messageBusHandlerSettings.RoleSettings as MessageBusHarnessRoleSettingsExecutor;
+            var executorRoleSettings =
+                messageBusHandlerSettings.RoleSettings as MessageBusHarnessRoleSettingsExecutor;
 
             if (executorRoleSettings != null)
             {
