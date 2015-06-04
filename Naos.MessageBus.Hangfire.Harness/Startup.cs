@@ -12,10 +12,6 @@ using Naos.MessageBus.Hangfire.Harness;
 
 namespace Naos.MessageBus.Hangfire.Harness
 {
-    using System;
-    using System.Diagnostics;
-    using System.IO;
-
     using global::Hangfire;
 
     using Its.Configuration;

@@ -8,8 +8,6 @@
 
 namespace Naos.MessageBus.Hangfire.Harness
 {
-    using System;
-    using System.IO;
     using System.Web.Hosting;
 
     using Its.Configuration;

@@ -63,6 +63,7 @@
     <None Include=".config\Host\MessageBusHarnessSettings.json" />
     <Compile Include="TestItsConfigMessageBusHandlerSettings.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <None Include="app.config" />
     <None Include="Settings.StyleCop" />
   </ItemGroup>
   <ItemGroup>
