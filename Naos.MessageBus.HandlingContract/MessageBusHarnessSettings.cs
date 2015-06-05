@@ -69,6 +69,6 @@ namespace Naos.MessageBus.HandlingContract
         /// <summary>
         /// Gets or sets the role settings of the harness.
         /// </summary>
-        public MessageBusHarnessRoleSettingsBase RoleSettings { get; set; }
+        public ICollection<MessageBusHarnessRoleSettingsBase> RoleSettings { get; set; }
     }
 }

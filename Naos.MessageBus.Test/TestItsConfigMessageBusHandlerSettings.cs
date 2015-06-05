@@ -25,8 +25,8 @@ namespace Naos.MessageBus.Test
 
             Assert.NotNull(settings);
             Assert.Equal("server=localhost", settings.PersistenceConnectionString);
-            Assert.IsType<MessageBusHarnessRoleSettingsHost>(settings.RoleSettings);
-            var hostSettings = (MessageBusHarnessRoleSettingsHost)settings.RoleSettings;
+            var hostSettings = settings.RoleSettings.OfType<MessageBusHarnessRoleSettingsHost>().SingleOrDefault();
+            Assert.NotNull(hostSettings);
             Assert.Equal("MyHangfireServer", hostSettings.ServerName);
         }
 
@@ -37,8 +37,8 @@ namespace Naos.MessageBus.Test
 
             Assert.NotNull(settings);
             Assert.Equal("server=localhost", settings.PersistenceConnectionString);
-            Assert.IsType<MessageBusHarnessRoleSettingsExecutor>(settings.RoleSettings);
-            var executorSettings = (MessageBusHarnessRoleSettingsExecutor)settings.RoleSettings;
+            var executorSettings = settings.RoleSettings.OfType<MessageBusHarnessRoleSettingsExecutor>().SingleOrDefault();
+            Assert.NotNull(executorSettings);
             Assert.Equal("monkeys", executorSettings.ChannelsToMonitor.First());
             Assert.Equal("pandas", executorSettings.ChannelsToMonitor.Skip(1).First());
             Assert.Equal(4, executorSettings.WorkerCount);
