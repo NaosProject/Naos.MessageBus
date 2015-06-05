@@ -43,7 +43,13 @@ namespace Naos.MessageBus.Hangfire.Sender
                 Queue = channel,
             };
 
-            Expression<Action<IDispatchMessages>> methodCall = _ => _.Dispatch(message);
+            var envelope = new Envelope()
+                               {
+                                   MessageAsJson = Serializer.Serialize(message),
+                                   MessageType = message.GetType()
+                               };
+
+            Expression<Action<IDispatchMessages>> methodCall = _ => _.Dispatch(envelope);
             var id =
                 client.Create<IDispatchMessages>(
                     methodCall,

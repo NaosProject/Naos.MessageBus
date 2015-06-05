@@ -6,6 +6,10 @@
 
 namespace Naos.MessageBus.Hangfire.Harness
 {
+    using System;
+    using System.Diagnostics;
+    using System.Reflection;
+
     using Naos.MessageBus.DataContract;
     using Naos.MessageBus.HandlingContract;
 
@@ -30,8 +34,17 @@ namespace Naos.MessageBus.Hangfire.Harness
         {
             var messageType = message.GetType();
             var handlerType = typeof(IHandleMessages<>).MakeGenericType(messageType);
-            var handler = (IHandleMessages<IMessage>)this.simpleInjectorContainer.GetInstance(handlerType);
-            handler.Handle(message);
+
+            // must be done with reflection b/c you can't do a cast to IHandleMessages<IMessage> since the handler is IHandleMessages<[SpecificType]> and dynamic's didn't work...
+            var handler = this.simpleInjectorContainer.GetInstance(handlerType);
+            var methodInfo = handlerType.GetMethod("Handle");
+            methodInfo.Invoke(handler, new object[] { message });
+        }
+
+        public void Dispatch(Envelope envelope)
+        {
+            var message = (IMessage)Serializer.Deserialize(envelope.MessageType, envelope.MessageAsJson);
+            this.Dispatch(message);
         }
     }
 }

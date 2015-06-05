@@ -10,12 +10,14 @@ namespace Naos.MessageBus.Hangfire.Harness
 {
     using System;
     using System.Collections.Generic;
+    using System.Diagnostics;
     using System.IO;
     using System.Linq;
     using System.Reflection;
     using System.Web.Hosting;
 
     using global::Hangfire;
+    using global::Hangfire.Server;
 
     using Its.Configuration;
 
@@ -71,8 +73,20 @@ namespace Naos.MessageBus.Hangfire.Harness
                     "*.dll",
                     SearchOption.AllDirectories);
 
-                var handlerTypeMap = new List<TypeMap>();
+                // add an unknown assembly resolver to go try to find the dll in one of the files we have discovered...
+                AppDomain.CurrentDomain.AssemblyResolve += (sender, args) =>
+                    {
+                        var dllName = args.Name.Split(',')[0] + ".dll";
+                        var fullDllPath = files.SingleOrDefault(_ => _.EndsWith(dllName));
+                        if (fullDllPath == null)
+                        {
+                            throw new TypeInitializationException(args.Name, null);
+                        }
 
+                        return Assembly.LoadFile(fullDllPath);
+                    };
+
+                var handlerTypeMap = new List<TypeMap>();
                 foreach (var filePathToPotentialHandlerAssembly in files)
                 {
                     var assembly = Assembly.LoadFile(filePathToPotentialHandlerAssembly);
