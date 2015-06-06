@@ -41,6 +41,7 @@ namespace Naos.MessageBus.Hangfire.Harness
             methodInfo.Invoke(handler, new object[] { message });
         }
 
+        /// <inheritdoc />
         public void Dispatch(Envelope envelope)
         {
             var message = (IMessage)Serializer.Deserialize(envelope.MessageType, envelope.MessageAsJson);
