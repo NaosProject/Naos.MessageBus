@@ -6,10 +6,6 @@
 
 namespace Naos.MessageBus.Hangfire.Harness
 {
-    using System;
-    using System.Diagnostics;
-    using System.Reflection;
-
     using Naos.MessageBus.DataContract;
     using Naos.MessageBus.HandlingContract;
 
@@ -32,13 +28,16 @@ namespace Naos.MessageBus.Hangfire.Harness
         /// <inheritdoc />
         public void Dispatch(IMessage message)
         {
-            var messageType = message.GetType();
-            var handlerType = typeof(IHandleMessages<>).MakeGenericType(messageType);
+            if (message != null)
+            {
+                var messageType = message.GetType();
+                var handlerType = typeof(IHandleMessages<>).MakeGenericType(messageType);
 
-            // must be done with reflection b/c you can't do a cast to IHandleMessages<IMessage> since the handler is IHandleMessages<[SpecificType]> and dynamic's didn't work...
-            var handler = this.simpleInjectorContainer.GetInstance(handlerType);
-            var methodInfo = handlerType.GetMethod("Handle");
-            methodInfo.Invoke(handler, new object[] { message });
+                // must be done with reflection b/c you can't do a cast to IHandleMessages<IMessage> since the handler is IHandleMessages<[SpecificType]> and dynamic's didn't work...
+                var handler = this.simpleInjectorContainer.GetInstance(handlerType);
+                var methodInfo = handlerType.GetMethod("Handle");
+                methodInfo.Invoke(handler, new object[] { message });
+            }
         }
 
         /// <inheritdoc />
