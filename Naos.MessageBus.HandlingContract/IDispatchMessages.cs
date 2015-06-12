@@ -6,6 +6,8 @@
 
 namespace Naos.MessageBus.HandlingContract
 {
+    using System;
+
     using Naos.MessageBus.DataContract;
 
     /// <summary>
@@ -14,15 +16,9 @@ namespace Naos.MessageBus.HandlingContract
     public interface IDispatchMessages
     {
         /// <summary>
-        /// Dispatches the message to the appropriate handler.
+        /// Dispatches the first message in the parcel to the appropriate handler.
         /// </summary>
-        /// <param name="message">Message to find a handler for.</param>
-        void Dispatch(IMessage message);
-
-        /// <summary>
-        /// Dispatches the message to the appropriate handler.
-        /// </summary>
-        /// <param name="envelope">Message in an envelope.</param>
-        void Dispatch(Envelope envelope);
+        /// <param name="parcel">Parcel to dispatch.</param>
+        void Dispatch(Parcel parcel);
     }
 }

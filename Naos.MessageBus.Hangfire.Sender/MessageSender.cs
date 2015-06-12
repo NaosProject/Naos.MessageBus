@@ -7,6 +7,8 @@
 namespace Naos.MessageBus.Hangfire.Sender
 {
     using System;
+    using System.Collections.Generic;
+    using System.Linq;
     using System.Linq.Expressions;
 
     using global::Hangfire;
@@ -29,27 +31,72 @@ namespace Naos.MessageBus.Hangfire.Sender
         }
 
         /// <inheritdoc />
-        public string Send(IMessage message, string channel)
+        public TrackingCode Send(IMessage message, Channel channel)
         {
-            return this.SendRecurring(message, channel, Schedules.None);
+            var messageSequence = new MessageSequence
+                               {
+                                   ChanneledMessages =
+                                       new[]
+                                           {
+                                               new ChanneledMessage
+                                                   {
+                                                       Channel = channel,
+                                                       Message = message
+                                                   }
+                                           }
+                               };
+
+            return this.SendRecurring(messageSequence, Schedules.None);
         }
 
         /// <inheritdoc />
-        public string SendRecurring(IMessage message, string channel, Schedules recurringSchedule)
+        public TrackingCode Send(MessageSequence messageSequence)
         {
+            return this.SendRecurring(messageSequence, Schedules.None);
+        }
+
+        /// <inheritdoc />
+        public TrackingCode SendRecurring(IMessage message, Channel channel, Schedules recurringSchedule)
+        {
+            var messageSequence = new MessageSequence
+            {
+                ChanneledMessages =
+                    new[]
+                                           {
+                                               new ChanneledMessage
+                                                   {
+                                                       Channel = channel,
+                                                       Message = message
+                                                   }
+                                           }
+            };
+
+            return this.SendRecurring(messageSequence, recurringSchedule);
+        }
+
+        /// <inheritdoc />
+        public TrackingCode SendRecurring(MessageSequence messageSequence, Schedules recurringSchedule)
+        {
+            var envelopes =
+                messageSequence.ChanneledMessages.Select(
+                    channeledMessage =>
+                    new Envelope()
+                        {
+                            MessageAsJson = Serializer.Serialize(channeledMessage.Message),
+                            MessageType = channeledMessage.Message.GetType(),
+                            Channel = channeledMessage.Channel
+                        }).ToList();
+
+            var parcel = new Parcel { Envelopes = envelopes };
+            var firstEnvelopeChannel = envelopes.First().Channel;
+
             var client = new BackgroundJobClient();
             var state = new EnqueuedState
             {
-                Queue = channel,
+                Queue = firstEnvelopeChannel.Name,
             };
 
-            var envelope = new Envelope()
-                               {
-                                   MessageAsJson = Serializer.Serialize(message),
-                                   MessageType = message.GetType()
-                               };
-
-            Expression<Action<IDispatchMessages>> methodCall = _ => _.Dispatch(envelope);
+            Expression<Action<IDispatchMessages>> methodCall = _ => _.Dispatch(parcel);
             var id =
                 client.Create<IDispatchMessages>(
                     methodCall,
@@ -61,7 +108,7 @@ namespace Naos.MessageBus.Hangfire.Sender
                 RecurringJob.AddOrUpdate(id, methodCall, cronExpression);
             }
 
-            return id;
+            return new TrackingCode { Code = id };
         }
 
         private static Func<string> GetCronExpressionFromSchedule(Schedules schedule)
@@ -74,12 +121,5 @@ namespace Naos.MessageBus.Hangfire.Sender
                     throw new NotSupportedException("Unsupported Schedule: " + schedule);
             }
         }
-    }
-
-    /// <inheritdoc />
-    public class TestMessage : IMessage
-    {
-        /// <inheritdoc />
-        public string Description { get; set; }
     }
 }

@@ -1,30 +1,23 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="Envelope.cs" company="Naos">
+// <copyright file="ChanneledMessage.cs" company="Naos">
 //   Copyright 2015 Naos
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
 namespace Naos.MessageBus.DataContract
 {
-    using System;
-
     /// <summary>
-    /// Container object to use when re-hydrating a message.
+    /// Message with channel.
     /// </summary>
-    public sealed class Envelope
+    public class ChanneledMessage
     {
         /// <summary>
-        /// Gets or sets the type of the message.
+        /// Gets or sets the message.
         /// </summary>
-        public Type MessageType { get; set; }
+        public IMessage Message { get; set; }
 
         /// <summary>
-        /// Gets or sets the message in JSON format.
-        /// </summary>
-        public string MessageAsJson { get; set; }
-
-        /// <summary>
-        /// Gets or sets the channel the message should be broadcasted on.
+        /// Gets or sets the channel to broadcast the message on.
         /// </summary>
         public Channel Channel { get; set; }
     }

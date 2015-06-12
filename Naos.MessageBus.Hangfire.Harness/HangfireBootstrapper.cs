@@ -10,19 +10,17 @@ namespace Naos.MessageBus.Hangfire.Harness
 {
     using System;
     using System.Collections.Generic;
-    using System.Diagnostics;
     using System.IO;
     using System.Linq;
     using System.Reflection;
     using System.Web.Hosting;
 
     using global::Hangfire;
-    using global::Hangfire.Server;
-
-    using Its.Configuration;
 
     using Naos.MessageBus.DataContract;
     using Naos.MessageBus.HandlingContract;
+    using Naos.MessageBus.Hangfire.Sender;
+    using Naos.MessageBus.SendingContract;
 
     using SimpleInjector;
 
@@ -68,6 +66,12 @@ namespace Naos.MessageBus.Hangfire.Harness
 
                 this.simpleInjectorContainer = new Container();
 
+                // register sender as it might need to send other messages in a sequence.
+                this.simpleInjectorContainer.Register(
+                    typeof(ISendMessages),
+                    () => new MessageSender(persistenceConnectionString));
+
+                // find all assemblies files to search for handlers.
                 var files = Directory.GetFiles(
                     executorRoleSettings.HandlerAssemblyPath,
                     "*.dll",

@@ -6,8 +6,13 @@
 
 namespace Naos.MessageBus.Hangfire.Harness
 {
+    using System.Collections.Generic;
+    using System.Linq;
+
     using Naos.MessageBus.DataContract;
+    using Naos.MessageBus.DataContract.Exceptions;
     using Naos.MessageBus.HandlingContract;
+    using Naos.MessageBus.SendingContract;
 
     using SimpleInjector;
 
@@ -26,25 +31,50 @@ namespace Naos.MessageBus.Hangfire.Harness
         }
 
         /// <inheritdoc />
-        public void Dispatch(IMessage message)
+        public void Dispatch(Parcel parcel)
         {
-            if (message != null)
+            if (parcel == null)
             {
-                var messageType = message.GetType();
-                var handlerType = typeof(IHandleMessages<>).MakeGenericType(messageType);
-
-                // must be done with reflection b/c you can't do a cast to IHandleMessages<IMessage> since the handler is IHandleMessages<[SpecificType]> and dynamic's didn't work...
-                var handler = this.simpleInjectorContainer.GetInstance(handlerType);
-                var methodInfo = handlerType.GetMethod("Handle");
-                methodInfo.Invoke(handler, new object[] { message });
+                throw new DispatchException("Parcel cannot be null");
             }
-        }
 
-        /// <inheritdoc />
-        public void Dispatch(Envelope envelope)
-        {
-            var message = (IMessage)Serializer.Deserialize(envelope.MessageType, envelope.MessageAsJson);
-            this.Dispatch(message);
+            if (parcel.Envelopes == null || !parcel.Envelopes.Any())
+            {
+                throw new DispatchException("Parcel must contain envelopes");
+            }
+
+            var channeledMessages =
+                parcel.Envelopes.Select(
+                    _ =>
+                    new ChanneledMessage
+                        {
+                            Message = (IMessage)Serializer.Deserialize(_.MessageType, _.MessageAsJson),
+                            Channel = _.Channel
+                        }).ToList();
+
+            var firstMessage = channeledMessages.First().Message;
+            var remainingChanneledMessages = channeledMessages.Skip(1).ToList();
+            var messageType = firstMessage.GetType();
+            var handlerType = typeof(IHandleMessages<>).MakeGenericType(messageType);
+
+            // must be done with reflection b/c you can't do a cast to IHandleMessages<IMessage> since the handler is IHandleMessages<[SpecificType]> and dynamic's didn't work...
+            var handler = this.simpleInjectorContainer.GetInstance(handlerType);
+            var methodInfo = handlerType.GetMethod("Handle");
+            methodInfo.Invoke(handler, new object[] { firstMessage });
+
+            if (remainingChanneledMessages.Any())
+            {
+                var firstRemainingMessage = channeledMessages.First().Message;
+                if (handler is IShare && firstRemainingMessage is IShare)
+                {
+                    // CHANGES STATE: this will pass IShare properties from the handler to the first message in the sequence before re-sending the trimmed sequence
+                    SharedPropertyApplicator.ApplySharedProperties(handler as IShare, firstRemainingMessage as IShare);
+                }
+
+                var sender = this.simpleInjectorContainer.GetInstance<ISendMessages>();
+                var remainingMessageSequence = new MessageSequence { ChanneledMessages = remainingChanneledMessages };
+                sender.Send(remainingMessageSequence);
+            }
         }
     }
 }

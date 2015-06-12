@@ -39,6 +39,10 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\packages\Newtonsoft.Json.6.0.8\lib\net45\Newtonsoft.Json.dll</HintPath>
     </Reference>
+    <Reference Include="SimpleInjector, Version=2.8.0.0, Culture=neutral, PublicKeyToken=984cb50dea722e99, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\packages\SimpleInjector.2.8.0\lib\net45\SimpleInjector.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.ComponentModel.Composition" />
     <Reference Include="System.Core" />
@@ -61,6 +65,8 @@
   <ItemGroup>
     <None Include=".config\Executor\MessageBusHarnessSettings.json" />
     <None Include=".config\Host\MessageBusHarnessSettings.json" />
+    <Compile Include="SharedPropertyApplicatorTest.cs" />
+    <Compile Include="MessageDispatcherTest.cs" />
     <Compile Include="TestItsConfigMessageBusHandlerSettings.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <None Include="app.config" />
@@ -70,6 +76,10 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Naos.MessageBus.DataContract\Naos.MessageBus.DataContract.csproj">
+      <Project>{77981A7E-D1B2-4A09-AE35-367BB5421E2B}</Project>
+      <Name>Naos.MessageBus.DataContract</Name>
+    </ProjectReference>
     <ProjectReference Include="..\Naos.MessageBus.HandlingContract\Naos.MessageBus.HandlingContract.csproj">
       <Project>{A4C4CA47-1299-4770-9063-559E6C5B17F8}</Project>
       <Name>Naos.MessageBus.HandlingContract</Name>
