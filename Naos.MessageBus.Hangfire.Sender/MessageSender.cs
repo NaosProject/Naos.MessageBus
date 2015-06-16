@@ -7,7 +7,6 @@
 namespace Naos.MessageBus.Hangfire.Sender
 {
     using System;
-    using System.Collections.Generic;
     using System.Linq;
     using System.Linq.Expressions;
 
@@ -87,7 +86,7 @@ namespace Naos.MessageBus.Hangfire.Sender
                             Channel = channeledMessage.Channel
                         }).ToList();
 
-            var parcel = new Parcel { Envelopes = envelopes };
+            var parcel = new Parcel { Id = messageSequence.Id, Envelopes = envelopes };
             var firstEnvelopeChannel = envelopes.First().Channel;
 
             var client = new BackgroundJobClient();

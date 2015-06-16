@@ -74,7 +74,12 @@ namespace Naos.MessageBus.Hangfire.Harness
                 }
 
                 var sender = this.simpleInjectorContainer.GetInstance<ISendMessages>();
-                var remainingMessageSequence = new MessageSequence { ChanneledMessages = remainingChanneledMessages };
+                var remainingMessageSequence = new MessageSequence
+                                                   {
+                                                       Id = parcel.Id, // persist the batch ID for collation
+                                                       ChanneledMessages = remainingChanneledMessages
+                                                   };
+
                 sender.Send(remainingMessageSequence);
             }
         }
