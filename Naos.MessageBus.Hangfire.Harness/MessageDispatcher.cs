@@ -64,11 +64,13 @@ namespace Naos.MessageBus.Hangfire.Harness
 
             if (remainingChanneledMessages.Any())
             {
-                var firstRemainingMessage = channeledMessages.First().Message;
-                if (handler is IShare && firstRemainingMessage is IShare)
+                var firstRemainingMessage = remainingChanneledMessages.First().Message;
+                var handlerAsShare = handler as IShare;
+                var nextMessageAsShare = firstRemainingMessage as IShare;
+                if (handlerAsShare != null && nextMessageAsShare != null)
                 {
                     // CHANGES STATE: this will pass IShare properties from the handler to the first message in the sequence before re-sending the trimmed sequence
-                    SharedPropertyApplicator.ApplySharedProperties(handler as IShare, firstRemainingMessage as IShare);
+                    SharedPropertyApplicator.ApplySharedProperties(handlerAsShare, nextMessageAsShare);
                 }
 
                 var sender = this.simpleInjectorContainer.GetInstance<ISendMessages>();
