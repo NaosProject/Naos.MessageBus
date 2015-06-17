@@ -82,7 +82,7 @@ namespace Naos.MessageBus.Hangfire.Harness
                 AppDomain.CurrentDomain.AssemblyResolve += (sender, args) =>
                     {
                         var dllName = args.Name.Split(',')[0] + ".dll";
-                        var fullDllPath = files.SingleOrDefault(_ => _.EndsWith(dllName));
+                        var fullDllPath = files.FirstOrDefault(_ => _.EndsWith(dllName));
                         if (fullDllPath == null)
                         {
                             throw new TypeInitializationException(args.Name, null);
@@ -103,7 +103,7 @@ namespace Naos.MessageBus.Hangfire.Harness
                     }
                     catch (ReflectionTypeLoadException reflectionTypeLoadException)
                     {
-                        throw new HarnessStartupException(
+                        throw new ApplicationException(
                             "Failed to load assembly: " + filePathToPotentialHandlerAssembly + ". "
                             + string.Join(",", reflectionTypeLoadException.LoaderExceptions.Select(_ => _.ToString())),
                             reflectionTypeLoadException);
