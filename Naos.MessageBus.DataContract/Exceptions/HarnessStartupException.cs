@@ -1,5 +1,5 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="MessageBusExceptionBase.cs" company="Naos">
+// <copyright file="HarnessStartupException.cs" company="Naos">
 //   Copyright 2015 Naos
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
@@ -9,25 +9,26 @@ namespace Naos.MessageBus.DataContract.Exceptions
     using System;
 
     /// <summary>
-    /// Base exception for all to derive from.
+    /// Custom exception for failures in harness startup.
     /// </summary>
     [Serializable]
-    public abstract class MessageBusExceptionBase : Exception
+    public class HarnessStartupException : MessageBusExceptionBase
     {
         /// <summary>
-        /// Initializes a new instance of the <see cref="MessageBusExceptionBase"/> class.
+        /// Initializes a new instance of the <see cref="HarnessStartupException"/> class.
         /// </summary>
         /// <param name="message">Exception message.</param>
-        protected MessageBusExceptionBase(string message) : base(message)
+        public HarnessStartupException(string message)
+            : base(message)
         {
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="MessageBusExceptionBase"/> class.
+        /// Initializes a new instance of the <see cref="HarnessStartupException"/> class.
         /// </summary>
         /// <param name="message">Exception message.</param>
         /// <param name="innerException">Inner exception.</param>
-        protected MessageBusExceptionBase(string message, Exception innerException)
+        public HarnessStartupException(string message, Exception innerException)
             : base(message, innerException)
         {
         }

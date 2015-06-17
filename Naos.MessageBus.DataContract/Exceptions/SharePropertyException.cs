@@ -9,8 +9,9 @@ namespace Naos.MessageBus.DataContract.Exceptions
     using System;
 
     /// <summary>
-    /// Custom exception for failures in 
+    /// Custom exception for failures in sharing properties.
     /// </summary>
+    [Serializable]
     public class SharePropertyException : MessageBusExceptionBase
     {
         /// <summary>

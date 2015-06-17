@@ -11,6 +11,7 @@ namespace Naos.MessageBus.DataContract.Exceptions
     /// <summary>
     /// Custom exception for failure to dispatch.
     /// </summary>
+    [Serializable]
     public class DispatchException : MessageBusExceptionBase
     {
         /// <summary>

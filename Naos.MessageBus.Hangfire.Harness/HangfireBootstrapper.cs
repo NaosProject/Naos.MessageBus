@@ -18,6 +18,7 @@ namespace Naos.MessageBus.Hangfire.Harness
     using global::Hangfire;
 
     using Naos.MessageBus.DataContract;
+    using Naos.MessageBus.DataContract.Exceptions;
     using Naos.MessageBus.HandlingContract;
     using Naos.MessageBus.Hangfire.Sender;
     using Naos.MessageBus.SendingContract;
@@ -93,10 +94,20 @@ namespace Naos.MessageBus.Hangfire.Harness
                 var handlerTypeMap = new List<TypeMap>();
                 foreach (var filePathToPotentialHandlerAssembly in files)
                 {
-                    var assembly = Assembly.LoadFile(filePathToPotentialHandlerAssembly);
-                    var typesInFile = assembly.GetTypes();
-                    var mapsInFile = typesInFile.GetTypeMapsOfImplementersOfGenericType(typeof(IHandleMessages<>));
-                    handlerTypeMap.AddRange(mapsInFile);
+                    try
+                    {
+                        var assembly = Assembly.LoadFile(filePathToPotentialHandlerAssembly);
+                        var typesInFile = assembly.GetTypes();
+                        var mapsInFile = typesInFile.GetTypeMapsOfImplementersOfGenericType(typeof(IHandleMessages<>));
+                        handlerTypeMap.AddRange(mapsInFile);
+                    }
+                    catch (ReflectionTypeLoadException reflectionTypeLoadException)
+                    {
+                        throw new HarnessStartupException(
+                            "Failed to load assembly: " + filePathToPotentialHandlerAssembly + ". "
+                            + string.Join(",", reflectionTypeLoadException.LoaderExceptions.Select(_ => _.ToString())),
+                            reflectionTypeLoadException);
+                    }
                 }
 
                 foreach (var handlerTypeMapEntry in handlerTypeMap)

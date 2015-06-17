@@ -47,6 +47,7 @@
     <Compile Include="ChanneledMessage.cs" />
     <Compile Include="Envelope.cs" />
     <Compile Include="Exceptions\DispatchException.cs" />
+    <Compile Include="Exceptions\HarnessStartupException.cs" />
     <Compile Include="Exceptions\SharePropertyException.cs" />
     <Compile Include="Exceptions\MessageBusExceptionBase.cs" />
     <Compile Include="IShare.cs" />
