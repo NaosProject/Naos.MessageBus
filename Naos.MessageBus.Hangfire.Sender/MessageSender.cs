@@ -114,8 +114,16 @@ namespace Naos.MessageBus.Hangfire.Sender
         {
             switch (schedule)
             {
-                case Schedules.MidnightUTC:
+                case Schedules.EveryDayMidnightUtc:
                     return Cron.Daily;
+                case Schedules.EveryHourFirstMinute:
+                    return Cron.Hourly;
+                case Schedules.EveryMinute:
+                    return Cron.Minutely;
+                case Schedules.EveryMondayMidnightUtc:
+                    return Cron.Weekly;
+                case Schedules.EveryJanuaryFirstMidnightUtc:
+                    return Cron.Yearly;
                 default:
                     throw new NotSupportedException("Unsupported Schedule: " + schedule);
             }
