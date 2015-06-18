@@ -1,0 +1,11 @@
+﻿{
+    "PersistenceConnectionString": "server=localhost",
+    "RoleSettings": [
+        {
+            "ChannelsToMonitor": [ "monkeys", "pandas" ],
+            "WorkerCount": 4,
+            "HandlerAssemblyPath": "I:\\Gets\\My\\Dlls\\Here",
+            "PollingTimeSpan": "00:01:00"
+        }
+    ]
+}

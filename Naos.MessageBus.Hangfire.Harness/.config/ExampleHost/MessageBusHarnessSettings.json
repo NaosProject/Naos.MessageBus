@@ -1,0 +1,8 @@
+﻿{
+    "PersistenceConnectionString": "Server=localhost;Database=Hangfire;Trusted Connection=yes;",
+    "RoleSettings": [
+        {
+            "ServerName": "MyHangfireServer"
+        }
+    ]
+}
