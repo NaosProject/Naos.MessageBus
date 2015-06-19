@@ -78,17 +78,23 @@ namespace Naos.MessageBus.Hangfire.Harness
                     "*.dll",
                     SearchOption.AllDirectories);
 
+                var pdbFiles = Directory.GetFiles(
+                    executorRoleSettings.HandlerAssemblyPath,
+                    "*.pdb",
+                    SearchOption.AllDirectories);
+
                 // add an unknown assembly resolver to go try to find the dll in one of the files we have discovered...
                 AppDomain.CurrentDomain.AssemblyResolve += (sender, args) =>
                     {
-                        var dllName = args.Name.Split(',')[0] + ".dll";
+                        var dllNameWithoutExtension = args.Name.Split(',')[0];
+                        var dllName = dllNameWithoutExtension + ".dll";
                         var fullDllPath = files.FirstOrDefault(_ => _.EndsWith(dllName));
                         if (fullDllPath == null)
                         {
                             throw new TypeInitializationException(args.Name, null);
                         }
 
-                        return Assembly.LoadFile(fullDllPath);
+                        return GetAssembly(dllNameWithoutExtension, pdbFiles, fullDllPath);
                     };
 
                 var handlerTypeMap = new List<TypeMap>();
@@ -96,7 +102,14 @@ namespace Naos.MessageBus.Hangfire.Harness
                 {
                     try
                     {
-                        var assembly = Assembly.LoadFile(filePathToPotentialHandlerAssembly);
+                        var fullDllPath = filePathToPotentialHandlerAssembly;
+                        var dllNameWithoutExtension =
+                            (Path.GetFileName(filePathToPotentialHandlerAssembly) ?? string.Empty).Replace(
+                                ".dll",
+                                string.Empty);
+
+                        var assembly = GetAssembly(dllNameWithoutExtension, pdbFiles, fullDllPath);
+
                         var typesInFile = assembly.GetTypes();
                         var mapsInFile = typesInFile.GetTypeMapsOfImplementersOfGenericType(typeof(IHandleMessages<>));
                         handlerTypeMap.AddRange(mapsInFile);
@@ -133,6 +146,24 @@ namespace Naos.MessageBus.Hangfire.Harness
 
                 GlobalConfiguration.Configuration.UseSqlServerStorage(persistenceConnectionString);
                 this.backgroundJobServer = new BackgroundJobServer(options);
+            }
+        }
+
+        private static Assembly GetAssembly(string dllNameWithoutExtension, string[] pdbFiles, string fullDllPath)
+        {
+            var pdbName = dllNameWithoutExtension + ".pdb";
+            var fullPdbPath = pdbFiles.FirstOrDefault(_ => _.EndsWith(pdbName));
+
+            if (fullPdbPath == null)
+            {
+                var dllBytes = File.ReadAllBytes(fullDllPath);
+                return Assembly.Load(dllBytes);
+            }
+            else
+            {
+                var dllBytes = File.ReadAllBytes(fullDllPath);
+                var pdbBytes = File.ReadAllBytes(fullPdbPath);
+                return Assembly.Load(dllBytes, pdbBytes);
             }
         }
 
