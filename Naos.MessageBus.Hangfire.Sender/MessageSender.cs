@@ -77,6 +77,13 @@ namespace Naos.MessageBus.Hangfire.Sender
         /// <inheritdoc />
         public TrackingCode SendRecurring(MessageSequence messageSequence, Schedules recurringSchedule)
         {
+            var isRecurring = recurringSchedule != Schedules.None;
+            var nullMessage = new NullMessage
+            {
+                Description =
+                    "Injected NullMessage, required for recurrence to work."
+            };
+
             var envelopesFromSequence =
                 messageSequence.ChanneledMessages.Select(
                     channeledMessage =>
@@ -89,26 +96,23 @@ namespace Naos.MessageBus.Hangfire.Sender
 
             // if this is recurring we must inject a null message that will be handled on the default queue and immediately moved to the next one 
             //             that will be put in the correct queue...
-            var envelopes = recurringSchedule == Schedules.None
-                                ? new List<Envelope>()
-                                : new List<Envelope>(
-                                      new[]
-                                          {
-                                              new Envelope
-                                                  {
-                                                      Channel = new Channel { Name = "default" },
-                                                      MessageType = typeof(NullMessage),
-                                                      MessageAsJson =
-                                                          Serializer.Serialize(
-                                                              new NullMessage
-                                                                  {
-                                                                      Description = "Injected NullMessage, required for recurrence to work."
-                                                                  })
-                                                  }
-                                          });
+            var envelopes = new List<Envelope>();
+            if (isRecurring)
+            {
+                envelopes.Add(
+                    new Envelope
+                        {
+                            Channel = new Channel { Name = "default" },
+                            MessageType = typeof(NullMessage),
+                            MessageAsJson = Serializer.Serialize(nullMessage)
+                        });
+            }
 
             envelopes.AddRange(envelopesFromSequence);
 
+            var displayName = isRecurring
+                                  ? nullMessage.Description
+                                  : messageSequence.ChanneledMessages.First().Message.Description;
             var parcel = new Parcel { Id = messageSequence.Id, Envelopes = envelopes };
             var firstEnvelopeChannel = envelopes.First().Channel;
 
@@ -118,13 +122,13 @@ namespace Naos.MessageBus.Hangfire.Sender
                 Queue = firstEnvelopeChannel.Name,
             };
 
-            Expression<Action<IDispatchMessages>> methodCall = _ => _.Dispatch(parcel);
+            Expression<Action<IDispatchMessages>> methodCall = _ => _.Dispatch(displayName, parcel);
             var id =
                 client.Create<IDispatchMessages>(
                     methodCall,
                     state);
 
-            if (recurringSchedule != Schedules.None)
+            if (isRecurring)
             {
                 var cronExpression = GetCronExpressionFromSchedule(recurringSchedule);
                 RecurringJob.AddOrUpdate(id, methodCall, cronExpression);
