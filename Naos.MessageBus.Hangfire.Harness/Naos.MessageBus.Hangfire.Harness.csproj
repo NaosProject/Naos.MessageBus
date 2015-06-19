@@ -117,6 +117,7 @@
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
     <Compile Include="HangfireBootstrapper.cs" />
+    <Compile Include="NullMessageHandler.cs" />
     <Compile Include="SharedPropertyApplicator.cs" />
     <Compile Include="MessageDispatcher.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

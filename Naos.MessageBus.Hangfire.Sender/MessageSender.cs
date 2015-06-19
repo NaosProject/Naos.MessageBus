@@ -7,6 +7,7 @@
 namespace Naos.MessageBus.Hangfire.Sender
 {
     using System;
+    using System.Collections.Generic;
     using System.Linq;
     using System.Linq.Expressions;
 
@@ -76,7 +77,7 @@ namespace Naos.MessageBus.Hangfire.Sender
         /// <inheritdoc />
         public TrackingCode SendRecurring(MessageSequence messageSequence, Schedules recurringSchedule)
         {
-            var envelopes =
+            var envelopesFromSequence =
                 messageSequence.ChanneledMessages.Select(
                     channeledMessage =>
                     new Envelope()
@@ -85,6 +86,22 @@ namespace Naos.MessageBus.Hangfire.Sender
                             MessageType = channeledMessage.Message.GetType(),
                             Channel = channeledMessage.Channel
                         }).ToList();
+
+            // if this is recurring we must inject a null message that will be handled on the default queue and immediately moved to the next one that will be put in the correct queue...
+            var envelopes = recurringSchedule == Schedules.None
+                                ? new List<Envelope>()
+                                : new List<Envelope>(
+                                      new[]
+                                          {
+                                              new Envelope
+                                                  {
+                                                      Channel = new Channel { Name = "default" },
+                                                      MessageType = typeof(NullMessage),
+                                                      MessageAsJson = Serializer.Serialize(new NullMessage())
+                                                  }
+                                          });
+
+            envelopes.AddRange(envelopesFromSequence);
 
             var parcel = new Parcel { Id = messageSequence.Id, Envelopes = envelopes };
             var firstEnvelopeChannel = envelopes.First().Channel;
