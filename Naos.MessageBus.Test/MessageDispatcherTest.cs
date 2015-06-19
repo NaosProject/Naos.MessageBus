@@ -22,7 +22,7 @@ namespace Naos.MessageBus.Test
         [Fact]
         public static void Dispatch_NullParcel_Throws()
         {
-            Action testCode = () => new MessageDispatcher(new Container()).Dispatch(null);
+            Action testCode = () => new MessageDispatcher(new Container()).Dispatch("Name", null);
             var ex = Assert.Throws<DispatchException>(testCode);
             Assert.Equal("Parcel cannot be null", ex.Message);
         }
@@ -30,7 +30,7 @@ namespace Naos.MessageBus.Test
         [Fact]
         public static void Dispatch_NullEnvelopesInParcel_Throws()
         {
-            Action testCode = () => new MessageDispatcher(new Container()).Dispatch(new Parcel());
+            Action testCode = () => new MessageDispatcher(new Container()).Dispatch("Name", new Parcel());
             var ex = Assert.Throws<DispatchException>(testCode);
             Assert.Equal("Parcel must contain envelopes", ex.Message);
         }
@@ -39,7 +39,7 @@ namespace Naos.MessageBus.Test
         public static void Dispatch_NoEnvelopesInParcel_Throws()
         {
             Action testCode =
-                () => new MessageDispatcher(new Container()).Dispatch(new Parcel { Envelopes = new List<Envelope>() });
+                () => new MessageDispatcher(new Container()).Dispatch("Name", new Parcel { Envelopes = new List<Envelope>() });
             var ex = Assert.Throws<DispatchException>(testCode);
             Assert.Equal("Parcel must contain envelopes", ex.Message);
         }

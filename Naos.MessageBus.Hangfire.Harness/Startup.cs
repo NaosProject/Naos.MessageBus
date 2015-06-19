@@ -42,7 +42,14 @@ namespace Naos.MessageBus.Hangfire.Harness
             {
                 GlobalConfiguration.Configuration.UseSqlServerStorage(
                     messageBusHandlerSettings.PersistenceConnectionString);
-                var options = new BackgroundJobServerOptions { ServerName = hostRoleSettings.ServerName };
+
+                // need one worker here to run the default queue (currently only intended to process NullMessages...)
+                var options = new BackgroundJobServerOptions
+                                  {
+                                      ServerName = hostRoleSettings.ServerName,
+                                      WorkerCount = 1,
+                                  };
+
                 app.UseHangfireServer(options);
                 app.UseHangfireDashboard();
             }

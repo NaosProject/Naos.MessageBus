@@ -6,7 +6,6 @@
 
 namespace Naos.MessageBus.Hangfire.Harness
 {
-    using System.Collections.Generic;
     using System.Linq;
 
     using Naos.MessageBus.DataContract;
@@ -31,7 +30,7 @@ namespace Naos.MessageBus.Hangfire.Harness
         }
 
         /// <inheritdoc />
-        public void Dispatch(Parcel parcel)
+        public void Dispatch(string displayName, Parcel parcel)
         {
             if (parcel == null)
             {

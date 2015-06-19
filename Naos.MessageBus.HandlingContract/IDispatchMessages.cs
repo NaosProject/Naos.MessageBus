@@ -6,7 +6,7 @@
 
 namespace Naos.MessageBus.HandlingContract
 {
-    using System;
+    using System.ComponentModel;
 
     using Naos.MessageBus.DataContract;
 
@@ -18,7 +18,9 @@ namespace Naos.MessageBus.HandlingContract
         /// <summary>
         /// Dispatches the first message in the parcel to the appropriate handler.
         /// </summary>
+        /// <param name="displayName">Display name for the parcel.</param>
         /// <param name="parcel">Parcel to dispatch.</param>
-        void Dispatch(Parcel parcel);
+        [DisplayName("{0}")]
+        void Dispatch(string displayName, Parcel parcel);
     }
 }

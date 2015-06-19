@@ -138,9 +138,8 @@ namespace Naos.MessageBus.Hangfire.Harness
                 var options = new BackgroundJobServerOptions
                                   {
                                       Queues = executorRoleSettings.ChannelsToMonitor.ToArray(),
-                                      ServerName = Environment.MachineName,
-                                      SchedulePollingInterval =
-                                          executorRoleSettings.PollingTimeSpan,
+                                      ServerName = "HangfireExecutor" + Environment.MachineName,
+                                      SchedulePollingInterval = executorRoleSettings.PollingTimeSpan,
                                       WorkerCount = executorRoleSettings.WorkerCount,
                                   };
 
