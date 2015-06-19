@@ -55,6 +55,7 @@
     <Compile Include="MessageSequence.cs" />
     <Compile Include="Parcel.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="NullMessage.cs" />
     <Compile Include="TrackingCode.cs" />
     <Compile Include="TypeMap.cs" />
   </ItemGroup>
