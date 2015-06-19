@@ -87,7 +87,8 @@ namespace Naos.MessageBus.Hangfire.Sender
                             Channel = channeledMessage.Channel
                         }).ToList();
 
-            // if this is recurring we must inject a null message that will be handled on the default queue and immediately moved to the next one that will be put in the correct queue...
+            // if this is recurring we must inject a null message that will be handled on the default queue and immediately moved to the next one 
+            //             that will be put in the correct queue...
             var envelopes = recurringSchedule == Schedules.None
                                 ? new List<Envelope>()
                                 : new List<Envelope>(
@@ -97,7 +98,12 @@ namespace Naos.MessageBus.Hangfire.Sender
                                                   {
                                                       Channel = new Channel { Name = "default" },
                                                       MessageType = typeof(NullMessage),
-                                                      MessageAsJson = Serializer.Serialize(new NullMessage())
+                                                      MessageAsJson =
+                                                          Serializer.Serialize(
+                                                              new NullMessage
+                                                                  {
+                                                                      Description = "Injected NullMessage, required for recurrence to work."
+                                                                  })
                                                   }
                                           });
 
