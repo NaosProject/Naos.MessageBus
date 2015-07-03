@@ -17,6 +17,8 @@ namespace Naos.MessageBus.Hangfire.Harness
 
     using global::Hangfire;
 
+    using Its.Log.Instrumentation;
+
     using Naos.MessageBus.DataContract;
     using Naos.MessageBus.DataContract.Exceptions;
     using Naos.MessageBus.HandlingContract;
@@ -111,7 +113,8 @@ namespace Naos.MessageBus.Hangfire.Harness
                         var assembly = GetAssembly(dllNameWithoutExtension, pdbFiles, fullDllPath);
 
                         var typesInFile = assembly.GetTypes();
-                        var mapsInFile = typesInFile.GetTypeMapsOfImplementersOfGenericType(typeof(IHandleMessages<>));
+                        var mapsInFile =
+                            typesInFile.GetTypeMapsOfImplementersOfGenericType(typeof(IHandleMessages<>));
                         handlerTypeMap.AddRange(mapsInFile);
                     }
                     catch (ReflectionTypeLoadException reflectionTypeLoadException)
@@ -156,12 +159,14 @@ namespace Naos.MessageBus.Hangfire.Harness
             if (fullPdbPath == null)
             {
                 var dllBytes = File.ReadAllBytes(fullDllPath);
+                Log.Write("Loaded Assembly: " + dllNameWithoutExtension + " From: " + fullDllPath + " Without Symbols.");
                 return Assembly.Load(dllBytes);
             }
             else
             {
                 var dllBytes = File.ReadAllBytes(fullDllPath);
                 var pdbBytes = File.ReadAllBytes(fullPdbPath);
+                Log.Write("Loaded Assembly: " + dllNameWithoutExtension + " From: " + fullDllPath + " With Symbols: " + fullPdbPath);
                 return Assembly.Load(dllBytes, pdbBytes);
             }
         }

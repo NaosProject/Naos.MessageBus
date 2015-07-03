@@ -26,8 +26,7 @@
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
     <OutputPath>bin\</OutputPath>
-    <DefineConstants>
-    </DefineConstants>
+    <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <DocumentationFile>bin\Naos.MessageBus.Hangfire.Harness.XML</DocumentationFile>
@@ -36,8 +35,7 @@
     <DebugType>pdbonly</DebugType>
     <Optimize>false</Optimize>
     <OutputPath>bin\</OutputPath>
-    <DefineConstants>
-    </DefineConstants>
+    <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <DocumentationFile>bin\Naos.MessageBus.Hangfire.Harness.XML</DocumentationFile>
@@ -51,6 +49,10 @@
     </Reference>
     <Reference Include="Its.Configuration">
       <HintPath>..\packages\Its.Configuration.0.10.1\lib\net40\Its.Configuration.dll</HintPath>
+    </Reference>
+    <Reference Include="Its.Log, Version=2.7.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\packages\Its.Log.2.8.3\lib\net40\Its.Log.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="Microsoft.JScript" />
@@ -117,6 +119,7 @@
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
     <Compile Include="HangfireBootstrapper.cs" />
+    <Compile Include="Logging.cs" />
     <Compile Include="NullMessageHandler.cs" />
     <Compile Include="SharedPropertyApplicator.cs" />
     <Compile Include="MessageDispatcher.cs" />

@@ -8,6 +8,8 @@ namespace Naos.MessageBus.Hangfire.Harness
 {
     using System.Linq;
 
+    using Its.Log.Instrumentation;
+
     using Naos.MessageBus.DataContract;
     using Naos.MessageBus.DataContract.Exceptions;
     using Naos.MessageBus.HandlingContract;
@@ -59,7 +61,10 @@ namespace Naos.MessageBus.Hangfire.Harness
             // must be done with reflection b/c you can't do a cast to IHandleMessages<IMessage> since the handler is IHandleMessages<[SpecificType]> and dynamic's didn't work...
             var handler = this.simpleInjectorContainer.GetInstance(handlerType);
             var methodInfo = handlerType.GetMethod("Handle");
-            methodInfo.Invoke(handler, new object[] { firstMessage });
+
+            // execute with wrapped log entries using the message as parameter...
+            var logger = Log.WithParams(() => firstMessage);
+            logger.Enter(() => methodInfo.Invoke(handler, new object[] { firstMessage }));
 
             if (remainingChanneledMessages.Any())
             {

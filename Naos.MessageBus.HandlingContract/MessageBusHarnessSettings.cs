@@ -70,5 +70,10 @@ namespace Naos.MessageBus.HandlingContract
         /// Gets or sets the role settings of the harness.
         /// </summary>
         public ICollection<MessageBusHarnessRoleSettingsBase> RoleSettings { get; set; }
+
+        /// <summary>
+        /// Gets or sets the settings for configuring the log processor.
+        /// </summary>
+        public LogProcessorSettings LogProcessorSettings { get; set; }
     }
 }

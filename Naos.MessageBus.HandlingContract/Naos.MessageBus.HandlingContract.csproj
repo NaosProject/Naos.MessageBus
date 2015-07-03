@@ -44,6 +44,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="LogProcessorSettings.cs" />
     <Compile Include="MessageBusHarnessSettings.cs" />
     <Compile Include="IDispatchMessages.cs" />
     <Compile Include="IHandleMessages.cs" />

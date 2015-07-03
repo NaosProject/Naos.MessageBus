@@ -13,8 +13,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Naos.MessageBus.Hangfire.Se
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Naos.MessageBus.DataContract", "Naos.MessageBus.DataContract\Naos.MessageBus.DataContract.csproj", "{77981A7E-D1B2-4A09-AE35-367BB5421E2B}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Naos.MessageBus.Console.Handler", "Naos.MessageBus.Console.Handler\Naos.MessageBus.Console.Handler.csproj", "{B7BB41DA-9D9B-4D0E-AD7E-1BD37360E9C4}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Naos.MessageBus.DataContract.Test", "Naos.MessageBus.DataContract.Test\Naos.MessageBus.DataContract.Test.csproj", "{30FC06AC-0FA1-4ED8-813F-CC3EC66FB002}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Naos.MessageBus.Test", "Naos.MessageBus.Test\Naos.MessageBus.Test.csproj", "{407121BE-9DE5-4412-BF20-FBA7147F9B94}"
@@ -47,10 +45,6 @@ Global
 		{77981A7E-D1B2-4A09-AE35-367BB5421E2B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{77981A7E-D1B2-4A09-AE35-367BB5421E2B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{77981A7E-D1B2-4A09-AE35-367BB5421E2B}.Release|Any CPU.Build.0 = Release|Any CPU
-		{B7BB41DA-9D9B-4D0E-AD7E-1BD37360E9C4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{B7BB41DA-9D9B-4D0E-AD7E-1BD37360E9C4}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{B7BB41DA-9D9B-4D0E-AD7E-1BD37360E9C4}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{B7BB41DA-9D9B-4D0E-AD7E-1BD37360E9C4}.Release|Any CPU.Build.0 = Release|Any CPU
 		{30FC06AC-0FA1-4ED8-813F-CC3EC66FB002}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{30FC06AC-0FA1-4ED8-813F-CC3EC66FB002}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{30FC06AC-0FA1-4ED8-813F-CC3EC66FB002}.Release|Any CPU.ActiveCfg = Release|Any CPU

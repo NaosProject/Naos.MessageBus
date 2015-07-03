@@ -24,6 +24,8 @@ namespace Naos.MessageBus.Hangfire.Harness
         {
             Settings.Deserialize = Serializer.Deserialize;
             var messageBusHandlerSettings = Settings.Get<MessageBusHarnessSettings>();
+            Logging.Setup(messageBusHandlerSettings);
+
             var executorRoleSettings =
                 messageBusHandlerSettings.RoleSettings.OfType<MessageBusHarnessRoleSettingsExecutor>().SingleOrDefault();
 
