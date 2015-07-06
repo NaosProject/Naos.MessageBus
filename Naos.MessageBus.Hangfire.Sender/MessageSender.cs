@@ -110,9 +110,12 @@ namespace Naos.MessageBus.Hangfire.Sender
 
             envelopes.AddRange(envelopesFromSequence);
 
-            var displayName = isRecurring
-                                  ? nullMessage.Description
-                                  : messageSequence.ChanneledMessages.First().Message.Description;
+            var messageName = isRecurring
+                                 ? messageSequence.ChanneledMessages.Skip(1).First().Message.Description // first message is a null message...
+                                 : messageSequence.ChanneledMessages.First().Message.Description;
+
+            var displayName = "Sequence " + messageSequence.Id + " - " + messageName;
+
             var parcel = new Parcel { Id = messageSequence.Id, Envelopes = envelopes };
             var firstEnvelopeChannel = envelopes.First().Channel;
 
