@@ -6,6 +6,8 @@
 
 namespace Naos.MessageBus.Hangfire.Harness
 {
+    using System;
+    using System.Collections.Generic;
     using System.Linq;
 
     using Its.Log.Instrumentation;
@@ -22,13 +24,17 @@ namespace Naos.MessageBus.Hangfire.Harness
     {
         private readonly Container simpleInjectorContainer;
 
+        private readonly IDictionary<Type, object> handlerInitialStateMap;
+
         /// <summary>
         /// Initializes a new instance of the <see cref="MessageDispatcher"/> class.
         /// </summary>
         /// <param name="simpleInjectorContainer">DI container to use for looking up handlers.</param>
-        public MessageDispatcher(Container simpleInjectorContainer)
+        /// <param name="handlerInitialStateMap">Initial state dictionary for handlers the require state to be seeded.</param>
+        public MessageDispatcher(Container simpleInjectorContainer, IDictionary<Type, object> handlerInitialStateMap)
         {
             this.simpleInjectorContainer = simpleInjectorContainer;
+            this.handlerInitialStateMap = handlerInitialStateMap;
         }
 
         /// <inheritdoc />
@@ -60,11 +66,54 @@ namespace Naos.MessageBus.Hangfire.Harness
 
             // must be done with reflection b/c you can't do a cast to IHandleMessages<IMessage> since the handler is IHandleMessages<[SpecificType]> and dynamic's didn't work...
             var handler = this.simpleInjectorContainer.GetInstance(handlerType);
-            var methodInfo = handlerType.GetMethod("Handle");
+
+            object initialState = null;
+            if (handlerType.IsGenericType && handlerType.GetGenericTypeDefinition() == typeof(INeedInitialState<>))
+            {
+                using (var activity = Log.Enter(() => new { HandlerType = handlerType, Handler = handler }))
+                {
+                    var alreadyHaveInitialState = this.handlerInitialStateMap.TryGetValue(handlerType, out initialState);
+                    if (alreadyHaveInitialState)
+                    {
+                        activity.Trace("Found pre-generated initial state.");
+                        var validateMethodInfo = handlerType.GetMethod("ValidateInitialState");
+                        var validRaw = validateMethodInfo.Invoke(handler, new[] { initialState });
+                        var valid = (bool)validRaw;
+                        if (!valid)
+                        {
+                            activity.Trace("Initial state was found to be invalid, not using.");
+                            initialState = null;
+                            this.handlerInitialStateMap.Remove(handlerType);
+                        }
+                        else
+                        {
+                            activity.Trace("Initial state was found to be valid.");
+                        }
+                    }
+
+                    // if not in cache or invalid then generate a new one
+                    if (initialState == null)
+                    {
+                        var getInitialStateMethod = handlerType.GetMethod("GenerateInitialState");
+                        initialState = getInitialStateMethod.Invoke(handler, new object[0]);
+
+                        this.handlerInitialStateMap.Add(handlerType, initialState);
+                    }
+
+                    // seed the handler with 
+                    var seedMethodInfo = handlerType.GetMethod("SeedInitialState");
+                    seedMethodInfo.Invoke(handler, new[] { initialState });
+                }
+            }
 
             // execute with wrapped log entries using the message as parameter...
-            var logger = Log.WithParams(() => firstMessage);
-            logger.Enter(() => methodInfo.Invoke(handler, new object[] { firstMessage }));
+            using (var activity = Log.Enter(() => new { Message = firstMessage, Handler = handler }))
+            {
+                // THIS IS THE ENTRY POINT TO A HANDLER.HANDLE(MESSAGE)
+                var methodInfo = handlerType.GetMethod("Handle");
+                methodInfo.Invoke(handler, new object[] { firstMessage });
+                activity.Confirm(() => "Successfully processed message.");
+            }
 
             if (remainingChanneledMessages.Any())
             {
@@ -74,7 +123,7 @@ namespace Naos.MessageBus.Hangfire.Harness
                     var messageToShareTo = channeledMessageToShareTo.Message as IShare;
                     if (handlerAsShare != null && messageToShareTo != null)
                     {
-                        // CHANGES STATE: this will pass IShare properties from the handler to the first message in the sequence before re-sending the trimmed sequence
+                        // CHANGES STATE: this will pass IShare properties from the handler to all messages in the sequence before re-sending the trimmed sequence
                         SharedPropertyApplicator.ApplySharedProperties(handlerAsShare, messageToShareTo);
                     }
                 }

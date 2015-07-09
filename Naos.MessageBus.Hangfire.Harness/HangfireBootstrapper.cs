@@ -20,7 +20,6 @@ namespace Naos.MessageBus.Hangfire.Harness
     using Its.Log.Instrumentation;
 
     using Naos.MessageBus.DataContract;
-    using Naos.MessageBus.DataContract.Exceptions;
     using Naos.MessageBus.HandlingContract;
     using Naos.MessageBus.Hangfire.Sender;
     using Naos.MessageBus.SendingContract;
@@ -35,12 +34,15 @@ namespace Naos.MessageBus.Hangfire.Harness
         /// </summary>
         public static readonly HangfireBootstrapper Instance = new HangfireBootstrapper();
 
+        // this is declared here to persist, it's filled exclusively in the MessageDispatcher...
+        private readonly Dictionary<Type, object> initialStateMap = new Dictionary<Type, object>();
+
+        private readonly Container simpleInjectorContainer = new Container();
+
         private readonly object lockObject = new object();
         private bool started;
 
         private BackgroundJobServer backgroundJobServer;
-
-        private Container simpleInjectorContainer;
 
         private HangfireBootstrapper()
         {
@@ -66,8 +68,6 @@ namespace Naos.MessageBus.Hangfire.Harness
                 this.started = true;
 
                 HostingEnvironment.RegisterObject(this);
-
-                this.simpleInjectorContainer = new Container();
 
                 // register sender as it might need to send other messages in a sequence.
                 this.simpleInjectorContainer.Register(
@@ -133,8 +133,11 @@ namespace Naos.MessageBus.Hangfire.Harness
                         handlerTypeMapEntry.ConcreteType);
                 }
 
+                // register the dispatcher so that hangfire can use it when a message is getting processed
                 this.simpleInjectorContainer.Register<IDispatchMessages>(
-                    () => new MessageDispatcher(this.simpleInjectorContainer));
+                    () => new MessageDispatcher(this.simpleInjectorContainer, this.initialStateMap));
+
+                // configure hangfire to use this DI container
                 GlobalConfiguration.Configuration.UseActivator(
                     new SimpleInjectorJobActivator(this.simpleInjectorContainer));
 
@@ -159,14 +162,14 @@ namespace Naos.MessageBus.Hangfire.Harness
             if (fullPdbPath == null)
             {
                 var dllBytes = File.ReadAllBytes(fullDllPath);
-                Log.Write("Loaded Assembly: " + dllNameWithoutExtension + " From: " + fullDllPath + " Without Symbols.");
+                Log.Write(() => "Loaded Assembly: " + dllNameWithoutExtension + " From: " + fullDllPath + " Without Symbols.");
                 return Assembly.Load(dllBytes);
             }
             else
             {
                 var dllBytes = File.ReadAllBytes(fullDllPath);
                 var pdbBytes = File.ReadAllBytes(fullPdbPath);
-                Log.Write("Loaded Assembly: " + dllNameWithoutExtension + " From: " + fullDllPath + " With Symbols: " + fullPdbPath);
+                Log.Write(() => "Loaded Assembly: " + dllNameWithoutExtension + " From: " + fullDllPath + " With Symbols: " + fullPdbPath);
                 return Assembly.Load(dllBytes, pdbBytes);
             }
         }
