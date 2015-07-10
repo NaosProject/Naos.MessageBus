@@ -48,6 +48,7 @@ namespace Naos.MessageBus.Test
         [Fact]
         public static void Dispatch_InitialStateRequirement_GetsGenerated()
         {
+            InitialStateHandler.StateHistory.Clear();
             var simpleInjectorContainer = new Container();
             simpleInjectorContainer.Register(typeof(IHandleMessages<InitialStateMessage>), typeof(InitialStateHandler));
             var message = new InitialStateMessage();
@@ -74,6 +75,95 @@ namespace Naos.MessageBus.Test
             Assert.Equal(2, InitialStateHandler.StateHistory.Count);
             Assert.Equal(
                 InitialStateHandler.StateHistory["GenerateInitialState"],
+                InitialStateHandler.StateHistory["SeedInitialState"]);
+        }
+
+        [Fact]
+        public static void Dispatch_InitialStateRequirementRunTwice_SecondCallUsesPreviousState()
+        {
+            InitialStateHandler.StateHistory.Clear();
+            var simpleInjectorContainer = new Container();
+            simpleInjectorContainer.Register(typeof(IHandleMessages<InitialStateMessage>), typeof(InitialStateHandler));
+            var message = new InitialStateMessage();
+            var messageJson = Serializer.Serialize(message);
+
+            var messageDispatcher = new MessageDispatcher(simpleInjectorContainer, new Dictionary<Type, object>());
+            var parcel = new Parcel
+                             {
+                                 Envelopes =
+                                     new List<Envelope>(
+                                     new[]
+                                         {
+                                             new Envelope()
+                                                 {
+                                                     Channel = new Channel { Name = "fakeChannel" },
+                                                     MessageAsJson = messageJson,
+                                                     MessageType = message.GetType()
+                                                 }
+                                         })
+                             };
+
+            Assert.Empty(InitialStateHandler.StateHistory);
+            messageDispatcher.Dispatch("Parcel Name", parcel);
+            Assert.Equal(2, InitialStateHandler.StateHistory.Count);
+            Assert.Equal(
+                InitialStateHandler.StateHistory["GenerateInitialState"],
+                InitialStateHandler.StateHistory["SeedInitialState"]);
+
+            InitialStateHandler.StateHistory.Clear();
+            InitialStateHandler.ShouldValidate = true; // this will say that the state is valid and should NOT re-generate
+            messageDispatcher.Dispatch("Parcel Name", parcel);
+            Assert.Equal(2, InitialStateHandler.StateHistory.Count);
+            Assert.Equal(
+                InitialStateHandler.StateHistory["ValidateInitialState"],
+                InitialStateHandler.StateHistory["SeedInitialState"]);
+            Assert.False(InitialStateHandler.StateHistory.ContainsKey("GenerateInitialState"));
+        }
+
+        [Fact]
+        public static void Dispatch_InitialStateRequirementRunTwice_InvalidSecondCallGeneratesNewState()
+        {
+            InitialStateHandler.StateHistory.Clear();
+            var simpleInjectorContainer = new Container();
+            simpleInjectorContainer.Register(typeof(IHandleMessages<InitialStateMessage>), typeof(InitialStateHandler));
+            var message = new InitialStateMessage();
+            var messageJson = Serializer.Serialize(message);
+
+            var messageDispatcher = new MessageDispatcher(simpleInjectorContainer, new Dictionary<Type, object>());
+            var parcel = new Parcel
+                             {
+                                 Envelopes =
+                                     new List<Envelope>(
+                                     new[]
+                                         {
+                                             new Envelope()
+                                                 {
+                                                     Channel = new Channel { Name = "fakeChannel" },
+                                                     MessageAsJson = messageJson,
+                                                     MessageType = message.GetType()
+                                                 }
+                                         })
+                             };
+
+            Assert.Empty(InitialStateHandler.StateHistory);
+            messageDispatcher.Dispatch("Parcel Name", parcel);
+            Assert.Equal(2, InitialStateHandler.StateHistory.Count);
+            Assert.Equal(
+                InitialStateHandler.StateHistory["GenerateInitialState"],
+                InitialStateHandler.StateHistory["SeedInitialState"]);
+
+            InitialStateHandler.StateHistory.Clear();
+            InitialStateHandler.ShouldValidate = false; // this will say that the state is NOT valid and should re-generate
+            messageDispatcher.Dispatch("Parcel Name", parcel);
+            Assert.Equal(3, InitialStateHandler.StateHistory.Count);
+            Assert.Equal(
+                InitialStateHandler.StateHistory["SeedInitialState"],
+                InitialStateHandler.StateHistory["GenerateInitialState"]);
+            Assert.NotEqual(
+                InitialStateHandler.StateHistory["ValidateInitialState"],
+                InitialStateHandler.StateHistory["GenerateInitialState"]);
+            Assert.NotEqual(
+                InitialStateHandler.StateHistory["ValidateInitialState"],
                 InitialStateHandler.StateHistory["SeedInitialState"]);
         }
 

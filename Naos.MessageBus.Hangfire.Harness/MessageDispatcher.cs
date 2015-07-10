@@ -68,22 +68,24 @@ namespace Naos.MessageBus.Hangfire.Harness
             var handler = this.simpleInjectorContainer.GetInstance(handlerType);
 
             object initialState = null;
-            if (handlerType.IsGenericType && handlerType.GetGenericTypeDefinition() == typeof(INeedInitialState<>))
+            var handlerActualType = handler.GetType();
+            var handlerInterfaces = handlerActualType.GetInterfaces();
+            if (handlerInterfaces.Any(_ => _.IsGenericType && _.GetGenericTypeDefinition() == typeof(INeedInitialState<>)))
             {
                 using (var activity = Log.Enter(() => new { HandlerType = handlerType, Handler = handler }))
                 {
-                    var alreadyHaveInitialState = this.handlerInitialStateMap.TryGetValue(handlerType, out initialState);
+                    var alreadyHaveInitialState = this.handlerInitialStateMap.TryGetValue(handlerActualType, out initialState);
                     if (alreadyHaveInitialState)
                     {
                         activity.Trace("Found pre-generated initial state.");
-                        var validateMethodInfo = handlerType.GetMethod("ValidateInitialState");
+                        var validateMethodInfo = handlerActualType.GetMethod("ValidateInitialState");
                         var validRaw = validateMethodInfo.Invoke(handler, new[] { initialState });
                         var valid = (bool)validRaw;
                         if (!valid)
                         {
                             activity.Trace("Initial state was found to be invalid, not using.");
                             initialState = null;
-                            this.handlerInitialStateMap.Remove(handlerType);
+                            this.handlerInitialStateMap.Remove(handlerActualType);
                         }
                         else
                         {
@@ -94,14 +96,14 @@ namespace Naos.MessageBus.Hangfire.Harness
                     // if not in cache or invalid then generate a new one
                     if (initialState == null)
                     {
-                        var getInitialStateMethod = handlerType.GetMethod("GenerateInitialState");
+                        var getInitialStateMethod = handlerActualType.GetMethod("GenerateInitialState");
                         initialState = getInitialStateMethod.Invoke(handler, new object[0]);
 
-                        this.handlerInitialStateMap.Add(handlerType, initialState);
+                        this.handlerInitialStateMap.Add(handlerActualType, initialState);
                     }
 
                     // seed the handler with 
-                    var seedMethodInfo = handlerType.GetMethod("SeedInitialState");
+                    var seedMethodInfo = handlerActualType.GetMethod("SeedInitialState");
                     seedMethodInfo.Invoke(handler, new[] { initialState });
                 }
             }
