@@ -49,10 +49,15 @@ namespace Naos.MessageBus.Hangfire.Harness
 
         private static void SetupLogProcessor(LogProcessorSettings logProcessorSettings)
         {
-            // Trace.Listeners.Add(new TextWriterTraceListener("Log_TextWriterOutput.log", "myListener")); 
+            Log.InternalErrors += (sender, args) =>
+                {
+                    EventLog.WriteEntry("Application", args.ToLogString());
+                };
+
+            // TODO: Trace.Listeners.Add(new TextWriterTraceListener("Log_TextWriterOutput.log", "myListener")); 
             Log.EntryPosted += (sender, args) =>
                 {
-                    var logEntry = args.LogEntry.Subject.ToString() + Environment.NewLine;
+                    var logEntry = args.ToLogString() + Environment.NewLine;
                     File.AppendAllText(logProcessorSettings.LogFilePath, logEntry);
                 };
         }
@@ -61,17 +66,17 @@ namespace Naos.MessageBus.Hangfire.Harness
         {
             AppDomain.CurrentDomain.AssemblyLoad += (o, args) =>
             {
-                Log.Write("Loaded: " + args.LoadedAssembly.FullName);
+                Log.Write(() => "Loaded: " + args.LoadedAssembly.FullName);
             };
 
             AppDomain.CurrentDomain.FirstChanceException += (o, args) =>
             {
-                Log.Write(args.Exception, "First chance exception encountered.");
+                Log.Write(() => args.Exception, "First chance exception encountered.");
             };
 
             AppDomain.CurrentDomain.UnhandledException += (o, args) =>
             {
-                Log.Write(args.ExceptionObject, "Unhandled exception encountered.");
+                Log.Write(() => args.ExceptionObject, "Unhandled exception encountered.");
             };
         }
     }
