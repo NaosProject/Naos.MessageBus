@@ -7,6 +7,7 @@
 namespace Naos.MessageBus.Test
 {
     using System;
+    using System.Collections.Concurrent;
     using System.Collections.Generic;
 
     using Naos.MessageBus.DataContract;
@@ -23,7 +24,7 @@ namespace Naos.MessageBus.Test
         [Fact]
         public static void Dispatch_NullParcel_Throws()
         {
-            Action testCode = () => new MessageDispatcher(new Container(), new Dictionary<Type, object>()).Dispatch("Name", null);
+            Action testCode = () => new MessageDispatcher(new Container(), new ConcurrentDictionary<Type, object>()).Dispatch("Name", null);
             var ex = Assert.Throws<DispatchException>(testCode);
             Assert.Equal("Parcel cannot be null", ex.Message);
         }
@@ -31,7 +32,7 @@ namespace Naos.MessageBus.Test
         [Fact]
         public static void Dispatch_NullEnvelopesInParcel_Throws()
         {
-            Action testCode = () => new MessageDispatcher(new Container(), new Dictionary<Type, object>()).Dispatch("Name", new Parcel());
+            Action testCode = () => new MessageDispatcher(new Container(), new ConcurrentDictionary<Type, object>()).Dispatch("Name", new Parcel());
             var ex = Assert.Throws<DispatchException>(testCode);
             Assert.Equal("Parcel must contain envelopes", ex.Message);
         }
@@ -40,7 +41,7 @@ namespace Naos.MessageBus.Test
         public static void Dispatch_NoEnvelopesInParcel_Throws()
         {
             Action testCode =
-                () => new MessageDispatcher(new Container(), new Dictionary<Type, object>()).Dispatch("Name", new Parcel { Envelopes = new List<Envelope>() });
+                () => new MessageDispatcher(new Container(), new ConcurrentDictionary<Type, object>()).Dispatch("Name", new Parcel { Envelopes = new List<Envelope>() });
             var ex = Assert.Throws<DispatchException>(testCode);
             Assert.Equal("Parcel must contain envelopes", ex.Message);
         }
@@ -48,13 +49,13 @@ namespace Naos.MessageBus.Test
         [Fact]
         public static void Dispatch_InitialStateRequirement_GetsGenerated()
         {
-            InitialStateHandler.StateHistory.Clear();
+            StateHandler.StateHistory.Clear();
             var simpleInjectorContainer = new Container();
-            simpleInjectorContainer.Register(typeof(IHandleMessages<InitialStateMessage>), typeof(InitialStateHandler));
+            simpleInjectorContainer.Register(typeof(IHandleMessages<InitialStateMessage>), typeof(StateHandler));
             var message = new InitialStateMessage();
             var messageJson = Serializer.Serialize(message);
 
-            var messageDispatcher = new MessageDispatcher(simpleInjectorContainer, new Dictionary<Type, object>());
+            var messageDispatcher = new MessageDispatcher(simpleInjectorContainer, new ConcurrentDictionary<Type, object>());
             var parcel = new Parcel
                              {
                                  Envelopes =
@@ -70,24 +71,24 @@ namespace Naos.MessageBus.Test
                                          })
                              };
 
-            Assert.Empty(InitialStateHandler.StateHistory);
+            Assert.Empty(StateHandler.StateHistory);
             messageDispatcher.Dispatch("Parcel Name", parcel);
-            Assert.Equal(2, InitialStateHandler.StateHistory.Count);
+            Assert.Equal(2, StateHandler.StateHistory.Count);
             Assert.Equal(
-                InitialStateHandler.StateHistory["GenerateInitialState"],
-                InitialStateHandler.StateHistory["SeedInitialState"]);
+                StateHandler.StateHistory["GenerateInitialState"],
+                StateHandler.StateHistory["SeedInitialState"]);
         }
 
         [Fact]
         public static void Dispatch_InitialStateRequirementRunTwice_SecondCallUsesPreviousState()
         {
-            InitialStateHandler.StateHistory.Clear();
+            StateHandler.StateHistory.Clear();
             var simpleInjectorContainer = new Container();
-            simpleInjectorContainer.Register(typeof(IHandleMessages<InitialStateMessage>), typeof(InitialStateHandler));
+            simpleInjectorContainer.Register(typeof(IHandleMessages<InitialStateMessage>), typeof(StateHandler));
             var message = new InitialStateMessage();
             var messageJson = Serializer.Serialize(message);
 
-            var messageDispatcher = new MessageDispatcher(simpleInjectorContainer, new Dictionary<Type, object>());
+            var messageDispatcher = new MessageDispatcher(simpleInjectorContainer, new ConcurrentDictionary<Type, object>());
             var parcel = new Parcel
                              {
                                  Envelopes =
@@ -103,33 +104,33 @@ namespace Naos.MessageBus.Test
                                          })
                              };
 
-            Assert.Empty(InitialStateHandler.StateHistory);
+            Assert.Empty(StateHandler.StateHistory);
             messageDispatcher.Dispatch("Parcel Name", parcel);
-            Assert.Equal(2, InitialStateHandler.StateHistory.Count);
+            Assert.Equal(2, StateHandler.StateHistory.Count);
             Assert.Equal(
-                InitialStateHandler.StateHistory["GenerateInitialState"],
-                InitialStateHandler.StateHistory["SeedInitialState"]);
+                StateHandler.StateHistory["GenerateInitialState"],
+                StateHandler.StateHistory["SeedInitialState"]);
 
-            InitialStateHandler.StateHistory.Clear();
-            InitialStateHandler.ShouldValidate = true; // this will say that the state is valid and should NOT re-generate
+            StateHandler.StateHistory.Clear();
+            StateHandler.ShouldValidate = true; // this will say that the state is valid and should NOT re-generate
             messageDispatcher.Dispatch("Parcel Name", parcel);
-            Assert.Equal(2, InitialStateHandler.StateHistory.Count);
+            Assert.Equal(2, StateHandler.StateHistory.Count);
             Assert.Equal(
-                InitialStateHandler.StateHistory["ValidateInitialState"],
-                InitialStateHandler.StateHistory["SeedInitialState"]);
-            Assert.False(InitialStateHandler.StateHistory.ContainsKey("GenerateInitialState"));
+                StateHandler.StateHistory["ValidateInitialState"],
+                StateHandler.StateHistory["SeedInitialState"]);
+            Assert.False(StateHandler.StateHistory.ContainsKey("GenerateInitialState"));
         }
 
         [Fact]
         public static void Dispatch_InitialStateRequirementRunTwice_InvalidSecondCallGeneratesNewState()
         {
-            InitialStateHandler.StateHistory.Clear();
+            StateHandler.StateHistory.Clear();
             var simpleInjectorContainer = new Container();
-            simpleInjectorContainer.Register(typeof(IHandleMessages<InitialStateMessage>), typeof(InitialStateHandler));
+            simpleInjectorContainer.Register(typeof(IHandleMessages<InitialStateMessage>), typeof(StateHandler));
             var message = new InitialStateMessage();
             var messageJson = Serializer.Serialize(message);
 
-            var messageDispatcher = new MessageDispatcher(simpleInjectorContainer, new Dictionary<Type, object>());
+            var messageDispatcher = new MessageDispatcher(simpleInjectorContainer, new ConcurrentDictionary<Type, object>());
             var parcel = new Parcel
                              {
                                  Envelopes =
@@ -145,31 +146,31 @@ namespace Naos.MessageBus.Test
                                          })
                              };
 
-            Assert.Empty(InitialStateHandler.StateHistory);
+            Assert.Empty(StateHandler.StateHistory);
             messageDispatcher.Dispatch("Parcel Name", parcel);
-            Assert.Equal(2, InitialStateHandler.StateHistory.Count);
+            Assert.Equal(2, StateHandler.StateHistory.Count);
             Assert.Equal(
-                InitialStateHandler.StateHistory["GenerateInitialState"],
-                InitialStateHandler.StateHistory["SeedInitialState"]);
+                StateHandler.StateHistory["GenerateInitialState"],
+                StateHandler.StateHistory["SeedInitialState"]);
 
-            InitialStateHandler.StateHistory.Clear();
-            InitialStateHandler.ShouldValidate = false; // this will say that the state is NOT valid and should re-generate
+            StateHandler.StateHistory.Clear();
+            StateHandler.ShouldValidate = false; // this will say that the state is NOT valid and should re-generate
             messageDispatcher.Dispatch("Parcel Name", parcel);
-            Assert.Equal(3, InitialStateHandler.StateHistory.Count);
+            Assert.Equal(3, StateHandler.StateHistory.Count);
             Assert.Equal(
-                InitialStateHandler.StateHistory["SeedInitialState"],
-                InitialStateHandler.StateHistory["GenerateInitialState"]);
+                StateHandler.StateHistory["SeedInitialState"],
+                StateHandler.StateHistory["GenerateInitialState"]);
             Assert.NotEqual(
-                InitialStateHandler.StateHistory["ValidateInitialState"],
-                InitialStateHandler.StateHistory["GenerateInitialState"]);
+                StateHandler.StateHistory["ValidateInitialState"],
+                StateHandler.StateHistory["GenerateInitialState"]);
             Assert.NotEqual(
-                InitialStateHandler.StateHistory["ValidateInitialState"],
-                InitialStateHandler.StateHistory["SeedInitialState"]);
+                StateHandler.StateHistory["ValidateInitialState"],
+                StateHandler.StateHistory["SeedInitialState"]);
         }
 
-        public class InitialStateHandler : IHandleMessages<InitialStateMessage>, INeedInitialState<string>
+        public class StateHandler : IHandleMessages<InitialStateMessage>, INeedState<string>
         {
-            static InitialStateHandler()
+            static StateHandler()
             {
                 StateHistory = new Dictionary<string, string>();
             }
@@ -183,19 +184,19 @@ namespace Naos.MessageBus.Test
                 /* no-op */
             }
 
-            public string GenerateInitialState()
+            public string CreateState()
             {
                 var state = Guid.NewGuid().ToString().ToUpper();
                 StateHistory.Add("GenerateInitialState", state);
                 return state;
             }
 
-            public void SeedInitialState(string initialState)
+            public void PreHandle(string initialState)
             {
                 StateHistory.Add("SeedInitialState", initialState);
             }
 
-            public bool ValidateInitialState(string initialState)
+            public bool ValidateState(string initialState)
             {
                 StateHistory.Add("ValidateInitialState", initialState);
                 return ShouldValidate;

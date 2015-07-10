@@ -9,6 +9,7 @@
 namespace Naos.MessageBus.Hangfire.Harness
 {
     using System;
+    using System.Collections.Concurrent;
     using System.Collections.Generic;
     using System.IO;
     using System.Linq;
@@ -35,7 +36,7 @@ namespace Naos.MessageBus.Hangfire.Harness
         public static readonly HangfireBootstrapper Instance = new HangfireBootstrapper();
 
         // this is declared here to persist, it's filled exclusively in the MessageDispatcher...
-        private readonly Dictionary<Type, object> initialStateMap = new Dictionary<Type, object>();
+        private readonly ConcurrentDictionary<Type, object> initialStateMap = new ConcurrentDictionary<Type, object>();
 
         private readonly Container simpleInjectorContainer = new Container();
 
