@@ -72,19 +72,19 @@ namespace Naos.MessageBus.Hangfire.Harness
                 using (var activity = Log.Enter(() => new { HandlerType = handlerActualType, Handler = handler }))
                 {
                     activity.Trace(() => "Detected need for state management.");
+                    var stateNeedsCreation = true; // this will only get set to false if there is existing state AND it is valid
 
-                    object initialState;
-                    var haveStateToValidateAndUse = this.handlerInitialStateMap.TryGetValue(handlerActualType, out initialState);
+                    object state;
+                    var haveStateToValidateAndUse = this.handlerInitialStateMap.TryGetValue(handlerActualType, out state);
                     if (haveStateToValidateAndUse)
                     {
                         activity.Trace(() => "Found pre-generated initial state.");
                         var validateMethodInfo = handlerActualType.GetMethod("ValidateState");
-                        var validRaw = validateMethodInfo.Invoke(handler, new[] { initialState });
+                        var validRaw = validateMethodInfo.Invoke(handler, new[] { state });
                         var valid = (bool)validRaw;
                         if (!valid)
                         {
                             activity.Trace(() => "State was found to be invalid, not using.");
-                            initialState = null;
                             object unusedOutput;
                             var removedThisTime = this.handlerInitialStateMap.TryRemove(handlerActualType, out unusedOutput);
                             if (removedThisTime)
@@ -99,21 +99,31 @@ namespace Naos.MessageBus.Hangfire.Harness
                         else
                         {
                             activity.Trace(() => "Initial state was found to be valid.");
+                            stateNeedsCreation = false;
                         }
                     }
 
-                    if (initialState == null)
+                    // this is the performance gain in case state creation is expensive...
+                    if (stateNeedsCreation)
                     {
-                        activity.Trace(() => "No pre-existing state, creating new state for this use and future uses.");
+                        activity.Trace(() => "No pre-existing state or it is invalid, creating new state for this use and future uses.");
                         var getInitialStateMethod = handlerActualType.GetMethod("CreateState");
-                        initialState = getInitialStateMethod.Invoke(handler, new object[0]);
+                        state = getInitialStateMethod.Invoke(handler, new object[0]);
 
-                        this.handlerInitialStateMap.TryAdd(handlerActualType, initialState);
+                        activity.Trace(() => "Adding state to tracking map for future use.");
+                        this.handlerInitialStateMap.AddOrUpdate(
+                            handlerActualType,
+                            state,
+                            (key, existingStateInDictionary) =>
+                                {
+                                    activity.Trace(() => "State already exists in map, updating with new state.");
+                                    return state;
+                                });
                     }
 
                     activity.Trace(() => "Applying state to handler.");
                     var seedMethodInfo = handlerActualType.GetMethod("PreHandle");
-                    seedMethodInfo.Invoke(handler, new[] { initialState });
+                    seedMethodInfo.Invoke(handler, new[] { state });
 
                     activity.Confirm(() => "Finished state management work.");
                 }
