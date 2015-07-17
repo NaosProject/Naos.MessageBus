@@ -36,7 +36,7 @@ namespace Naos.MessageBus.Hangfire.Harness
         public static readonly HangfireBootstrapper Instance = new HangfireBootstrapper();
 
         // this is declared here to persist, it's filled exclusively in the MessageDispatcher...
-        private readonly ConcurrentDictionary<Type, object> initialStateMap = new ConcurrentDictionary<Type, object>();
+        private readonly ConcurrentDictionary<Type, object> sharedStateMap = new ConcurrentDictionary<Type, object>();
 
         private readonly Container simpleInjectorContainer = new Container();
 
@@ -135,8 +135,9 @@ namespace Naos.MessageBus.Hangfire.Harness
                 }
 
                 // register the dispatcher so that hangfire can use it when a message is getting processed
+                // if we weren't in hangfire we'd just persist the dispatcher and keep these two fields inside of it...
                 this.simpleInjectorContainer.Register<IDispatchMessages>(
-                    () => new MessageDispatcher(this.simpleInjectorContainer, this.initialStateMap));
+                    () => new MessageDispatcher(this.simpleInjectorContainer, this.sharedStateMap));
 
                 // configure hangfire to use this DI container
                 GlobalConfiguration.Configuration.UseActivator(

@@ -44,7 +44,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="INeedState.cs" />
+    <Compile Include="INeedSharedState.cs" />
     <Compile Include="LogProcessorSettings.cs" />
     <Compile Include="MessageBusHarnessSettings.cs" />
     <Compile Include="IDispatchMessages.cs" />
