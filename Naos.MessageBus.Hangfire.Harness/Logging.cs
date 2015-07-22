@@ -54,11 +54,15 @@ namespace Naos.MessageBus.Hangfire.Harness
                     EventLog.WriteEntry("Application", args.ToLogString());
                 };
 
-            // TODO: Trace.Listeners.Add(new TextWriterTraceListener("Log_TextWriterOutput.log", "myListener")); 
+            // TODO: Trace.Listeners.Add(new TextWriterTraceListener("Log_TextWriterOutput.log", "myListener"));
+            var fileLock = new object();
             Log.EntryPosted += (sender, args) =>
                 {
-                    var logEntry = args.ToLogString() + Environment.NewLine;
-                    File.AppendAllText(logProcessorSettings.LogFilePath, logEntry);
+                    var logEntry = (args.LogEntry ?? new LogEntry("Null LogEntry Supplied to EntryPosted")).ToLogString() + Environment.NewLine;
+                    lock (fileLock)
+                    {
+                        File.AppendAllText(logProcessorSettings.LogFilePath, logEntry);
+                    }
                 };
         }
 

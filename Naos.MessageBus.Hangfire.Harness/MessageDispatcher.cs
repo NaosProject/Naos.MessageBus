@@ -24,17 +24,17 @@ namespace Naos.MessageBus.Hangfire.Harness
     {
         private readonly Container simpleInjectorContainer;
 
-        private readonly ConcurrentDictionary<Type, object> handlerInitialStateMap;
+        private readonly ConcurrentDictionary<Type, object> handlerSharedStateMap;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="MessageDispatcher"/> class.
         /// </summary>
         /// <param name="simpleInjectorContainer">DI container to use for looking up handlers.</param>
-        /// <param name="handlerInitialStateMap">Initial state dictionary for handlers the require state to be seeded.</param>
-        public MessageDispatcher(Container simpleInjectorContainer, ConcurrentDictionary<Type, object> handlerInitialStateMap)
+        /// <param name="handlerSharedStateMap">Initial state dictionary for handlers the require state to be seeded.</param>
+        public MessageDispatcher(Container simpleInjectorContainer, ConcurrentDictionary<Type, object> handlerSharedStateMap)
         {
             this.simpleInjectorContainer = simpleInjectorContainer;
-            this.handlerInitialStateMap = handlerInitialStateMap;
+            this.handlerSharedStateMap = handlerSharedStateMap;
         }
 
         /// <inheritdoc />
@@ -67,7 +67,7 @@ namespace Naos.MessageBus.Hangfire.Harness
 
             var handlerActualType = handler.GetType();
             var handlerInterfaces = handlerActualType.GetInterfaces();
-            if (handlerInterfaces.Any(_ => _.IsGenericType && _.GetGenericTypeDefinition() == typeof(INeedState<>)))
+            if (handlerInterfaces.Any(_ => _.IsGenericType && _.GetGenericTypeDefinition() == typeof(INeedSharedState<>)))
             {
                 using (var activity = Log.Enter(() => new { HandlerType = handlerActualType, Handler = handler }))
                 {
@@ -75,25 +75,26 @@ namespace Naos.MessageBus.Hangfire.Harness
                     var stateNeedsCreation = true; // this will only get set to false if there is existing state AND it is valid
 
                     object state;
-                    var haveStateToValidateAndUse = this.handlerInitialStateMap.TryGetValue(handlerActualType, out state);
+                    var haveStateToValidateAndUse = this.handlerSharedStateMap.TryGetValue(handlerActualType, out state);
                     if (haveStateToValidateAndUse)
                     {
                         activity.Trace(() => "Found pre-generated initial state.");
-                        var validateMethodInfo = handlerActualType.GetMethod("ValidateState");
+                        var validateMethodInfo = handlerActualType.GetMethod("IsStateStillValid");
                         var validRaw = validateMethodInfo.Invoke(handler, new[] { state });
                         var valid = (bool)validRaw;
                         if (!valid)
                         {
                             activity.Trace(() => "State was found to be invalid, not using.");
-                            object unusedOutput;
-                            var removedThisTime = this.handlerInitialStateMap.TryRemove(handlerActualType, out unusedOutput);
+                            object removalOutput;
+                            var removedThisTime = this.handlerSharedStateMap.TryRemove(handlerActualType, out removalOutput);
                             if (removedThisTime)
                             {
-                                activity.Trace(() => "Invalidated state but was already removed from dictionary.");
+                                // this is where you would dispose if it were disposable DO NOT DO THIS!!! this object could be in live handlers that are not finished yet...
+                                activity.Trace(() => "Invalidated state and removed from dictionary.");
                             }
                             else
                             {
-                                activity.Trace(() => "Invalidated state and removed from dictionary.");
+                                activity.Trace(() => "Invalidated state but was already removed from dictionary.");
                             }
                         }
                         else
@@ -111,7 +112,7 @@ namespace Naos.MessageBus.Hangfire.Harness
                         state = getInitialStateMethod.Invoke(handler, new object[0]);
 
                         activity.Trace(() => "Adding state to tracking map for future use.");
-                        this.handlerInitialStateMap.AddOrUpdate(
+                        this.handlerSharedStateMap.AddOrUpdate(
                             handlerActualType,
                             state,
                             (key, existingStateInDictionary) =>
@@ -122,7 +123,7 @@ namespace Naos.MessageBus.Hangfire.Harness
                     }
 
                     activity.Trace(() => "Applying state to handler.");
-                    var seedMethodInfo = handlerActualType.GetMethod("PreHandle");
+                    var seedMethodInfo = handlerActualType.GetMethod("PreHandleWithState");
                     seedMethodInfo.Invoke(handler, new[] { state });
 
                     activity.Confirm(() => "Finished state management work.");

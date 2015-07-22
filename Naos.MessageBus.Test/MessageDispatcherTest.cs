@@ -168,7 +168,7 @@ namespace Naos.MessageBus.Test
                 StateHandler.StateHistory["SeedInitialState"]);
         }
 
-        public class StateHandler : IHandleMessages<InitialStateMessage>, INeedState<string>
+        public class StateHandler : IHandleMessages<InitialStateMessage>, INeedSharedState<string>
         {
             static StateHandler()
             {
@@ -191,14 +191,14 @@ namespace Naos.MessageBus.Test
                 return state;
             }
 
-            public void PreHandle(string initialState)
+            public void PreHandleWithState(string sharedState)
             {
-                StateHistory.Add("SeedInitialState", initialState);
+                StateHistory.Add("SeedInitialState", sharedState);
             }
 
-            public bool ValidateState(string initialState)
+            public bool IsStateStillValid(string sharedState)
             {
-                StateHistory.Add("ValidateInitialState", initialState);
+                StateHistory.Add("ValidateInitialState", sharedState);
                 return ShouldValidate;
             }
         }

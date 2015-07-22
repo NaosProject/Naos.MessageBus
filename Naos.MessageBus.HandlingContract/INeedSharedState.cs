@@ -1,5 +1,5 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="INeedState.cs" company="Naos">
+// <copyright file="INeedSharedState.cs" company="Naos">
 //   Copyright 2015 Naos
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
@@ -10,7 +10,7 @@ namespace Naos.MessageBus.HandlingContract
     /// Interface for handlers that require an initial state to be created then shared to subsequent handler uses.
     /// </summary>
     /// <typeparam name="T">Type of the state object that is generated and seeded.</typeparam>
-    public interface INeedState<T>
+    public interface INeedSharedState<T>
     {
         /// <summary>
         /// Gets the initial state to be used for subsequent runs.
@@ -21,14 +21,14 @@ namespace Naos.MessageBus.HandlingContract
         /// <summary>
         /// Validate the initial state generated is still valid (called every message handled).
         /// </summary>
-        /// <param name="initialState">Initial state to validate.</param>
+        /// <param name="sharedState">Initial state to validate.</param>
         /// <returns>Whether or not the state provided is still valid (if not then new one is generated).</returns>
-        bool ValidateState(T initialState);
+        bool IsStateStillValid(T sharedState);
 
         /// <summary>
         /// Seeds the initial state that is created during handler registration.
         /// </summary>
-        /// <param name="initialState">Initial state that is created during handler registration.</param>
-        void PreHandle(T initialState);
+        /// <param name="sharedState">Initial state that is created during handler registration.</param>
+        void PreHandleWithState(T sharedState);
     }
 }
