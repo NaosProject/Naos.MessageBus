@@ -4,5 +4,8 @@
         {
             "ServerName": "MyHangfireServer"
         }
-    ]
+    ],
+    "LogProcessorSettings": { 
+        "LogFilePath": "D:\\Logs\\LogFile.txt"
+    }
 }

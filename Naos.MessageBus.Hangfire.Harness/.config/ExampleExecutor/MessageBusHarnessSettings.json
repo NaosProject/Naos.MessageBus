@@ -7,5 +7,9 @@
             "HandlerAssemblyPath": "D:\\DllsPath\\",
             "PollingTimeSpan": "00:01:00"
         }
-    ]
+    ],
+    "LogProcessorSettings": { 
+        "LogFilePath": "D:\\Logs\\LogFile.txt"
+    }
+
 }

@@ -70,12 +70,12 @@ namespace Naos.MessageBus.Hangfire.Harness
         {
             AppDomain.CurrentDomain.AssemblyLoad += (o, args) =>
             {
-                Log.Write(() => "Loaded: " + args.LoadedAssembly.FullName);
+                // Log.Write(() => "Loaded: " + args.LoadedAssembly.FullName);
             };
 
             AppDomain.CurrentDomain.FirstChanceException += (o, args) =>
             {
-                Log.Write(() => args.Exception, "First chance exception encountered.");
+                // Log.Write(() => args.Exception, "First chance exception encountered.");
             };
 
             AppDomain.CurrentDomain.UnhandledException += (o, args) =>
