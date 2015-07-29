@@ -71,103 +71,138 @@ namespace Naos.MessageBus.Hangfire.Harness
             {
                 using (var activity = Log.Enter(() => new { HandlerType = handlerActualType, Handler = handler }))
                 {
-                    activity.Trace(() => "Detected need for state management.");
-                    var stateNeedsCreation = true; // this will only get set to false if there is existing state AND it is valid
-
-                    object state;
-                    var haveStateToValidateAndUse = this.handlerSharedStateMap.TryGetValue(handlerActualType, out state);
-                    if (haveStateToValidateAndUse)
+                    try
                     {
-                        activity.Trace(() => "Found pre-generated initial state.");
-                        var validateMethodInfo = handlerActualType.GetMethod("IsStateStillValid");
-                        var validRaw = validateMethodInfo.Invoke(handler, new[] { state });
-                        var valid = (bool)validRaw;
-                        if (!valid)
+                        activity.Trace(() => "Detected need for state management.");
+
+                        // this will only get set to false if there is existing state AND it is valid
+                        var stateNeedsCreation = true;
+
+                        object state;
+                        var haveStateToValidateAndUse = this.handlerSharedStateMap.TryGetValue(
+                            handlerActualType,
+                            out state);
+                        if (haveStateToValidateAndUse)
                         {
-                            activity.Trace(() => "State was found to be invalid, not using.");
-                            object removalOutput;
-                            var removedThisTime = this.handlerSharedStateMap.TryRemove(handlerActualType, out removalOutput);
-                            if (removedThisTime)
+                            activity.Trace(() => "Found pre-generated initial state.");
+                            var validateMethodInfo = handlerActualType.GetMethod("IsStateStillValid");
+                            var validRaw = validateMethodInfo.Invoke(handler, new[] { state });
+                            var valid = (bool)validRaw;
+                            if (!valid)
                             {
-                                // this is where you would dispose if it were disposable DO NOT DO THIS!!! this object could be in live handlers that are not finished yet...
-                                activity.Trace(() => "Invalidated state and removed from dictionary.");
+                                activity.Trace(() => "State was found to be invalid, not using.");
+                                object removalOutput;
+                                var removedThisTime = this.handlerSharedStateMap.TryRemove(
+                                    handlerActualType,
+                                    out removalOutput);
+                                if (removedThisTime)
+                                {
+                                    // this is where you would dispose if it were disposable DO NOT DO THIS!!! this object could be in live handlers that are not finished yet...
+                                    activity.Trace(() => "Invalidated state and removed from dictionary.");
+                                }
+                                else
+                                {
+                                    activity.Trace(() => "Invalidated state but was already removed from dictionary.");
+                                }
                             }
                             else
                             {
-                                activity.Trace(() => "Invalidated state but was already removed from dictionary.");
+                                activity.Trace(() => "Initial state was found to be valid.");
+                                stateNeedsCreation = false;
                             }
                         }
-                        else
+
+                        // this is the performance gain in case state creation is expensive...
+                        if (stateNeedsCreation)
                         {
-                            activity.Trace(() => "Initial state was found to be valid.");
-                            stateNeedsCreation = false;
+                            activity.Trace(
+                                () =>
+                                "No pre-existing state or it is invalid, creating new state for this use and future uses.");
+                            var getInitialStateMethod = handlerActualType.GetMethod("CreateState");
+                            state = getInitialStateMethod.Invoke(handler, new object[0]);
+
+                            activity.Trace(() => "Adding state to tracking map for future use.");
+                            this.handlerSharedStateMap.AddOrUpdate(
+                                handlerActualType,
+                                state,
+                                (key, existingStateInDictionary) =>
+                                    {
+                                        activity.Trace(() => "State already exists in map, updating with new state.");
+                                        return state;
+                                    });
                         }
-                    }
 
-                    // this is the performance gain in case state creation is expensive...
-                    if (stateNeedsCreation)
+                        activity.Trace(() => "Applying state to handler.");
+                        var seedMethodInfo = handlerActualType.GetMethod("PreHandleWithState");
+                        seedMethodInfo.Invoke(handler, new[] { state });
+
+                        activity.Confirm(() => "Finished state management work.");
+                    }
+                    catch (Exception ex)
                     {
-                        activity.Trace(() => "No pre-existing state or it is invalid, creating new state for this use and future uses.");
-                        var getInitialStateMethod = handlerActualType.GetMethod("CreateState");
-                        state = getInitialStateMethod.Invoke(handler, new object[0]);
-
-                        activity.Trace(() => "Adding state to tracking map for future use.");
-                        this.handlerSharedStateMap.AddOrUpdate(
-                            handlerActualType,
-                            state,
-                            (key, existingStateInDictionary) =>
-                                {
-                                    activity.Trace(() => "State already exists in map, updating with new state.");
-                                    return state;
-                                });
+                        activity.Trace(() => ex);
+                        throw;
                     }
-
-                    activity.Trace(() => "Applying state to handler.");
-                    var seedMethodInfo = handlerActualType.GetMethod("PreHandleWithState");
-                    seedMethodInfo.Invoke(handler, new[] { state });
-
-                    activity.Confirm(() => "Finished state management work.");
                 }
             }
 
             using (var activity = Log.Enter(() => new { Message = firstMessage, Handler = handler }))
             {
-                activity.Trace(() => "Handling message (calling Handle on selected Handler).");
-                var methodInfo = handlerType.GetMethod("Handle");
-                methodInfo.Invoke(handler, new object[] { firstMessage });
-                activity.Confirm(() => "Successfully handled message.");
+                try
+                {
+                    activity.Trace(() => "Handling message (calling Handle on selected Handler).");
+                    var methodInfo = handlerType.GetMethod("Handle");
+                    methodInfo.Invoke(handler, new object[] { firstMessage });
+                    activity.Confirm(() => "Successfully handled message.");
+                }
+                catch (Exception ex)
+                {
+                    activity.Trace(() => ex);
+                    throw;
+                }
             }
 
             if (remainingChanneledMessages.Any())
             {
                 using (var activity = Log.Enter(() => new { RemainingMessage = remainingChanneledMessages }))
                 {
-                    activity.Trace(() => "Found remaining messages in sequence.");
-
-                    var handlerAsShare = handler as IShare;
-                    foreach (var channeledMessageToShareTo in remainingChanneledMessages)
+                    try
                     {
-                        var messageToShareTo = channeledMessageToShareTo.Message as IShare;
-                        if (handlerAsShare != null && messageToShareTo != null)
+                        activity.Trace(() => "Found remaining messages in sequence.");
+
+                        var handlerAsShare = handler as IShare;
+                        foreach (var channeledMessageToShareTo in remainingChanneledMessages)
                         {
-                            activity.Trace(() => "Discovered need to share, sharing applicable properties to remaining messages in sequence.");
+                            var messageToShareTo = channeledMessageToShareTo.Message as IShare;
+                            if (handlerAsShare != null && messageToShareTo != null)
+                            {
+                                activity.Trace(
+                                    () =>
+                                    "Discovered need to share, sharing applicable properties to remaining messages in sequence.");
 
-                            // CHANGES STATE: this will pass IShare properties from the handler to all messages in the sequence before re-sending the trimmed sequence
-                            SharedPropertyApplicator.ApplySharedProperties(handlerAsShare, messageToShareTo);
+                                // CHANGES STATE: this will pass IShare properties from the handler to all messages in the sequence before re-sending the trimmed sequence
+                                SharedPropertyApplicator.ApplySharedProperties(handlerAsShare, messageToShareTo);
+                            }
                         }
+
+                        activity.Trace(() => "Sending remaining messages in sequence.");
+                        var sender = this.simpleInjectorContainer.GetInstance<ISendMessages>();
+                        var remainingMessageSequence = new MessageSequence
+                                                           {
+                                                               Id = parcel.Id, // persist the batch ID for collation
+                                                               ChanneledMessages =
+                                                                   remainingChanneledMessages
+                                                           };
+
+                        sender.Send(remainingMessageSequence);
+
+                        activity.Confirm(() => "Finished sending remaining messages in sequence.");
                     }
-
-                    activity.Trace(() => "Sending remaining messages in sequence.");
-                    var sender = this.simpleInjectorContainer.GetInstance<ISendMessages>();
-                    var remainingMessageSequence = new MessageSequence
-                                                       {
-                                                           Id = parcel.Id, // persist the batch ID for collation
-                                                           ChanneledMessages = remainingChanneledMessages
-                                                       };
-
-                    sender.Send(remainingMessageSequence);
-
-                    activity.Confirm(() => "Finished sending remaining messages in sequence.");
+                    catch (Exception ex)
+                    {
+                        activity.Trace(() => ex);
+                        throw;
+                    }
                 }
             }
         }

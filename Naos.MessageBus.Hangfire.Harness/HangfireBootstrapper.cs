@@ -139,6 +139,17 @@ namespace Naos.MessageBus.Hangfire.Harness
                 this.simpleInjectorContainer.Register<IDispatchMessages>(
                     () => new MessageDispatcher(this.simpleInjectorContainer, this.sharedStateMap));
 
+                foreach (var registration in this.simpleInjectorContainer.GetCurrentRegistrations())
+                {
+                    var localScopeRegistration = registration;
+                    Log.Write(
+                        () =>
+                        string.Format(
+                            "Registered Type in SimpleInjector: {0} -> {1}",
+                            localScopeRegistration.ServiceType,
+                            localScopeRegistration.Registration.ImplementationType));
+                }
+
                 // configure hangfire to use this DI container
                 GlobalConfiguration.Configuration.UseActivator(
                     new SimpleInjectorJobActivator(this.simpleInjectorContainer));
