@@ -7,6 +7,7 @@
 namespace Naos.MessageBus.Hangfire.Harness
 {
     using System;
+    using System.Linq;
 
     using global::Hangfire;
 

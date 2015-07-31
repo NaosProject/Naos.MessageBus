@@ -63,9 +63,25 @@ namespace Naos.MessageBus.Hangfire.Harness
             var remainingChanneledMessages = channeledMessages.Skip(1).ToList();
             var messageType = firstMessage.GetType();
             var handlerType = typeof(IHandleMessages<>).MakeGenericType(messageType);
-            var handler = this.simpleInjectorContainer.GetInstance(handlerType);
+
+            Log.Write(() => "Attempting to get handler for type: " + handlerType.FullName);
+            object handler;
+            var matchingRegistration =
+                this.simpleInjectorContainer.GetCurrentRegistrations()
+                    .SingleOrDefault(_ => _.ServiceType.FullName == handlerType.FullName);
+            if (matchingRegistration != null)
+            {
+                // DON'T use "handler = matchingRegistration.GetInstance();" as it will suppress the Fusion Log error when there is a contract version mismatch...
+                handler = Activator.CreateInstance(matchingRegistration.Registration.ImplementationType);
+            }
+            else
+            {
+                throw new ApplicationException("Could not find type in container: " + handlerType.FullName);
+            }
 
             var handlerActualType = handler.GetType();
+            Log.Write(() => "Loaded handler: " + handlerActualType.FullName);
+
             var handlerInterfaces = handlerActualType.GetInterfaces();
             if (handlerInterfaces.Any(_ => _.IsGenericType && _.GetGenericTypeDefinition() == typeof(INeedSharedState<>)))
             {

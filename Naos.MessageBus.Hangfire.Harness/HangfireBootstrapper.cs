@@ -146,8 +146,8 @@ namespace Naos.MessageBus.Hangfire.Harness
                         () =>
                         string.Format(
                             "Registered Type in SimpleInjector: {0} -> {1}",
-                            localScopeRegistration.ServiceType,
-                            localScopeRegistration.Registration.ImplementationType));
+                            localScopeRegistration.ServiceType.FullName,
+                            localScopeRegistration.Registration.ImplementationType.FullName));
                 }
 
                 // configure hangfire to use this DI container
