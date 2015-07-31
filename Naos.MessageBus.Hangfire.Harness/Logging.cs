@@ -51,7 +51,8 @@ namespace Naos.MessageBus.Hangfire.Harness
         {
             Log.InternalErrors += (sender, args) =>
                 {
-                    EventLog.WriteEntry("Application", args.ToLogString());
+                    var eventLog = new EventLog("Application");
+                    eventLog.WriteEntry(args.ToLogString());
                 };
 
             // TODO: Trace.Listeners.Add(new TextWriterTraceListener("Log_TextWriterOutput.log", "myListener"));

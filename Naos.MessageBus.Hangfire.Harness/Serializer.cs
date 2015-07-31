@@ -10,11 +10,14 @@ namespace Naos.MessageBus.Hangfire.Harness
     using System.Collections.Generic;
     using System.Linq;
     using System.Runtime.Serialization;
+    using System.Security.Cryptography;
 
     using Newtonsoft.Json;
     using Newtonsoft.Json.Converters;
     using Newtonsoft.Json.Linq;
     using Newtonsoft.Json.Serialization;
+
+    using Spritely.Recipes;
 
     /// <summary>
     /// Specific serialization settings encapsulated for needs when using objects from this project..
@@ -97,6 +100,7 @@ namespace Naos.MessageBus.Hangfire.Harness
                                                       true
                                               },
                                           new KnownTypeConverter(),
+                                          new SecureStringJsonConverter(),
                                       }
             };
 

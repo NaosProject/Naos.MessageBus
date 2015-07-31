@@ -8,31 +8,39 @@
 
 namespace Naos.MessageBus.Hangfire.Harness
 {
+    using System;
     using System.Linq;
     using System.Web.Hosting;
 
     using Its.Configuration;
+    using Its.Log.Instrumentation;
 
     using Naos.MessageBus.HandlingContract;
 
     /// <inheritdoc />
     public class ApplicationPreload : IProcessHostPreloadClient
     {
+        private static readonly object PreloadSync = new object();
+
         /// <inheritdoc />
         public void Preload(string[] parameters)
         {
-            Settings.Deserialize = Serializer.Deserialize;
-            var messageBusHandlerSettings = Settings.Get<MessageBusHarnessSettings>();
-            Logging.Setup(messageBusHandlerSettings);
-
-            var executorRoleSettings =
-                messageBusHandlerSettings.RoleSettings.OfType<MessageBusHarnessRoleSettingsExecutor>().SingleOrDefault();
-
-            if (executorRoleSettings != null)
+            lock (PreloadSync)
             {
-                HangfireBootstrapper.Instance.Start(
-                    messageBusHandlerSettings.PersistenceConnectionString,
-                    executorRoleSettings);
+                Settings.Deserialize = Serializer.Deserialize;
+                var messageBusHandlerSettings = Settings.Get<MessageBusHarnessSettings>();
+                Logging.Setup(messageBusHandlerSettings);
+
+                var executorRoleSettings =
+                    messageBusHandlerSettings.RoleSettings.OfType<MessageBusHarnessRoleSettingsExecutor>()
+                        .SingleOrDefault();
+
+                if (executorRoleSettings != null)
+                {
+                    HangfireBootstrapper.Instance.Start(
+                        messageBusHandlerSettings.PersistenceConnectionString,
+                        executorRoleSettings);
+                }
             }
         }
     }
