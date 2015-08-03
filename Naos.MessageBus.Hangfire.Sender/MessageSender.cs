@@ -77,13 +77,6 @@ namespace Naos.MessageBus.Hangfire.Sender
         /// <inheritdoc />
         public TrackingCode SendRecurring(MessageSequence messageSequence, Schedules recurringSchedule)
         {
-            var isRecurring = recurringSchedule != Schedules.None;
-            var nullMessage = new NullMessage
-            {
-                Description =
-                    "Injected NullMessage, required for recurrence to work."
-            };
-
             var envelopesFromSequence =
                 messageSequence.ChanneledMessages.Select(
                     channeledMessage =>
@@ -97,22 +90,9 @@ namespace Naos.MessageBus.Hangfire.Sender
             // if this is recurring we must inject a null message that will be handled on the default queue and immediately moved to the next one 
             //             that will be put in the correct queue...
             var envelopes = new List<Envelope>();
-            if (isRecurring)
-            {
-                envelopes.Add(
-                    new Envelope
-                        {
-                            Channel = new Channel { Name = "default" },
-                            MessageType = typeof(NullMessage),
-                            MessageAsJson = Serializer.Serialize(nullMessage)
-                        });
-            }
-
             envelopes.AddRange(envelopesFromSequence);
 
-            var messageName = isRecurring
-                                 ? messageSequence.ChanneledMessages.Skip(1).First().Message.Description // first message is a null message...
-                                 : messageSequence.ChanneledMessages.First().Message.Description;
+            var messageName = messageSequence.ChanneledMessages.First().Message.Description;
 
             var displayName = "Sequence " + messageSequence.Id + " - " + messageName;
 
@@ -131,7 +111,7 @@ namespace Naos.MessageBus.Hangfire.Sender
                     methodCall,
                     state);
 
-            if (isRecurring)
+            if (recurringSchedule != Schedules.None)
             {
                 var cronExpression = GetCronExpressionFromSchedule(recurringSchedule);
                 RecurringJob.AddOrUpdate(id, methodCall, cronExpression);

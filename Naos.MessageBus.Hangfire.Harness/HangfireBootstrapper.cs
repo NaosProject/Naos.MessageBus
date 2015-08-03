@@ -45,6 +45,8 @@ namespace Naos.MessageBus.Hangfire.Harness
 
         private BackgroundJobServer backgroundJobServer;
 
+        private ICollection<Channel> monitoredChannels;
+
         private HangfireBootstrapper()
         {
             /* to prevent instantiation (otherwise a default public will be created) */
@@ -69,6 +71,9 @@ namespace Naos.MessageBus.Hangfire.Harness
                 this.started = true;
 
                 HostingEnvironment.RegisterObject(this);
+
+                this.monitoredChannels =
+                    executorRoleSettings.ChannelsToMonitor.Select(_ => new Channel { Name = _ }).ToList();
 
                 // register sender as it might need to send other messages in a sequence.
                 this.simpleInjectorContainer.Register(
@@ -137,7 +142,7 @@ namespace Naos.MessageBus.Hangfire.Harness
                 // register the dispatcher so that hangfire can use it when a message is getting processed
                 // if we weren't in hangfire we'd just persist the dispatcher and keep these two fields inside of it...
                 this.simpleInjectorContainer.Register<IDispatchMessages>(
-                    () => new MessageDispatcher(this.simpleInjectorContainer, this.sharedStateMap));
+                    () => new MessageDispatcher(this.simpleInjectorContainer, this.sharedStateMap, this.monitoredChannels));
 
                 foreach (var registration in this.simpleInjectorContainer.GetCurrentRegistrations())
                 {

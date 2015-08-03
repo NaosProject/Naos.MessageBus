@@ -9,22 +9,91 @@ namespace Naos.MessageBus.Test
     using System;
     using System.Collections.Concurrent;
     using System.Collections.Generic;
+    using System.Dynamic;
+    using System.Runtime.Remoting.Messaging;
+
+    using ImpromptuInterface;
+    using ImpromptuInterface.Dynamic;
 
     using Naos.MessageBus.DataContract;
     using Naos.MessageBus.DataContract.Exceptions;
     using Naos.MessageBus.HandlingContract;
     using Naos.MessageBus.Hangfire.Harness;
+    using Naos.MessageBus.SendingContract;
 
     using SimpleInjector;
 
     using Xunit;
 
+    using IMessage = Naos.MessageBus.DataContract.IMessage;
+
     public class MessageDispatcherTest
     {
         [Fact]
+        public static void Dispatch_DispatchingMethodToWrongChannel_ReSends()
+        {
+            var container = new Container();
+            container.Register<IHandleMessages<NullMessage>, NullMessageHandler>();
+
+            var trackingSends = new List<MessageSequence>();
+            Func<ISendMessages> senderConstructor = () =>
+                {
+                    dynamic dynamicObject = new ExpandoObject();
+                    dynamicObject.Send = Return<TrackingCode>.Arguments<MessageSequence>(messageSequence =>
+                        {
+                            trackingSends.Add(messageSequence);
+                            return null;
+                        });
+
+                    ISendMessages ret = Impromptu.ActLike(dynamicObject);
+                    return ret;
+                };
+
+            container.Register(senderConstructor);
+            var monitoredChannel = new Channel { Name = "ChannelName" };
+            var dispatcher = new MessageDispatcher(
+                container,
+                new ConcurrentDictionary<Type, object>(),
+                new[] { monitoredChannel });
+
+            var validParcel = new Parcel()
+                             {
+                                 Envelopes =
+                                     new[]
+                                         {
+                                             new Envelope()
+                                                 {
+                                                     Channel = monitoredChannel,
+                                                     MessageType = typeof(NullMessage),
+                                                     MessageAsJson = Serializer.Serialize(new NullMessage())
+                                                 }
+                                         }
+                             };
+
+            var invalidParcel = new Parcel()
+                             {
+                                 Envelopes =
+                                     new[]
+                                         {
+                                             new Envelope()
+                                                 {
+                                                     Channel = new Channel() { Name = "OtherChannel" },
+                                                     MessageType = typeof(NullMessage),
+                                                     MessageAsJson = Serializer.Serialize(new NullMessage())
+                                                 }
+                                         }
+                             };
+
+            dispatcher.Dispatch("ValidParcel", validParcel);
+            Assert.Equal(0, trackingSends.Count);
+            dispatcher.Dispatch("InvalidParcel", invalidParcel);
+            Assert.Equal(1, trackingSends.Count);
+        }
+
+        [Fact]
         public static void Dispatch_NullParcel_Throws()
         {
-            Action testCode = () => new MessageDispatcher(new Container(), new ConcurrentDictionary<Type, object>()).Dispatch("Name", null);
+            Action testCode = () => new MessageDispatcher(new Container(), new ConcurrentDictionary<Type, object>(), new List<Channel>()).Dispatch("Name", null);
             var ex = Assert.Throws<DispatchException>(testCode);
             Assert.Equal("Parcel cannot be null", ex.Message);
         }
@@ -32,7 +101,7 @@ namespace Naos.MessageBus.Test
         [Fact]
         public static void Dispatch_NullEnvelopesInParcel_Throws()
         {
-            Action testCode = () => new MessageDispatcher(new Container(), new ConcurrentDictionary<Type, object>()).Dispatch("Name", new Parcel());
+            Action testCode = () => new MessageDispatcher(new Container(), new ConcurrentDictionary<Type, object>(), new List<Channel>()).Dispatch("Name", new Parcel());
             var ex = Assert.Throws<DispatchException>(testCode);
             Assert.Equal("Parcel must contain envelopes", ex.Message);
         }
@@ -41,9 +110,18 @@ namespace Naos.MessageBus.Test
         public static void Dispatch_NoEnvelopesInParcel_Throws()
         {
             Action testCode =
-                () => new MessageDispatcher(new Container(), new ConcurrentDictionary<Type, object>()).Dispatch("Name", new Parcel { Envelopes = new List<Envelope>() });
+                () => new MessageDispatcher(new Container(), new ConcurrentDictionary<Type, object>(), new List<Channel>()).Dispatch("Name", new Parcel { Envelopes = new List<Envelope>() });
             var ex = Assert.Throws<DispatchException>(testCode);
             Assert.Equal("Parcel must contain envelopes", ex.Message);
+        }
+
+        [Fact]
+        public static void Dispatch_EnvelopeProducingNullMessage_Throws()
+        {
+            Action testCode =
+                () => new MessageDispatcher(new Container(), new ConcurrentDictionary<Type, object>(), new List<Channel>()).Dispatch("Name", new Parcel { Envelopes = new[] { new Envelope(), } });
+            var ex = Assert.Throws<DispatchException>(testCode);
+            Assert.Equal("Message deserialized to null", ex.Message);
         }
 
         [Fact]
@@ -55,7 +133,8 @@ namespace Naos.MessageBus.Test
             var message = new InitialStateMessage();
             var messageJson = Serializer.Serialize(message);
 
-            var messageDispatcher = new MessageDispatcher(simpleInjectorContainer, new ConcurrentDictionary<Type, object>());
+            var channel = new Channel { Name = "fakeChannel" }; 
+            var messageDispatcher = new MessageDispatcher(simpleInjectorContainer, new ConcurrentDictionary<Type, object>(), new[] { channel });
             var parcel = new Parcel
                              {
                                  Envelopes =
@@ -64,7 +143,7 @@ namespace Naos.MessageBus.Test
                                          {
                                              new Envelope()
                                                  {
-                                                     Channel = new Channel { Name = "fakeChannel" },
+                                                     Channel = channel,
                                                      MessageAsJson = messageJson,
                                                      MessageType = message.GetType()
                                                  }
@@ -88,7 +167,8 @@ namespace Naos.MessageBus.Test
             var message = new InitialStateMessage();
             var messageJson = Serializer.Serialize(message);
 
-            var messageDispatcher = new MessageDispatcher(simpleInjectorContainer, new ConcurrentDictionary<Type, object>());
+            var channel = new Channel { Name = "fakeChannel" };
+            var messageDispatcher = new MessageDispatcher(simpleInjectorContainer, new ConcurrentDictionary<Type, object>(), new[] { channel });
             var parcel = new Parcel
                              {
                                  Envelopes =
@@ -97,7 +177,7 @@ namespace Naos.MessageBus.Test
                                          {
                                              new Envelope()
                                                  {
-                                                     Channel = new Channel { Name = "fakeChannel" },
+                                                     Channel = channel,
                                                      MessageAsJson = messageJson,
                                                      MessageType = message.GetType()
                                                  }
@@ -130,7 +210,12 @@ namespace Naos.MessageBus.Test
             var message = new InitialStateMessage();
             var messageJson = Serializer.Serialize(message);
 
-            var messageDispatcher = new MessageDispatcher(simpleInjectorContainer, new ConcurrentDictionary<Type, object>());
+            var channel = new Channel { Name = "fakeChannel" };
+            var messageDispatcher = new MessageDispatcher(
+                simpleInjectorContainer,
+                new ConcurrentDictionary<Type, object>(),
+                new[] { channel });
+
             var parcel = new Parcel
                              {
                                  Envelopes =
@@ -139,7 +224,7 @@ namespace Naos.MessageBus.Test
                                          {
                                              new Envelope()
                                                  {
-                                                     Channel = new Channel { Name = "fakeChannel" },
+                                                     Channel = channel,
                                                      MessageAsJson = messageJson,
                                                      MessageType = message.GetType()
                                                  }

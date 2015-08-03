@@ -8,6 +8,7 @@ namespace Naos.MessageBus.Hangfire.Harness
 {
     using System;
     using System.Collections.Concurrent;
+    using System.Collections.Generic;
     using System.Linq;
 
     using Its.Log.Instrumentation;
@@ -26,15 +27,19 @@ namespace Naos.MessageBus.Hangfire.Harness
 
         private readonly ConcurrentDictionary<Type, object> handlerSharedStateMap;
 
+        private readonly ICollection<Channel> servicedChannels;
+
         /// <summary>
         /// Initializes a new instance of the <see cref="MessageDispatcher"/> class.
         /// </summary>
         /// <param name="simpleInjectorContainer">DI container to use for looking up handlers.</param>
         /// <param name="handlerSharedStateMap">Initial state dictionary for handlers the require state to be seeded.</param>
-        public MessageDispatcher(Container simpleInjectorContainer, ConcurrentDictionary<Type, object> handlerSharedStateMap)
+        /// <param name="servicedChannels">Channels being services by this dispatcher.</param>
+        public MessageDispatcher(Container simpleInjectorContainer, ConcurrentDictionary<Type, object> handlerSharedStateMap, ICollection<Channel> servicedChannels)
         {
             this.simpleInjectorContainer = simpleInjectorContainer;
             this.handlerSharedStateMap = handlerSharedStateMap;
+            this.servicedChannels = servicedChannels;
         }
 
         /// <inheritdoc />
@@ -59,8 +64,28 @@ namespace Naos.MessageBus.Hangfire.Harness
                             Channel = _.Channel
                         }).ToList();
 
+            var firstChannel = channeledMessages.First().Channel;
             var firstMessage = channeledMessages.First().Message;
             var remainingChanneledMessages = channeledMessages.Skip(1).ToList();
+
+            if (firstMessage == null)
+            {
+                throw new DispatchException("Message deserialized to null");
+            }
+
+            // make sure the message was routed correctly (if not then reroute)
+            if (!this.servicedChannels.Contains(firstChannel))
+            {
+                var rerouteMessageSender = this.simpleInjectorContainer.GetInstance<ISendMessages>();
+                var rerouteMessageSequence = new MessageSequence
+                {
+                    Id = parcel.Id,
+                    ChanneledMessages = channeledMessages
+                };
+
+                rerouteMessageSender.Send(rerouteMessageSequence);
+            }
+
             var messageType = firstMessage.GetType();
             var handlerType = typeof(IHandleMessages<>).MakeGenericType(messageType);
 
