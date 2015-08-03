@@ -14,8 +14,10 @@ namespace Naos.MessageBus.Hangfire.Console
     using Its.Configuration;
 
     using Naos.MessageBus.Core;
+    using Naos.MessageBus.DataContract;
     using Naos.MessageBus.HandlingContract;
     using Naos.MessageBus.Hangfire.Harness;
+    using Naos.MessageBus.Hangfire.Sender;
 
     /// <summary>
     /// Main entry point of the application.
@@ -34,12 +36,24 @@ namespace Naos.MessageBus.Hangfire.Console
 
             if (executorRoleSettings != null)
             {
-                // HangfireBootstrapper.Instance.Start(
-                //    messageBusHandlerSettings.PersistenceConnectionString,
-                //    executorRoleSettings);
-                GlobalConfiguration.Configuration.UseSqlServerStorage("connection_string");
+                Func<MessageSender> messageSenderBuilder = () => new MessageSender(messageBusHandlerSettings.PersistenceConnectionString);
+                var monitoredChannels = executorRoleSettings.ChannelsToMonitor.Select(_ => new Channel { Name = _ }).ToList();
+                var dispatcherFactory = new DispatcherFactory(executorRoleSettings.HandlerAssemblyPath, monitoredChannels, messageSenderBuilder);
 
-                using (var server = new BackgroundJobServer())
+                // configure hangfire to use this DI container
+                GlobalConfiguration.Configuration.UseActivator(new DispatcherFactoryJobActivator(dispatcherFactory));
+
+                var options = new BackgroundJobServerOptions
+                {
+                    Queues = executorRoleSettings.ChannelsToMonitor.ToArray(),
+                    ServerName = "HangfireExecutor" + Environment.MachineName,
+                    SchedulePollingInterval = executorRoleSettings.PollingTimeSpan,
+                    WorkerCount = executorRoleSettings.WorkerCount,
+                };
+
+                GlobalConfiguration.Configuration.UseSqlServerStorage(messageBusHandlerSettings.PersistenceConnectionString);
+
+                using (var server = new BackgroundJobServer(options))
                 {
                     Console.WriteLine("Hangfire Server started. Press any key to exit...");
                     Console.ReadKey();
