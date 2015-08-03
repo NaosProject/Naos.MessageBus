@@ -9,7 +9,6 @@
 namespace Naos.MessageBus.Hangfire.Harness
 {
     using System;
-    using System.Collections.Generic;
     using System.Linq;
     using System.Web.Hosting;
 
@@ -70,15 +69,17 @@ namespace Naos.MessageBus.Hangfire.Harness
             MessageBusHarnessRoleSettingsExecutor executorRoleSettings)
         {
             Func<MessageSender> messageSenderBuilder = () => new MessageSender(persistenceConnectionString);
-            var monitoredChannels = executorRoleSettings.ChannelsToMonitor.Select(_ => new Channel { Name = _ }).ToList();
-            this.dispatcherFactory = new DispatcherFactory(executorRoleSettings.HandlerAssemblyPath, monitoredChannels, messageSenderBuilder);
+            this.dispatcherFactory = new DispatcherFactory(
+                executorRoleSettings.HandlerAssemblyPath,
+                executorRoleSettings.ChannelsToMonitor,
+                messageSenderBuilder);
 
-            // configure hangfire to use this DI container
+            // configure hangfire to use the DispatcherFactory for getting IDispatchMessages calls
             GlobalConfiguration.Configuration.UseActivator(new DispatcherFactoryJobActivator(this.dispatcherFactory));
 
             var options = new BackgroundJobServerOptions
                               {
-                                  Queues = executorRoleSettings.ChannelsToMonitor.ToArray(),
+                                  Queues = executorRoleSettings.ChannelsToMonitor.Select(_ => _.Name).ToArray(),
                                   ServerName = "HangfireExecutor" + Environment.MachineName,
                                   SchedulePollingInterval = executorRoleSettings.PollingTimeSpan,
                                   WorkerCount = executorRoleSettings.WorkerCount,

@@ -55,23 +55,56 @@ namespace Naos.MessageBus.Core
                 throw new DispatchException("Parcel must contain envelopes");
             }
 
-            var channeledMessages =
-                parcel.Envelopes.Select(
-                    _ =>
-                    new ChanneledMessage
+            Func<Type, Type> getTypeForLocalVersion = (typeIn) =>
+                {
+                    var registeredHandlers =
+                        this.simpleInjectorContainer.GetCurrentRegistrations()
+                            .Select(_ => _.Registration.ImplementationType)
+                            .ToList()
+                            .GetTypeMapsOfImplementersOfGenericType(typeof(IHandleMessages<>));
+
+                    foreach (var registeredHandler in registeredHandlers)
+                    {
+                        var messageTypeFromRegistered = registeredHandler.InterfaceType.GenericTypeArguments.Single();
+                        if (messageTypeFromRegistered.Namespace == typeIn.Namespace
+                            && messageTypeFromRegistered.Name == typeIn.Name)
                         {
-                            Message = (IMessage)Serializer.Deserialize(_.MessageType, _.MessageAsJson),
-                            Channel = _.Channel
-                        }).ToList();
+                            return messageTypeFromRegistered;
+                        }
+                    }
+
+                    throw new DispatchException("Unable to find handler for message type: " + typeIn.FullName);
+                };
+
+            var channeledMessages = parcel.Envelopes.Select(
+                _ =>
+                    {
+                        if (_.MessageType == null)
+                        {
+                            throw new DispatchException("Message type not specified in envelope");
+                        }
+
+                        var ret = new ChanneledMessage
+                                      {
+                                          Message =
+                                              (IMessage)
+                                              Serializer.Deserialize(
+                                                  getTypeForLocalVersion(_.MessageType),
+                                                  _.MessageAsJson),
+                                          Channel = _.Channel
+                                      };
+
+                        if (ret.Message == null)
+                        {
+                            throw new DispatchException("Message deserialized to null");
+                        }
+
+                        return ret;
+                    }).ToList();
 
             var firstChannel = channeledMessages.First().Channel;
             var firstMessage = channeledMessages.First().Message;
             var remainingChanneledMessages = channeledMessages.Skip(1).ToList();
-
-            if (firstMessage == null)
-            {
-                throw new DispatchException("Message deserialized to null");
-            }
 
             // make sure the message was routed correctly (if not then reroute)
             if (!this.servicedChannels.Contains(firstChannel))

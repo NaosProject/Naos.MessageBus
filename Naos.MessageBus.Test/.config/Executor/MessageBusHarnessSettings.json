@@ -2,7 +2,7 @@
     "PersistenceConnectionString": "server=localhost",
     "RoleSettings": [
         {
-            "ChannelsToMonitor": [ "monkeys", "pandas" ],
+            "ChannelsToMonitor": [ { "Name": "monkeys" }, { "Name": "pandas" } ],
             "WorkerCount": 4,
             "HandlerAssemblyPath": "I:\\Gets\\My\\Dlls\\Here",
             "PollingTimeSpan": "00:01:00"

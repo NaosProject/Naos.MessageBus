@@ -48,15 +48,17 @@ namespace Naos.MessageBus.Hangfire.Console
             if (executorRoleSettings != null)
             {
                 Func<MessageSender> messageSenderBuilder = () => new MessageSender(messageBusHandlerSettings.PersistenceConnectionString);
-                var monitoredChannels = executorRoleSettings.ChannelsToMonitor.Select(_ => new Channel { Name = _ }).ToList();
-                var dispatcherFactory = new DispatcherFactory(executorRoleSettings.HandlerAssemblyPath, monitoredChannels, messageSenderBuilder);
+                var dispatcherFactory = new DispatcherFactory(
+                    executorRoleSettings.HandlerAssemblyPath,
+                    executorRoleSettings.ChannelsToMonitor,
+                    messageSenderBuilder);
 
-                // configure hangfire to use this DI container
+                // configure hangfire to use the DispatcherFactory for getting IDispatchMessages calls
                 GlobalConfiguration.Configuration.UseActivator(new DispatcherFactoryJobActivator(dispatcherFactory));
 
                 var executorOptions = new BackgroundJobServerOptions
                 {
-                    Queues = executorRoleSettings.ChannelsToMonitor.ToArray(),
+                    Queues = executorRoleSettings.ChannelsToMonitor.Select(_ => _.Name).ToArray(),
                     ServerName = "HangfireExecutor" + Environment.MachineName,
                     SchedulePollingInterval = executorRoleSettings.PollingTimeSpan,
                     WorkerCount = executorRoleSettings.WorkerCount,

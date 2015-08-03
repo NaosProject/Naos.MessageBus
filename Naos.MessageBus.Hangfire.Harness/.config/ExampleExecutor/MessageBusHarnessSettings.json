@@ -2,7 +2,7 @@
     "PersistenceConnectionString": "Server=localhost;Database=Hangfire;Trusted Connection=yes;",
     "RoleSettings": [
         {
-            "ChannelsToMonitor": [ "WorkToDoBucket" ],
+            "ChannelsToMonitor": [ { "Name": "WorkToDoBucket" } ],
             "WorkerCount": 1,
             "HandlerAssemblyPath": "D:\\DllsPath\\",
             "PollingTimeSpan": "00:01:00"
