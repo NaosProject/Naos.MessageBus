@@ -15,6 +15,7 @@ namespace Naos.MessageBus.Test
     using ImpromptuInterface;
     using ImpromptuInterface.Dynamic;
 
+    using Naos.MessageBus.Core;
     using Naos.MessageBus.DataContract;
     using Naos.MessageBus.DataContract.Exceptions;
     using Naos.MessageBus.HandlingContract;

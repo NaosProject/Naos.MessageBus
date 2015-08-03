@@ -20,6 +20,7 @@ namespace Naos.MessageBus.Hangfire.Harness
 
     using Its.Log.Instrumentation;
 
+    using Naos.MessageBus.Core;
     using Naos.MessageBus.DataContract;
     using Naos.MessageBus.HandlingContract;
     using Naos.MessageBus.Hangfire.Sender;

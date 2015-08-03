@@ -4,11 +4,11 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{D52056F4-FD46-47C5-B768-EADBF93B0BA9}</ProjectGuid>
+    <ProjectGuid>{705714A7-1F25-4AF0-B84C-A08E0F4FF60C}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Naos.MessageBus.Hangfire.Sender</RootNamespace>
-    <AssemblyName>Naos.MessageBus.Hangfire.Sender</AssemblyName>
+    <RootNamespace>Naos.MessageBus.Hangfire.Console</RootNamespace>
+    <AssemblyName>Naos.MessageBus.Hangfire.Console</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>
@@ -21,7 +21,7 @@
     </DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-    <DocumentationFile>bin\Debug\Naos.MessageBus.Hangfire.Sender.XML</DocumentationFile>
+    <DocumentationFile>bin\Debug\Naos.MessageBus.Hangfire.Console.XML</DocumentationFile>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -31,16 +31,17 @@
     </DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-    <DocumentationFile>bin\Release\Naos.MessageBus.Hangfire.Sender.XML</DocumentationFile>
+    <DocumentationFile>bin\Release\Naos.MessageBus.Hangfire.Console.XML</DocumentationFile>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Hangfire.Core, Version=1.4.5.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
+    <Reference Include="Hangfire.Core">
       <HintPath>..\packages\Hangfire.Core.1.4.5\lib\net45\Hangfire.Core.dll</HintPath>
     </Reference>
-    <Reference Include="Hangfire.SqlServer, Version=1.4.5.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\packages\HangFire.SqlServer.1.4.5\lib\net45\Hangfire.SqlServer.dll</HintPath>
+    <Reference Include="Hangfire.SqlServer">
+      <HintPath>..\packages\Hangfire.SqlServer.1.4.5\lib\net45\Hangfire.SqlServer.dll</HintPath>
+    </Reference>
+    <Reference Include="Its.Configuration">
+      <HintPath>..\packages\Its.Configuration.0.10.1\lib\net40\Its.Configuration.dll</HintPath>
     </Reference>
     <Reference Include="Newtonsoft.Json, Version=7.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
@@ -49,9 +50,13 @@
     <Reference Include="Owin">
       <HintPath>..\packages\Owin.1.0\lib\net40\Owin.dll</HintPath>
     </Reference>
+    <Reference Include="SimpleInjector">
+      <HintPath>..\packages\SimpleInjector.2.8.3\lib\net45\SimpleInjector.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
+    <Reference Include="System.ComponentModel.Composition" />
     <Reference Include="System.Core" />
-    <Reference Include="System.Runtime.Serialization" />
+    <Reference Include="System.Web.Extensions" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
@@ -59,30 +64,23 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="MessageSender.cs" />
+    <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="SimpleInjectorJobActivator.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="app.config" />
+    <None Include="App.config" />
     <None Include="packages.config" />
-    <None Include="Settings.StyleCop" />
+    <Content Include="Settings.StyleCop" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Naos.MessageBus.Core\Naos.MessageBus.Core.csproj">
       <Project>{D0F8244E-3833-4DE4-A2B9-6E9B9A33C72A}</Project>
       <Name>Naos.MessageBus.Core</Name>
     </ProjectReference>
-    <ProjectReference Include="..\Naos.MessageBus.DataContract\Naos.MessageBus.DataContract.csproj">
-      <Project>{77981A7E-D1B2-4A09-AE35-367BB5421E2B}</Project>
-      <Name>Naos.MessageBus.DataContract</Name>
-    </ProjectReference>
     <ProjectReference Include="..\Naos.MessageBus.HandlingContract\Naos.MessageBus.HandlingContract.csproj">
       <Project>{A4C4CA47-1299-4770-9063-559E6C5B17F8}</Project>
       <Name>Naos.MessageBus.HandlingContract</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\Naos.MessageBus.SendingContract\Naos.MessageBus.SendingContract.csproj">
-      <Project>{7EBD065F-CD10-4B9C-B511-89B01F6EC5DA}</Project>
-      <Name>Naos.MessageBus.SendingContract</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
