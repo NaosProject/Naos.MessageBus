@@ -36,6 +36,23 @@ namespace Naos.MessageBus.Core
         /// <summary>
         /// Initializes a new instance of the <see cref="DispatcherFactory"/> class.
         /// </summary>
+        /// <param name="servicedChannels">Channels being monitored.</param>
+        /// <param name="messageSenderBuilder">Function to build a message sender to supply to the dispatcher.</param>
+        public DispatcherFactory(ICollection<Channel> servicedChannels, Func<ISendMessages> messageSenderBuilder)
+        {
+            this.servicedChannels = servicedChannels;
+
+            // register sender as it might need to send other messages in a sequence.
+            this.simpleInjectorContainer.Register(messageSenderBuilder);
+
+            var typesInFile = typeof(DispatcherFactory).Assembly.GetTypes();
+            var handlerTypeMap = typesInFile.GetTypeMapsOfImplementersOfGenericType(typeof(IHandleMessages<>));
+            this.LoadContainer(handlerTypeMap);
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="DispatcherFactory"/> class.
+        /// </summary>
         /// <param name="handlerAssemblyPath">Path to the assemblies being searched through to be loaded as message handlers.</param>
         /// <param name="servicedChannels">Channels being monitored.</param>
         /// <param name="messageSenderBuilder">Function to build a message sender to supply to the dispatcher.</param>
@@ -89,6 +106,11 @@ namespace Naos.MessageBus.Core
                 }
             }
 
+            this.LoadContainer(handlerTypeMap);
+        }
+
+        private void LoadContainer(ICollection<TypeMap> handlerTypeMap)
+        {
             foreach (var handlerTypeMapEntry in handlerTypeMap)
             {
                 this.simpleInjectorContainer.Register(handlerTypeMapEntry.InterfaceType, handlerTypeMapEntry.ConcreteType);
