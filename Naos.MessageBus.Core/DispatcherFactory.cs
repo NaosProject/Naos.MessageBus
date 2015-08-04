@@ -33,14 +33,18 @@ namespace Naos.MessageBus.Core
 
         private readonly Container simpleInjectorContainer = new Container();
 
+        private readonly MessageTypeMatchStrategy messageTypeMatchStrategy;
+
         /// <summary>
         /// Initializes a new instance of the <see cref="DispatcherFactory"/> class.
         /// </summary>
         /// <param name="servicedChannels">Channels being monitored.</param>
         /// <param name="messageSenderBuilder">Function to build a message sender to supply to the dispatcher.</param>
-        public DispatcherFactory(ICollection<Channel> servicedChannels, Func<ISendMessages> messageSenderBuilder)
+        /// <param name="messageTypeMatchStrategy">Strategy on how to match message type when selecting a handler.</param>
+        public DispatcherFactory(ICollection<Channel> servicedChannels, Func<ISendMessages> messageSenderBuilder, MessageTypeMatchStrategy messageTypeMatchStrategy)
         {
             this.servicedChannels = servicedChannels;
+            this.messageTypeMatchStrategy = messageTypeMatchStrategy;
 
             // register sender as it might need to send other messages in a sequence.
             this.simpleInjectorContainer.Register(messageSenderBuilder);
@@ -56,9 +60,11 @@ namespace Naos.MessageBus.Core
         /// <param name="handlerAssemblyPath">Path to the assemblies being searched through to be loaded as message handlers.</param>
         /// <param name="servicedChannels">Channels being monitored.</param>
         /// <param name="messageSenderBuilder">Function to build a message sender to supply to the dispatcher.</param>
-        public DispatcherFactory(string handlerAssemblyPath, ICollection<Channel> servicedChannels, Func<ISendMessages> messageSenderBuilder)
+        /// <param name="messageTypeMatchStrategy">Strategy on how to match message type when selecting a handler.</param>
+        public DispatcherFactory(string handlerAssemblyPath, ICollection<Channel> servicedChannels, Func<ISendMessages> messageSenderBuilder, MessageTypeMatchStrategy messageTypeMatchStrategy)
         {
             this.servicedChannels = servicedChannels;
+            this.messageTypeMatchStrategy = messageTypeMatchStrategy;
 
             // register sender as it might need to send other messages in a sequence.
             this.simpleInjectorContainer.Register(messageSenderBuilder);
@@ -119,7 +125,12 @@ namespace Naos.MessageBus.Core
             // register the dispatcher so that hangfire can use it when a message is getting processed
             // if we weren't in hangfire we'd just persist the dispatcher and keep these two fields inside of it...
             this.simpleInjectorContainer.Register<IDispatchMessages>(
-                () => new MessageDispatcher(this.simpleInjectorContainer, this.sharedStateMap, this.servicedChannels));
+                () =>
+                new MessageDispatcher(
+                    this.simpleInjectorContainer,
+                    this.sharedStateMap,
+                    this.servicedChannels,
+                    this.messageTypeMatchStrategy));
 
             foreach (var registration in this.simpleInjectorContainer.GetCurrentRegistrations())
             {

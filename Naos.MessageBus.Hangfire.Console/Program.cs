@@ -10,6 +10,7 @@ namespace Naos.MessageBus.Hangfire.Console
     using System.Linq;
 
     using global::Hangfire;
+    using global::Hangfire.Logging;
 
     using Its.Configuration;
 
@@ -33,6 +34,7 @@ namespace Naos.MessageBus.Hangfire.Console
             Settings.Deserialize = Serializer.Deserialize;
             var messageBusHandlerSettings = Settings.Get<MessageBusHarnessSettings>();
             Logging.Setup(messageBusHandlerSettings);
+            LogProvider.SetCurrentLogProvider(new ItsLogPassThroughProvider());
 
             var hostRoleSettings =
                 messageBusHandlerSettings.RoleSettings.OfType<MessageBusHarnessRoleSettingsHost>().SingleOrDefault();
@@ -51,7 +53,8 @@ namespace Naos.MessageBus.Hangfire.Console
                 var dispatcherFactory = new DispatcherFactory(
                     executorRoleSettings.HandlerAssemblyPath,
                     executorRoleSettings.ChannelsToMonitor,
-                    messageSenderBuilder);
+                    messageSenderBuilder,
+                    executorRoleSettings.MessageTypeMatchStrategy);
 
                 // configure hangfire to use the DispatcherFactory for getting IDispatchMessages calls
                 GlobalConfiguration.Configuration.UseActivator(new DispatcherFactoryJobActivator(dispatcherFactory));

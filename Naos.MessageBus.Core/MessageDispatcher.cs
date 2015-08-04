@@ -29,17 +29,21 @@ namespace Naos.MessageBus.Core
 
         private readonly ICollection<Channel> servicedChannels;
 
+        private readonly MessageTypeMatchStrategy messageTypeMatchStrategy;
+
         /// <summary>
         /// Initializes a new instance of the <see cref="MessageDispatcher"/> class.
         /// </summary>
         /// <param name="simpleInjectorContainer">DI container to use for looking up handlers.</param>
         /// <param name="handlerSharedStateMap">Initial state dictionary for handlers the require state to be seeded.</param>
         /// <param name="servicedChannels">Channels being services by this dispatcher.</param>
-        public MessageDispatcher(Container simpleInjectorContainer, ConcurrentDictionary<Type, object> handlerSharedStateMap, ICollection<Channel> servicedChannels)
+        /// <param name="messageTypeMatchStrategy">Message type match strategy for use when selecting a handler.</param>
+        public MessageDispatcher(Container simpleInjectorContainer, ConcurrentDictionary<Type, object> handlerSharedStateMap, ICollection<Channel> servicedChannels, MessageTypeMatchStrategy messageTypeMatchStrategy)
         {
             this.simpleInjectorContainer = simpleInjectorContainer;
             this.handlerSharedStateMap = handlerSharedStateMap;
             this.servicedChannels = servicedChannels;
+            this.messageTypeMatchStrategy = messageTypeMatchStrategy;
         }
 
         /// <inheritdoc />
@@ -55,7 +59,7 @@ namespace Naos.MessageBus.Core
                 throw new DispatchException("Parcel must contain envelopes");
             }
 
-            Func<Type, Type> getTypeForLocalVersion = (typeIn) =>
+            Func<string, string, string, Type> getTypeForLocalVersion = (typeNamespace, typeName, typeAssemblyQualifiedName) =>
                 {
                     var registeredHandlers =
                         this.simpleInjectorContainer.GetCurrentRegistrations()
@@ -66,20 +70,27 @@ namespace Naos.MessageBus.Core
                     foreach (var registeredHandler in registeredHandlers)
                     {
                         var messageTypeFromRegistered = registeredHandler.InterfaceType.GenericTypeArguments.Single();
-                        if (messageTypeFromRegistered.Namespace == typeIn.Namespace
-                            && messageTypeFromRegistered.Name == typeIn.Name)
+                        if (this.messageTypeMatchStrategy == MessageTypeMatchStrategy.NamespaceAndName
+                            && messageTypeFromRegistered.Namespace == typeNamespace
+                            && messageTypeFromRegistered.Name == typeName)
+                        {
+                            return messageTypeFromRegistered;
+                        }
+
+                        if (this.messageTypeMatchStrategy == MessageTypeMatchStrategy.AssemblyQualifiedName
+                            && messageTypeFromRegistered.AssemblyQualifiedName == typeAssemblyQualifiedName)
                         {
                             return messageTypeFromRegistered;
                         }
                     }
 
-                    throw new DispatchException("Unable to find handler for message type: " + typeIn.FullName);
+                    throw new DispatchException("Unable to find handler for message type; Namespace: " + typeNamespace + ", Name: " + typeName);
                 };
 
             var channeledMessages = parcel.Envelopes.Select(
                 _ =>
                     {
-                        if (_.MessageType == null)
+                        if (string.IsNullOrEmpty(_.MessageTypeNamespace) || string.IsNullOrEmpty(_.MessageTypeName))
                         {
                             throw new DispatchException("Message type not specified in envelope");
                         }
@@ -89,7 +100,7 @@ namespace Naos.MessageBus.Core
                                           Message =
                                               (IMessage)
                                               Serializer.Deserialize(
-                                                  getTypeForLocalVersion(_.MessageType),
+                                                  getTypeForLocalVersion(_.MessageTypeNamespace, _.MessageTypeName, _.MessageTypeAssemblyQualifiedName),
                                                   _.MessageAsJson),
                                           Channel = _.Channel
                                       };

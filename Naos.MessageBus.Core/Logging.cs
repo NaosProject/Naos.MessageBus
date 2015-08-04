@@ -20,7 +20,7 @@ namespace Naos.MessageBus.Hangfire.Harness
     public static class Logging
     {
         private static readonly object LockObject = new object();
-        private static bool started = false;
+        private static bool isSetup = false;
 
         /// <summary>
         /// Entry point to configure logging.
@@ -28,19 +28,19 @@ namespace Naos.MessageBus.Hangfire.Harness
         /// <param name="messageBusHandlerSettings">Handler settings to use when discovering log processing logic.</param>
         public static void Setup(MessageBusHarnessSettings messageBusHandlerSettings)
         {
-            if (started)
+            if (isSetup)
             {
                 return;
             }
 
             lock (LockObject)
             {
-                if (started)
+                if (isSetup)
                 {
                     return;
                 }
 
-                started = true;
+                isSetup = true;
 
                 SetupLogProcessor(messageBusHandlerSettings.LogProcessorSettings);
                 WireUpAppDomainHandlers();

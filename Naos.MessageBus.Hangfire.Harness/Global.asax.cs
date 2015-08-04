@@ -12,6 +12,8 @@ namespace Naos.MessageBus.Hangfire.Harness
     using System.Linq;
     using System.Web;
 
+    using global::Hangfire.Logging;
+
     using Its.Configuration;
 
     using Naos.MessageBus.Core;
@@ -26,6 +28,7 @@ namespace Naos.MessageBus.Hangfire.Harness
             Settings.Deserialize = Serializer.Deserialize;
             var messageBusHandlerSettings = Settings.Get<MessageBusHarnessSettings>();
             Logging.Setup(messageBusHandlerSettings);
+            LogProvider.SetCurrentLogProvider(new ItsLogPassThroughProvider());
 
             var executorRoleSettings =
                 messageBusHandlerSettings.RoleSettings.OfType<MessageBusHarnessRoleSettingsExecutor>().SingleOrDefault();

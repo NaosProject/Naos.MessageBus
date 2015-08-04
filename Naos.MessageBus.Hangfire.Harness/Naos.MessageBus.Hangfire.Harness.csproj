@@ -124,6 +124,7 @@
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
     <Compile Include="HangfireBootstrapper.cs" />
+    <Compile Include="ItsLogPassThroughProvider.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="DispatcherFactoryJobActivator.cs" />
     <Compile Include="Startup.cs" />
