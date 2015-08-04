@@ -14,6 +14,7 @@ namespace Naos.MessageBus.Hangfire.Harness
 
     using Its.Configuration;
 
+    using Naos.MessageBus.Core;
     using Naos.MessageBus.HandlingContract;
 
     /// <inheritdoc />

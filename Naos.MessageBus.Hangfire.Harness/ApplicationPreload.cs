@@ -8,13 +8,12 @@
 
 namespace Naos.MessageBus.Hangfire.Harness
 {
-    using System;
     using System.Linq;
     using System.Web.Hosting;
 
     using Its.Configuration;
-    using Its.Log.Instrumentation;
 
+    using Naos.MessageBus.Core;
     using Naos.MessageBus.HandlingContract;
 
     /// <inheritdoc />

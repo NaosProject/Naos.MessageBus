@@ -11,6 +11,7 @@ namespace Naos.MessageBus.Test
 
     using Its.Configuration;
 
+    using Naos.MessageBus.Core;
     using Naos.MessageBus.HandlingContract;
     using Naos.MessageBus.Hangfire.Harness;
 
@@ -39,8 +40,8 @@ namespace Naos.MessageBus.Test
             Assert.Equal("server=localhost", settings.PersistenceConnectionString);
             var executorSettings = settings.RoleSettings.OfType<MessageBusHarnessRoleSettingsExecutor>().SingleOrDefault();
             Assert.NotNull(executorSettings);
-            Assert.Equal("monkeys", executorSettings.ChannelsToMonitor.First());
-            Assert.Equal("pandas", executorSettings.ChannelsToMonitor.Skip(1).First());
+            Assert.Equal("monkeys", executorSettings.ChannelsToMonitor.First().Name);
+            Assert.Equal("pandas", executorSettings.ChannelsToMonitor.Skip(1).First().Name);
             Assert.Equal(4, executorSettings.WorkerCount);
             Assert.Equal("I:\\Gets\\My\\Dlls\\Here", executorSettings.HandlerAssemblyPath);
             Assert.Equal(TimeSpan.FromMinutes(1), executorSettings.PollingTimeSpan);

@@ -9,6 +9,7 @@ namespace Naos.MessageBus.Test
     using System;
     using System.IO;
 
+    using Naos.MessageBus.Core;
     using Naos.MessageBus.DataContract;
     using Naos.MessageBus.DataContract.Exceptions;
     using Naos.MessageBus.HandlingContract;

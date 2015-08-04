@@ -10,11 +10,12 @@ namespace Naos.MessageBus.Test
     using System.Collections.Concurrent;
     using System.Collections.Generic;
     using System.Dynamic;
-    using System.Runtime.Remoting.Messaging;
+    using System.IO;
 
     using ImpromptuInterface;
     using ImpromptuInterface.Dynamic;
 
+    using Naos.MessageBus.Core;
     using Naos.MessageBus.DataContract;
     using Naos.MessageBus.DataContract.Exceptions;
     using Naos.MessageBus.HandlingContract;
@@ -24,8 +25,6 @@ namespace Naos.MessageBus.Test
     using SimpleInjector;
 
     using Xunit;
-
-    using IMessage = Naos.MessageBus.DataContract.IMessage;
 
     public class MessageDispatcherTest
     {
@@ -116,12 +115,56 @@ namespace Naos.MessageBus.Test
         }
 
         [Fact]
-        public static void Dispatch_EnvelopeProducingNullMessage_Throws()
+        public static void Dispatch_EnvelopeMissingType_Throws()
         {
             Action testCode =
                 () => new MessageDispatcher(new Container(), new ConcurrentDictionary<Type, object>(), new List<Channel>()).Dispatch("Name", new Parcel { Envelopes = new[] { new Envelope(), } });
             var ex = Assert.Throws<DispatchException>(testCode);
+            Assert.Equal("Message type not specified in envelope", ex.Message);
+        }
+
+        [Fact]
+        public static void Dispatch_EnvelopeProducingNullMessage_Throws()
+        {
+            var container = new Container();
+            container.Register<IHandleMessages<NullMessage>, NullMessageHandler>();
+            Action testCode =
+                () =>
+                    {
+                        new MessageDispatcher(container, new ConcurrentDictionary<Type, object>(), new List<Channel>())
+                              .Dispatch(
+                                  "Name",
+                                  new Parcel
+                                      {
+                                          Envelopes = new[]
+                                                          {
+                                                              new Envelope { MessageType = typeof(NullMessage) }
+                                                          }
+                                      });
+                    };
+
+            var ex = Assert.Throws<DispatchException>(testCode);
             Assert.Equal("Message deserialized to null", ex.Message);
+        }
+
+        [Fact]
+        public static void Dispatch_EnvelopeWithUnregisteredType_Throws()
+        {
+            Action testCode =
+                () =>
+                new MessageDispatcher(new Container(), new ConcurrentDictionary<Type, object>(), new List<Channel>())
+                    .Dispatch(
+                        "Name",
+                        new Parcel
+                            {
+                                Envelopes = new[]
+                                                {
+                                                    new Envelope { MessageType = typeof(NullMessage) }
+                                                }
+                            });
+
+            var ex = Assert.Throws<DispatchException>(testCode);
+            Assert.True(ex.Message.StartsWith("Unable to find handler for message type: "), ex.Message);
         }
 
         [Fact]

@@ -4,7 +4,7 @@
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
-namespace Naos.MessageBus.Hangfire.Harness
+namespace Naos.MessageBus.Core
 {
     using System.Linq;
 

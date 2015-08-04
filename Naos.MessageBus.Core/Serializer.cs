@@ -4,7 +4,7 @@
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
-namespace Naos.MessageBus.Hangfire.Sender
+namespace Naos.MessageBus.Core
 {
     using System;
     using System.Collections.Generic;
@@ -15,6 +15,8 @@ namespace Naos.MessageBus.Hangfire.Sender
     using Newtonsoft.Json.Converters;
     using Newtonsoft.Json.Linq;
     using Newtonsoft.Json.Serialization;
+
+    using Spritely.Recipes;
 
     /// <summary>
     /// Specific serialization settings encapsulated for needs when using objects from this project..
@@ -97,6 +99,7 @@ namespace Naos.MessageBus.Hangfire.Sender
                                                       true
                                               },
                                           new KnownTypeConverter(),
+                                          new SecureStringJsonConverter(),
                                       }
             };
 

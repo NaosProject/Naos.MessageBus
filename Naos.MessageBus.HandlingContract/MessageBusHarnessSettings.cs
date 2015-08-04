@@ -10,6 +10,8 @@ namespace Naos.MessageBus.HandlingContract
     using System.Collections.Generic;
     using System.Runtime.Serialization;
 
+    using Naos.MessageBus.DataContract;
+
     /// <summary>
     /// Base class of the settings for the different roles of a message bus harness.
     /// </summary>
@@ -38,7 +40,7 @@ namespace Naos.MessageBus.HandlingContract
         /// <summary>
         /// Gets or sets the channels to monitor.
         /// </summary>
-        public ICollection<string> ChannelsToMonitor { get; set; }
+        public ICollection<Channel> ChannelsToMonitor { get; set; }
 
         /// <summary>
         /// Gets or sets the number of workers to use.
