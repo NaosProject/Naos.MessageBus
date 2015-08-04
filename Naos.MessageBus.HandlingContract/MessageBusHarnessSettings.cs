@@ -30,6 +30,11 @@ namespace Naos.MessageBus.HandlingContract
         /// Gets or sets the server name to use.
         /// </summary>
         public string ServerName { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether or not to run the dashboard.
+        /// </summary>
+        public bool RunDashboard { get; set; }
     }
 
     /// <summary>
@@ -56,6 +61,11 @@ namespace Naos.MessageBus.HandlingContract
         /// Gets or sets the time to wait between checking for new messages.
         /// </summary>
         public TimeSpan PollingTimeSpan { get; set; }
+
+        /// <summary>
+        /// Gets or sets the matching strategy to use when finding a handler.
+        /// </summary>
+        public MessageTypeMatchStrategy MessageTypeMatchStrategy { get; set; }
     }
 
     /// <summary>
@@ -77,5 +87,21 @@ namespace Naos.MessageBus.HandlingContract
         /// Gets or sets the settings for configuring the log processor.
         /// </summary>
         public LogProcessorSettings LogProcessorSettings { get; set; }
+    }
+
+    /// <summary>
+    /// Matching strategies on the message type for use when selecting a handler to service the message.
+    /// </summary>
+    public enum MessageTypeMatchStrategy
+    {
+        /// <summary>
+        /// Match the name and namespace of the type.
+        /// </summary>
+        NamespaceAndName,
+
+        /// <summary>
+        /// Match the assembly qualified name of the type (this will include the version).
+        /// </summary>
+        AssemblyQualifiedName
     }
 }

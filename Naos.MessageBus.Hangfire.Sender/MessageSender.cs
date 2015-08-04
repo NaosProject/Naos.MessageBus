@@ -78,15 +78,19 @@ namespace Naos.MessageBus.Hangfire.Sender
         /// <inheritdoc />
         public TrackingCode SendRecurring(MessageSequence messageSequence, Schedules recurringSchedule)
         {
-            var envelopesFromSequence =
-                messageSequence.ChanneledMessages.Select(
-                    channeledMessage =>
-                    new Envelope()
-                        {
-                            MessageAsJson = Serializer.Serialize(channeledMessage.Message),
-                            MessageType = channeledMessage.Message.GetType(),
-                            Channel = channeledMessage.Channel
-                        }).ToList();
+            var envelopesFromSequence = messageSequence.ChanneledMessages.Select(
+                channeledMessage =>
+                    {
+                        var messageType = channeledMessage.Message.GetType();
+                        return new Envelope()
+                                   {
+                                       MessageAsJson = Serializer.Serialize(channeledMessage.Message),
+                                       MessageTypeNamespace = messageType.Namespace,
+                                       MessageTypeName = messageType.Name,
+                                       MessageTypeAssemblyQualifiedName = messageType.AssemblyQualifiedName,
+                                       Channel = channeledMessage.Channel
+                                   };
+                    }).ToList();
 
             // if this is recurring we must inject a null message that will be handled on the default queue and immediately moved to the next one 
             //             that will be put in the correct queue...

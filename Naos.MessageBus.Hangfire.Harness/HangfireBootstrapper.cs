@@ -15,7 +15,6 @@ namespace Naos.MessageBus.Hangfire.Harness
     using global::Hangfire;
 
     using Naos.MessageBus.Core;
-    using Naos.MessageBus.DataContract;
     using Naos.MessageBus.HandlingContract;
     using Naos.MessageBus.Hangfire.Sender;
 
@@ -72,7 +71,8 @@ namespace Naos.MessageBus.Hangfire.Harness
             this.dispatcherFactory = new DispatcherFactory(
                 executorRoleSettings.HandlerAssemblyPath,
                 executorRoleSettings.ChannelsToMonitor,
-                messageSenderBuilder);
+                messageSenderBuilder,
+                executorRoleSettings.MessageTypeMatchStrategy);
 
             // configure hangfire to use the DispatcherFactory for getting IDispatchMessages calls
             GlobalConfiguration.Configuration.UseActivator(new DispatcherFactoryJobActivator(this.dispatcherFactory));

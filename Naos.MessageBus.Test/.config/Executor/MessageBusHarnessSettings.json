@@ -5,7 +5,8 @@
             "ChannelsToMonitor": [ { "Name": "monkeys" }, { "Name": "pandas" } ],
             "WorkerCount": 4,
             "HandlerAssemblyPath": "I:\\Gets\\My\\Dlls\\Here",
-            "PollingTimeSpan": "00:01:00"
+            "PollingTimeSpan": "00:01:00",
+            "MessageTypeMatchStrategy":  "NamespaceAndName"
         }
     ]
 }
