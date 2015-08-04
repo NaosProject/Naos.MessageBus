@@ -29,6 +29,14 @@ namespace Naos.MessageBus.SendingContract
         TrackingCode Send(MessageSequence messageSequence);
 
         /// <summary>
+        /// Send a parcel (the deconstructed form of a message sequence).
+        /// </summary>
+        /// <param name="parcel">Parcel to send.</param>
+        /// <param name="recurringSchedule">Schedule the message should recur on.</param>
+        /// <returns>ID of the scheduled message.</returns>
+        TrackingCode Send(Parcel parcel, Schedules recurringSchedule);
+
+        /// <summary>
         /// Sends a message to recur on a schedule.
         /// </summary>
         /// <param name="message">Message to send.</param>

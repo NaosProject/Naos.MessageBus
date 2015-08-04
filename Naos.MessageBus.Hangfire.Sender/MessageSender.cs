@@ -84,6 +84,7 @@ namespace Naos.MessageBus.Hangfire.Sender
                         var messageType = channeledMessage.Message.GetType();
                         return new Envelope()
                                    {
+                                       Description = channeledMessage.Message.Description,
                                        MessageAsJson = Serializer.Serialize(channeledMessage.Message),
                                        MessageTypeNamespace = messageType.Namespace,
                                        MessageTypeName = messageType.Name,
@@ -97,13 +98,20 @@ namespace Naos.MessageBus.Hangfire.Sender
             var envelopes = new List<Envelope>();
             envelopes.AddRange(envelopesFromSequence);
 
-            var messageName = messageSequence.ChanneledMessages.First().Message.Description;
-
-            var displayName = "Sequence " + messageSequence.Id + " - " + messageName;
-
             var parcel = new Parcel { Id = messageSequence.Id, Envelopes = envelopes };
-            var firstEnvelopeChannel = envelopes.First().Channel;
 
+            return this.Send(parcel, recurringSchedule);
+        }
+
+        /// <inheritdoc />
+        public TrackingCode Send(Parcel parcel, Schedules recurringSchedule)
+        {
+            var firstEnvelope = parcel.Envelopes.First();
+            var firstEnvelopeChannel = firstEnvelope.Channel;
+            var firstEnvelopeDescription = firstEnvelope.Description;
+
+            var displayName = "Sequence " + parcel.Id + " - " + firstEnvelopeDescription;
+            
             var client = new BackgroundJobClient();
             var state = new EnqueuedState
             {
