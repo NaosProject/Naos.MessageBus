@@ -12,6 +12,7 @@ using Naos.MessageBus.Hangfire.Harness;
 
 namespace Naos.MessageBus.Hangfire.Harness
 {
+    using System;
     using System.Linq;
 
     using global::Hangfire;
@@ -19,7 +20,9 @@ namespace Naos.MessageBus.Hangfire.Harness
     using Its.Configuration;
 
     using Naos.MessageBus.Core;
+    using Naos.MessageBus.DataContract;
     using Naos.MessageBus.HandlingContract;
+    using Naos.MessageBus.Hangfire.Sender;
 
     using Owin;
 
@@ -28,6 +31,8 @@ namespace Naos.MessageBus.Hangfire.Harness
     /// </summary>
     public partial class Startup
     {
+        private DispatcherFactory dispatcherFactory;
+
         /// <summary>
         /// Configuration methods that loads applications.
         /// </summary>
@@ -43,6 +48,15 @@ namespace Naos.MessageBus.Hangfire.Harness
 
             if (hostRoleSettings != null)
             {
+                // must wire up the dispatcher to handle items sent to default queue (recurring and retries) - these will get rerouted to correct place...
+                Func<MessageSender> messageSenderBuilder = () => new MessageSender(messageBusHandlerSettings.PersistenceConnectionString);
+                this.dispatcherFactory = new DispatcherFactory(
+                    new[] { new Channel { Name = "default" } },
+                    messageSenderBuilder);
+
+                // configure hangfire to use the DispatcherFactory for getting IDispatchMessages calls
+                GlobalConfiguration.Configuration.UseActivator(new DispatcherFactoryJobActivator(this.dispatcherFactory));
+
                 GlobalConfiguration.Configuration.UseSqlServerStorage(
                     messageBusHandlerSettings.PersistenceConnectionString);
 
