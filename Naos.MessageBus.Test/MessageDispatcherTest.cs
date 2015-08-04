@@ -34,19 +34,20 @@ namespace Naos.MessageBus.Test
             var container = new Container();
             container.Register<IHandleMessages<NullMessage>, NullMessageHandler>();
 
-            var trackingSends = new List<MessageSequence>();
+            var trackingSends = new List<Parcel>();
             Func<ISendMessages> senderConstructor = () =>
-                {
-                    dynamic dynamicObject = new ExpandoObject();
-                    dynamicObject.Send = Return<TrackingCode>.Arguments<MessageSequence>(messageSequence =>
-                        {
-                            trackingSends.Add(messageSequence);
-                            return null;
-                        });
+            {
+                dynamic dynamicObject = new ExpandoObject();
+                dynamicObject.Send = Return<TrackingCode>.Arguments<Parcel, Schedules>(
+                    (parcel, schedules) =>
+                    {
+                        trackingSends.Add(parcel);
+                        return null;
+                    });
 
-                    ISendMessages ret = Impromptu.ActLike(dynamicObject);
-                    return ret;
-                };
+                ISendMessages ret = Impromptu.ActLike(dynamicObject);
+                return ret;
+            };
 
             container.Register(senderConstructor);
             var monitoredChannel = new Channel { Name = "ChannelName" };
@@ -100,15 +101,16 @@ namespace Naos.MessageBus.Test
             var container = new Container();
             container.Register<IHandleMessages<NullMessage>, NullMessageHandler>();
 
-            var trackingSends = new List<MessageSequence>();
+            var trackingSends = new List<Parcel>();
             Func<ISendMessages> senderConstructor = () =>
             {
                 dynamic dynamicObject = new ExpandoObject();
-                dynamicObject.Send = Return<TrackingCode>.Arguments<MessageSequence>(messageSequence =>
-                {
-                    trackingSends.Add(messageSequence);
-                    return null;
-                });
+                dynamicObject.Send = Return<TrackingCode>.Arguments<Parcel, Schedules>(
+                    (parcel, schedules) =>
+                        {
+                            trackingSends.Add(parcel);
+                            return null;
+                        });
 
                 ISendMessages ret = Impromptu.ActLike(dynamicObject);
                 return ret;
@@ -189,7 +191,7 @@ namespace Naos.MessageBus.Test
         public static void Dispatch_EnvelopeMissingTypeCompletely_Throws()
         {
             Action testCode =
-                () => new MessageDispatcher(new Container(), new ConcurrentDictionary<Type, object>(), new List<Channel>(), MessageTypeMatchStrategy.NamespaceAndName).Dispatch("Name", new Parcel { Envelopes = new[] { new Envelope(), } });
+                () => new MessageDispatcher(new Container(), new ConcurrentDictionary<Type, object>(), new[] { new Channel { Name = "Channel" } }, MessageTypeMatchStrategy.NamespaceAndName).Dispatch("Name", new Parcel { Envelopes = new[] { new Envelope { Channel = new Channel { Name = "Channel" } } } });
             var ex = Assert.Throws<DispatchException>(testCode);
             Assert.Equal("Message type not specified in envelope", ex.Message);
         }
@@ -198,7 +200,7 @@ namespace Naos.MessageBus.Test
         public static void Dispatch_EnvelopeMissingTypeNamespace_Throws()
         {
             Action testCode =
-                () => new MessageDispatcher(new Container(), new ConcurrentDictionary<Type, object>(), new List<Channel>(), MessageTypeMatchStrategy.NamespaceAndName).Dispatch("Name", new Parcel { Envelopes = new[] { new Envelope { MessageTypeName = "Name" }, } });
+                () => new MessageDispatcher(new Container(), new ConcurrentDictionary<Type, object>(), new[] { new Channel { Name = "Channel" } }, MessageTypeMatchStrategy.NamespaceAndName).Dispatch("Name", new Parcel { Envelopes = new[] { new Envelope { MessageTypeName = "Name", Channel = new Channel { Name = "Channel" } } } });
             var ex = Assert.Throws<DispatchException>(testCode);
             Assert.Equal("Message type not specified in envelope", ex.Message);
         }
@@ -207,7 +209,7 @@ namespace Naos.MessageBus.Test
         public static void Dispatch_EnvelopeMissingTypeName_Throws()
         {
             Action testCode =
-                () => new MessageDispatcher(new Container(), new ConcurrentDictionary<Type, object>(), new List<Channel>(), MessageTypeMatchStrategy.NamespaceAndName).Dispatch("Name", new Parcel { Envelopes = new[] { new Envelope { MessageTypeNamespace = "Namespace" } } });
+                () => new MessageDispatcher(new Container(), new ConcurrentDictionary<Type, object>(), new[] { new Channel { Name = "Channel" } }, MessageTypeMatchStrategy.NamespaceAndName).Dispatch("Name", new Parcel { Envelopes = new[] { new Envelope { MessageTypeNamespace = "Namespace", Channel = new Channel { Name = "Channel" } } } });
             var ex = Assert.Throws<DispatchException>(testCode);
             Assert.Equal("Message type not specified in envelope", ex.Message);
         }
@@ -219,8 +221,11 @@ namespace Naos.MessageBus.Test
             container.Register<IHandleMessages<NullMessage>, NullMessageHandler>();
             Action testCode = () =>
                 {
-                    new MessageDispatcher(container, new ConcurrentDictionary<Type, object>(), new List<Channel>(), MessageTypeMatchStrategy.NamespaceAndName)
-                        .Dispatch(
+                    new MessageDispatcher(
+                        container,
+                        new ConcurrentDictionary<Type, object>(),
+                        new[] { new Channel { Name = "Channel" } },
+                        MessageTypeMatchStrategy.NamespaceAndName).Dispatch(
                             "Name",
                             new Parcel
                                 {
@@ -229,6 +234,7 @@ namespace Naos.MessageBus.Test
                                             {
                                                 new Envelope
                                                     {
+                                                        Channel = new Channel { Name = "Channel" },
                                                         MessageTypeNamespace =
                                                             typeof(NullMessage).Namespace,
                                                         MessageTypeName = typeof(NullMessage).Name,
@@ -248,23 +254,32 @@ namespace Naos.MessageBus.Test
         {
             Action testCode =
                 () =>
-                new MessageDispatcher(new Container(), new ConcurrentDictionary<Type, object>(), new List<Channel>(), MessageTypeMatchStrategy.NamespaceAndName)
-                    .Dispatch(
-                        "Name",
-                        new Parcel
-                            {
-                                Envelopes =
-                                    new[]
-                                        {
-                                            new Envelope
-                                                {
-                                                    MessageTypeNamespace = typeof(NullMessage).Namespace,
-                                                    MessageTypeName = typeof(NullMessage).Name,
-                                                    MessageTypeAssemblyQualifiedName =
-                                                        typeof(NullMessage).AssemblyQualifiedName,
-                                                }
-                                        }
-                            });
+                    {
+                        var channel = new Channel { Name = "Channel" };
+
+                        new MessageDispatcher(
+                              new Container(), 
+                              new ConcurrentDictionary<Type, object>(), 
+                              new[] { channel }, 
+                              MessageTypeMatchStrategy.NamespaceAndName)
+                              .Dispatch(
+                                  "Name",
+                                  new Parcel
+                                      {
+                                          Envelopes =
+                                              new[]
+                                                  {
+                                                      new Envelope
+                                                          {
+                                                              Channel = channel,
+                                                              MessageTypeNamespace = typeof(NullMessage).Namespace,
+                                                              MessageTypeName = typeof(NullMessage).Name,
+                                                              MessageTypeAssemblyQualifiedName =
+                                                                  typeof(NullMessage).AssemblyQualifiedName,
+                                                          }
+                                                  }
+                                      });
+                    };
 
             var ex = Assert.Throws<DispatchException>(testCode);
             Assert.True(ex.Message.StartsWith("Unable to find handler for message type"), ex.Message);

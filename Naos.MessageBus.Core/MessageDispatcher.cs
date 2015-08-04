@@ -59,6 +59,17 @@ namespace Naos.MessageBus.Core
                 throw new DispatchException("Parcel must contain envelopes");
             }
 
+            // make sure the message was routed correctly (if not then reroute)
+            if (this.servicedChannels.SingleOrDefault(_ => _.Name == parcel.Envelopes.First().Channel.Name) == null)
+            {
+                var rerouteMessageSender = this.simpleInjectorContainer.GetInstance<ISendMessages>();
+
+                // any schedule should already be set and NOT reset...
+                rerouteMessageSender.Send(parcel, Schedules.None);
+
+                return;
+            }
+
             Func<string, string, string, Type> getTypeForLocalVersion = (typeNamespace, typeName, typeAssemblyQualifiedName) =>
                 {
                     var registeredHandlers =
@@ -113,22 +124,8 @@ namespace Naos.MessageBus.Core
                         return ret;
                     }).ToList();
 
-            var firstChannel = channeledMessages.First().Channel;
             var firstMessage = channeledMessages.First().Message;
             var remainingChanneledMessages = channeledMessages.Skip(1).ToList();
-
-            // make sure the message was routed correctly (if not then reroute)
-            if (!this.servicedChannels.Contains(firstChannel))
-            {
-                var rerouteMessageSender = this.simpleInjectorContainer.GetInstance<ISendMessages>();
-                var rerouteMessageSequence = new MessageSequence
-                {
-                    Id = parcel.Id,
-                    ChanneledMessages = channeledMessages
-                };
-
-                rerouteMessageSender.Send(rerouteMessageSequence);
-            }
 
             var messageType = firstMessage.GetType();
             var handlerType = typeof(IHandleMessages<>).MakeGenericType(messageType);

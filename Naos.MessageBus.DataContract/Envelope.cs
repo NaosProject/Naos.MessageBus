@@ -14,6 +14,11 @@ namespace Naos.MessageBus.DataContract
     public sealed class Envelope
     {
         /// <summary>
+        /// Gets or sets the description of the message in the envelope.
+        /// </summary>
+        public string Description { get; set; }
+
+        /// <summary>
         /// Gets or sets the namespace of the type of the message.
         /// </summary>
         public string MessageTypeNamespace { get; set; }
