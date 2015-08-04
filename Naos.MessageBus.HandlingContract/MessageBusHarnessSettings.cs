@@ -66,6 +66,11 @@ namespace Naos.MessageBus.HandlingContract
         /// Gets or sets the matching strategy to use when finding a handler.
         /// </summary>
         public MessageTypeMatchStrategy MessageTypeMatchStrategy { get; set; }
+
+        /// <summary>
+        /// Gets or sets the number of retries a failed message will get.
+        /// </summary>
+        public int RetryCount { get; set; }
     }
 
     /// <summary>

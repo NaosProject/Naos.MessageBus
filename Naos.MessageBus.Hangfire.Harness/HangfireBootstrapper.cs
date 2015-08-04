@@ -76,6 +76,7 @@ namespace Naos.MessageBus.Hangfire.Harness
 
             // configure hangfire to use the DispatcherFactory for getting IDispatchMessages calls
             GlobalConfiguration.Configuration.UseActivator(new DispatcherFactoryJobActivator(this.dispatcherFactory));
+            GlobalJobFilters.Filters.Add(new AutomaticRetryAttribute { Attempts = executorRoleSettings.RetryCount });
 
             var options = new BackgroundJobServerOptions
                               {

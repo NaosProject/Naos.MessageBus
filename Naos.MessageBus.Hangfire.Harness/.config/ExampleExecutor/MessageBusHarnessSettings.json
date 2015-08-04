@@ -6,7 +6,8 @@
             "WorkerCount": 1,
             "HandlerAssemblyPath": "D:\\DllsPath\\",
             "PollingTimeSpan": "00:01:00",
-            "MessageTypeMatchStrategy":  "NamespaceAndName"
+            "MessageTypeMatchStrategy": "NamespaceAndName",
+            "RetryCount": 0
         }
     ],
     "LogProcessorSettings": { 

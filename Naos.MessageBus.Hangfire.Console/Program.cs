@@ -15,7 +15,6 @@ namespace Naos.MessageBus.Hangfire.Console
     using Its.Configuration;
 
     using Naos.MessageBus.Core;
-    using Naos.MessageBus.DataContract;
     using Naos.MessageBus.DataContract.Exceptions;
     using Naos.MessageBus.HandlingContract;
     using Naos.MessageBus.Hangfire.Harness;
@@ -58,6 +57,7 @@ namespace Naos.MessageBus.Hangfire.Console
 
                 // configure hangfire to use the DispatcherFactory for getting IDispatchMessages calls
                 GlobalConfiguration.Configuration.UseActivator(new DispatcherFactoryJobActivator(dispatcherFactory));
+                GlobalJobFilters.Filters.Add(new AutomaticRetryAttribute { Attempts = executorRoleSettings.RetryCount });
 
                 var executorOptions = new BackgroundJobServerOptions
                 {
