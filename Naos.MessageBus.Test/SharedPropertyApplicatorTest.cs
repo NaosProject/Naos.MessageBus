@@ -51,6 +51,66 @@ namespace Naos.MessageBus.Test
             SharedPropertyApplicator.ApplySharedProperties(testHandler, testMessage);
             Assert.Equal(testHandler.FilePath, testMessage.FilePath);
         }
+
+        [Fact]
+        public static void ApplySharedProperties_ValidMatchOnEnum_PropertiesSet()
+        {
+            var testHandler = new FirstEnumHandler { EnumValueToTest = MyEnum.OtherValue };
+            var testMessage = new SecondEnumMessage();
+
+            Assert.NotEqual(testHandler.EnumValueToTest, testMessage.EnumValueToTest);
+            SharedPropertyApplicator.ApplySharedProperties(testHandler, testMessage);
+            Assert.Equal(testHandler.EnumValueToTest, testMessage.EnumValueToTest);
+        }
+    }
+
+    public class FirstEnumHandler : IHandleMessages<FirstEnumMessage>, IShareEnum
+    {
+        public void Handle(FirstEnumMessage message)
+        {
+            this.EnumValueToTest = message.SeedValue;
+        }
+
+        public MyEnum EnumValueToTest { get; set; }
+    }
+
+    public class FirstEnumMessage : IMessage
+    {
+        public string Description { get; set; }
+
+        public MyEnum EnumValueToTest { get; set; }
+
+        public MyEnum SeedValue { get; set; }
+    }
+
+    public class SecondEnumMessage : IMessage, IShareEnum
+    {
+        public string Description { get; set; }
+
+        public MyEnum EnumValueToTest { get; set; }
+    }
+
+    public enum MyEnum
+    {
+        /// <summary>
+        /// Test value.
+        /// </summary>
+        ShouldNotGet,
+
+        /// <summary>
+        /// Test value.
+        /// </summary>
+        OtherValue,
+
+        /// <summary>
+        /// Test value.
+        /// </summary>
+        OtherOtherValue
+    }
+
+    public interface IShareEnum : IShare
+    {
+        MyEnum EnumValueToTest { get; set; }
     }
 
     public class CopyFileHandler : IHandleMessages<CopyFileMessage>, IShareFilePath
