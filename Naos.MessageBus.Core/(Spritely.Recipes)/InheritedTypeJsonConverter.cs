@@ -10,19 +10,19 @@
 
 namespace Spritely.Recipes
 {
-    using System;
-    using System.Collections.Concurrent;
-    using System.Collections.Generic;
-    using System.IO;
-    using System.Linq;
     using Newtonsoft.Json;
     using Newtonsoft.Json.Linq;
+    using System;
     using System.CodeDom.Compiler;
-    using System.Diagnostics.CodeAnalysis;
+    using System.Collections.Concurrent;
+    using System.Collections.Generic;
     using System.Diagnostics;
+    using System.Diagnostics.CodeAnalysis;
+    using System.IO;
+    using System.Linq;
 
     /// <summary>
-    ///     Inspired by: http://StackOverflow.com/a/17247339/1442829
+    ///     Significantly rewritten from original source at: http://StackOverflow.com/a/17247339/1442829
     ///     ---
     ///     This requires the base type it's used on to declare all of the types it might use...
     ///     ---
@@ -34,6 +34,7 @@ namespace Spritely.Recipes
     [ExcludeFromCodeCoverage]
     [GeneratedCode("Spritely.Recipes", "See package version number")]
 #endif
+
     internal partial class InheritedTypeJsonConverter : JsonConverter
     {
         private readonly ConcurrentDictionary<Type, IReadOnlyCollection<Type>> allChildTypes =
@@ -67,35 +68,44 @@ namespace Spritely.Recipes
         /// <inheritdoc />
         public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
         {
-            var jObject = JObject.Load(reader);
+            var jsonObject = JObject.Load(reader);
+            var sourceKeys = GetKeys(jsonObject).Select(k => k.Key).ToList();
 
             var childTypes = this.GetChildTypes(objectType);
 
-            foreach (var childType in childTypes)
+            var testObjects = childTypes.Select(Activator.CreateInstance)
+                .Select(instance => new { Instance = instance, SerializedInstance = Serialize(serializer, instance) })
+                .ToList();
+
+            var testKeys = testObjects.ToDictionary(
+                to => to,
+                to => GetKeys(to.SerializedInstance).Select(kvp => kvp.Key).ToList());
+
+            var target = testObjects.Select(to => new { TestObject = to, Keys = testKeys[to] })
+                .OrderBy(t => t.Keys.Count)
+                .FirstOrDefault(t => !sourceKeys.Except(t.Keys).Any()); // Any keys in source that are not in the target object?
+
+            if (target == null)
             {
-                var target = Activator.CreateInstance(childType);
-
-                JObject jTest;
-                using (var writer = new StringWriter())
-                {
-                    var jsonWriter = new JsonTextWriter(writer);
-
-                    serializer.Serialize(jsonWriter, target);
-                    var json = writer.ToString();
-                    jTest = JObject.Parse(json);
-                }
-
-                var jO = GetKeys(jObject).Select(k => k.Key).ToList();
-                var jT = GetKeys(jTest).Select(k => k.Key).ToList();
-
-                if (jO.Count == jT.Count && jO.Intersect(jT).Count() == jO.Count)
-                {
-                    serializer.Populate(jObject.CreateReader(), target);
-                    return target;
-                }
+                throw new JsonSerializationException(string.Format("Unable to deserialize to type {0}, value: {1}", objectType, jsonObject));
             }
 
-            throw new JsonSerializationException(string.Format("Unable to deserialize to type {0}, value: {1}", objectType, jObject));
+            serializer.Populate(jsonObject.CreateReader(), target.TestObject.Instance);
+
+            return target.TestObject.Instance;
+        }
+
+        private static JObject Serialize(JsonSerializer serializer, object instance)
+        {
+            using (var writer = new StringWriter())
+            {
+                var jsonWriter = new JsonTextWriter(writer);
+
+                serializer.Serialize(jsonWriter, instance);
+                var json = writer.ToString();
+                var parsed = JObject.Parse(json);
+                return parsed;
+            }
         }
 
         private static IEnumerable<KeyValuePair<string, JToken>> GetKeys(JObject jObject)
