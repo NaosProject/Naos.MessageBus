@@ -1,13 +1,13 @@
 ﻿{
-    "PersistenceConnectionString": "server=localhost",
-    "RoleSettings": [
+    "persistenceConnectionString": "server=localhost",
+    "roleSettings": [
         {
-            "ChannelsToMonitor": [ { "Name": "monkeys" }, { "Name": "pandas" } ],
-            "WorkerCount": 4,
-            "HandlerAssemblyPath": "I:\\Gets\\My\\Dlls\\Here",
-            "PollingTimeSpan": "00:01:00",
-            "MessageTypeMatchStrategy":  "NamespaceAndName",
-            "RetryCount": 0
+            "channelsToMonitor": [ { "Name": "monkeys" }, { "Name": "pandas" } ],
+            "workerCount": 4,
+            "handlerAssemblyPath": "I:\\Gets\\My\\Dlls\\Here",
+            "pollingTimeSpan": "00:01:00",
+            "messageTypeMatchStrategy":  "NamespaceAndName",
+            "retryCount": 0
         }
     ]
 }

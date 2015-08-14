@@ -1,8 +1,9 @@
 ﻿{
-    "PersistenceConnectionString": "server=localhost",
-    "RoleSettings": [
+    "persistenceConnectionString": "server=localhost",
+    "roleSettings": [
         {
-            "ServerName": "MyHangfireServer"
+            "serverName": "MyHangfireServer",
+            "runDashboard":  false
         }
     ]
 }
