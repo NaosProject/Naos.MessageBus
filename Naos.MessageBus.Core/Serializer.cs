@@ -19,7 +19,7 @@ namespace Naos.MessageBus.Core
     {
         private static readonly object SyncDefaultSettings = new object();
 
-        private static bool DefaultSettingsApplied = false;
+        private static bool defaultSettingsApplied = false;
 
         /// <summary>
         /// Gets the object from the JSON with specific settings needed for project objects.
@@ -79,14 +79,14 @@ namespace Naos.MessageBus.Core
 
         private static void SetupDefaultSettings()
         {
-            if (!DefaultSettingsApplied)
+            if (!defaultSettingsApplied)
             {
                 lock (SyncDefaultSettings)
                 {
-                    if (!DefaultSettingsApplied)
+                    if (!defaultSettingsApplied)
                     {
                         JsonConvert.DefaultSettings = () => JsonConfiguration.SerializerSettings;
-                        DefaultSettingsApplied = true;
+                        defaultSettingsApplied = true;
                     }
                 }
             }
