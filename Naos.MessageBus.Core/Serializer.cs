@@ -7,14 +7,8 @@
 namespace Naos.MessageBus.Core
 {
     using System;
-    using System.Collections.Generic;
-    using System.Linq;
-    using System.Runtime.Serialization;
 
     using Newtonsoft.Json;
-    using Newtonsoft.Json.Converters;
-    using Newtonsoft.Json.Linq;
-    using Newtonsoft.Json.Serialization;
 
     using Spritely.Recipes;
 
@@ -23,6 +17,10 @@ namespace Naos.MessageBus.Core
     /// </summary>
     public static class Serializer
     {
+        private static readonly object SyncDefaultSettings = new object();
+
+        private static bool DefaultSettingsApplied = false;
+
         /// <summary>
         /// Gets the object from the JSON with specific settings needed for project objects.
         /// </summary>
@@ -36,7 +34,7 @@ namespace Naos.MessageBus.Core
                 return null;
             }
 
-            JsonConvert.DefaultSettings = () => JsonConfiguration.SerializerSettings;
+            SetupDefaultSettings();
 
             var ret = JsonConvert.DeserializeObject<T>(json);
 
@@ -56,7 +54,7 @@ namespace Naos.MessageBus.Core
                 return null;
             }
 
-            JsonConvert.DefaultSettings = () => JsonConfiguration.SerializerSettings;
+            SetupDefaultSettings();
 
             var ret = JsonConvert.DeserializeObject(json, type);
 
@@ -72,11 +70,26 @@ namespace Naos.MessageBus.Core
         /// <returns>String of JSON.</returns>
         public static string Serialize<T>(T objectToSerialize, bool indented = true) where T : class
         {
-            JsonConvert.DefaultSettings = () => JsonConfiguration.SerializerSettings;
+            SetupDefaultSettings();
 
             var ret = JsonConvert.SerializeObject(objectToSerialize);
 
             return ret;
+        }
+
+        private static void SetupDefaultSettings()
+        {
+            if (!DefaultSettingsApplied)
+            {
+                lock (SyncDefaultSettings)
+                {
+                    if (!DefaultSettingsApplied)
+                    {
+                        JsonConvert.DefaultSettings = () => JsonConfiguration.SerializerSettings;
+                        DefaultSettingsApplied = true;
+                    }
+                }
+            }
         }
     }
 }
