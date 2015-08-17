@@ -85,7 +85,7 @@ namespace Naos.MessageBus.Core
                 {
                     if (!defaultSettingsApplied)
                     {
-                        JsonConvert.DefaultSettings = () => JsonConfiguration.SerializerSettings;
+                        JsonConvert.DefaultSettings = () => JsonConfiguration.DefaultSerializerSettings;
                         defaultSettingsApplied = true;
                     }
                 }
