@@ -32,44 +32,25 @@ namespace Spritely.Recipes
     [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
     [System.CodeDom.Compiler.GeneratedCode("Spritely.Recipes", "See package version number")]
 #endif
+    [AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct | AttributeTargets.Interface)]
+    internal partial class SerializeMostInheritedTypeAttribute : Attribute
+    {
+    }
+
     internal partial class InheritedTypeJsonConverter : JsonConverter
     {
         private readonly ConcurrentDictionary<Type, IReadOnlyCollection<Type>> allChildTypes =
             new ConcurrentDictionary<Type, IReadOnlyCollection<Type>>();
 
-        private IEnumerable<Type> GetChildTypes(Type type)
-        {
-            if (!this.allChildTypes.ContainsKey(type))
-            {
-                var childTypes = AppDomain.CurrentDomain.GetAssemblies()
-                    .Where(a => !a.FullName.Contains("Microsoft.GeneratedCode"))
-                    .SelectMany(
-                        a =>
-                        {
-                            try
-                            {
-                                return a.GetTypes();
-                            }
-                            catch (ReflectionTypeLoadException)
-                            {
-                                return new Type[] { };
-                            }
-                        })
-                    .Where(
-                        t =>
-                            t != null && t.IsClass && !t.IsAbstract && t != type && type.IsAssignableFrom(t) &&
-                            t.GetConstructor(Type.EmptyTypes) != null)
-                    .ToList();
-
-                this.allChildTypes.AddOrUpdate(type, t => childTypes, (t, cts) => childTypes);
-            }
-
-            return this.allChildTypes[type];
-        }
-
         /// <inheritdoc />
         public override bool CanConvert(Type objectType)
         {
+            var attributes = Attribute.GetCustomAttributes(objectType, typeof(SerializeMostInheritedTypeAttribute));
+            if (!attributes.Any())
+            {
+                return false;
+            }
+
             var childTypes = this.GetChildTypes(objectType);
 
             return childTypes.Any();
@@ -103,6 +84,13 @@ namespace Spritely.Recipes
             serializer.Populate(jsonObject.CreateReader(), target.TestObject.Instance);
 
             return target.TestObject.Instance;
+        }
+
+        /// <inheritdoc />
+        public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
+        {
+            var jsonObject = JObject.FromObject(value, serializer);
+            jsonObject.WriteTo(writer);
         }
 
         private static JObject Serialize(JsonSerializer serializer, object instance)
@@ -162,11 +150,34 @@ namespace Spritely.Recipes
             return list;
         }
 
-        /// <inheritdoc />
-        public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
+        private IEnumerable<Type> GetChildTypes(Type type)
         {
-            var jsonObject = JObject.FromObject(value, serializer);
-            jsonObject.WriteTo(writer);
+            if (!this.allChildTypes.ContainsKey(type))
+            {
+                var childTypes = AppDomain.CurrentDomain.GetAssemblies()
+                    .Where(a => !a.FullName.Contains("Microsoft.GeneratedCode"))
+                    .SelectMany(
+                        a =>
+                        {
+                            try
+                            {
+                                return a.GetTypes();
+                            }
+                            catch (ReflectionTypeLoadException)
+                            {
+                                return new Type[] { };
+                            }
+                        })
+                    .Where(
+                        t =>
+                            t != null && t.IsClass && !t.IsAbstract && !t.IsGenericTypeDefinition && t != type && type.IsAssignableFrom(t) &&
+                            t.GetConstructor(Type.EmptyTypes) != null)
+                    .ToList();
+
+                this.allChildTypes.AddOrUpdate(type, t => childTypes, (t, cts) => childTypes);
+            }
+
+            return this.allChildTypes[type];
         }
     }
 }
