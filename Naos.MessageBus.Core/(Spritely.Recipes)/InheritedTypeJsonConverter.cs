@@ -13,6 +13,8 @@ namespace Spritely.Recipes
     using System;
     using System.Collections.Concurrent;
     using System.Collections.Generic;
+    using System.ComponentModel;
+    using System.Globalization;
     using System.IO;
     using System.Linq;
     using System.Reflection;
@@ -32,11 +34,6 @@ namespace Spritely.Recipes
     [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
     [System.CodeDom.Compiler.GeneratedCode("Spritely.Recipes", "See package version number")]
 #endif
-    [AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct | AttributeTargets.Interface)]
-    internal partial class SerializeMostInheritedTypeAttribute : Attribute
-    {
-    }
-
     internal partial class InheritedTypeJsonConverter : JsonConverter
     {
         private readonly ConcurrentDictionary<Type, IReadOnlyCollection<Type>> allChildTypes =
@@ -45,7 +42,7 @@ namespace Spritely.Recipes
         /// <inheritdoc />
         public override bool CanConvert(Type objectType)
         {
-            var attributes = Attribute.GetCustomAttributes(objectType, typeof(SerializeMostInheritedTypeAttribute));
+            var attributes = Attribute.GetCustomAttributes(objectType, typeof(BindableAttribute));
             if (!attributes.Any())
             {
                 return false;
@@ -78,7 +75,8 @@ namespace Spritely.Recipes
 
             if (target == null)
             {
-                throw new JsonSerializationException(string.Format("Unable to deserialize to type {0}, value: {1}", objectType, jsonObject));
+                throw new JsonSerializationException(
+                    string.Format(CultureInfo.InvariantCulture, "Unable to deserialize to type {0}, value: {1}", objectType, jsonObject));
             }
 
             serializer.Populate(jsonObject.CreateReader(), target.TestObject.Instance);
@@ -129,7 +127,7 @@ namespace Spritely.Recipes
 
             serializer.Converters.ForEach(jsonSerializer.Converters.Add);
 
-            using (var writer = new StringWriter())
+            using (var writer = new StringWriter(CultureInfo.InvariantCulture))
             {
                 jsonSerializer.Serialize(writer, instance);
                 var json = writer.ToString();

@@ -8,6 +8,7 @@ namespace Naos.MessageBus.HandlingContract
 {
     using System;
     using System.Collections.Generic;
+    using System.ComponentModel;
     using System.Runtime.Serialization;
 
     using Naos.MessageBus.DataContract;
@@ -17,6 +18,7 @@ namespace Naos.MessageBus.HandlingContract
     /// </summary>
     [KnownType(typeof(MessageBusHarnessRoleSettingsHost))]
     [KnownType(typeof(MessageBusHarnessRoleSettingsExecutor))]
+    [Bindable(BindableSupport.Default)]
     public abstract class MessageBusHarnessRoleSettingsBase
     {
     }
