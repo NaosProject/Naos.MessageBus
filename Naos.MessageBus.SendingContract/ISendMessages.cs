@@ -6,6 +6,7 @@
 
 namespace Naos.MessageBus.SendingContract
 {
+    using Naos.Cron;
     using Naos.MessageBus.DataContract;
 
     /// <summary>
@@ -32,9 +33,16 @@ namespace Naos.MessageBus.SendingContract
         /// Send a parcel (the deconstructed form of a message sequence).
         /// </summary>
         /// <param name="parcel">Parcel to send.</param>
+        /// <returns>ID of the scheduled message.</returns>
+        TrackingCode Send(Parcel parcel);
+
+        /// <summary>
+        /// Send a parcel (the deconstructed form of a message sequence).
+        /// </summary>
+        /// <param name="parcel">Parcel to send.</param>
         /// <param name="recurringSchedule">Schedule the message should recur on.</param>
         /// <returns>ID of the scheduled message.</returns>
-        TrackingCode Send(Parcel parcel, Schedules recurringSchedule);
+        TrackingCode Send(Parcel parcel, ScheduleBase recurringSchedule);
 
         /// <summary>
         /// Sends a message to recur on a schedule.
@@ -43,7 +51,7 @@ namespace Naos.MessageBus.SendingContract
         /// <param name="channel">Channel to send message to.</param>
         /// <param name="recurringSchedule">Schedule the message should recur on.</param>
         /// <returns>ID of the scheduled message.</returns>
-        TrackingCode SendRecurring(IMessage message, Channel channel, Schedules recurringSchedule);
+        TrackingCode SendRecurring(IMessage message, Channel channel, ScheduleBase recurringSchedule);
 
         /// <summary>
         /// Send an ordered set of messages to recur on a schedule.
@@ -51,6 +59,6 @@ namespace Naos.MessageBus.SendingContract
         /// <param name="messageSequence">Message sequence to send.</param>
         /// <param name="recurringSchedule">Schedule the message should recur on.</param>
         /// <returns>ID of the scheduled message.</returns>
-        TrackingCode SendRecurring(MessageSequence messageSequence, Schedules recurringSchedule);
+        TrackingCode SendRecurring(MessageSequence messageSequence, ScheduleBase recurringSchedule);
     }
 }

@@ -10,10 +10,12 @@ namespace Naos.MessageBus.Hangfire.Sender
     using System.Collections.Generic;
     using System.Linq;
     using System.Linq.Expressions;
+    using System.Text.RegularExpressions;
 
     using global::Hangfire;
     using global::Hangfire.States;
 
+    using Naos.Cron;
     using Naos.MessageBus.Core;
     using Naos.MessageBus.DataContract;
     using Naos.MessageBus.HandlingContract;
@@ -22,6 +24,10 @@ namespace Naos.MessageBus.Hangfire.Sender
     /// <inheritdoc />
     public class MessageSender : ISendMessages
     {
+        private const int HangfireQueueNameMaxLength = 20;
+
+        private const string HangfireQueueNameAllowedRegex = "^[a-z0-9_]*$";
+
         /// <summary>
         /// Initializes a new instance of the <see cref="MessageSender"/> class.
         /// </summary>
@@ -47,17 +53,17 @@ namespace Naos.MessageBus.Hangfire.Sender
                                            }
                                };
 
-            return this.SendRecurring(messageSequence, Schedules.None);
+            return this.SendRecurring(messageSequence, new NullSchedule());
         }
 
         /// <inheritdoc />
         public TrackingCode Send(MessageSequence messageSequence)
         {
-            return this.SendRecurring(messageSequence, Schedules.None);
+            return this.SendRecurring(messageSequence, new NullSchedule());
         }
 
         /// <inheritdoc />
-        public TrackingCode SendRecurring(IMessage message, Channel channel, Schedules recurringSchedule)
+        public TrackingCode SendRecurring(IMessage message, Channel channel, ScheduleBase recurringSchedule)
         {
             var messageSequence = new MessageSequence
             {
@@ -76,7 +82,7 @@ namespace Naos.MessageBus.Hangfire.Sender
         }
 
         /// <inheritdoc />
-        public TrackingCode SendRecurring(MessageSequence messageSequence, Schedules recurringSchedule)
+        public TrackingCode SendRecurring(MessageSequence messageSequence, ScheduleBase recurringSchedule)
         {
             var envelopesFromSequence = messageSequence.ChanneledMessages.Select(
                 channeledMessage =>
@@ -104,10 +110,18 @@ namespace Naos.MessageBus.Hangfire.Sender
         }
 
         /// <inheritdoc />
-        public TrackingCode Send(Parcel parcel, Schedules recurringSchedule)
+        public TrackingCode Send(Parcel parcel)
+        {
+            return this.Send(parcel, new NullSchedule());
+        }
+
+        /// <inheritdoc />
+        public TrackingCode Send(Parcel parcel, ScheduleBase recurringSchedule)
         {
             var firstEnvelope = parcel.Envelopes.First();
             var firstEnvelopeChannel = firstEnvelope.Channel;
+            ThrowIfInvalidChannel(firstEnvelopeChannel);
+
             var firstEnvelopeDescription = firstEnvelope.Description;
 
             var displayName = "Sequence " + parcel.Id + " - " + firstEnvelopeDescription;
@@ -124,31 +138,34 @@ namespace Naos.MessageBus.Hangfire.Sender
                     methodCall,
                     state);
 
-            if (recurringSchedule != Schedules.None)
+            if (recurringSchedule.GetType() != typeof(NullSchedule))
             {
-                var cronExpression = GetCronExpressionFromSchedule(recurringSchedule);
+                Func<string> cronExpression = recurringSchedule.ToCronExpression;
                 RecurringJob.AddOrUpdate(id, methodCall, cronExpression);
             }
 
             return new TrackingCode { Code = id };
         }
 
-        private static Func<string> GetCronExpressionFromSchedule(Schedules schedule)
+        /// <summary>
+        /// Throws an exception if the channel is invalid in its structure.
+        /// </summary>
+        /// <param name="channelToTest">The channel to examine.</param>
+        public static void ThrowIfInvalidChannel(Channel channelToTest)
         {
-            switch (schedule)
+            if (channelToTest.Name.Length > HangfireQueueNameMaxLength)
             {
-                case Schedules.EveryDayMidnightUtc:
-                    return Cron.Daily;
-                case Schedules.EveryHourFirstMinute:
-                    return Cron.Hourly;
-                case Schedules.EveryMinute:
-                    return Cron.Minutely;
-                case Schedules.EveryMondayMidnightUtc:
-                    return Cron.Weekly;
-                case Schedules.EveryJanuaryFirstMidnightUtc:
-                    return Cron.Yearly;
-                default:
-                    throw new NotSupportedException("Unsupported Schedule: " + schedule);
+                throw new ArgumentException(
+                    "Cannot use a channel name longer than " + HangfireQueueNameMaxLength
+                    + " characters.  The supplied channel name: " + channelToTest.Name + " is "
+                    + channelToTest.Name.Length + " characters long.");
+            }
+
+            if (!Regex.IsMatch(channelToTest.Name, HangfireQueueNameAllowedRegex, RegexOptions.None))
+            {
+                throw new ArgumentException(
+                    "Channel name must be lowercase alphanumeric with underscores ONLY.  The supplied channel name: "
+                    + channelToTest.Name);
             }
         }
     }
