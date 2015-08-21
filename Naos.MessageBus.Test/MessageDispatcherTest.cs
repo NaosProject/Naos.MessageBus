@@ -38,8 +38,8 @@ namespace Naos.MessageBus.Test
             Func<ISendMessages> senderConstructor = () =>
             {
                 dynamic dynamicObject = new ExpandoObject();
-                dynamicObject.Send = Return<TrackingCode>.Arguments<Parcel, ScheduleBase>(
-                    (parcel, schedules) =>
+                dynamicObject.Send = Return<TrackingCode>.Arguments<Parcel>(
+                    (parcel) =>
                     {
                         trackingSends.Add(parcel);
                         return null;
@@ -105,8 +105,15 @@ namespace Naos.MessageBus.Test
             Func<ISendMessages> senderConstructor = () =>
             {
                 dynamic dynamicObject = new ExpandoObject();
-                dynamicObject.Send = Return<TrackingCode>.Arguments<Parcel, ScheduleBase>(
-                    (parcel, schedules) =>
+                dynamicObject.SendRecurring = Return<TrackingCode>.Arguments<Parcel, ScheduleBase>(
+                    (parcel, schedule) =>
+                        {
+                            trackingSends.Add(parcel);
+                            return null;
+                        });
+
+                dynamicObject.Send = Return<TrackingCode>.Arguments<Parcel>(
+                    (parcel) =>
                         {
                             trackingSends.Add(parcel);
                             return null;

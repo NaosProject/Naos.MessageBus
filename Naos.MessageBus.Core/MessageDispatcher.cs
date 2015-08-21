@@ -66,7 +66,7 @@ namespace Naos.MessageBus.Core
                 var rerouteMessageSender = this.simpleInjectorContainer.GetInstance<ISendMessages>();
 
                 // any schedule should already be set and NOT reset...
-                rerouteMessageSender.Send(parcel, new NullSchedule());
+                rerouteMessageSender.Send(parcel);
 
                 return;
             }

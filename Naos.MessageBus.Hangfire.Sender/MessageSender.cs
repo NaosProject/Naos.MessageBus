@@ -106,17 +106,17 @@ namespace Naos.MessageBus.Hangfire.Sender
 
             var parcel = new Parcel { Id = messageSequence.Id, Envelopes = envelopes };
 
-            return this.Send(parcel, recurringSchedule);
+            return this.SendRecurring(parcel, recurringSchedule);
         }
 
         /// <inheritdoc />
         public TrackingCode Send(Parcel parcel)
         {
-            return this.Send(parcel, new NullSchedule());
+            return this.SendRecurring(parcel, new NullSchedule());
         }
 
         /// <inheritdoc />
-        public TrackingCode Send(Parcel parcel, ScheduleBase recurringSchedule)
+        public TrackingCode SendRecurring(Parcel parcel, ScheduleBase recurringSchedule)
         {
             var firstEnvelope = parcel.Envelopes.First();
             var firstEnvelopeChannel = firstEnvelope.Channel;
