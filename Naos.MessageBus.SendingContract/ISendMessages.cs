@@ -42,7 +42,7 @@ namespace Naos.MessageBus.SendingContract
         /// <param name="parcel">Parcel to send.</param>
         /// <param name="recurringSchedule">Schedule the message should recur on.</param>
         /// <returns>ID of the scheduled message.</returns>
-        TrackingCode Send(Parcel parcel, ScheduleBase recurringSchedule);
+        TrackingCode SendRecurring(Parcel parcel, ScheduleBase recurringSchedule);
 
         /// <summary>
         /// Sends a message to recur on a schedule.
