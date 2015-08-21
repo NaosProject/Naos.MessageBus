@@ -13,6 +13,7 @@ namespace Naos.MessageBus.Core
 
     using Its.Log.Instrumentation;
 
+    using Naos.Cron;
     using Naos.MessageBus.DataContract;
     using Naos.MessageBus.DataContract.Exceptions;
     using Naos.MessageBus.HandlingContract;
@@ -65,7 +66,7 @@ namespace Naos.MessageBus.Core
                 var rerouteMessageSender = this.simpleInjectorContainer.GetInstance<ISendMessages>();
 
                 // any schedule should already be set and NOT reset...
-                rerouteMessageSender.Send(parcel, Schedules.None);
+                rerouteMessageSender.Send(parcel, new NullSchedule());
 
                 return;
             }

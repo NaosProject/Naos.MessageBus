@@ -10,11 +10,11 @@ namespace Naos.MessageBus.Test
     using System.Collections.Concurrent;
     using System.Collections.Generic;
     using System.Dynamic;
-    using System.IO;
 
     using ImpromptuInterface;
     using ImpromptuInterface.Dynamic;
 
+    using Naos.Cron;
     using Naos.MessageBus.Core;
     using Naos.MessageBus.DataContract;
     using Naos.MessageBus.DataContract.Exceptions;
@@ -38,7 +38,7 @@ namespace Naos.MessageBus.Test
             Func<ISendMessages> senderConstructor = () =>
             {
                 dynamic dynamicObject = new ExpandoObject();
-                dynamicObject.Send = Return<TrackingCode>.Arguments<Parcel, Schedules>(
+                dynamicObject.Send = Return<TrackingCode>.Arguments<Parcel, ScheduleBase>(
                     (parcel, schedules) =>
                     {
                         trackingSends.Add(parcel);
@@ -105,7 +105,7 @@ namespace Naos.MessageBus.Test
             Func<ISendMessages> senderConstructor = () =>
             {
                 dynamic dynamicObject = new ExpandoObject();
-                dynamicObject.Send = Return<TrackingCode>.Arguments<Parcel, Schedules>(
+                dynamicObject.Send = Return<TrackingCode>.Arguments<Parcel, ScheduleBase>(
                     (parcel, schedules) =>
                         {
                             trackingSends.Add(parcel);
