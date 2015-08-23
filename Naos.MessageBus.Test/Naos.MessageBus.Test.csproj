@@ -72,6 +72,7 @@
   <ItemGroup>
     <None Include=".config\Executor\MessageBusHarnessSettings.json" />
     <None Include=".config\Host\MessageBusHarnessSettings.json" />
+    <Compile Include="ChannelTests.cs" />
     <Compile Include="MessageSenderTest.cs" />
     <Compile Include="SharedPropertyApplicatorTest.cs" />
     <Compile Include="MessageDispatcherTest.cs" />

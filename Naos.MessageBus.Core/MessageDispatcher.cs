@@ -13,7 +13,6 @@ namespace Naos.MessageBus.Core
 
     using Its.Log.Instrumentation;
 
-    using Naos.Cron;
     using Naos.MessageBus.DataContract;
     using Naos.MessageBus.DataContract.Exceptions;
     using Naos.MessageBus.HandlingContract;
