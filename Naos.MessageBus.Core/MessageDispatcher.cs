@@ -29,7 +29,7 @@ namespace Naos.MessageBus.Core
 
         private readonly ICollection<Channel> servicedChannels;
 
-        private readonly MessageTypeMatchStrategy messageTypeMatchStrategy;
+        private readonly TypeMatchStrategy typeMatchStrategy;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="MessageDispatcher"/> class.
@@ -37,13 +37,13 @@ namespace Naos.MessageBus.Core
         /// <param name="simpleInjectorContainer">DI container to use for looking up handlers.</param>
         /// <param name="handlerSharedStateMap">Initial state dictionary for handlers the require state to be seeded.</param>
         /// <param name="servicedChannels">Channels being services by this dispatcher.</param>
-        /// <param name="messageTypeMatchStrategy">Message type match strategy for use when selecting a handler.</param>
-        public MessageDispatcher(Container simpleInjectorContainer, ConcurrentDictionary<Type, object> handlerSharedStateMap, ICollection<Channel> servicedChannels, MessageTypeMatchStrategy messageTypeMatchStrategy)
+        /// <param name="typeMatchStrategy">Message type match strategy for use when selecting a handler.</param>
+        public MessageDispatcher(Container simpleInjectorContainer, ConcurrentDictionary<Type, object> handlerSharedStateMap, ICollection<Channel> servicedChannels, TypeMatchStrategy typeMatchStrategy)
         {
             this.simpleInjectorContainer = simpleInjectorContainer;
             this.handlerSharedStateMap = handlerSharedStateMap;
             this.servicedChannels = servicedChannels;
-            this.messageTypeMatchStrategy = messageTypeMatchStrategy;
+            this.typeMatchStrategy = typeMatchStrategy;
         }
 
         /// <inheritdoc />
@@ -78,18 +78,20 @@ namespace Naos.MessageBus.Core
                             .ToList()
                             .GetTypeMapsOfImplementersOfGenericType(typeof(IHandleMessages<>));
 
+                    var typeComparer = new TypeComparer(this.typeMatchStrategy);
                     foreach (var registeredHandler in registeredHandlers)
                     {
                         var messageTypeFromRegistered = registeredHandler.InterfaceType.GenericTypeArguments.Single();
-                        if (this.messageTypeMatchStrategy == MessageTypeMatchStrategy.NamespaceAndName
-                            && messageTypeFromRegistered.Namespace == typeNamespace
-                            && messageTypeFromRegistered.Name == typeName)
-                        {
-                            return messageTypeFromRegistered;
-                        }
 
-                        if (this.messageTypeMatchStrategy == MessageTypeMatchStrategy.AssemblyQualifiedName
-                            && messageTypeFromRegistered.AssemblyQualifiedName == typeAssemblyQualifiedName)
+                        var handlerMessageTypeMatches = typeComparer.Equals(
+                            messageTypeFromRegistered.Namespace,
+                            messageTypeFromRegistered.Name,
+                            messageTypeFromRegistered.AssemblyQualifiedName,
+                            typeNamespace,
+                            typeName,
+                            typeAssemblyQualifiedName);
+
+                        if (handlerMessageTypeMatches)
                         {
                             return messageTypeFromRegistered;
                         }
@@ -263,7 +265,10 @@ namespace Naos.MessageBus.Core
                                     "Discovered need to share, sharing applicable properties to remaining messages in sequence.");
 
                                 // CHANGES STATE: this will pass IShare properties from the handler to all messages in the sequence before re-sending the trimmed sequence
-                                SharedPropertyApplicator.ApplySharedProperties(handlerAsShare, messageToShareTo);
+                                SharedPropertyApplicator.ApplySharedProperties(
+                                    this.typeMatchStrategy,
+                                    handlerAsShare,
+                                    messageToShareTo);
                             }
                         }
 

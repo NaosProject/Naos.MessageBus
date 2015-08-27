@@ -55,7 +55,7 @@ namespace Naos.MessageBus.Test
                 container,
                 new ConcurrentDictionary<Type, object>(),
                 new[] { monitoredChannel },
-                MessageTypeMatchStrategy.NamespaceAndName);
+                TypeMatchStrategy.NamespaceAndName);
 
             var validParcel = new Parcel()
                              {
@@ -129,7 +129,7 @@ namespace Naos.MessageBus.Test
                 container,
                 new ConcurrentDictionary<Type, object>(),
                 new[] { monitoredChannel },
-                MessageTypeMatchStrategy.AssemblyQualifiedName);
+                TypeMatchStrategy.AssemblyQualifiedName);
 
             var validParcel = new Parcel()
             {
@@ -172,7 +172,7 @@ namespace Naos.MessageBus.Test
         [Fact]
         public static void Dispatch_NullParcel_Throws()
         {
-            Action testCode = () => new MessageDispatcher(new Container(), new ConcurrentDictionary<Type, object>(), new List<Channel>(), MessageTypeMatchStrategy.NamespaceAndName).Dispatch("Name", null);
+            Action testCode = () => new MessageDispatcher(new Container(), new ConcurrentDictionary<Type, object>(), new List<Channel>(), TypeMatchStrategy.NamespaceAndName).Dispatch("Name", null);
             var ex = Assert.Throws<DispatchException>(testCode);
             Assert.Equal("Parcel cannot be null", ex.Message);
         }
@@ -180,7 +180,7 @@ namespace Naos.MessageBus.Test
         [Fact]
         public static void Dispatch_NullEnvelopesInParcel_Throws()
         {
-            Action testCode = () => new MessageDispatcher(new Container(), new ConcurrentDictionary<Type, object>(), new List<Channel>(), MessageTypeMatchStrategy.NamespaceAndName).Dispatch("Name", new Parcel());
+            Action testCode = () => new MessageDispatcher(new Container(), new ConcurrentDictionary<Type, object>(), new List<Channel>(), TypeMatchStrategy.NamespaceAndName).Dispatch("Name", new Parcel());
             var ex = Assert.Throws<DispatchException>(testCode);
             Assert.Equal("Parcel must contain envelopes", ex.Message);
         }
@@ -189,7 +189,7 @@ namespace Naos.MessageBus.Test
         public static void Dispatch_NoEnvelopesInParcel_Throws()
         {
             Action testCode =
-                () => new MessageDispatcher(new Container(), new ConcurrentDictionary<Type, object>(), new List<Channel>(), MessageTypeMatchStrategy.NamespaceAndName).Dispatch("Name", new Parcel { Envelopes = new List<Envelope>() });
+                () => new MessageDispatcher(new Container(), new ConcurrentDictionary<Type, object>(), new List<Channel>(), TypeMatchStrategy.NamespaceAndName).Dispatch("Name", new Parcel { Envelopes = new List<Envelope>() });
             var ex = Assert.Throws<DispatchException>(testCode);
             Assert.Equal("Parcel must contain envelopes", ex.Message);
         }
@@ -198,7 +198,7 @@ namespace Naos.MessageBus.Test
         public static void Dispatch_EnvelopeMissingTypeCompletely_Throws()
         {
             Action testCode =
-                () => new MessageDispatcher(new Container(), new ConcurrentDictionary<Type, object>(), new[] { new Channel { Name = "Channel" } }, MessageTypeMatchStrategy.NamespaceAndName).Dispatch("Name", new Parcel { Envelopes = new[] { new Envelope { Channel = new Channel { Name = "Channel" } } } });
+                () => new MessageDispatcher(new Container(), new ConcurrentDictionary<Type, object>(), new[] { new Channel { Name = "Channel" } }, TypeMatchStrategy.NamespaceAndName).Dispatch("Name", new Parcel { Envelopes = new[] { new Envelope { Channel = new Channel { Name = "Channel" } } } });
             var ex = Assert.Throws<DispatchException>(testCode);
             Assert.Equal("Message type not specified in envelope", ex.Message);
         }
@@ -207,7 +207,7 @@ namespace Naos.MessageBus.Test
         public static void Dispatch_EnvelopeMissingTypeNamespace_Throws()
         {
             Action testCode =
-                () => new MessageDispatcher(new Container(), new ConcurrentDictionary<Type, object>(), new[] { new Channel { Name = "Channel" } }, MessageTypeMatchStrategy.NamespaceAndName).Dispatch("Name", new Parcel { Envelopes = new[] { new Envelope { MessageTypeName = "Name", Channel = new Channel { Name = "Channel" } } } });
+                () => new MessageDispatcher(new Container(), new ConcurrentDictionary<Type, object>(), new[] { new Channel { Name = "Channel" } }, TypeMatchStrategy.NamespaceAndName).Dispatch("Name", new Parcel { Envelopes = new[] { new Envelope { MessageTypeName = "Name", Channel = new Channel { Name = "Channel" } } } });
             var ex = Assert.Throws<DispatchException>(testCode);
             Assert.Equal("Message type not specified in envelope", ex.Message);
         }
@@ -216,7 +216,7 @@ namespace Naos.MessageBus.Test
         public static void Dispatch_EnvelopeMissingTypeName_Throws()
         {
             Action testCode =
-                () => new MessageDispatcher(new Container(), new ConcurrentDictionary<Type, object>(), new[] { new Channel { Name = "Channel" } }, MessageTypeMatchStrategy.NamespaceAndName).Dispatch("Name", new Parcel { Envelopes = new[] { new Envelope { MessageTypeNamespace = "Namespace", Channel = new Channel { Name = "Channel" } } } });
+                () => new MessageDispatcher(new Container(), new ConcurrentDictionary<Type, object>(), new[] { new Channel { Name = "Channel" } }, TypeMatchStrategy.NamespaceAndName).Dispatch("Name", new Parcel { Envelopes = new[] { new Envelope { MessageTypeNamespace = "Namespace", Channel = new Channel { Name = "Channel" } } } });
             var ex = Assert.Throws<DispatchException>(testCode);
             Assert.Equal("Message type not specified in envelope", ex.Message);
         }
@@ -232,7 +232,7 @@ namespace Naos.MessageBus.Test
                         container,
                         new ConcurrentDictionary<Type, object>(),
                         new[] { new Channel { Name = "Channel" } },
-                        MessageTypeMatchStrategy.NamespaceAndName).Dispatch(
+                        TypeMatchStrategy.NamespaceAndName).Dispatch(
                             "Name",
                             new Parcel
                                 {
@@ -268,7 +268,7 @@ namespace Naos.MessageBus.Test
                               new Container(), 
                               new ConcurrentDictionary<Type, object>(), 
                               new[] { channel }, 
-                              MessageTypeMatchStrategy.NamespaceAndName)
+                              TypeMatchStrategy.NamespaceAndName)
                               .Dispatch(
                                   "Name",
                                   new Parcel
@@ -302,7 +302,7 @@ namespace Naos.MessageBus.Test
             var messageJson = Serializer.Serialize(message);
 
             var channel = new Channel { Name = "fakeChannel" };
-            var messageDispatcher = new MessageDispatcher(simpleInjectorContainer, new ConcurrentDictionary<Type, object>(), new[] { channel }, MessageTypeMatchStrategy.NamespaceAndName);
+            var messageDispatcher = new MessageDispatcher(simpleInjectorContainer, new ConcurrentDictionary<Type, object>(), new[] { channel }, TypeMatchStrategy.NamespaceAndName);
             var parcel = new Parcel
                              {
                                  Envelopes =
@@ -338,7 +338,7 @@ namespace Naos.MessageBus.Test
             var messageJson = Serializer.Serialize(message);
 
             var channel = new Channel { Name = "fakeChannel" };
-            var messageDispatcher = new MessageDispatcher(simpleInjectorContainer, new ConcurrentDictionary<Type, object>(), new[] { channel }, MessageTypeMatchStrategy.NamespaceAndName);
+            var messageDispatcher = new MessageDispatcher(simpleInjectorContainer, new ConcurrentDictionary<Type, object>(), new[] { channel }, TypeMatchStrategy.NamespaceAndName);
             var parcel = new Parcel
                              {
                                  Envelopes =
@@ -387,7 +387,7 @@ namespace Naos.MessageBus.Test
                 simpleInjectorContainer,
                 new ConcurrentDictionary<Type, object>(),
                 new[] { channel },
-                MessageTypeMatchStrategy.NamespaceAndName);
+                TypeMatchStrategy.NamespaceAndName);
 
             var parcel = new Parcel
                              {

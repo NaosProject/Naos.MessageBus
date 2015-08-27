@@ -6,7 +6,7 @@
             "workerCount": 4,
             "handlerAssemblyPath": "I:\\Gets\\My\\Dlls\\Here",
             "pollingTimeSpan": "00:01:00",
-            "messageTypeMatchStrategy":  "NamespaceAndName",
+            "typeMatchStrategy":  "namespaceAndName",
             "retryCount": 0
         }
     ]

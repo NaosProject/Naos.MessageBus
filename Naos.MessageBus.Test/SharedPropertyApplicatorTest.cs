@@ -24,7 +24,7 @@ namespace Naos.MessageBus.Test
         {
             Action testCode = () =>
             {
-                SharedPropertyApplicator.ApplySharedProperties(null, new CopyFileMessage());
+                SharedPropertyApplicator.ApplySharedProperties(TypeMatchStrategy.NamespaceAndName, null, new CopyFileMessage());
             };
             var ex = Assert.Throws<SharePropertyException>(testCode);
             Assert.Equal("Neither source nor target can be null", ex.Message);
@@ -35,7 +35,7 @@ namespace Naos.MessageBus.Test
         {
             Action testCode = () =>
             {
-                SharedPropertyApplicator.ApplySharedProperties(null, new CopyFileMessage());
+                SharedPropertyApplicator.ApplySharedProperties(TypeMatchStrategy.NamespaceAndName, null, new CopyFileMessage());
             };
             var ex = Assert.Throws<SharePropertyException>(testCode);
             Assert.Equal("Neither source nor target can be null", ex.Message);
@@ -48,7 +48,7 @@ namespace Naos.MessageBus.Test
             var testMessage = new DeleteFileMessage();
 
             Assert.NotEqual(testHandler.FilePath, testMessage.FilePath);
-            SharedPropertyApplicator.ApplySharedProperties(testHandler, testMessage);
+            SharedPropertyApplicator.ApplySharedProperties(TypeMatchStrategy.NamespaceAndName, testHandler, testMessage);
             Assert.Equal(testHandler.FilePath, testMessage.FilePath);
         }
 
@@ -59,7 +59,7 @@ namespace Naos.MessageBus.Test
             var testMessage = new SecondEnumMessage();
 
             Assert.NotEqual(testHandler.EnumValueToTest, testMessage.EnumValueToTest);
-            SharedPropertyApplicator.ApplySharedProperties(testHandler, testMessage);
+            SharedPropertyApplicator.ApplySharedProperties(TypeMatchStrategy.NamespaceAndName, testHandler, testMessage);
             Assert.Equal(testHandler.EnumValueToTest, testMessage.EnumValueToTest);
         }
     }

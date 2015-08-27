@@ -10,6 +10,7 @@ namespace Naos.MessageBus.Core
 
     using Naos.MessageBus.DataContract;
     using Naos.MessageBus.DataContract.Exceptions;
+    using Naos.MessageBus.HandlingContract;
 
     /// <summary>
     /// Code to handle merging IShare properties.
@@ -19,9 +20,10 @@ namespace Naos.MessageBus.Core
         /// <summary>
         /// Takes any matching have properties from the handler to the message.
         /// </summary>
+        /// <param name="typeMatchStrategy">Strategy to use when matching types for sharing.</param>
         /// <param name="source">Object to find properties on.</param>
         /// <param name="target">Object to apply properties to.</param>
-        public static void ApplySharedProperties(IShare source, IShare target)
+        public static void ApplySharedProperties(TypeMatchStrategy typeMatchStrategy, IShare source, IShare target)
         {
             if (source == null || target == null)
             {
@@ -46,7 +48,9 @@ namespace Naos.MessageBus.Core
                         sourceTypeInterface.GetInterfaces()
                             .Select(inferfaceType => inferfaceType == typeof(IShare))
                             .Any());
-            var typesToDealWith = sourceTypeInterfaces.Intersect(targetTypeInterfaces);
+
+            var typeNameComparer = new TypeComparer(typeMatchStrategy);
+            var typesToDealWith = sourceTypeInterfaces.Intersect(targetTypeInterfaces, typeNameComparer);
 
             // squash all the properties from source to target
             foreach (var type in typesToDealWith)
