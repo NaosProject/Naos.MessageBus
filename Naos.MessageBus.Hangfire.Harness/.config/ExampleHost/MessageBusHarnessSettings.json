@@ -1,11 +1,11 @@
 ﻿{
-    "PersistenceConnectionString": "Server=localhost;Database=Hangfire;Trusted Connection=yes;",
-    "RoleSettings": [
+    "persistenceConnectionString": "Server=localhost;Database=Hangfire;Trusted Connection=yes;",
+    "roleSettings": [
         {
-            "ServerName": "MyHangfireServer"
+            "serverName": "MyHangfireServer"
         }
     ],
-    "LogProcessorSettings": { 
-        "LogFilePath": "D:\\Logs\\LogFile.txt"
+    "logProcessorSettings": { 
+        "logFilePath": "D:\\Logs\\LogFile.txt"
     }
 }

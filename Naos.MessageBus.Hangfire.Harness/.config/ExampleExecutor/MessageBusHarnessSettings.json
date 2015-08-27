@@ -1,17 +1,16 @@
 ﻿{
-    "PersistenceConnectionString": "Server=localhost;Database=Hangfire;Trusted Connection=yes;",
-    "RoleSettings": [
+    "persistenceConnectionString": "Server=localhost;Database=Hangfire;Trusted Connection=yes;",
+    "roleSettings": [
         {
-            "ChannelsToMonitor": [ { "Name": "WorkToDoBucket" } ],
-            "WorkerCount": 1,
-            "HandlerAssemblyPath": "D:\\DllsPath\\",
-            "PollingTimeSpan": "00:01:00",
-            "MessageTypeMatchStrategy": "NamespaceAndName",
-            "RetryCount": 0
+            "channelsToMonitor": [ { "Name": "WorkToDoBucket" } ],
+            "workerCount": 1,
+            "handlerAssemblyPath": "D:\\DllsPath\\",
+            "pollingTimeSpan": "00:01:00",
+            "typeMatchStrategy":  "namespaceAndName",
+            "retryCount": 0
         }
     ],
-    "LogProcessorSettings": { 
-        "LogFilePath": "D:\\Logs\\LogFile.txt"
+    "logProcessorSettings": { 
+        "logFilePath": "D:\\Logs\\LogFile.txt"
     }
-
 }

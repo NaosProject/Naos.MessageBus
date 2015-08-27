@@ -50,6 +50,7 @@
     <Compile Include="MessageBusHarnessSettings.cs" />
     <Compile Include="IDispatchMessages.cs" />
     <Compile Include="IHandleMessages.cs" />
+    <Compile Include="TypeMatchStrategy.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

@@ -65,9 +65,9 @@ namespace Naos.MessageBus.HandlingContract
         public TimeSpan PollingTimeSpan { get; set; }
 
         /// <summary>
-        /// Gets or sets the matching strategy to use when finding a handler.
+        /// Gets or sets the matching strategy for use when finding a type.
         /// </summary>
-        public MessageTypeMatchStrategy MessageTypeMatchStrategy { get; set; }
+        public TypeMatchStrategy TypeMatchStrategy { get; set; }
 
         /// <summary>
         /// Gets or sets the number of retries a failed message will get.
@@ -94,21 +94,5 @@ namespace Naos.MessageBus.HandlingContract
         /// Gets or sets the settings for configuring the log processor.
         /// </summary>
         public LogProcessorSettings LogProcessorSettings { get; set; }
-    }
-
-    /// <summary>
-    /// Matching strategies on the message type for use when selecting a handler to service the message.
-    /// </summary>
-    public enum MessageTypeMatchStrategy
-    {
-        /// <summary>
-        /// Match the name and namespace of the type.
-        /// </summary>
-        NamespaceAndName,
-
-        /// <summary>
-        /// Match the assembly qualified name of the type (this will include the version).
-        /// </summary>
-        AssemblyQualifiedName
     }
 }
