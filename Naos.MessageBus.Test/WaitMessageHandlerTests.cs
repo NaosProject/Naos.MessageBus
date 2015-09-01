@@ -34,5 +34,23 @@ namespace Naos.MessageBus.Test
             // assert
             Assert.InRange(stopwatch.Elapsed.TotalSeconds, secondsToWait - 1, secondsToWait + 1);
         }
+
+        [Fact]
+        public void Handle_FiveSecondTimeSpanWithOneSecondSleepTime_FiveSecondWait()
+        {
+            // arrange
+            var secondsToWait = 3;
+            var message = new WaitMessage { TimeToWait = TimeSpan.FromSeconds(secondsToWait), MaxThreadSleepTime = TimeSpan.FromSeconds(1) };
+            var handler = new WaitMessageHandler();
+            var stopwatch = new Stopwatch();
+
+            // act
+            stopwatch.Start();
+            handler.Handle(message);
+            stopwatch.Stop();
+
+            // assert
+            Assert.InRange(stopwatch.Elapsed.TotalSeconds, secondsToWait - 1, secondsToWait + 1);
+        }
     }
 }
