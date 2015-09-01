@@ -6,6 +6,7 @@
 
 namespace Naos.MessageBus.Core
 {
+    using System;
     using System.Threading;
 
     using Its.Log.Instrumentation;
@@ -21,10 +22,24 @@ namespace Naos.MessageBus.Core
         /// <inheritdoc />
         public void Handle(WaitMessage message)
         {
-            using (var activity = Log.Enter(() => new { Message = message, TimeToWait = message.TimeToWait }))
+            using (var activity = Log.Enter(() => new { Message = message, TimeToWait = message.TimeToWait, MaxThreadSleepTime = message.MaxThreadSleepTime }))
             {
+                var waitFinished = DateTime.UtcNow.Add(message.TimeToWait);
+                var counter = 1;
+                var threadSleepTime = message.MaxThreadSleepTime;
+                if (threadSleepTime == default(TimeSpan))
+                {
+                    threadSleepTime = message.TimeToWait;
+                }
+
                 activity.Trace("Starting to wait.");
-                Thread.Sleep(message.TimeToWait);
+                while (DateTime.UtcNow < waitFinished)
+                {
+                    Thread.Sleep(threadSleepTime);
+                    activity.Trace("Completed sleep cycle # " + counter);
+                    counter = counter + 1;
+                }
+
                 activity.Trace("Finished waiting.");
             }
         }
