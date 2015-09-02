@@ -25,7 +25,6 @@ namespace Naos.MessageBus.Core
             using (var activity = Log.Enter(() => new { Message = message, TimeToWait = message.TimeToWait, MaxThreadSleepTime = message.MaxThreadSleepTime }))
             {
                 var waitFinished = DateTime.UtcNow.Add(message.TimeToWait);
-                var counter = 1;
                 var threadSleepTime = message.MaxThreadSleepTime;
                 if (threadSleepTime == default(TimeSpan))
                 {
@@ -33,11 +32,10 @@ namespace Naos.MessageBus.Core
                 }
 
                 activity.Trace("Starting to wait.");
+
                 while (DateTime.UtcNow < waitFinished)
                 {
                     Thread.Sleep(threadSleepTime);
-                    activity.Trace("Completed sleep cycle # " + counter);
-                    counter = counter + 1;
                 }
 
                 activity.Trace("Finished waiting.");

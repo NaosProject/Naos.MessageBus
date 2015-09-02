@@ -41,13 +41,13 @@
     <DocumentationFile>bin\Naos.MessageBus.Hangfire.Harness.XML</DocumentationFile>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Hangfire.Core, Version=1.4.5.0, Culture=neutral, processorArchitecture=MSIL">
+    <Reference Include="Hangfire.Core, Version=1.4.6.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\packages\Hangfire.Core.1.4.5\lib\net45\Hangfire.Core.dll</HintPath>
+      <HintPath>..\packages\Hangfire.Core.1.4.6\lib\net45\Hangfire.Core.dll</HintPath>
     </Reference>
-    <Reference Include="Hangfire.SqlServer">
-      <HintPath>..\packages\HangFire.SqlServer.1.4.5\lib\net45\Hangfire.SqlServer.dll</HintPath>
-      <Private>True</Private>
+    <Reference Include="Hangfire.SqlServer, Version=1.4.6.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\packages\HangFire.SqlServer.1.4.6\lib\net45\Hangfire.SqlServer.dll</HintPath>
     </Reference>
     <Reference Include="Its.Configuration">
       <HintPath>..\packages\Its.Configuration.0.10.1\lib\net40\Its.Configuration.dll</HintPath>
