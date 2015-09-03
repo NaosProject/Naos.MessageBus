@@ -35,16 +35,20 @@ namespace Naos.MessageBus.Core
 
         private readonly TypeMatchStrategy typeMatchStrategy;
 
+        private readonly TimeSpan messageDispatcherWaitThreadSleepTime;
+
         /// <summary>
         /// Initializes a new instance of the <see cref="DispatcherFactory"/> class.
         /// </summary>
         /// <param name="servicedChannels">Channels being monitored.</param>
         /// <param name="messageSenderBuilder">Function to build a message sender to supply to the dispatcher.</param>
         /// <param name="typeMatchStrategy">Strategy on how to match types.</param>
-        public DispatcherFactory(ICollection<Channel> servicedChannels, Func<ISendMessages> messageSenderBuilder, TypeMatchStrategy typeMatchStrategy)
+        /// <param name="messageDispatcherWaitThreadSleepTime">Amount of time to sleep while waiting on messages to be handled.</param>
+        public DispatcherFactory(ICollection<Channel> servicedChannels, Func<ISendMessages> messageSenderBuilder, TypeMatchStrategy typeMatchStrategy, TimeSpan messageDispatcherWaitThreadSleepTime)
         {
             this.servicedChannels = servicedChannels;
             this.typeMatchStrategy = typeMatchStrategy;
+            this.messageDispatcherWaitThreadSleepTime = messageDispatcherWaitThreadSleepTime;
 
             // register sender as it might need to send other messages in a sequence.
             this.simpleInjectorContainer.Register(messageSenderBuilder);
@@ -61,10 +65,12 @@ namespace Naos.MessageBus.Core
         /// <param name="servicedChannels">Channels being monitored.</param>
         /// <param name="messageSenderBuilder">Function to build a message sender to supply to the dispatcher.</param>
         /// <param name="typeMatchStrategy">Strategy on how to match types.</param>
-        public DispatcherFactory(string handlerAssemblyPath, ICollection<Channel> servicedChannels, Func<ISendMessages> messageSenderBuilder, TypeMatchStrategy typeMatchStrategy)
+        /// <param name="messageDispatcherWaitThreadSleepTime">Amount of time to sleep while waiting on messages to be handled.</param>
+        public DispatcherFactory(string handlerAssemblyPath, ICollection<Channel> servicedChannels, Func<ISendMessages> messageSenderBuilder, TypeMatchStrategy typeMatchStrategy, TimeSpan messageDispatcherWaitThreadSleepTime)
         {
             this.servicedChannels = servicedChannels;
             this.typeMatchStrategy = typeMatchStrategy;
+            this.messageDispatcherWaitThreadSleepTime = messageDispatcherWaitThreadSleepTime;
 
             // register sender as it might need to send other messages in a sequence.
             this.simpleInjectorContainer.Register(messageSenderBuilder);
@@ -130,7 +136,8 @@ namespace Naos.MessageBus.Core
                     this.simpleInjectorContainer,
                     this.sharedStateMap,
                     this.servicedChannels,
-                    this.typeMatchStrategy));
+                    this.typeMatchStrategy,
+                    this.messageDispatcherWaitThreadSleepTime));
 
             foreach (var registration in this.simpleInjectorContainer.GetCurrentRegistrations())
             {

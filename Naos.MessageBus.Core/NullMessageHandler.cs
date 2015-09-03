@@ -17,7 +17,7 @@ namespace Naos.MessageBus.Core
     public class NullMessageHandler : IHandleMessages<NullMessage>
     {
         /// <inheritdoc />
-        public async Task Handle(NullMessage message)
+        public async Task HandleAsync(NullMessage message)
         {
             /* no-op */
             await Task.FromResult<object>(null);

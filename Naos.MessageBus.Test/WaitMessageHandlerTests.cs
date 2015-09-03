@@ -27,7 +27,7 @@ namespace Naos.MessageBus.Test
 
             // act
             stopwatch.Start();
-            handler.Handle(message).Wait();
+            handler.HandleAsync(message).Wait();
             stopwatch.Stop();
 
             // assert
@@ -45,7 +45,7 @@ namespace Naos.MessageBus.Test
 
             // act
             stopwatch.Start();
-            handler.Handle(message).Wait();
+            handler.HandleAsync(message).Wait();
             stopwatch.Stop();
 
             // assert

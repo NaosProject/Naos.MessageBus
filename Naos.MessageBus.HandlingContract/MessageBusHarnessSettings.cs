@@ -70,6 +70,11 @@ namespace Naos.MessageBus.HandlingContract
         public TypeMatchStrategy TypeMatchStrategy { get; set; }
 
         /// <summary>
+        /// Gets or sets the amount of time to sleep while waiting on messages to be handled.
+        /// </summary>
+        public TimeSpan MessageDispatcherWaitThreadSleepTime { get; set; }
+
+        /// <summary>
         /// Gets or sets the number of retries a failed message will get.
         /// </summary>
         public int RetryCount { get; set; }

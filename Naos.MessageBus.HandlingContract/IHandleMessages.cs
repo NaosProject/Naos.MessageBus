@@ -21,6 +21,6 @@ namespace Naos.MessageBus.HandlingContract
         /// </summary>
         /// <param name="message">Message to handle.</param>
         /// <returns>Task to support async await execution.</returns>
-        Task Handle(T message);
+        Task HandleAsync(T message);
     }
 }
