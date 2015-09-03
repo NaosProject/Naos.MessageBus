@@ -8,6 +8,7 @@ namespace Naos.MessageBus.Core
 {
     using System;
     using System.Threading;
+    using System.Threading.Tasks;
 
     using Its.Log.Instrumentation;
 
@@ -20,23 +21,13 @@ namespace Naos.MessageBus.Core
     public class WaitMessageHandler : IHandleMessages<WaitMessage>
     {
         /// <inheritdoc />
-        public void Handle(WaitMessage message)
+        public async Task Handle(WaitMessage message)
         {
-            using (var activity = Log.Enter(() => new { Message = message, TimeToWait = message.TimeToWait, MaxThreadSleepTime = message.MaxThreadSleepTime }))
+            using (var activity = Log.Enter(() => new { Message = message, TimeToWait = message.TimeToWait }))
             {
-                var waitFinished = DateTime.UtcNow.Add(message.TimeToWait);
-                var threadSleepTime = message.MaxThreadSleepTime;
-                if (threadSleepTime == default(TimeSpan))
-                {
-                    threadSleepTime = message.TimeToWait;
-                }
-
                 activity.Trace("Starting to wait.");
 
-                while (DateTime.UtcNow < waitFinished)
-                {
-                    Thread.Sleep(threadSleepTime);
-                }
+                await Task.Delay(message.TimeToWait);
 
                 activity.Trace("Finished waiting.");
             }

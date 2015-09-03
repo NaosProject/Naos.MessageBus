@@ -10,6 +10,7 @@ namespace Naos.MessageBus.Test
     using System.Collections.Concurrent;
     using System.Collections.Generic;
     using System.Dynamic;
+    using System.Threading.Tasks;
 
     using ImpromptuInterface;
     using ImpromptuInterface.Dynamic;
@@ -439,9 +440,10 @@ namespace Naos.MessageBus.Test
 
             public static bool ShouldValidate { get; set; }
 
-            public void Handle(InitialStateMessage message)
+            public async Task Handle(InitialStateMessage message)
             {
                 /* no-op */
+                await Task.FromResult<object>(null);
             }
 
             public string CreateState()

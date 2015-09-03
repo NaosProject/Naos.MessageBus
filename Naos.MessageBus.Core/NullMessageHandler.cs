@@ -6,6 +6,8 @@
 
 namespace Naos.MessageBus.Core
 {
+    using System.Threading.Tasks;
+
     using Naos.MessageBus.DataContract;
     using Naos.MessageBus.HandlingContract;
 
@@ -15,9 +17,10 @@ namespace Naos.MessageBus.Core
     public class NullMessageHandler : IHandleMessages<NullMessage>
     {
         /// <inheritdoc />
-        public void Handle(NullMessage message)
+        public async Task Handle(NullMessage message)
         {
-            // no-op...
+            /* no-op */
+            await Task.FromResult<object>(null);
         }
     }
 }
