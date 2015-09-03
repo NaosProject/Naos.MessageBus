@@ -8,7 +8,6 @@ namespace Naos.MessageBus.Test
 {
     using System;
     using System.Diagnostics;
-    using System.Linq;
 
     using Naos.MessageBus.Core;
     using Naos.MessageBus.DataContract;
@@ -28,7 +27,7 @@ namespace Naos.MessageBus.Test
 
             // act
             stopwatch.Start();
-            handler.Handle(message);
+            handler.Handle(message).Wait();
             stopwatch.Stop();
 
             // assert
@@ -40,13 +39,13 @@ namespace Naos.MessageBus.Test
         {
             // arrange
             var secondsToWait = 3;
-            var message = new WaitMessage { TimeToWait = TimeSpan.FromSeconds(secondsToWait), MaxThreadSleepTime = TimeSpan.FromSeconds(1) };
+            var message = new WaitMessage { TimeToWait = TimeSpan.FromSeconds(secondsToWait) };
             var handler = new WaitMessageHandler();
             var stopwatch = new Stopwatch();
 
             // act
             stopwatch.Start();
-            handler.Handle(message);
+            handler.Handle(message).Wait();
             stopwatch.Stop();
 
             // assert

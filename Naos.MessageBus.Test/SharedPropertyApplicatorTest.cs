@@ -8,6 +8,7 @@ namespace Naos.MessageBus.Test
 {
     using System;
     using System.IO;
+    using System.Threading.Tasks;
 
     using Naos.MessageBus.Core;
     using Naos.MessageBus.DataContract;
@@ -66,9 +67,9 @@ namespace Naos.MessageBus.Test
 
     public class FirstEnumHandler : IHandleMessages<FirstEnumMessage>, IShareEnum
     {
-        public void Handle(FirstEnumMessage message)
+        public async Task Handle(FirstEnumMessage message)
         {
-            this.EnumValueToTest = message.SeedValue;
+            this.EnumValueToTest = await Task.FromResult(message.SeedValue);
         }
 
         public MyEnum EnumValueToTest { get; set; }
@@ -117,9 +118,9 @@ namespace Naos.MessageBus.Test
     {
         public string FilePath { get; set; }
 
-        public void Handle(CopyFileMessage message)
+        public async Task Handle(CopyFileMessage message)
         {
-            File.Copy(message.FilePath, "new file path");
+            await Task.Run(() => File.Copy(message.FilePath, "new file path"));
             this.FilePath = message.FilePath;
         }
     }

@@ -10,6 +10,7 @@ namespace Naos.MessageBus.Core
     using System.Collections.Concurrent;
     using System.Collections.Generic;
     using System.Linq;
+    using System.Threading.Tasks;
 
     using Its.Log.Instrumentation;
 
@@ -236,7 +237,14 @@ namespace Naos.MessageBus.Core
                 {
                     activity.Trace(() => "Handling message (calling Handle on selected Handler).");
                     var methodInfo = handlerType.GetMethod("Handle");
-                    methodInfo.Invoke(handler, new object[] { firstMessage });
+                    var result = methodInfo.Invoke(handler, new object[] { firstMessage });
+                    var task = result as Task;
+                    if (task == null)
+                    {
+                        throw new ArgumentException("Failed to get a task result from Handle method, necessary to perform the wait for async operations...");
+                    }
+
+                    task.Wait();
                     activity.Confirm(() => "Successfully handled message.");
                 }
                 catch (Exception ex)
