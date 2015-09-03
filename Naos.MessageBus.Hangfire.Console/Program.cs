@@ -53,7 +53,8 @@ namespace Naos.MessageBus.Hangfire.Console
                     executorRoleSettings.HandlerAssemblyPath,
                     executorRoleSettings.ChannelsToMonitor,
                     messageSenderBuilder,
-                    executorRoleSettings.TypeMatchStrategy);
+                    executorRoleSettings.TypeMatchStrategy,
+                    executorRoleSettings.MessageDispatcherWaitThreadSleepTime);
 
                 // configure hangfire to use the DispatcherFactory for getting IDispatchMessages calls
                 GlobalConfiguration.Configuration.UseActivator(new DispatcherFactoryJobActivator(dispatcherFactory));

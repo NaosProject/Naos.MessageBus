@@ -13,7 +13,6 @@ namespace Naos.MessageBus.Test
 
     using Naos.MessageBus.Core;
     using Naos.MessageBus.HandlingContract;
-    using Naos.MessageBus.Hangfire.Harness;
 
     using Xunit;
 
@@ -45,6 +44,7 @@ namespace Naos.MessageBus.Test
             Assert.Equal(4, executorSettings.WorkerCount);
             Assert.Equal("I:\\Gets\\My\\Dlls\\Here", executorSettings.HandlerAssemblyPath);
             Assert.Equal(TimeSpan.FromMinutes(1), executorSettings.PollingTimeSpan);
+            Assert.Equal(TimeSpan.FromSeconds(.5), executorSettings.MessageDispatcherWaitThreadSleepTime);
          }
 
         private static MessageBusHarnessSettings SetupItsConfigAndGetSettingsByPrcedence(string precedence)

@@ -10,6 +10,7 @@ namespace Naos.MessageBus.Core
     using System.Collections.Concurrent;
     using System.Collections.Generic;
     using System.Linq;
+    using System.Threading;
     using System.Threading.Tasks;
 
     using Its.Log.Instrumentation;
@@ -32,6 +33,8 @@ namespace Naos.MessageBus.Core
 
         private readonly TypeMatchStrategy typeMatchStrategy;
 
+        private readonly TimeSpan messageDispatcherWaitThreadSleepTime;
+
         /// <summary>
         /// Initializes a new instance of the <see cref="MessageDispatcher"/> class.
         /// </summary>
@@ -39,12 +42,14 @@ namespace Naos.MessageBus.Core
         /// <param name="handlerSharedStateMap">Initial state dictionary for handlers the require state to be seeded.</param>
         /// <param name="servicedChannels">Channels being services by this dispatcher.</param>
         /// <param name="typeMatchStrategy">Message type match strategy for use when selecting a handler.</param>
-        public MessageDispatcher(Container simpleInjectorContainer, ConcurrentDictionary<Type, object> handlerSharedStateMap, ICollection<Channel> servicedChannels, TypeMatchStrategy typeMatchStrategy)
+        /// <param name="messageDispatcherWaitThreadSleepTime">Amount of time to sleep while waiting on messages to be handled.</param>
+        public MessageDispatcher(Container simpleInjectorContainer, ConcurrentDictionary<Type, object> handlerSharedStateMap, ICollection<Channel> servicedChannels, TypeMatchStrategy typeMatchStrategy, TimeSpan messageDispatcherWaitThreadSleepTime)
         {
             this.simpleInjectorContainer = simpleInjectorContainer;
             this.handlerSharedStateMap = handlerSharedStateMap;
             this.servicedChannels = servicedChannels;
             this.typeMatchStrategy = typeMatchStrategy;
+            this.messageDispatcherWaitThreadSleepTime = messageDispatcherWaitThreadSleepTime;
         }
 
         /// <inheritdoc />
@@ -236,7 +241,7 @@ namespace Naos.MessageBus.Core
                 try
                 {
                     activity.Trace(() => "Handling message (calling Handle on selected Handler).");
-                    var methodInfo = handlerType.GetMethod("Handle");
+                    var methodInfo = handlerType.GetMethod("HandleAsync");
                     var result = methodInfo.Invoke(handler, new object[] { firstMessage });
                     var task = result as Task;
                     if (task == null)
@@ -244,8 +249,17 @@ namespace Naos.MessageBus.Core
                         throw new ArgumentException("Failed to get a task result from Handle method, necessary to perform the wait for async operations...");
                     }
 
-                    task.Wait();
-                    activity.Confirm(() => "Successfully handled message.");
+                    if (task.Status == TaskStatus.Created)
+                    {
+                        task.Start();
+                    }
+
+                    while (!task.IsCompleted && !task.IsCanceled && !task.IsFaulted)
+                    {
+                        Thread.Sleep(this.messageDispatcherWaitThreadSleepTime);
+                    }
+
+                    activity.Confirm(() => "Successfully handled message. Task ended with status: " + task.Status);
                 }
                 catch (Exception ex)
                 {

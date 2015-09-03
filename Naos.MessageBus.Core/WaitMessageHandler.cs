@@ -21,7 +21,7 @@ namespace Naos.MessageBus.Core
     public class WaitMessageHandler : IHandleMessages<WaitMessage>
     {
         /// <inheritdoc />
-        public async Task Handle(WaitMessage message)
+        public async Task HandleAsync(WaitMessage message)
         {
             using (var activity = Log.Enter(() => new { Message = message, TimeToWait = message.TimeToWait }))
             {

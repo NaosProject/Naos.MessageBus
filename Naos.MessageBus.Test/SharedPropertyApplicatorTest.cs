@@ -67,7 +67,7 @@ namespace Naos.MessageBus.Test
 
     public class FirstEnumHandler : IHandleMessages<FirstEnumMessage>, IShareEnum
     {
-        public async Task Handle(FirstEnumMessage message)
+        public async Task HandleAsync(FirstEnumMessage message)
         {
             this.EnumValueToTest = await Task.FromResult(message.SeedValue);
         }
@@ -118,7 +118,7 @@ namespace Naos.MessageBus.Test
     {
         public string FilePath { get; set; }
 
-        public async Task Handle(CopyFileMessage message)
+        public async Task HandleAsync(CopyFileMessage message)
         {
             await Task.Run(() => File.Copy(message.FilePath, "new file path"));
             this.FilePath = message.FilePath;
