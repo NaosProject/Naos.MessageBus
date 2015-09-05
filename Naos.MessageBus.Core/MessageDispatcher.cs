@@ -9,6 +9,7 @@ namespace Naos.MessageBus.Core
     using System;
     using System.Collections.Concurrent;
     using System.Collections.Generic;
+    using System.Collections.ObjectModel;
     using System.Linq;
     using System.Threading;
     using System.Threading.Tasks;
@@ -257,6 +258,12 @@ namespace Naos.MessageBus.Core
                     while (!task.IsCompleted && !task.IsCanceled && !task.IsFaulted)
                     {
                         Thread.Sleep(this.messageDispatcherWaitThreadSleepTime);
+                    }
+
+                    if (task.Status == TaskStatus.Faulted)
+                    {
+                        var exception = task.Exception ?? new AggregateException("No exception came back from task");
+                        throw exception;
                     }
 
                     activity.Confirm(() => "Successfully handled message. Task ended with status: " + task.Status);
