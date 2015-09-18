@@ -20,6 +20,8 @@ namespace Naos.MessageBus.Hangfire.Console
     using Naos.MessageBus.Hangfire.Harness;
     using Naos.MessageBus.Hangfire.Sender;
 
+    using Serializer = Naos.MessageBus.Core.Serializer;
+
     /// <summary>
     /// Main entry point of the application.
     /// </summary>

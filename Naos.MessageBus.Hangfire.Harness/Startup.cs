@@ -27,6 +27,8 @@ namespace Naos.MessageBus.Hangfire.Harness
 
     using Owin;
 
+    using Serializer = Naos.MessageBus.Core.Serializer;
+
     /// <summary>
     /// Startup class to optionally load the Hangfire server.
     /// </summary>

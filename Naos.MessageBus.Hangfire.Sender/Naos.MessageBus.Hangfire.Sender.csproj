@@ -63,8 +63,14 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include=".Spritely.Recipes\Functional.cs" />
+    <Compile Include=".Spritely.Recipes\InheritedTypeJsonConverter.cs" />
+    <Compile Include=".Spritely.Recipes\JsonConfiguration.cs" />
+    <Compile Include=".Spritely.Recipes\SecureString.cs" />
+    <Compile Include=".Spritely.Recipes\SecureStringJsonConverter.cs" />
     <Compile Include="MessageSender.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Serializer.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />
@@ -72,10 +78,6 @@
     <None Include="Settings.StyleCop" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Naos.MessageBus.Core\Naos.MessageBus.Core.csproj">
-      <Project>{D0F8244E-3833-4DE4-A2B9-6E9B9A33C72A}</Project>
-      <Name>Naos.MessageBus.Core</Name>
-    </ProjectReference>
     <ProjectReference Include="..\Naos.MessageBus.DataContract\Naos.MessageBus.DataContract.csproj">
       <Project>{77981A7E-D1B2-4A09-AE35-367BB5421E2B}</Project>
       <Name>Naos.MessageBus.DataContract</Name>

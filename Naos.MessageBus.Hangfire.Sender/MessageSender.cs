@@ -16,7 +16,6 @@ namespace Naos.MessageBus.Hangfire.Sender
     using global::Hangfire.States;
 
     using Naos.Cron;
-    using Naos.MessageBus.Core;
     using Naos.MessageBus.DataContract;
     using Naos.MessageBus.HandlingContract;
     using Naos.MessageBus.SendingContract;
