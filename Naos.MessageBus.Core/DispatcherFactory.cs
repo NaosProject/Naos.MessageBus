@@ -91,6 +91,7 @@ namespace Naos.MessageBus.Core
                     throw new TypeInitializationException(args.Name, null);
                 }
 
+                Log.Write(() => "Loaded Assembly (in AppDomain.CurrentDomain.AssemblyResolve): " + dllNameWithoutExtension + " From: " + fullDllPath);
                 return Assembly.LoadFrom(fullDllPath);
             };
 
@@ -159,14 +160,14 @@ namespace Naos.MessageBus.Core
             if (fullPdbPath == null)
             {
                 var dllBytes = File.ReadAllBytes(fullDllPath);
-                Log.Write(() => "Loaded Assembly: " + dllNameWithoutExtension + " From: " + fullDllPath + " Without Symbols.");
+                Log.Write(() => "Loaded Assembly (in GetAssembly): " + dllNameWithoutExtension + " From: " + fullDllPath + " Without Symbols.");
                 return Assembly.Load(dllBytes);
             }
             else
             {
                 var dllBytes = File.ReadAllBytes(fullDllPath);
                 var pdbBytes = File.ReadAllBytes(fullPdbPath);
-                Log.Write(() => "Loaded Assembly: " + dllNameWithoutExtension + " From: " + fullDllPath + " With Symbols: " + fullPdbPath);
+                Log.Write(() => "Loaded Assembly (in GetAssembly): " + dllNameWithoutExtension + " From: " + fullDllPath + " With Symbols: " + fullPdbPath);
                 return Assembly.Load(dllBytes, pdbBytes);
             }
         }
