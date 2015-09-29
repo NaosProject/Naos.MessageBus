@@ -27,6 +27,8 @@ namespace Naos.MessageBus.Hangfire.Sender
 
         private const string HangfireQueueNameAllowedRegex = "^[a-z0-9_]*$";
 
+        private readonly Func<Parcel, ScheduleBase, Channel, string, string> sendingLambda;
+
         /// <summary>
         /// Initializes a new instance of the <see cref="MessageSender"/> class.
         /// </summary>
@@ -34,23 +36,47 @@ namespace Naos.MessageBus.Hangfire.Sender
         public MessageSender(string messageBusPersistenceConnectionString)
         {
             GlobalConfiguration.Configuration.UseSqlServerStorage(messageBusPersistenceConnectionString);
+            this.sendingLambda =
+                (Parcel parcel, ScheduleBase recurringSchedule, Channel firstEnvelopeChannel, string displayName) =>
+                    {
+                        var client = new BackgroundJobClient();
+                        var state = new EnqueuedState { Queue = firstEnvelopeChannel.Name, };
+
+                        Expression<Action<IDispatchMessages>> methodCall = _ => _.Dispatch(displayName, parcel);
+                        var id = client.Create<IDispatchMessages>(methodCall, state);
+
+                        if (recurringSchedule.GetType() != typeof(NullSchedule))
+                        {
+                            Func<string> cronExpression = recurringSchedule.ToCronExpression;
+                            RecurringJob.AddOrUpdate(id, methodCall, cronExpression);
+                        }
+
+                        return id;
+                    };
+        }
+
+        internal MessageSender(Func<Parcel, ScheduleBase, Channel, string, string> sendingLambda)
+        {
+            this.sendingLambda = sendingLambda;
         }
 
         /// <inheritdoc />
         public TrackingCode Send(IMessage message, Channel channel)
         {
+            var messageSequenceId = Guid.NewGuid();
             var messageSequence = new MessageSequence
-                               {
-                                   ChanneledMessages =
-                                       new[]
-                                           {
-                                               new ChanneledMessage
-                                                   {
-                                                       Channel = channel,
-                                                       Message = message
-                                                   }
-                                           }
-                               };
+                                      {
+                                          Id = messageSequenceId,
+                                          ChanneledMessages =
+                                              new[]
+                                                  {
+                                                      new ChanneledMessage
+                                                          {
+                                                              Channel = channel,
+                                                              Message = message
+                                                          }
+                                                  }
+                                      };
 
             return this.SendRecurring(messageSequence, new NullSchedule());
         }
@@ -64,18 +90,20 @@ namespace Naos.MessageBus.Hangfire.Sender
         /// <inheritdoc />
         public TrackingCode SendRecurring(IMessage message, Channel channel, ScheduleBase recurringSchedule)
         {
+            var messageSequenceId = Guid.NewGuid();
             var messageSequence = new MessageSequence
-            {
-                ChanneledMessages =
-                    new[]
-                                           {
-                                               new ChanneledMessage
-                                                   {
-                                                       Channel = channel,
-                                                       Message = message
-                                                   }
-                                           }
-            };
+                                      {
+                                          Id = messageSequenceId,
+                                          ChanneledMessages =
+                                              new[]
+                                                  {
+                                                      new ChanneledMessage
+                                                          {
+                                                              Channel = channel,
+                                                              Message = message
+                                                          }
+                                                  }
+                                      };
 
             return this.SendRecurring(messageSequence, recurringSchedule);
         }
@@ -125,23 +153,7 @@ namespace Naos.MessageBus.Hangfire.Sender
 
             var displayName = "Sequence " + parcel.Id + " - " + firstEnvelopeDescription;
             
-            var client = new BackgroundJobClient();
-            var state = new EnqueuedState
-            {
-                Queue = firstEnvelopeChannel.Name,
-            };
-
-            Expression<Action<IDispatchMessages>> methodCall = _ => _.Dispatch(displayName, parcel);
-            var id =
-                client.Create<IDispatchMessages>(
-                    methodCall,
-                    state);
-
-            if (recurringSchedule.GetType() != typeof(NullSchedule))
-            {
-                Func<string> cronExpression = recurringSchedule.ToCronExpression;
-                RecurringJob.AddOrUpdate(id, methodCall, cronExpression);
-            }
+            var id = this.sendingLambda(parcel, recurringSchedule, firstEnvelopeChannel, displayName);
 
             return new TrackingCode { Code = id };
         }
@@ -152,6 +164,11 @@ namespace Naos.MessageBus.Hangfire.Sender
         /// <param name="channelToTest">The channel to examine.</param>
         public static void ThrowIfInvalidChannel(Channel channelToTest)
         {
+            if (string.IsNullOrEmpty(channelToTest.Name))
+            {
+                throw new ArgumentException("Cannot use null channel name.");
+            }
+
             if (channelToTest.Name.Length > HangfireQueueNameMaxLength)
             {
                 throw new ArgumentException(

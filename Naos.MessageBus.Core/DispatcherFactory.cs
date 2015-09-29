@@ -91,7 +91,9 @@ namespace Naos.MessageBus.Core
                     throw new TypeInitializationException(args.Name, null);
                 }
 
-                return GetAssembly(dllNameWithoutExtension, pdbFiles, fullDllPath);
+                // Can't use Assembly.Load() here because it fails when you have different versions of N-level dependencies...I have no idea why Assembly.LoadFrom works.
+                Log.Write(() => "Loaded Assembly (in AppDomain.CurrentDomain.AssemblyResolve): " + dllNameWithoutExtension + " From: " + fullDllPath);
+                return Assembly.LoadFrom(fullDllPath);
             };
 
             var handlerTypeMap = new List<TypeMap>();
@@ -103,6 +105,7 @@ namespace Naos.MessageBus.Core
                     var dllNameWithoutExtension =
                         (Path.GetFileName(filePathToPotentialHandlerAssembly) ?? string.Empty).Replace(".dll", string.Empty);
 
+                    // Can't use Assembly.LoadFrom() here because it fails for some reason.
                     var assembly = GetAssembly(dllNameWithoutExtension, pdbFiles, fullDllPath);
 
                     var typesInFile = assembly.GetTypes();
@@ -159,14 +162,14 @@ namespace Naos.MessageBus.Core
             if (fullPdbPath == null)
             {
                 var dllBytes = File.ReadAllBytes(fullDllPath);
-                Log.Write(() => "Loaded Assembly: " + dllNameWithoutExtension + " From: " + fullDllPath + " Without Symbols.");
+                Log.Write(() => "Loaded Assembly (in GetAssembly): " + dllNameWithoutExtension + " From: " + fullDllPath + " Without Symbols.");
                 return Assembly.Load(dllBytes);
             }
             else
             {
                 var dllBytes = File.ReadAllBytes(fullDllPath);
                 var pdbBytes = File.ReadAllBytes(fullPdbPath);
-                Log.Write(() => "Loaded Assembly: " + dllNameWithoutExtension + " From: " + fullDllPath + " With Symbols: " + fullPdbPath);
+                Log.Write(() => "Loaded Assembly (in GetAssembly): " + dllNameWithoutExtension + " From: " + fullDllPath + " With Symbols: " + fullPdbPath);
                 return Assembly.Load(dllBytes, pdbBytes);
             }
         }
