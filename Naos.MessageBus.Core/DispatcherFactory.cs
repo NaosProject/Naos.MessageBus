@@ -91,7 +91,7 @@ namespace Naos.MessageBus.Core
                     throw new TypeInitializationException(args.Name, null);
                 }
 
-                return GetAssembly(dllNameWithoutExtension, pdbFiles, fullDllPath);
+                return Assembly.LoadFrom(fullDllPath);
             };
 
             var handlerTypeMap = new List<TypeMap>();
