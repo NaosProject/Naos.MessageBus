@@ -91,6 +91,7 @@ namespace Naos.MessageBus.Core
                     throw new TypeInitializationException(args.Name, null);
                 }
 
+                // Can't use Assembly.Load() here because it fails when you have different versions of N-level dependencies...I have no idea why Assembly.LoadFrom works.
                 Log.Write(() => "Loaded Assembly (in AppDomain.CurrentDomain.AssemblyResolve): " + dllNameWithoutExtension + " From: " + fullDllPath);
                 return Assembly.LoadFrom(fullDllPath);
             };
@@ -104,6 +105,7 @@ namespace Naos.MessageBus.Core
                     var dllNameWithoutExtension =
                         (Path.GetFileName(filePathToPotentialHandlerAssembly) ?? string.Empty).Replace(".dll", string.Empty);
 
+                    // Can't use Assembly.LoadFrom() here because it fails for some reason.
                     var assembly = GetAssembly(dllNameWithoutExtension, pdbFiles, fullDllPath);
 
                     var typesInFile = assembly.GetTypes();
