@@ -8,12 +8,14 @@
 
 namespace Naos.MessageBus.Hangfire.Harness
 {
+    using System;
     using System.Linq;
     using System.Web.Hosting;
 
     using global::Hangfire.Logging;
 
     using Its.Configuration;
+    using Its.Log.Instrumentation;
 
     using Naos.MessageBus.Core;
     using Naos.MessageBus.HandlingContract;
@@ -28,20 +30,28 @@ namespace Naos.MessageBus.Hangfire.Harness
         {
             lock (PreloadSync)
             {
-                Settings.Deserialize = Serializer.Deserialize;
-                var messageBusHandlerSettings = Settings.Get<MessageBusHarnessSettings>();
-                Logging.Setup(messageBusHandlerSettings);
-                LogProvider.SetCurrentLogProvider(new ItsLogPassThroughProvider());
-
-                var executorRoleSettings =
-                    messageBusHandlerSettings.RoleSettings.OfType<MessageBusHarnessRoleSettingsExecutor>()
-                        .SingleOrDefault();
-
-                if (executorRoleSettings != null)
+                try
                 {
-                    HangfireBootstrapper.Instance.Start(
-                        messageBusHandlerSettings.PersistenceConnectionString,
-                        executorRoleSettings);
+                    Settings.Deserialize = Serializer.Deserialize;
+                    var messageBusHandlerSettings = Settings.Get<MessageBusHarnessSettings>();
+                    Logging.Setup(messageBusHandlerSettings);
+                    LogProvider.SetCurrentLogProvider(new ItsLogPassThroughProvider());
+
+                    var executorRoleSettings =
+                        messageBusHandlerSettings.RoleSettings.OfType<MessageBusHarnessRoleSettingsExecutor>()
+                            .SingleOrDefault();
+
+                    if (executorRoleSettings != null)
+                    {
+                        HangfireBootstrapper.Instance.Start(
+                            messageBusHandlerSettings.PersistenceConnectionString,
+                            executorRoleSettings);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Log.Write(() => new { LogMessage = "Failure in Preload Method", Exception = ex });
+                    throw;
                 }
             }
         }
