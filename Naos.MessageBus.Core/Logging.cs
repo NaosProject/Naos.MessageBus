@@ -52,8 +52,10 @@ namespace Naos.MessageBus.Core
         {
             Log.InternalErrors += (sender, args) =>
                 {
+                    var logEntry = (args.LogEntry ?? new LogEntry("Null LogEntry Supplied to EntryPosted")).ToLogString();
+
                     var eventLog = new EventLog("Application") { Source = GetCallerFriendlyName() };
-                    eventLog.WriteEntry(args.ToLogString(), EventLogEntryType.Error);
+                    eventLog.WriteEntry(logEntry, EventLogEntryType.Error);
                 };
 
             // TODO: Trace.Listeners.Add(new TextWriterTraceListener("Log_TextWriterOutput.log", "myListener"));
