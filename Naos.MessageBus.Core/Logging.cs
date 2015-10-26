@@ -53,7 +53,7 @@ namespace Naos.MessageBus.Core
             Log.InternalErrors += (sender, args) =>
                 {
                     var eventLog = new EventLog("Application") { Source = GetCallerFriendlyName() };
-                    eventLog.WriteEntry(args.ToLogString());
+                    eventLog.WriteEntry(args.ToLogString(), EventLogEntryType.Error);
                 };
 
             // TODO: Trace.Listeners.Add(new TextWriterTraceListener("Log_TextWriterOutput.log", "myListener"));
