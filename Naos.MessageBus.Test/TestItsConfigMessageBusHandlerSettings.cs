@@ -28,6 +28,7 @@ namespace Naos.MessageBus.Test
             var hostSettings = settings.RoleSettings.OfType<MessageBusHarnessRoleSettingsHost>().SingleOrDefault();
             Assert.NotNull(hostSettings);
             Assert.Equal("MyHangfireServer", hostSettings.ServerName);
+            Assert.Equal(true, hostSettings.RunDashboard);
         }
 
         [Fact]
@@ -45,7 +46,8 @@ namespace Naos.MessageBus.Test
             Assert.Equal("I:\\Gets\\My\\Dlls\\Here", executorSettings.HandlerAssemblyPath);
             Assert.Equal(TimeSpan.FromMinutes(1), executorSettings.PollingTimeSpan);
             Assert.Equal(TimeSpan.FromSeconds(.5), executorSettings.MessageDispatcherWaitThreadSleepTime);
-         }
+            Assert.Equal(TimeSpan.FromMinutes(10), executorSettings.HarnessProcessTimeToLive);
+        }
 
         private static MessageBusHarnessSettings SetupItsConfigAndGetSettingsByPrcedence(string precedence)
         {

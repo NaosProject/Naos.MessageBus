@@ -37,6 +37,8 @@ namespace Naos.MessageBus.Core
 
         private readonly TimeSpan messageDispatcherWaitThreadSleepTime;
 
+        private readonly ITrackActiveJobs tracker;
+
         /// <summary>
         /// Initializes a new instance of the <see cref="DispatcherFactory"/> class.
         /// </summary>
@@ -66,11 +68,13 @@ namespace Naos.MessageBus.Core
         /// <param name="messageSenderBuilder">Function to build a message sender to supply to the dispatcher.</param>
         /// <param name="typeMatchStrategy">Strategy on how to match types.</param>
         /// <param name="messageDispatcherWaitThreadSleepTime">Amount of time to sleep while waiting on messages to be handled.</param>
-        public DispatcherFactory(string handlerAssemblyPath, ICollection<Channel> servicedChannels, Func<ISendMessages> messageSenderBuilder, TypeMatchStrategy typeMatchStrategy, TimeSpan messageDispatcherWaitThreadSleepTime)
+        /// <param name="tracker">Tracker to keep track of active jobs.</param>
+        public DispatcherFactory(string handlerAssemblyPath, ICollection<Channel> servicedChannels, Func<ISendMessages> messageSenderBuilder, TypeMatchStrategy typeMatchStrategy, TimeSpan messageDispatcherWaitThreadSleepTime, ITrackActiveJobs tracker = null)
         {
             this.servicedChannels = servicedChannels;
             this.typeMatchStrategy = typeMatchStrategy;
             this.messageDispatcherWaitThreadSleepTime = messageDispatcherWaitThreadSleepTime;
+            this.tracker = tracker;
 
             // register sender as it might need to send other messages in a sequence.
             this.simpleInjectorContainer.Register(messageSenderBuilder);
@@ -135,12 +139,18 @@ namespace Naos.MessageBus.Core
             // if we weren't in hangfire we'd just persist the dispatcher and keep these two fields inside of it...
             this.simpleInjectorContainer.Register<IDispatchMessages>(
                 () =>
-                new MessageDispatcher(
-                    this.simpleInjectorContainer,
-                    this.sharedStateMap,
-                    this.servicedChannels,
-                    this.typeMatchStrategy,
-                    this.messageDispatcherWaitThreadSleepTime));
+                    {
+                        var nullAction = new Action(() => { });
+
+                        return new MessageDispatcher(
+                              this.simpleInjectorContainer,
+                              this.sharedStateMap,
+                              this.servicedChannels,
+                              this.typeMatchStrategy,
+                              this.messageDispatcherWaitThreadSleepTime,
+                              this.tracker == null ? nullAction : this.tracker.IncrementActiveJobs,
+                              this.tracker == null ? nullAction : this.tracker.DecrementActiveJobs);
+                    });
 
             foreach (var registration in this.simpleInjectorContainer.GetCurrentRegistrations())
             {

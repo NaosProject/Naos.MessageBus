@@ -60,7 +60,7 @@ namespace Naos.MessageBus.HandlingContract
         public string HandlerAssemblyPath { get; set; }
 
         /// <summary>
-        /// Gets or sets the time to wait between checking for new messages.
+        /// Gets or sets the time to wait when yielding process.
         /// </summary>
         public TimeSpan PollingTimeSpan { get; set; }
 
@@ -78,6 +78,11 @@ namespace Naos.MessageBus.HandlingContract
         /// Gets or sets the number of retries a failed message will get.
         /// </summary>
         public int RetryCount { get; set; }
+
+        /// <summary>
+        /// Gets or sets the time to keep a process alive, once expired the process should be cycled.
+        /// </summary>
+        public TimeSpan HarnessProcessTimeToLive { get; set; }
     }
 
     /// <summary>
