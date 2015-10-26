@@ -9,6 +9,7 @@ namespace Naos.MessageBus.Core
     using System;
     using System.Diagnostics;
     using System.IO;
+    using System.Web.Hosting;
 
     using Its.Log.Instrumentation;
 
@@ -51,8 +52,10 @@ namespace Naos.MessageBus.Core
         {
             Log.InternalErrors += (sender, args) =>
                 {
-                    var eventLog = new EventLog("Application");
-                    eventLog.WriteEntry(args.ToLogString());
+                    var logEntry = (args.LogEntry ?? new LogEntry("Null LogEntry Supplied to InternalErrors")).ToLogString();
+
+                    var eventLog = new EventLog("Application") { Source = GetCallerFriendlyName() };
+                    eventLog.WriteEntry(logEntry, EventLogEntryType.Error);
                 };
 
             // TODO: Trace.Listeners.Add(new TextWriterTraceListener("Log_TextWriterOutput.log", "myListener"));
@@ -65,6 +68,26 @@ namespace Naos.MessageBus.Core
                         File.AppendAllText(logProcessorSettings.LogFilePath, logEntry);
                     }
                 };
+        }
+
+        private static string GetCallerFriendlyName()
+        {
+            string caller = IsWebApp() ? GetAspNetSiteName() : Process.GetCurrentProcess().ProcessName;
+            return caller;
+        }
+
+        private static bool IsWebApp()
+        {
+            // https://stackoverflow.com/questions/209806/how-to-determine-if-net-code-is-running-in-an-asp-net-process
+            // http://forums.asp.net/t/1879952.aspx?HostingEnvironment+and+HttpRuntime+objects+in+ASP+NET+Application+Life+cycle
+            // return HttpRuntime.AppDomainAppId != null;
+            return HostingEnvironment.ApplicationHost != null;
+        }
+
+        private static string GetAspNetSiteName()
+        {
+            // https://stackoverflow.com/questions/26136529/how-to-get-iis-site-name-in-nlog
+            return HostingEnvironment.SiteName;
         }
 
         private static void WireUpAppDomainHandlers()
