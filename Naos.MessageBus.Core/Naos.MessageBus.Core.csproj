@@ -66,6 +66,7 @@
     <Compile Include="%28Spritely.Recipes%29\SecureString.cs" />
     <Compile Include="%28Spritely.Recipes%29\SecureStringJsonConverter.cs" />
     <Compile Include="DispatcherFactory.cs" />
+    <Compile Include="ITrackActiveJobs.cs" />
     <Compile Include="Logging.cs" />
     <Compile Include="MessageDispatcher.cs" />
     <Compile Include="WaitMessageHandler.cs" />

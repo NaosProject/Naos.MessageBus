@@ -8,6 +8,7 @@ namespace Naos.MessageBus.Hangfire.Console
 {
     using System;
     using System.Linq;
+    using System.Threading;
 
     using global::Hangfire;
     using global::Hangfire.Logging;
@@ -17,7 +18,6 @@ namespace Naos.MessageBus.Hangfire.Console
     using Naos.MessageBus.Core;
     using Naos.MessageBus.DataContract.Exceptions;
     using Naos.MessageBus.HandlingContract;
-    using Naos.MessageBus.Hangfire.Harness;
     using Naos.MessageBus.Hangfire.Sender;
 
     using Serializer = Naos.MessageBus.Core.Serializer;
@@ -51,12 +51,14 @@ namespace Naos.MessageBus.Hangfire.Console
             if (executorRoleSettings != null)
             {
                 Func<MessageSender> messageSenderBuilder = () => new MessageSender(messageBusHandlerSettings.PersistenceConnectionString);
+                var tracker = new InMemoryJobTracker();
                 var dispatcherFactory = new DispatcherFactory(
                     executorRoleSettings.HandlerAssemblyPath,
                     executorRoleSettings.ChannelsToMonitor,
                     messageSenderBuilder,
                     executorRoleSettings.TypeMatchStrategy,
-                    executorRoleSettings.MessageDispatcherWaitThreadSleepTime);
+                    executorRoleSettings.MessageDispatcherWaitThreadSleepTime,
+                    tracker);
 
                 // configure hangfire to use the DispatcherFactory for getting IDispatchMessages calls
                 GlobalConfiguration.Configuration.UseActivator(new DispatcherFactoryJobActivator(dispatcherFactory));
@@ -71,10 +73,18 @@ namespace Naos.MessageBus.Hangfire.Console
                 };
 
                 GlobalConfiguration.Configuration.UseSqlServerStorage(messageBusHandlerSettings.PersistenceConnectionString);
+                var timeout = DateTime.UtcNow.Add(executorRoleSettings.HarnessProcessTimeToLive);
                 using (var server = new BackgroundJobServer(executorOptions))
                 {
-                    Console.WriteLine("Hangfire Server started. Press any key to exit...");
-                    Console.ReadKey();
+                    Console.WriteLine(
+                        "Hangfire Server started. Will terminate when there are no active jobs after: " + timeout);
+
+                    // once the timeout has been achieved with no active jobs the process will exit (this assumes that a scheduled task will restart the process)
+                    //    the main impetus for this was the fact that Hangfire won't reconnect correctly so we must periodically initiate an entire reconnect.
+                    while (tracker.ActiveJobsCount != 0 && (DateTime.UtcNow < timeout))
+                    {
+                        Thread.Sleep(executorRoleSettings.PollingTimeSpan);
+                    }
                 }
             }
         }

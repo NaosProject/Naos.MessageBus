@@ -10,6 +10,7 @@ namespace Naos.MessageBus.Test
     using System.Collections.Concurrent;
     using System.Collections.Generic;
     using System.Dynamic;
+    using System.Threading;
     using System.Threading.Tasks;
 
     using ImpromptuInterface;
@@ -20,7 +21,6 @@ namespace Naos.MessageBus.Test
     using Naos.MessageBus.DataContract;
     using Naos.MessageBus.DataContract.Exceptions;
     using Naos.MessageBus.HandlingContract;
-    using Naos.MessageBus.Hangfire.Harness;
     using Naos.MessageBus.SendingContract;
 
     using SimpleInjector;
@@ -29,6 +29,43 @@ namespace Naos.MessageBus.Test
 
     public class MessageDispatcherTest
     {
+        [Fact]
+        public static void Dispatch_IncrementsAndDecrementsTracker()
+        {
+            var tracker = new InMemoryJobTracker();
+            var channel = new Channel { Name = "el-channel" };
+            var container = new Container();
+            container.Register<IHandleMessages<WaitMessage>, WaitMessageHandler>();
+            var dispatcher = new MessageDispatcher(
+                container,
+                new ConcurrentDictionary<Type, object>(),
+                new[] { channel },
+                TypeMatchStrategy.NamespaceAndName,
+                TimeSpan.FromSeconds(.5),
+                tracker.IncrementActiveJobs,
+                tracker.DecrementActiveJobs);
+
+            var message = new WaitMessage { Description = "RunMe", TimeToWait = TimeSpan.FromSeconds(3) };
+            var jsonMessage = Serializer.Serialize(message);
+            var envelope = new Envelope
+                               {
+                                   Channel = channel,
+                                   Description = "RunMe",
+                                   MessageAsJson = jsonMessage,
+                                   MessageTypeName = message.GetType().Name,
+                                   MessageTypeNamespace = message.GetType().Namespace,
+                                   MessageTypeAssemblyQualifiedName = message.GetType().AssemblyQualifiedName
+                               };
+
+            Assert.Equal(0, tracker.ActiveJobsCount);
+            ThreadPool.QueueUserWorkItem(
+                state => dispatcher.Dispatch("RunMe", new Parcel { Envelopes = new[] { envelope } }));
+            Thread.Sleep(2000);
+            Assert.Equal(1, tracker.ActiveJobsCount);
+            Thread.Sleep(4000);
+            Assert.Equal(0, tracker.ActiveJobsCount);
+        }
+
         [Fact]
         public static void Dispatch_DispatchingMethodToWrongChannelNamespaceNameMatch_ReSends()
         {

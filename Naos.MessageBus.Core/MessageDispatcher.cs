@@ -36,6 +36,10 @@ namespace Naos.MessageBus.Core
 
         private readonly TimeSpan messageDispatcherWaitThreadSleepTime;
 
+        private readonly Action onStartDispatch;
+
+        private readonly Action onFinishDispatch;
+
         /// <summary>
         /// Initializes a new instance of the <see cref="MessageDispatcher"/> class.
         /// </summary>
@@ -44,17 +48,43 @@ namespace Naos.MessageBus.Core
         /// <param name="servicedChannels">Channels being services by this dispatcher.</param>
         /// <param name="typeMatchStrategy">Message type match strategy for use when selecting a handler.</param>
         /// <param name="messageDispatcherWaitThreadSleepTime">Amount of time to sleep while waiting on messages to be handled.</param>
-        public MessageDispatcher(Container simpleInjectorContainer, ConcurrentDictionary<Type, object> handlerSharedStateMap, ICollection<Channel> servicedChannels, TypeMatchStrategy typeMatchStrategy, TimeSpan messageDispatcherWaitThreadSleepTime)
+        /// <param name="onStartDispatch">Action fired when dispatch started.</param>
+        /// <param name="onFinishDispatch">Action fired when dispatch finished.</param>
+        public MessageDispatcher(Container simpleInjectorContainer, ConcurrentDictionary<Type, object> handlerSharedStateMap, ICollection<Channel> servicedChannels, TypeMatchStrategy typeMatchStrategy, TimeSpan messageDispatcherWaitThreadSleepTime, Action onStartDispatch = null, Action onFinishDispatch = null)
         {
             this.simpleInjectorContainer = simpleInjectorContainer;
             this.handlerSharedStateMap = handlerSharedStateMap;
             this.servicedChannels = servicedChannels;
             this.typeMatchStrategy = typeMatchStrategy;
             this.messageDispatcherWaitThreadSleepTime = messageDispatcherWaitThreadSleepTime;
+            this.onStartDispatch = onStartDispatch;
+            this.onFinishDispatch = onFinishDispatch;
         }
 
         /// <inheritdoc />
         public void Dispatch(string displayName, Parcel parcel)
+        {
+            var fireEvents = this.onStartDispatch != null && this.onFinishDispatch != null;
+
+            if (fireEvents)
+            {
+                this.onStartDispatch();
+            }
+
+            try
+            {
+                this.InternalDispatch(parcel);
+            }
+            finally
+            {
+                if (fireEvents)
+                {
+                    this.onFinishDispatch();
+                }
+            }
+        }
+
+        private void InternalDispatch(Parcel parcel)
         {
             if (parcel == null)
             {
@@ -104,7 +134,8 @@ namespace Naos.MessageBus.Core
                         }
                     }
 
-                    throw new DispatchException("Unable to find handler for message type; Namespace: " + typeNamespace + ", Name: " + typeName);
+                    throw new DispatchException(
+                        "Unable to find handler for message type; Namespace: " + typeNamespace + ", Name: " + typeName);
                 };
 
             var channeledMessages = parcel.Envelopes.Select(
@@ -120,7 +151,10 @@ namespace Naos.MessageBus.Core
                                           Message =
                                               (IMessage)
                                               Serializer.Deserialize(
-                                                  getTypeForLocalVersion(_.MessageTypeNamespace, _.MessageTypeName, _.MessageTypeAssemblyQualifiedName),
+                                                  getTypeForLocalVersion(
+                                                      _.MessageTypeNamespace,
+                                                      _.MessageTypeName,
+                                                      _.MessageTypeAssemblyQualifiedName),
                                                   _.MessageAsJson),
                                           Channel = _.Channel
                                       };
@@ -170,9 +204,7 @@ namespace Naos.MessageBus.Core
                         var stateNeedsCreation = true;
 
                         object state;
-                        var haveStateToValidateAndUse = this.handlerSharedStateMap.TryGetValue(
-                            handlerActualType,
-                            out state);
+                        var haveStateToValidateAndUse = this.handlerSharedStateMap.TryGetValue(handlerActualType, out state);
                         if (haveStateToValidateAndUse)
                         {
                             activity.Trace(() => "Found pre-generated initial state.");
@@ -183,9 +215,7 @@ namespace Naos.MessageBus.Core
                             {
                                 activity.Trace(() => "State was found to be invalid, not using.");
                                 object removalOutput;
-                                var removedThisTime = this.handlerSharedStateMap.TryRemove(
-                                    handlerActualType,
-                                    out removalOutput);
+                                var removedThisTime = this.handlerSharedStateMap.TryRemove(handlerActualType, out removalOutput);
                                 if (removedThisTime)
                                 {
                                     // this is where you would dispose if it were disposable DO NOT DO THIS!!! this object could be in live handlers that are not finished yet...
@@ -207,8 +237,7 @@ namespace Naos.MessageBus.Core
                         if (stateNeedsCreation)
                         {
                             activity.Trace(
-                                () =>
-                                "No pre-existing state or it is invalid, creating new state for this use and future uses.");
+                                () => "No pre-existing state or it is invalid, creating new state for this use and future uses.");
                             var getInitialStateMethod = handlerActualType.GetMethod("CreateState");
                             state = getInitialStateMethod.Invoke(handler, new object[0]);
 
@@ -247,7 +276,8 @@ namespace Naos.MessageBus.Core
                     var task = result as Task;
                     if (task == null)
                     {
-                        throw new ArgumentException("Failed to get a task result from Handle method, necessary to perform the wait for async operations...");
+                        throw new ArgumentException(
+                            "Failed to get a task result from Handle method, necessary to perform the wait for async operations...");
                     }
 
                     if (task.Status == TaskStatus.Created)
@@ -306,8 +336,7 @@ namespace Naos.MessageBus.Core
                         var remainingMessageSequence = new MessageSequence
                                                            {
                                                                Id = parcel.Id, // persist the batch ID for collation
-                                                               ChanneledMessages =
-                                                                   remainingChanneledMessages
+                                                               ChanneledMessages = remainingChanneledMessages
                                                            };
 
                         sender.Send(remainingMessageSequence);
