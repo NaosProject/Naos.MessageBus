@@ -49,7 +49,7 @@ namespace Naos.MessageBus.Test
             stopwatch.Stop();
 
             // assert
-            Assert.InRange(stopwatch.Elapsed.TotalSeconds, secondsToWait - 1, secondsToWait + 1);
+            Assert.InRange(stopwatch.Elapsed.TotalSeconds, secondsToWait - 1.5, secondsToWait + 1.5);
         }
     }
 }
