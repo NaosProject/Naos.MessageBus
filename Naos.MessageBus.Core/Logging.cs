@@ -52,7 +52,7 @@ namespace Naos.MessageBus.Core
         {
             Log.InternalErrors += (sender, args) =>
                 {
-                    var logEntry = (args.LogEntry ?? new LogEntry("Null LogEntry Supplied to EntryPosted")).ToLogString();
+                    var logEntry = (args.LogEntry ?? new LogEntry("Null LogEntry Supplied to InternalErrors")).ToLogString();
 
                     var eventLog = new EventLog("Application") { Source = GetCallerFriendlyName() };
                     eventLog.WriteEntry(logEntry, EventLogEntryType.Error);
