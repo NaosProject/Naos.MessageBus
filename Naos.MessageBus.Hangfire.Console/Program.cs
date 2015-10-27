@@ -14,6 +14,7 @@ namespace Naos.MessageBus.Hangfire.Console
     using global::Hangfire.Logging;
 
     using Its.Configuration;
+    using Its.Log.Instrumentation;
 
     using Naos.MessageBus.Core;
     using Naos.MessageBus.DataContract.Exceptions;
@@ -73,11 +74,24 @@ namespace Naos.MessageBus.Hangfire.Console
                 };
 
                 GlobalConfiguration.Configuration.UseSqlServerStorage(messageBusHandlerSettings.PersistenceConnectionString);
-                var timeout = DateTime.UtcNow.Add(executorRoleSettings.HarnessProcessTimeToLive);
+                var timeToLive = executorRoleSettings.HarnessProcessTimeToLive;
+                if (timeToLive == default(TimeSpan))
+                {
+                    timeToLive = TimeSpan.MaxValue;
+                }
+
+                var timeout = DateTime.UtcNow.Add(timeToLive);
                 using (var server = new BackgroundJobServer(executorOptions))
                 {
                     Console.WriteLine(
                         "Hangfire Server started. Will terminate when there are no active jobs after: " + timeout);
+                    Log.Write(
+                        () =>
+                        new
+                            {
+                                LogMessage =
+                            "Hangfire Server launched. Will terminate when there are no active jobs after: " + timeout
+                            });
 
                     // once the timeout has been achieved with no active jobs the process will exit (this assumes that a scheduled task will restart the process)
                     //    the main impetus for this was the fact that Hangfire won't reconnect correctly so we must periodically initiate an entire reconnect.
@@ -85,6 +99,15 @@ namespace Naos.MessageBus.Hangfire.Console
                     {
                         Thread.Sleep(executorRoleSettings.PollingTimeSpan);
                     }
+
+                    Log.Write(
+                        () =>
+                        new
+                            {
+                                LogMessage =
+                            "Hangfire Server terminating. There are no active jobs and current time if beyond the timeout: "
+                            + timeout
+                            });
                 }
             }
         }

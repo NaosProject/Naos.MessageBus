@@ -187,7 +187,8 @@ namespace Naos.MessageBus.Core
         /// <inheritdoc />
         public IDispatchMessages Create()
         {
-            return this.simpleInjectorContainer.GetInstance<IDispatchMessages>();
+            var ret = this.simpleInjectorContainer.GetInstance<IDispatchMessages>();
+            return ret;
         }
     }
 }
