@@ -8,6 +8,7 @@ namespace Naos.MessageBus.Test
 {
     using System;
     using System.Diagnostics;
+    using System.Threading.Tasks;
 
     using Naos.MessageBus.Core;
     using Naos.MessageBus.DataContract;
@@ -17,7 +18,7 @@ namespace Naos.MessageBus.Test
     public class WaitMessageHandlerTests
     {
         [Fact]
-        public void Handle_FiveSecondTimeSpan_FiveSecondWait()
+        public void Handle_ThreeSecondTimeSpan_ThreeSecondWait()
         {
             // arrange
             var secondsToWait = 3;
@@ -32,24 +33,6 @@ namespace Naos.MessageBus.Test
 
             // assert
             Assert.InRange(stopwatch.Elapsed.TotalSeconds, secondsToWait - 1, secondsToWait + 1);
-        }
-
-        [Fact]
-        public void Handle_FiveSecondTimeSpanWithOneSecondSleepTime_FiveSecondWait()
-        {
-            // arrange
-            var secondsToWait = 3;
-            var message = new WaitMessage { TimeToWait = TimeSpan.FromSeconds(secondsToWait) };
-            var handler = new WaitMessageHandler();
-            var stopwatch = new Stopwatch();
-
-            // act
-            stopwatch.Start();
-            handler.HandleAsync(message).Wait();
-            stopwatch.Stop();
-
-            // assert
-            Assert.InRange(stopwatch.Elapsed.TotalSeconds, secondsToWait - 1.5, secondsToWait + 1.5);
         }
     }
 }
