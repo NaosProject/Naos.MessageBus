@@ -81,7 +81,7 @@ namespace Naos.MessageBus.Hangfire.Console
 
                     // once the timeout has been achieved with no active jobs the process will exit (this assumes that a scheduled task will restart the process)
                     //    the main impetus for this was the fact that Hangfire won't reconnect correctly so we must periodically initiate an entire reconnect.
-                    while (tracker.ActiveJobsCount != 0 && (DateTime.UtcNow < timeout))
+                    while (tracker.ActiveJobsCount != 0 || (DateTime.UtcNow < timeout))
                     {
                         Thread.Sleep(executorRoleSettings.PollingTimeSpan);
                     }
