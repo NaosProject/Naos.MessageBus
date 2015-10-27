@@ -21,7 +21,7 @@ namespace Naos.MessageBus.Test
         [Fact]
         public static void ItsConfigGetSettings_MessageBusHarnessSettingsHost_ComeOutCorrectly()
         {
-            var settings = SetupItsConfigAndGetSettingsByPrcedence("Host");
+            var settings = SetupItsConfigAndGetSettingsByPrecedence("Host");
 
             Assert.NotNull(settings);
             Assert.Equal("server=localhost", settings.PersistenceConnectionString);
@@ -34,7 +34,7 @@ namespace Naos.MessageBus.Test
         [Fact]
         public static void ItsConfigGetSettings_MessageBusHarnessSettingsExecutor_ComeOutCorrectly()
         {
-            var settings = SetupItsConfigAndGetSettingsByPrcedence("Executor");
+            var settings = SetupItsConfigAndGetSettingsByPrecedence("Executor");
 
             Assert.NotNull(settings);
             Assert.Equal("server=localhost", settings.PersistenceConnectionString);
@@ -49,7 +49,7 @@ namespace Naos.MessageBus.Test
             Assert.Equal(TimeSpan.FromMinutes(10), executorSettings.HarnessProcessTimeToLive);
         }
 
-        private static MessageBusHarnessSettings SetupItsConfigAndGetSettingsByPrcedence(string precedence)
+        private static MessageBusHarnessSettings SetupItsConfigAndGetSettingsByPrecedence(string precedence)
         {
             Settings.Reset();
             Settings.SettingsDirectory = Settings.SettingsDirectory.Replace("\\bin\\Debug", string.Empty);

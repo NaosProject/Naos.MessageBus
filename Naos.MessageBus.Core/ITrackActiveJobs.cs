@@ -16,7 +16,7 @@ namespace Naos.MessageBus.Core
         /// <summary>
         /// Gets the active jobs count.
         /// </summary>
-        int ActiveJobsCount { get; }
+        long ActiveJobsCount { get; }
 
         /// <summary>
         /// Increases the job count by 1.
@@ -34,14 +34,14 @@ namespace Naos.MessageBus.Core
     /// </summary>
     public class InMemoryJobTracker : ITrackActiveJobs
     {
-        private int activeJobsCount = 0;
+        private long activeJobsCount = 0;
 
         /// <inheritdoc />
-        public int ActiveJobsCount
+        public long ActiveJobsCount
         {
             get
             {
-                return this.activeJobsCount;
+                return Interlocked.Read(ref this.activeJobsCount);
             }
         }
 
