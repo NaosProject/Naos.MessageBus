@@ -18,10 +18,10 @@ namespace Naos.MessageBus.Test
     public class WaitMessageHandlerTests
     {
         [Fact]
-        public void Handle_ThreeSecondTimeSpan_ThreeSecondWait()
+        public void Handle_TenSecondTimeSpan_TenSecondWait()
         {
             // arrange
-            var secondsToWait = 3;
+            var secondsToWait = 10;
             var message = new WaitMessage { TimeToWait = TimeSpan.FromSeconds(secondsToWait) };
             var handler = new WaitMessageHandler();
             var stopwatch = new Stopwatch();
@@ -32,7 +32,7 @@ namespace Naos.MessageBus.Test
             stopwatch.Stop();
 
             // assert
-            Assert.InRange(stopwatch.Elapsed.TotalSeconds, secondsToWait - 1, secondsToWait + 1);
+            Assert.InRange(stopwatch.Elapsed.TotalSeconds, secondsToWait * .7, secondsToWait * 1.3);
         }
     }
 }
