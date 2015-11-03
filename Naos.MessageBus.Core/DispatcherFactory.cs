@@ -80,7 +80,10 @@ namespace Naos.MessageBus.Core
             this.simpleInjectorContainer.Register(messageSenderBuilder);
 
             // find all assemblies files to search for handlers.
-            var files = Directory.GetFiles(handlerAssemblyPath, "*.dll", SearchOption.AllDirectories);
+            var filesRaw = Directory.GetFiles(handlerAssemblyPath, "*.dll", SearchOption.AllDirectories);
+            
+            // prune out the Microsoft.Bcl nonsense (if present)
+            var files = filesRaw.Where(_ => !_.Contains("Microsoft.Bcl")).ToList();
 
             var pdbFiles = Directory.GetFiles(handlerAssemblyPath, "*.pdb", SearchOption.AllDirectories);
 
