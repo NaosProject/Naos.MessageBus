@@ -68,7 +68,7 @@ namespace Naos.MessageBus.Core
         /// <param name="objectToSerialize">Object to serialize to JSON.</param>
         /// <param name="indented">Optionally indents the JSON (default is true; specifying false will put all on one line).</param>
         /// <returns>String of JSON.</returns>
-        public static string Serialize<T>(T objectToSerialize, bool indented = true) where T : class
+        public static string Serialize<T>(T objectToSerialize, bool indented = true)
         {
             SetupDefaultSettings();
 

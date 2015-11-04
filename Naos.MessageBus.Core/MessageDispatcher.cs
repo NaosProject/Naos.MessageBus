@@ -107,70 +107,13 @@ namespace Naos.MessageBus.Core
                 return;
             }
 
-            Func<string, string, string, Type> getTypeForLocalVersion = (typeNamespace, typeName, typeAssemblyQualifiedName) =>
-                {
-                    var registeredHandlers =
-                        this.simpleInjectorContainer.GetCurrentRegistrations()
-                            .Select(_ => _.Registration.ImplementationType)
-                            .ToList()
-                            .GetTypeMapsOfImplementersOfGenericType(typeof(IHandleMessages<>));
+            var firstEnvelope = parcel.Envelopes.First();
+            var remainingEnvelopes = parcel.Envelopes.Skip(1).ToList();
+            var firstChanneledMessage = this.DeserializeEnvelopeIntoChanneledMessage(firstEnvelope);
 
-                    var typeComparer = new TypeComparer(this.typeMatchStrategy);
-                    foreach (var registeredHandler in registeredHandlers)
-                    {
-                        var messageTypeFromRegistered = registeredHandler.InterfaceType.GenericTypeArguments.Single();
+            var messageToHandle = firstChanneledMessage.Message;
 
-                        var handlerMessageTypeMatches = typeComparer.Equals(
-                            messageTypeFromRegistered.Namespace,
-                            messageTypeFromRegistered.Name,
-                            messageTypeFromRegistered.AssemblyQualifiedName,
-                            typeNamespace,
-                            typeName,
-                            typeAssemblyQualifiedName);
-
-                        if (handlerMessageTypeMatches)
-                        {
-                            return messageTypeFromRegistered;
-                        }
-                    }
-
-                    throw new DispatchException(
-                        "Unable to find handler for message type; Namespace: " + typeNamespace + ", Name: " + typeName);
-                };
-
-            var channeledMessages = parcel.Envelopes.Select(
-                _ =>
-                    {
-                        if (string.IsNullOrEmpty(_.MessageTypeNamespace) || string.IsNullOrEmpty(_.MessageTypeName))
-                        {
-                            throw new DispatchException("Message type not specified in envelope");
-                        }
-
-                        var ret = new ChanneledMessage
-                                      {
-                                          Message =
-                                              (IMessage)
-                                              Serializer.Deserialize(
-                                                  getTypeForLocalVersion(
-                                                      _.MessageTypeNamespace,
-                                                      _.MessageTypeName,
-                                                      _.MessageTypeAssemblyQualifiedName),
-                                                  _.MessageAsJson),
-                                          Channel = _.Channel
-                                      };
-
-                        if (ret.Message == null)
-                        {
-                            throw new DispatchException("Message deserialized to null");
-                        }
-
-                        return ret;
-                    }).ToList();
-
-            var firstMessage = channeledMessages.First().Message;
-            var remainingChanneledMessages = channeledMessages.Skip(1).ToList();
-
-            var messageType = firstMessage.GetType();
+            var messageType = messageToHandle.GetType();
             var handlerType = typeof(IHandleMessages<>).MakeGenericType(messageType);
 
             Log.Write(() => "Attempting to get handler for type: " + handlerType.FullName);
@@ -188,9 +131,100 @@ namespace Naos.MessageBus.Core
                 throw new ApplicationException("Could not find type in container: " + handlerType.FullName);
             }
 
-            var handlerActualType = handler.GetType();
-            Log.Write(() => "Loaded handler: " + handlerActualType.FullName);
+            Log.Write(() => "Loaded handler: " + handler.GetType().FullName);
 
+            // WARNING: these methods change the state of the objects passed in!!!
+            this.PrepareMessage(messageToHandle, parcel.SharedInterfaceStates);
+            this.PrepareHandler(handler);
+
+            using (var activity = Log.Enter(() => new { Message = messageToHandle, Handler = handler }))
+            {
+                try
+                {
+                    activity.Trace(() => "Handling message (calling Handle on selected Handler).");
+                    var methodInfo = handlerType.GetMethod("HandleAsync");
+                    var result = methodInfo.Invoke(handler, new object[] { messageToHandle });
+                    var task = result as Task;
+                    if (task == null)
+                    {
+                        throw new ArgumentException(
+                            "Failed to get a task result from Handle method, necessary to perform the wait for async operations...");
+                    }
+
+                    if (task.Status == TaskStatus.Created)
+                    {
+                        task.Start();
+                    }
+
+                    // running this way because i want to interrogate afterwards to throw if faulted...
+                    while (!task.IsCompleted && !task.IsCanceled && !task.IsFaulted)
+                    {
+                        Thread.Sleep(this.messageDispatcherWaitThreadSleepTime);
+                    }
+
+                    if (task.Status == TaskStatus.Faulted)
+                    {
+                        var exception = task.Exception ?? new AggregateException("No exception came back from task");
+                        throw exception;
+                    }
+
+                    activity.Confirm(() => "Successfully handled message. Task ended with status: " + task.Status);
+                }
+                catch (Exception ex)
+                {
+                    activity.Trace(() => ex);
+                    throw;
+                }
+            }
+
+            if (remainingEnvelopes.Any())
+            {
+                using (var activity = Log.Enter(() => new { RemainingEnvelopes = remainingEnvelopes }))
+                {
+                    try
+                    {
+                        activity.Trace(() => "Found remaining messages in sequence.");
+
+                        var shareSets = new List<SharedInterfaceState>();
+                        if (parcel.SharedInterfaceStates != null)
+                        {
+                            shareSets.AddRange(parcel.SharedInterfaceStates);
+                        }
+
+                        var handlerAsShare = handler as IShare;
+                        if (handlerAsShare != null)
+                        {
+                            activity.Trace(() => "Handler is IShare, loading shared properties into parcel for future messages.");
+                            var newShareSets = SharedPropertyHelper.GetSharedInterfaceStates(handlerAsShare);
+                            shareSets.AddRange(newShareSets);
+                        }
+
+                        activity.Trace(() => "Sending remaining messages in sequence.");
+                        var sender = this.simpleInjectorContainer.GetInstance<ISendMessages>();
+
+                        var remainingEnvelopesParcel = new Parcel
+                                                           {
+                                                               Id = parcel.Id, // persist the batch ID for collation
+                                                               Envelopes = remainingEnvelopes,
+                                                               SharedInterfaceStates = shareSets
+                                                           };
+
+                        sender.Send(remainingEnvelopesParcel);
+
+                        activity.Confirm(() => "Finished sending remaining messages in sequence.");
+                    }
+                    catch (Exception ex)
+                    {
+                        activity.Trace(() => ex);
+                        throw;
+                    }
+                }
+            }
+        }
+
+        private void PrepareHandler(object handler)
+        {
+            var handlerActualType = handler.GetType();
             var handlerInterfaces = handlerActualType.GetInterfaces();
             if (handlerInterfaces.Any(_ => _.IsGenericType && _.GetGenericTypeDefinition() == typeof(INeedSharedState<>)))
             {
@@ -265,83 +299,30 @@ namespace Naos.MessageBus.Core
                     }
                 }
             }
+        }
 
-            using (var activity = Log.Enter(() => new { Message = firstMessage, Handler = handler }))
+        private void PrepareMessage(IMessage message, IList<SharedInterfaceState> sharedProperties)
+        {
+            var messageAsShare = message as IShare;
+            if (messageAsShare != null && sharedProperties.Count > 0)
             {
-                try
-                {
-                    activity.Trace(() => "Handling message (calling Handle on selected Handler).");
-                    var methodInfo = handlerType.GetMethod("HandleAsync");
-                    var result = methodInfo.Invoke(handler, new object[] { firstMessage });
-                    var task = result as Task;
-                    if (task == null)
-                    {
-                        throw new ArgumentException(
-                            "Failed to get a task result from Handle method, necessary to perform the wait for async operations...");
-                    }
-
-                    if (task.Status == TaskStatus.Created)
-                    {
-                        task.Start();
-                    }
-
-                    while (!task.IsCompleted && !task.IsCanceled && !task.IsFaulted)
-                    {
-                        Thread.Sleep(this.messageDispatcherWaitThreadSleepTime);
-                    }
-
-                    if (task.Status == TaskStatus.Faulted)
-                    {
-                        var exception = task.Exception ?? new AggregateException("No exception came back from task");
-                        throw exception;
-                    }
-
-                    activity.Confirm(() => "Successfully handled message. Task ended with status: " + task.Status);
-                }
-                catch (Exception ex)
-                {
-                    activity.Trace(() => ex);
-                    throw;
-                }
-            }
-
-            if (remainingChanneledMessages.Any())
-            {
-                using (var activity = Log.Enter(() => new { RemainingMessage = remainingChanneledMessages }))
+                using (var activity = Log.Enter(() => new { Message = message }))
                 {
                     try
                     {
-                        activity.Trace(() => "Found remaining messages in sequence.");
+                        activity.Trace(
+                            () =>
+                            "Discovered need to evaluate shared properties, sharing applicable properties to message from sharedProperties in parcel.");
 
-                        var handlerAsShare = handler as IShare;
-                        foreach (var channeledMessageToShareTo in remainingChanneledMessages)
+                        foreach (var sharedPropertySet in sharedProperties)
                         {
-                            var messageToShareTo = channeledMessageToShareTo.Message as IShare;
-                            if (handlerAsShare != null && messageToShareTo != null)
-                            {
-                                activity.Trace(
-                                    () =>
-                                    "Discovered need to share, sharing applicable properties to remaining messages in sequence.");
-
-                                // CHANGES STATE: this will pass IShare properties from the handler to all messages in the sequence before re-sending the trimmed sequence
-                                SharedPropertyApplicator.ApplySharedProperties(
-                                    this.typeMatchStrategy,
-                                    handlerAsShare,
-                                    messageToShareTo);
-                            }
+                            SharedPropertyHelper.ApplySharedInterfaceState(
+                                this.typeMatchStrategy,
+                                sharedPropertySet,
+                                messageAsShare);
                         }
 
-                        activity.Trace(() => "Sending remaining messages in sequence.");
-                        var sender = this.simpleInjectorContainer.GetInstance<ISendMessages>();
-                        var remainingMessageSequence = new MessageSequence
-                                                           {
-                                                               Id = parcel.Id, // persist the batch ID for collation
-                                                               ChanneledMessages = remainingChanneledMessages
-                                                           };
-
-                        sender.Send(remainingMessageSequence);
-
-                        activity.Confirm(() => "Finished sending remaining messages in sequence.");
+                        activity.Confirm(() => "Finished property sharing.");
                     }
                     catch (Exception ex)
                     {
@@ -350,6 +331,61 @@ namespace Naos.MessageBus.Core
                     }
                 }
             }
+        }
+
+        private ChanneledMessage DeserializeEnvelopeIntoChanneledMessage(Envelope envelope)
+        {
+            if (envelope.MessageType == null || string.IsNullOrEmpty(envelope.MessageType.AssemblyQualifiedName) || string.IsNullOrEmpty(envelope.MessageType.Namespace) || string.IsNullOrEmpty(envelope.MessageType.Name))
+            {
+                throw new DispatchException("Message type not specified in envelope");
+            }
+
+            var messageType = this.ResolveMessageTypeUsingRegisteredHandlers(envelope.MessageType);
+
+            var ret = new ChanneledMessage
+            {
+                Message =
+                    (IMessage)
+                    Serializer.Deserialize(
+                        messageType,
+                        envelope.MessageAsJson),
+                Channel = envelope.Channel
+            };
+
+            if (ret.Message == null)
+            {
+                throw new DispatchException("First message in parcel deserialized to null");
+            }
+
+            return ret;
+        }
+
+        private Type ResolveMessageTypeUsingRegisteredHandlers(TypeDescription typeDescription)
+        {
+            var registeredHandlers =
+                this.simpleInjectorContainer.GetCurrentRegistrations()
+                    .Select(_ => _.Registration.ImplementationType)
+                    .ToList()
+                    .GetTypeMapsOfImplementersOfGenericType(typeof(IHandleMessages<>));
+
+            var typeComparer = new TypeComparer(this.typeMatchStrategy);
+            foreach (var registeredHandler in registeredHandlers)
+            {
+                var messageTypeFromRegistered = registeredHandler.InterfaceType.GenericTypeArguments.Single();
+
+                var handlerMessageTypeMatches = typeComparer.Equals(
+                    messageTypeFromRegistered.ToTypeDescription(),
+                    typeDescription);
+
+                if (handlerMessageTypeMatches)
+                {
+                    return messageTypeFromRegistered;
+                }
+            }
+
+            throw new DispatchException(
+                "Unable to find handler for message type; Namespace: " + typeDescription.Namespace + ", Name: "
+                + typeDescription.Name + ", AssemblyQualifiedName: " + typeDescription.AssemblyQualifiedName);
         }
     }
 }
