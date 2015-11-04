@@ -112,7 +112,7 @@ namespace Naos.MessageBus.Core
                                     {
                                         Name = propertyName,
                                         ValueAsJson = propertyValueAsJson,
-                                        ValueType = prop.PropertyType.ToTypeDescription()
+                                        ValueType = propertyValue.GetType().ToTypeDescription()
                                     };
 
                     entry.Properties.Add(propertyEntry);
