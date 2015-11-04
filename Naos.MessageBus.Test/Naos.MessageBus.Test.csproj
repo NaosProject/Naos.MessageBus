@@ -70,13 +70,14 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="TypeDescriptionTests.cs" />
     <Compile Include="WaitMessageHandlerTests.cs" />
     <Compile Include="TypeComparerTests.cs" />
     <None Include=".config\Executor\MessageBusHarnessSettings.json" />
     <None Include=".config\Host\MessageBusHarnessSettings.json" />
     <Compile Include="ChannelTests.cs" />
     <Compile Include="MessageSenderTest.cs" />
-    <Compile Include="SharedPropertyApplicatorTest.cs" />
+    <Compile Include="SharedPropertyHelperTest.cs" />
     <Compile Include="MessageDispatcherTest.cs" />
     <Compile Include="TestItsConfigMessageBusHandlerSettings.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

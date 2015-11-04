@@ -23,5 +23,10 @@ namespace Naos.MessageBus.DataContract
         /// Gets or sets a collection of envelopes to run in order.
         /// </summary>
         public ICollection<Envelope> Envelopes { get; set; }
+
+        /// <summary>
+        /// Gets or sets a list of shared interface states to apply to messages as they dispatched (can accumulate more throughout execution when shares are found on handlers).
+        /// </summary>
+        public IList<SharedInterfaceState> SharedInterfaceStates { get; set; }
     }
 }

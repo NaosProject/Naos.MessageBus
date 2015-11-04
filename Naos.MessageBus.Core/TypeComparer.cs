@@ -9,12 +9,13 @@ namespace Naos.MessageBus.Core
     using System;
     using System.Collections.Generic;
 
+    using Naos.MessageBus.DataContract;
     using Naos.MessageBus.HandlingContract;
 
     /// <summary>
     /// Type comparer using the provided strategy.
     /// </summary>
-    public class TypeComparer : IEqualityComparer<Type>
+    public class TypeComparer : IEqualityComparer<Type>, IEqualityComparer<TypeDescription>
     {
         private readonly TypeMatchStrategy typeMatchStrategy;
 
@@ -38,6 +39,19 @@ namespace Naos.MessageBus.Core
                 y.Name,
                 y.AssemblyQualifiedName);
 
+            return ret;
+        }
+
+        /// <inheritdoc />
+        public bool Equals(TypeDescription x, TypeDescription y)
+        {
+            var ret = this.Equals(
+                x.Namespace,
+                x.Name,
+                x.AssemblyQualifiedName,
+                y.Namespace,
+                y.Name,
+                y.AssemblyQualifiedName);
             return ret;
         }
 
@@ -76,7 +90,7 @@ namespace Naos.MessageBus.Core
         }
 
         /// <inheritdoc />
-        public int GetHashCode(Type obj)
+        public int GetHashCode(TypeDescription obj)
         {
             switch (this.typeMatchStrategy)
             {
@@ -93,6 +107,12 @@ namespace Naos.MessageBus.Core
                 default:
                     throw new ArgumentException("Unsupported matching strategy: " + this.typeMatchStrategy);
             }
+        }
+
+        /// <inheritdoc />
+        public int GetHashCode(Type obj)
+        {
+            return this.GetHashCode(obj.ToTypeDescription());
         }
     }
 }

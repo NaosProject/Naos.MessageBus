@@ -119,9 +119,7 @@ namespace Naos.MessageBus.Hangfire.Sender
                                    {
                                        Description = channeledMessage.Message.Description,
                                        MessageAsJson = Serializer.Serialize(channeledMessage.Message),
-                                       MessageTypeNamespace = messageType.Namespace,
-                                       MessageTypeName = messageType.Name,
-                                       MessageTypeAssemblyQualifiedName = messageType.AssemblyQualifiedName,
+                                       MessageType = messageType.ToTypeDescription(),
                                        Channel = channeledMessage.Channel
                                    };
                     }).ToList();

@@ -6,8 +6,6 @@
 
 namespace Naos.MessageBus.DataContract
 {
-    using System;
-
     /// <summary>
     /// Container object to use when re-hydrating a message.
     /// </summary>
@@ -19,19 +17,9 @@ namespace Naos.MessageBus.DataContract
         public string Description { get; set; }
 
         /// <summary>
-        /// Gets or sets the namespace of the type of the message.
+        /// Gets or sets a description of the message type.
         /// </summary>
-        public string MessageTypeNamespace { get; set; }
-
-        /// <summary>
-        /// Gets or sets the name of the type of the message.
-        /// </summary>
-        public string MessageTypeName { get; set; }
-
-        /// <summary>
-        /// Gets or sets the qualified name of the assembly of the type of the message.
-        /// </summary>
-        public string MessageTypeAssemblyQualifiedName { get; set; }
+        public TypeDescription MessageType { get; set; }
 
         /// <summary>
         /// Gets or sets the message in JSON format.
