@@ -107,8 +107,8 @@ namespace Naos.MessageBus.Test
                         TypeMatchStrategy.NamespaceAndName,
                         new SharedInterfaceState
                             {
-                                ShareInterfaceType = typeof(IShareFilePath).ToTypeDescription(),
-                                SharedProperties =
+                                InterfaceType = typeof(IShareFilePath).ToTypeDescription(),
+                                Properties =
                                     new[]
                                         {
                                             sharedPropertyEntry

@@ -113,10 +113,10 @@ namespace Naos.MessageBus.Test
             var sharedPropertySet = newParcel.SharedInterfaceStates.Single();
             var typeComparer = new TypeComparer(TypeMatchStrategy.NamespaceAndName);
             Assert.True(
-                typeComparer.Equals(typeof(IShareEnum).ToTypeDescription(), sharedPropertySet.ShareInterfaceType)); 
-            Assert.Equal("EnumValueToShare", sharedPropertySet.SharedProperties.Single().Name);
+                typeComparer.Equals(typeof(IShareEnum).ToTypeDescription(), sharedPropertySet.InterfaceType)); 
+            Assert.Equal("EnumValueToShare", sharedPropertySet.Properties.Single().Name);
             var seedValueAsJson = Serializer.Serialize(firstMessage.SeedValue);
-            Assert.Equal(seedValueAsJson, sharedPropertySet.SharedProperties.Single().ValueAsJson);
+            Assert.Equal(seedValueAsJson, sharedPropertySet.Properties.Single().ValueAsJson);
 
             dispatcher.Dispatch("Second Message", newParcel);
 
@@ -124,6 +124,8 @@ namespace Naos.MessageBus.Test
             Assert.Equal(2, trackingSends.Count);
             var newNewParcel = trackingSends.Single(_ => _.Envelopes.First().Description == thirdMessage.Description);
             Assert.Equal(2, newNewParcel.SharedInterfaceStates.Count);
+            Assert.Equal(typeof(FirstEnumHandler).ToTypeDescription().Name, newNewParcel.SharedInterfaceStates.First().SourceType.Name);
+            Assert.Equal(typeof(SecondEnumHandler).ToTypeDescription().Name, newNewParcel.SharedInterfaceStates.Skip(1).First().SourceType.Name);
         }
 
         [Fact]

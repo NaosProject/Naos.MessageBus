@@ -97,8 +97,9 @@ namespace Naos.MessageBus.Core
             {
                 var entry = new SharedInterfaceState
                                 {
-                                    ShareInterfaceType = type.ToTypeDescription(),
-                                    SharedProperties = new List<SharedProperty>()
+                                    SourceType = sourceObject.GetType().ToTypeDescription(),
+                                    InterfaceType = type.ToTypeDescription(),
+                                    Properties = new List<SharedProperty>()
                                 };
 
                 var properties = type.GetProperties();
@@ -114,7 +115,7 @@ namespace Naos.MessageBus.Core
                                         ValueType = prop.PropertyType.ToTypeDescription()
                                     };
 
-                    entry.SharedProperties.Add(propertyEntry);
+                    entry.Properties.Add(propertyEntry);
                 }
 
                 ret.Add(entry);
@@ -145,10 +146,10 @@ namespace Naos.MessageBus.Core
             var typeComparer = new TypeComparer(typeMatchStrategy);
 
             // check if the interface of the shared set is implemented by the message
-            if (shareInterfaceTypeDescriptions.Contains(interfaceState.ShareInterfaceType, typeComparer))
+            if (shareInterfaceTypeDescriptions.Contains(interfaceState.InterfaceType, typeComparer))
             {
                 var typeProperties = targetObject.GetType().GetProperties();
-                foreach (var sharedPropertyEntry in interfaceState.SharedProperties)
+                foreach (var sharedPropertyEntry in interfaceState.Properties)
                 {
                     // local copy for scoping with the lambda
                     var localSharedProperty = sharedPropertyEntry;

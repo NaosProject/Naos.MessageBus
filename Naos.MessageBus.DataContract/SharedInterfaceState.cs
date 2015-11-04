@@ -14,13 +14,18 @@ namespace Naos.MessageBus.DataContract
     public class SharedInterfaceState
     {
         /// <summary>
+        /// Gets or sets a description of the type of the object the properties were taken from.
+        /// </summary>
+        public TypeDescription SourceType { get; set; }
+
+        /// <summary>
         /// Gets or sets a description of the the type of the IShareInterface.
         /// </summary>
-        public TypeDescription ShareInterfaceType { get; set; }
+        public TypeDescription InterfaceType { get; set; }
 
         /// <summary>
         /// Gets or sets a list of the shared properties (name, value, and value type description).
         /// </summary>
-        public IList<SharedProperty> SharedProperties { get; set; }
+        public IList<SharedProperty> Properties { get; set; }
     }
 }
