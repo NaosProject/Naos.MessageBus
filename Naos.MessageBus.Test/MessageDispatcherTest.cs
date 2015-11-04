@@ -57,7 +57,7 @@ namespace Naos.MessageBus.Test
             var firstMessage = new FirstEnumMessage() { Description = "RunMe 1", SeedValue = MyEnum.OtherValue };
             var secondMessage = new SecondEnumMessage() { Description = "RunMe 2" };
             var thirdMessage = new SecondEnumMessage() { Description = "RunMe 3" };
-            var fourthMessage = new SecondEnumMessage() { Description = "RunMe 4" };
+ 
             var messageSequence = new MessageSequence
                                       {
                                           ChanneledMessages =
@@ -77,11 +77,6 @@ namespace Naos.MessageBus.Test
                                                           {
                                                               Channel = channel,
                                                               Message = thirdMessage
-                                                          },
-                                                      new ChanneledMessage
-                                                          {
-                                                              Channel = channel,
-                                                              Message = fourthMessage
                                                           }
                                                   }
                                       };
@@ -131,7 +126,64 @@ namespace Naos.MessageBus.Test
         [Fact]
         public static void Dispatch_ParcelWithRemainingEnvelopes_RemainingEnvelopesDoNotGetDeserialized()
         {
-            // make the second message a fake type and run sequence verify first message succeeds...
+            // arrange
+            var container = new Container();
+            var trackingSends = new List<Parcel>();
+            var senderConstructor = GetInMemorySender(trackingSends);
+            container.Register(senderConstructor);
+
+            var tracker = new InMemoryJobTracker();
+            var channel = new Channel { Name = "el-channel" };
+
+            container.Register<IHandleMessages<FirstEnumMessage>, FirstEnumHandler>();
+            container.Register<IHandleMessages<SecondEnumMessage>, SecondEnumHandler>();
+
+            var dispatcher = new MessageDispatcher(
+                container,
+                new ConcurrentDictionary<Type, object>(),
+                new[] { channel },
+                TypeMatchStrategy.NamespaceAndName,
+                TimeSpan.FromSeconds(.5),
+                tracker.IncrementActiveJobs,
+                tracker.DecrementActiveJobs);
+
+            var firstMessage = new FirstEnumMessage() { Description = "RunMe 1", SeedValue = MyEnum.OtherValue };
+
+            var envelopesFromSequence = new[]
+                                            {
+                                                new Envelope()
+                                                    {
+                                                        Description = firstMessage.Description,
+                                                        MessageAsJson =
+                                                            Hangfire.Sender.Serializer.Serialize(firstMessage),
+                                                        MessageType =
+                                                            firstMessage.GetType().ToTypeDescription(),
+                                                        Channel = channel
+                                                    },
+                                                new Envelope()
+                                                    {
+                                                        Description = "No work",
+                                                        MessageType =
+                                                            new TypeDescription
+                                                                {
+                                                                    Namespace = "Namespace",
+                                                                    Name = "Name",
+                                                                    AssemblyQualifiedName =
+                                                                        "AssemblyQualifiedName"
+                                                                },
+                                                        Channel = channel,
+                                                        MessageAsJson = "WON'T WORK"
+                                                    }
+                                            };
+
+            var parcel = new Parcel { Envelopes = envelopesFromSequence };
+
+            // act
+            dispatcher.Dispatch("First Message", parcel);
+
+            // assert
+
+            // by virtue of not throwing we succeeded because the second message in the sequence won't deserialize...
         }
 
         [Fact]
