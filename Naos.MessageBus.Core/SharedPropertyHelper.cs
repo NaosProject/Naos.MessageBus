@@ -171,11 +171,20 @@ namespace Naos.MessageBus.Core
         private static Type GetTypeFromLoadedTypes(TypeDescription valueType, TypeMatchStrategy typeMatchStrategy)
         {
             var typeComparer = new TypeComparer(typeMatchStrategy);
-            var matchingType =
+            var matchingTypes =
                 AppDomain.CurrentDomain.GetAssemblies()
                     .Where(_ => !_.IsDynamic)
                     .SelectMany(_ => _.GetExportedTypes())
-                    .SingleOrDefault(_ => typeComparer.Equals(valueType, _.ToTypeDescription()));
+                    .Where(_ => typeComparer.Equals(valueType, _.ToTypeDescription())).ToList();
+
+            var matchingTypesDistinct = matchingTypes.Distinct(typeComparer).ToList();
+
+            if (matchingTypesDistinct.Count() > 1)
+            {
+                throw new ArgumentException("Found too many type matches; " + string.Join(",", matchingTypes.Select(_ => _.AssemblyQualifiedName)));
+            }
+
+            var matchingType = matchingTypesDistinct.Single();
 
             if (matchingType == null)
             {

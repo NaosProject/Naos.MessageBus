@@ -60,11 +60,11 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="%28Spritely.Recipes%29\Functional.cs" />
-    <Compile Include="%28Spritely.Recipes%29\InheritedTypeJsonConverter.cs" />
-    <Compile Include="%28Spritely.Recipes%29\JsonConfiguration.cs" />
-    <Compile Include="%28Spritely.Recipes%29\SecureString.cs" />
-    <Compile Include="%28Spritely.Recipes%29\SecureStringJsonConverter.cs" />
+    <Compile Include=".Spritely.Recipes\Functional.cs" />
+    <Compile Include=".Spritely.Recipes\InheritedTypeJsonConverter.cs" />
+    <Compile Include=".Spritely.Recipes\JsonConfiguration.cs" />
+    <Compile Include=".Spritely.Recipes\SecureString.cs" />
+    <Compile Include=".Spritely.Recipes\SecureStringJsonConverter.cs" />
     <Compile Include="DispatcherFactory.cs" />
     <Compile Include="ITrackActiveJobs.cs" />
     <Compile Include="Logging.cs" />
