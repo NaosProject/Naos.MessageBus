@@ -184,7 +184,7 @@ namespace Naos.MessageBus.Core
                 throw new ArgumentException("Found too many type matches; " + string.Join(",", matchingTypes.Select(_ => _.AssemblyQualifiedName)));
             }
 
-            var matchingType = matchingTypesDistinct.Single();
+            var matchingType = matchingTypesDistinct.SingleOrDefault();
 
             if (matchingType == null)
             {
