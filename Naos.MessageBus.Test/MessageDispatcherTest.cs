@@ -127,25 +127,14 @@ namespace Naos.MessageBus.Test
         public static void Dispatch_ParcelWithRemainingEnvelopes_RemainingEnvelopesDoNotGetDeserialized()
         {
             // arrange
-            var container = new Container();
-            var trackingSends = new List<Parcel>();
-            var senderConstructor = GetInMemorySender(trackingSends);
-            container.Register(senderConstructor);
-
-            var tracker = new InMemoryJobTracker();
             var channel = new Channel { Name = "el-channel" };
+            var container = new Container();
 
             container.Register<IHandleMessages<FirstEnumMessage>, FirstEnumHandler>();
             container.Register<IHandleMessages<SecondEnumMessage>, SecondEnumHandler>();
+            var trackingSends = new List<Parcel>();
 
-            var dispatcher = new MessageDispatcher(
-                container,
-                new ConcurrentDictionary<Type, object>(),
-                new[] { channel },
-                TypeMatchStrategy.NamespaceAndName,
-                TimeSpan.FromSeconds(.5),
-                tracker.IncrementActiveJobs,
-                tracker.DecrementActiveJobs);
+            var dispatcher = GetMessageDispatcher(trackingSends, container, channel);
 
             var firstMessage = new FirstEnumMessage() { Description = "RunMe 1", SeedValue = MyEnum.OtherValue };
 
@@ -184,6 +173,130 @@ namespace Naos.MessageBus.Test
             // assert
 
             // by virtue of not throwing we succeeded because the second message in the sequence won't deserialize...
+        }
+
+        [Fact]
+        public static void Dispatch_ParcelWithNonSharedMessages_Succeeds()
+        {
+            // arrange
+            var channel = new Channel { Name = "el-channel" };
+            var container = new Container();
+            container.Register<IHandleMessages<MessageOne>, MessageOneHandler>();
+            container.Register<IHandleMessages<MessageTwo>, MessageTwoHandler>();
+
+            var trackingSends = new List<Parcel>();
+
+            var dispatcher = GetMessageDispatcher(trackingSends, container, channel);
+
+            var firstMessage = new MessageOne() { Description = "RunMe 1" };
+            var secondMessage = new MessageTwo() { Description = "RunMe 2" };
+
+            var envelopesFromSequence = new[]
+                                            {
+                                                new Envelope()
+                                                    {
+                                                        Description = firstMessage.Description,
+                                                        MessageAsJson =
+                                                            Hangfire.Sender.Serializer.Serialize(firstMessage),
+                                                        MessageType =
+                                                            firstMessage.GetType().ToTypeDescription(),
+                                                        Channel = channel
+                                                    },
+                                                new Envelope()
+                                                    {
+                                                        Description = secondMessage.Description,
+                                                        MessageAsJson =
+                                                            Hangfire.Sender.Serializer.Serialize(secondMessage),
+                                                        MessageType =
+                                                            secondMessage.GetType().ToTypeDescription(),
+                                                        Channel = channel
+                                                    }
+                                            };
+
+            var parcel = new Parcel { Envelopes = envelopesFromSequence };
+
+            // act
+            dispatcher.Dispatch("First Message", parcel);
+            Assert.Equal(1, trackingSends.Count);
+            var nextMessage = trackingSends.Single();
+            trackingSends.Clear();
+            dispatcher.Dispatch("Second Message", nextMessage);
+            Assert.Equal(0, trackingSends.Count);
+
+            // assert
+
+            // by virtue of not throwing we succeeded because the messages didn't throw...
+        }
+
+        [Fact]
+        public static void Dispatch_ParcelWithShareableMessagesAndNoShares_Succeeds()
+        {
+            // arrange
+            var channel = new Channel { Name = "el-channel" };
+            var container = new Container();
+            container.Register<IHandleMessages<MessageOneShare>, MessageOneShareHandler>();
+            container.Register<IHandleMessages<MessageTwoShare>, MessageTwoShareHandler>();
+
+            var trackingSends = new List<Parcel>();
+
+            var dispatcher = GetMessageDispatcher(trackingSends, container, channel);
+
+            var firstMessage = new MessageOneShare() { Description = "RunMe 1" };
+            var secondMessage = new MessageTwoShare() { Description = "RunMe 2" };
+
+            var envelopesFromSequence = new[]
+                                            {
+                                                new Envelope()
+                                                    {
+                                                        Description = firstMessage.Description,
+                                                        MessageAsJson =
+                                                            Hangfire.Sender.Serializer.Serialize(firstMessage),
+                                                        MessageType =
+                                                            firstMessage.GetType().ToTypeDescription(),
+                                                        Channel = channel
+                                                    },
+                                                new Envelope()
+                                                    {
+                                                        Description = secondMessage.Description,
+                                                        MessageAsJson =
+                                                            Hangfire.Sender.Serializer.Serialize(secondMessage),
+                                                        MessageType =
+                                                            secondMessage.GetType().ToTypeDescription(),
+                                                        Channel = channel
+                                                    }
+                                            };
+
+            var parcel = new Parcel { Envelopes = envelopesFromSequence };
+
+            // act
+            dispatcher.Dispatch("First Message", parcel);
+            Assert.Equal(1, trackingSends.Count);
+            var nextMessage = trackingSends.Single();
+            trackingSends.Clear();
+            dispatcher.Dispatch("Second Message", nextMessage);
+            Assert.Equal(0, trackingSends.Count);
+
+            // assert
+
+            // by virtue of not throwing we succeeded because the messages didn't throw...
+        }
+
+        private static MessageDispatcher GetMessageDispatcher(List<Parcel> trackingSends, Container container, Channel channel)
+        {
+            var senderConstructor = GetInMemorySender(trackingSends);
+            container.Register(senderConstructor);
+
+            var tracker = new InMemoryJobTracker();
+
+            var dispatcher = new MessageDispatcher(
+                container,
+                new ConcurrentDictionary<Type, object>(),
+                new[] { channel },
+                TypeMatchStrategy.NamespaceAndName,
+                TimeSpan.FromSeconds(.5),
+                tracker.IncrementActiveJobs,
+                tracker.DecrementActiveJobs);
+            return dispatcher;
         }
 
         [Fact]
@@ -659,6 +772,62 @@ namespace Naos.MessageBus.Test
         public class InitialStateMessage : IMessage
         {
             public string Description { get; set; }
+        }
+    }
+
+    public class MessageOne : IMessage
+    {
+        public string Description { get; set; }
+    }
+
+    public class MessageOneHandler : IHandleMessages<MessageOne>
+    {
+        public async Task HandleAsync(MessageOne message)
+        {
+            await Task.Delay(TimeSpan.FromMilliseconds(1));
+        }
+    }
+
+    public class MessageTwo : IMessage
+    {
+        public string Description { get; set; }
+    }
+
+    public class MessageTwoHandler : IHandleMessages<MessageTwo>
+    {
+        public async Task HandleAsync(MessageTwo message)
+        {
+            await Task.Delay(TimeSpan.FromMilliseconds(1));
+        }
+    }
+
+    public interface IShareNothing : IShare
+    {
+    }
+
+    public class MessageOneShare : IMessage, IShareNothing
+    {
+        public string Description { get; set; }
+    }
+
+    public class MessageOneShareHandler : IHandleMessages<MessageOneShare>, IShareNothing
+    {
+        public async Task HandleAsync(MessageOneShare message)
+        {
+            await Task.Delay(TimeSpan.FromMilliseconds(1));
+        }
+    }
+
+    public class MessageTwoShare : IMessage, IShareNothing
+    {
+        public string Description { get; set; }
+    }
+
+    public class MessageTwoShareHandler : IHandleMessages<MessageTwoShare>, IShareNothing
+    {
+        public async Task HandleAsync(MessageTwoShare message)
+        {
+            await Task.Delay(TimeSpan.FromMilliseconds(1));
         }
     }
 }
