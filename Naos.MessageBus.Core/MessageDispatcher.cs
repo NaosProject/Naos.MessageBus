@@ -304,7 +304,7 @@ namespace Naos.MessageBus.Core
         private void PrepareMessage(IMessage message, IList<SharedInterfaceState> sharedProperties)
         {
             var messageAsShare = message as IShare;
-            if (messageAsShare != null && sharedProperties.Count > 0)
+            if (messageAsShare != null && (sharedProperties ?? new List<SharedInterfaceState>()).Count > 0)
             {
                 using (var activity = Log.Enter(() => new { Message = message }))
                 {
