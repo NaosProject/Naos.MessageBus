@@ -109,11 +109,14 @@ namespace Naos.MessageBus.Core
                     var propertyValue = prop.GetValue(sourceObject);
                     var propertyValueAsJson = Serializer.Serialize(propertyValue);
                     var propertyEntry = new SharedProperty
-                                    {
-                                        Name = propertyName,
-                                        ValueAsJson = propertyValueAsJson,
-                                        ValueType = propertyValue.GetType().ToTypeDescription()
-                                    };
+                                            {
+                                                Name = propertyName,
+                                                ValueAsJson = propertyValueAsJson,
+                                                ValueType =
+                                                    (propertyValue == null
+                                                         ? prop.PropertyType
+                                                         : propertyValue.GetType()).ToTypeDescription()
+                                            };
 
                     entry.Properties.Add(propertyEntry);
                 }
