@@ -293,7 +293,7 @@ namespace Naos.MessageBus.Test
                 new ConcurrentDictionary<Type, object>(),
                 new[] { channel },
                 TypeMatchStrategy.NamespaceAndName,
-                TimeSpan.FromSeconds(.5),
+                TimeSpan.FromSeconds(.01),
                 tracker.IncrementActiveJobs,
                 tracker.DecrementActiveJobs);
             return dispatcher;
