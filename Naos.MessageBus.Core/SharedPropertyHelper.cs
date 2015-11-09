@@ -130,7 +130,7 @@ namespace Naos.MessageBus.Core
         /// <summary>
         /// Applies given shared property set to given IShare object.
         /// </summary>
-        /// <param name="typeMatchStrategy">Strategy to use when matching types for sharing.</param>
+        /// <param name="typeMatchStrategy">Strategy to use when matching types.</param>
         /// <param name="interfaceState">Property set to apply.</param>
         /// <param name="targetObject">IShare object to apply set to.</param>
         public static void ApplySharedInterfaceState(
@@ -164,21 +164,55 @@ namespace Naos.MessageBus.Core
             }
         }
 
-        private static object GetValueFromPropertyEntry(TypeMatchStrategy typeMatchStrategy, SharedProperty sharedProperty)
+        /// <summary>
+        /// Gets a value of a described shared property using the provided strategy.
+        /// </summary>
+        /// <param name="typeMatchStrategy">Strategy to use when matching types.</param>
+        /// <param name="sharedProperty">Property to use to get value from.</param>
+        /// <returns>Value of the property description.</returns>
+        public static object GetValueFromPropertyEntry(TypeMatchStrategy typeMatchStrategy, SharedProperty sharedProperty)
         {
-            var type = GetTypeFromLoadedTypes(sharedProperty.ValueType, typeMatchStrategy);
+            var type = ResolveTypeDescriptionFromAllLoadedTypes(typeMatchStrategy, sharedProperty.ValueType);
+            if (type == null)
+            {
+                throw new ArgumentException(
+                    "Can not find loaded type; Namespace: " + sharedProperty.ValueType.Namespace + ", Name: "
+                    + sharedProperty.ValueType.Name + ", AssemblyQualifiedName: "
+                    + sharedProperty.ValueType.AssemblyQualifiedName);
+            }
+
             var ret = Serializer.Deserialize(type, sharedProperty.ValueAsJson);
             return ret;
         }
 
-        private static Type GetTypeFromLoadedTypes(TypeDescription valueType, TypeMatchStrategy typeMatchStrategy)
+        /// <summary>
+        /// Resolves a TypeDescription to an actual Type by comparing with all loaded types using the provided strategy.
+        /// </summary>
+        /// <param name="typeMatchStrategy">Strategy to use when matching types.</param>
+        /// <param name="typeDescriptionToResolve">Description of type to resolve.</param>
+        /// <returns>Matching type if found, null otherwise.</returns>
+        public static Type ResolveTypeDescriptionFromAllLoadedTypes(TypeMatchStrategy typeMatchStrategy, TypeDescription typeDescriptionToResolve)
         {
+            var isArrayType = false;
+            var localTypeDescriptionToResolve = typeDescriptionToResolve;
+            if (typeDescriptionToResolve.Name.Contains("[]")
+                || typeDescriptionToResolve.AssemblyQualifiedName.Contains("[]"))
+            {
+                localTypeDescriptionToResolve = new TypeDescription
+                                                    {
+                                                        AssemblyQualifiedName = typeDescriptionToResolve.AssemblyQualifiedName.Replace("[]", string.Empty),
+                                                        Namespace = typeDescriptionToResolve.Namespace,
+                                                        Name = typeDescriptionToResolve.Name.Replace("[]", string.Empty)
+                                                    };
+                isArrayType = true;
+            }
+
             var typeComparer = new TypeComparer(typeMatchStrategy);
             var matchingTypes =
                 AppDomain.CurrentDomain.GetAssemblies()
                     .Where(_ => !_.IsDynamic)
                     .SelectMany(_ => _.GetExportedTypes())
-                    .Where(_ => typeComparer.Equals(valueType, _.ToTypeDescription())).ToList();
+                    .Where(_ => typeComparer.Equals(localTypeDescriptionToResolve, _.ToTypeDescription())).ToList();
 
             var matchingTypesDistinct = matchingTypes.Distinct(typeComparer).ToList();
 
@@ -188,12 +222,9 @@ namespace Naos.MessageBus.Core
             }
 
             var matchingType = matchingTypesDistinct.SingleOrDefault();
-
-            if (matchingType == null)
+            if (matchingType != null && isArrayType)
             {
-                throw new ArgumentException(
-                    "Can not find loaded type; Namespace: " + valueType.Namespace + ", Name: " + valueType.Name
-                    + ", AssemblyQualifiedName: " + valueType.AssemblyQualifiedName);
+                matchingType = matchingType.MakeArrayType();
             }
 
             return matchingType;
