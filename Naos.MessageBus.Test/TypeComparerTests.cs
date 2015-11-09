@@ -7,10 +7,14 @@
 namespace Naos.MessageBus.Test
 {
     using System;
+    using System.Collections.Generic;
+    using System.Linq;
 
     using Naos.MessageBus.Core;
     using Naos.MessageBus.DataContract;
     using Naos.MessageBus.HandlingContract;
+
+    using Newtonsoft.Json;
 
     using Xunit;
 
@@ -134,6 +138,48 @@ namespace Naos.MessageBus.Test
             var y = typeof(Type);
             var actual = comparer.Equals(x.ToTypeDescription(), y.ToTypeDescription());
             Assert.False(actual);
+        }
+
+        [Fact]
+        public void ListTypeIsTypeDescriptedAndDeserializedWithGenericInfo()
+        {
+            var obj = new List<string>(new[] { "hello" }).ToArray();
+            var json = Serializer.Serialize(obj);
+            var sharedProperty = new SharedProperty
+                                     {
+                                         Name = "Property",
+                                         ValueAsJson = json,
+                                         ValueType = obj.GetType().ToTypeDescription()
+                                     };
+
+            var fromSharedPropertyRaw = SharedPropertyHelper.GetValueFromPropertyEntry(
+                TypeMatchStrategy.NamespaceAndName,
+                sharedProperty);
+
+            Assert.NotNull(fromSharedPropertyRaw);
+            Assert.IsType(obj.GetType(), fromSharedPropertyRaw);
+            var fromSharePropertyTyped = (string[])fromSharedPropertyRaw;
+            Assert.Equal(obj.Single(), fromSharePropertyTyped.Single());
+        }
+
+        [Fact]
+        public void ResolveArraysOfKnwonResolveTypeDescriptionFromAllLoadedTypes_ArrayOfType_ResolvesIfTypeKnown()
+        {
+            var obj = new[] { "hello" };
+            var typeDescription = obj.GetType().ToTypeDescription();
+            var type = SharedPropertyHelper.ResolveTypeDescriptionFromAllLoadedTypes(
+                TypeMatchStrategy.NamespaceAndName,
+                typeDescription);
+            Assert.NotNull(type);
+            Assert.Equal(obj.GetType(), type);
+        }
+
+        [Fact]
+        public void ResolveTypeDescriptionFromAllLoadedTypes_NotFound_ReturnsNull()
+        {
+            var description = new TypeDescription { AssemblyQualifiedName = "Monkeys", Name = "Are", Namespace = "Cool" };
+            var ret = SharedPropertyHelper.ResolveTypeDescriptionFromAllLoadedTypes(TypeMatchStrategy.AssemblyQualifiedName, description);
+            Assert.Null(ret);
         }
     }
 }
