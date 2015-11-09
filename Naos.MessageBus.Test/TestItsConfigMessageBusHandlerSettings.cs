@@ -38,6 +38,8 @@ namespace Naos.MessageBus.Test
 
             Assert.NotNull(settings);
             Assert.Equal("server=localhost", settings.PersistenceConnectionString);
+            var hostSettings = settings.RoleSettings.OfType<MessageBusHarnessRoleSettingsHost>().SingleOrDefault();
+            Assert.Null(hostSettings);
             var executorSettings = settings.RoleSettings.OfType<MessageBusHarnessRoleSettingsExecutor>().SingleOrDefault();
             Assert.NotNull(executorSettings);
             Assert.Equal("monkeys", executorSettings.ChannelsToMonitor.First().Name);
