@@ -8,7 +8,6 @@ namespace Naos.MessageBus.Test
 {
     using System;
     using System.Diagnostics;
-    using System.Threading.Tasks;
 
     using Naos.MessageBus.Core;
     using Naos.MessageBus.DataContract;
