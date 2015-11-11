@@ -11,11 +11,32 @@ namespace Naos.MessageBus.Test
     using Naos.Cron;
     using Naos.MessageBus.DataContract;
     using Naos.MessageBus.Hangfire.Sender;
+    using Naos.MessageBus.SendingContract;
 
     using Xunit;
 
     public class MessageSenderTest
     {
+        [Fact]
+        public static void SenderFactoryGetMessageSenderBuilder_Uninitialized_Throws()
+        {
+            var ex = Assert.Throws<ArgumentException>(() => SenderFactory.GetMessageSenderBuilder());
+            Assert.IsType<ArgumentException>(ex);
+            Assert.Equal(
+                "MessageSenderBuilder is not initialized.",
+                ex.Message);
+        }
+
+        [Fact]
+        public static void SenderFactoryGetMessageSender_Uninitialized_Throws()
+        {
+            var ex = Assert.Throws<ArgumentException>(() => SenderFactory.GetMessageSender());
+            Assert.IsType<ArgumentException>(ex);
+            Assert.Equal(
+                "MessageSenderBuilder is not initialized.",
+                ex.Message);
+        }
+
         [Fact]
         public static void Send_Message_AddsSequenceId()
         {

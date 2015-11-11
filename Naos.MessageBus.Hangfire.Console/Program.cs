@@ -20,6 +20,7 @@ namespace Naos.MessageBus.Hangfire.Console
     using Naos.MessageBus.DataContract.Exceptions;
     using Naos.MessageBus.HandlingContract;
     using Naos.MessageBus.Hangfire.Sender;
+    using Naos.MessageBus.SendingContract;
 
     using Serializer = Naos.MessageBus.Core.Serializer;
 
@@ -51,12 +52,14 @@ namespace Naos.MessageBus.Hangfire.Console
 
             if (executorRoleSettings != null)
             {
-                Func<MessageSender> messageSenderBuilder = () => new MessageSender(messageBusHandlerSettings.PersistenceConnectionString);
+                Func<ISendMessages> messageSenderBuilder = () => new MessageSender(messageBusHandlerSettings.PersistenceConnectionString);
+                SenderFactory.Initialize(messageSenderBuilder);
+
                 var tracker = new InMemoryJobTracker();
                 var dispatcherFactory = new DispatcherFactory(
                     executorRoleSettings.HandlerAssemblyPath,
                     executorRoleSettings.ChannelsToMonitor,
-                    messageSenderBuilder,
+                    SenderFactory.GetMessageSender,
                     executorRoleSettings.TypeMatchStrategy,
                     executorRoleSettings.MessageDispatcherWaitThreadSleepTime,
                     tracker);
@@ -68,7 +71,7 @@ namespace Naos.MessageBus.Hangfire.Console
                 var executorOptions = new BackgroundJobServerOptions
                 {
                     Queues = executorRoleSettings.ChannelsToMonitor.Select(_ => _.Name).ToArray(),
-                    ServerName = "HangfireExecutor" + Environment.MachineName,
+                    ServerName = Environment.MachineName,
                     SchedulePollingInterval = executorRoleSettings.PollingTimeSpan,
                     WorkerCount = executorRoleSettings.WorkerCount,
                 };

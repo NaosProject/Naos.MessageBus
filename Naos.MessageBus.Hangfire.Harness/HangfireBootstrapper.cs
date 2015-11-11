@@ -17,6 +17,7 @@ namespace Naos.MessageBus.Hangfire.Harness
     using Naos.MessageBus.Core;
     using Naos.MessageBus.HandlingContract;
     using Naos.MessageBus.Hangfire.Sender;
+    using Naos.MessageBus.SendingContract;
 
     /// <inheritdoc />
     public class HangfireBootstrapper : IRegisteredObject
@@ -67,11 +68,13 @@ namespace Naos.MessageBus.Hangfire.Harness
             string persistenceConnectionString,
             MessageBusHarnessRoleSettingsExecutor executorRoleSettings)
         {
-            Func<MessageSender> messageSenderBuilder = () => new MessageSender(persistenceConnectionString);
+            Func<ISendMessages> messageSenderBuilder = () => new MessageSender(persistenceConnectionString);
+            SenderFactory.Initialize(messageSenderBuilder);
+
             this.dispatcherFactory = new DispatcherFactory(
                 executorRoleSettings.HandlerAssemblyPath,
                 executorRoleSettings.ChannelsToMonitor,
-                messageSenderBuilder,
+                SenderFactory.GetMessageSender,
                 executorRoleSettings.TypeMatchStrategy,
                 executorRoleSettings.MessageDispatcherWaitThreadSleepTime);
 
@@ -82,7 +85,7 @@ namespace Naos.MessageBus.Hangfire.Harness
             var options = new BackgroundJobServerOptions
                               {
                                   Queues = executorRoleSettings.ChannelsToMonitor.Select(_ => _.Name).ToArray(),
-                                  ServerName = "HangfireExecutor" + Environment.MachineName,
+                                  ServerName = Environment.MachineName,
                                   SchedulePollingInterval = executorRoleSettings.PollingTimeSpan,
                                   WorkerCount = executorRoleSettings.WorkerCount,
                               };
