@@ -47,7 +47,7 @@ namespace Naos.MessageBus.Test
             Assert.Equal(4, executorSettings.WorkerCount);
             Assert.Equal("I:\\Gets\\My\\Dlls\\Here", executorSettings.HandlerAssemblyPath);
             Assert.Equal(TimeSpan.FromMinutes(1), executorSettings.PollingTimeSpan);
-            Assert.Equal(TimeSpan.FromSeconds(.5), executorSettings.MessageDispatcherWaitThreadSleepTime);
+            Assert.Equal(TimeSpan.FromSeconds(1), executorSettings.MessageDispatcherWaitThreadSleepTime);
             Assert.Equal(TimeSpan.FromMinutes(10), executorSettings.HarnessProcessTimeToLive);
         }
 

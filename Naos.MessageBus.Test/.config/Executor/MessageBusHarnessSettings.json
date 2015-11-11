@@ -8,7 +8,7 @@
             "pollingTimeSpan": "00:01:00",
             "harnessProcessTimeToLive": "00:10:00",
             "typeMatchStrategy":  "namespaceAndName",
-            "messageDispatcherWaitThreadSleepTime":  "00:00:00.5000000",
+            "messageDispatcherWaitThreadSleepTime":  "00:00:01",
             "retryCount": 0
         }
     ]
