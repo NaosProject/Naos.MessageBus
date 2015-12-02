@@ -17,6 +17,8 @@ namespace Naos.MessageBus.Hangfire.Harness
 
     using global::Hangfire;
     using global::Hangfire.Logging;
+    using global::Hangfire.Server;
+    using global::Hangfire.SqlServer;
 
     using Its.Configuration;
 
@@ -50,15 +52,22 @@ namespace Naos.MessageBus.Hangfire.Harness
 
             if (hostRoleSettings != null)
             {
+                var invisibilityTimeout = hostRoleSettings.InvisibilityTimeout;
+                if (invisibilityTimeout == default(TimeSpan))
+                {
+                    invisibilityTimeout = TimeSpan.FromMinutes(30);
+                }
+
                 GlobalConfiguration.Configuration.UseSqlServerStorage(
-                    messageBusHandlerSettings.PersistenceConnectionString);
+                    messageBusHandlerSettings.PersistenceConnectionString,
+                    new SqlServerStorageOptions { InvisibilityTimeout = invisibilityTimeout });
 
                 // need one worker here to run the default queue (currently only intended to process NullMessages or requeue messages...)
                 var options = new BackgroundJobServerOptions
                                   {
                                       ServerName = hostRoleSettings.ServerName,
                                       WorkerCount = 1,
-                                      Queues = new[] { "hangfire.host" }
+                                      Queues = new[] { "hangfire.host" },
                                   };
 
                 app.UseHangfireServer(options);
