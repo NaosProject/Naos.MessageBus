@@ -13,6 +13,7 @@ namespace Naos.MessageBus.Hangfire.Harness
     using System.Web.Hosting;
 
     using global::Hangfire;
+    using global::Hangfire.SqlServer;
 
     using Naos.MessageBus.Core;
     using Naos.MessageBus.HandlingContract;
@@ -90,7 +91,16 @@ namespace Naos.MessageBus.Hangfire.Harness
                                   WorkerCount = executorRoleSettings.WorkerCount,
                               };
 
-            GlobalConfiguration.Configuration.UseSqlServerStorage(persistenceConnectionString);
+            var invisibilityTimeout = executorRoleSettings.InvisibilityTimeout;
+            if (invisibilityTimeout == default(TimeSpan))
+            {
+                invisibilityTimeout = TimeSpan.FromMinutes(30);
+            }
+
+            GlobalConfiguration.Configuration.UseSqlServerStorage(
+                persistenceConnectionString,
+                new SqlServerStorageOptions { InvisibilityTimeout = invisibilityTimeout });
+
             this.backgroundJobServer = new BackgroundJobServer(options);
         }
 

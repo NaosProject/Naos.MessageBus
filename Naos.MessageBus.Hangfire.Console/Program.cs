@@ -12,6 +12,7 @@ namespace Naos.MessageBus.Hangfire.Console
 
     using global::Hangfire;
     using global::Hangfire.Logging;
+    using global::Hangfire.SqlServer;
 
     using Its.Configuration;
     using Its.Log.Instrumentation;
@@ -76,7 +77,16 @@ namespace Naos.MessageBus.Hangfire.Console
                     WorkerCount = executorRoleSettings.WorkerCount,
                 };
 
-                GlobalConfiguration.Configuration.UseSqlServerStorage(messageBusHandlerSettings.PersistenceConnectionString);
+                var invisibilityTimeout = executorRoleSettings.InvisibilityTimeout;
+                if (invisibilityTimeout == default(TimeSpan))
+                {
+                    invisibilityTimeout = TimeSpan.FromMinutes(30);
+                }
+
+                GlobalConfiguration.Configuration.UseSqlServerStorage(
+                    messageBusHandlerSettings.PersistenceConnectionString,
+                    new SqlServerStorageOptions { InvisibilityTimeout = invisibilityTimeout });
+
                 var timeToLive = executorRoleSettings.HarnessProcessTimeToLive;
                 if (timeToLive == default(TimeSpan))
                 {

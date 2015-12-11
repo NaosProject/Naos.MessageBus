@@ -21,6 +21,10 @@ namespace Naos.MessageBus.HandlingContract
     [Bindable(BindableSupport.Default)]
     public abstract class MessageBusHarnessRoleSettingsBase
     {
+        /// <summary>
+        /// Gets or sets invisibility timeout to use for the server.
+        /// </summary>
+        public TimeSpan InvisibilityTimeout { get; set; }
     }
 
     /// <summary>
@@ -37,11 +41,6 @@ namespace Naos.MessageBus.HandlingContract
         /// Gets or sets a value indicating whether or not to run the dashboard.
         /// </summary>
         public bool RunDashboard { get; set; }
-
-        /// <summary>
-        /// Gets or sets invisibility timeout to use for the server.
-        /// </summary>
-        public TimeSpan InvisibilityTimeout { get; set; }
     }
 
     /// <summary>
