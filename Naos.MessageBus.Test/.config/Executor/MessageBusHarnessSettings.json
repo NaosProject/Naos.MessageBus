@@ -9,7 +9,8 @@
             "harnessProcessTimeToLive": "00:10:00",
             "typeMatchStrategy":  "namespaceAndName",
             "messageDispatcherWaitThreadSleepTime":  "00:00:01",
-            "retryCount": 0
+            "retryCount": 0,
+            "invisibilityTimeout": "02:00:00"
         }
     ]
 }

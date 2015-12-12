@@ -3,7 +3,8 @@
     "roleSettings": [
         {
             "serverName": "MyHangfireServer",
-            "runDashboard": true
+            "runDashboard": true,
+            "invisibilityTimeout": "02:00:00"
         }
     ]
 }
