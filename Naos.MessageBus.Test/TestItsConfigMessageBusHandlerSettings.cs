@@ -27,9 +27,7 @@ namespace Naos.MessageBus.Test
             Assert.Equal("server=localhost", settings.PersistenceConnectionString);
             var hostSettings = settings.RoleSettings.OfType<MessageBusHarnessRoleSettingsHost>().SingleOrDefault();
             Assert.NotNull(hostSettings);
-            Assert.Equal("MyHangfireServer", hostSettings.ServerName);
             Assert.Equal(true, hostSettings.RunDashboard);
-            Assert.Equal(TimeSpan.FromHours(2), hostSettings.InvisibilityTimeout);
         }
 
         [Fact]
@@ -50,7 +48,6 @@ namespace Naos.MessageBus.Test
             Assert.Equal(TimeSpan.FromMinutes(1), executorSettings.PollingTimeSpan);
             Assert.Equal(TimeSpan.FromSeconds(1), executorSettings.MessageDispatcherWaitThreadSleepTime);
             Assert.Equal(TimeSpan.FromMinutes(10), executorSettings.HarnessProcessTimeToLive);
-            Assert.Equal(TimeSpan.FromHours(2), executorSettings.InvisibilityTimeout);
         }
 
         private static MessageBusHarnessSettings SetupItsConfigAndGetSettingsByPrecedence(string precedence)
