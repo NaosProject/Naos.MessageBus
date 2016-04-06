@@ -16,9 +16,15 @@ namespace Naos.MessageBus.Test
 
     public class WaitMessageHandlerTests
     {
-        [Fact(Skip = "This doesn't really work right on the AppVeyor so keeping ignored for now...")]
+        [Fact]
         public void Handle_TenSecondTimeSpan_TenSecondWait()
         {
+            // skipping on appveyor because it hangs...
+            if (true.ToString().Equals(Environment.GetEnvironmentVariable("APPVEYOR")))
+            {
+                return;
+            }
+
             // arrange
             var secondsToWait = 10;
             var message = new WaitMessage { TimeToWait = TimeSpan.FromSeconds(secondsToWait) };
