@@ -86,20 +86,13 @@ namespace Naos.MessageBus.Hangfire.Harness
             var options = new BackgroundJobServerOptions
                               {
                                   Queues = executorRoleSettings.ChannelsToMonitor.Select(_ => _.Name).ToArray(),
-                                  ServerName = Environment.MachineName,
                                   SchedulePollingInterval = executorRoleSettings.PollingTimeSpan,
                                   WorkerCount = executorRoleSettings.WorkerCount,
                               };
 
-            var invisibilityTimeout = executorRoleSettings.InvisibilityTimeout;
-            if (invisibilityTimeout == default(TimeSpan))
-            {
-                invisibilityTimeout = TimeSpan.FromMinutes(30);
-            }
-
             GlobalConfiguration.Configuration.UseSqlServerStorage(
                 persistenceConnectionString,
-                new SqlServerStorageOptions { InvisibilityTimeout = invisibilityTimeout });
+                new SqlServerStorageOptions());
 
             this.backgroundJobServer = new BackgroundJobServer(options);
         }

@@ -2,9 +2,7 @@
     "persistenceConnectionString": "server=localhost",
     "roleSettings": [
         {
-            "serverName": "MyHangfireServer",
-            "runDashboard": true,
-            "invisibilityTimeout": "02:00:00"
+            "runDashboard": true
         }
     ]
 }
