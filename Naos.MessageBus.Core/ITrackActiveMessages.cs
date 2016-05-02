@@ -1,5 +1,5 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="ITrackActiveJobs.cs" company="Naos">
+// <copyright file="ITrackActiveMessages.cs" company="Naos">
 //   Copyright 2015 Naos
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
@@ -11,50 +11,50 @@ namespace Naos.MessageBus.Core
     /// <summary>
     /// Interface to track running jobs from the dispatcher.
     /// </summary>
-    public interface ITrackActiveJobs
+    public interface ITrackActiveMessages
     {
         /// <summary>
         /// Gets the active jobs count.
         /// </summary>
-        long ActiveJobsCount { get; }
+        long ActiveMessagesCount { get; }
 
         /// <summary>
         /// Increases the job count by 1.
         /// </summary>
-        void IncrementActiveJobs();
+        void IncrementActiveMessages();
 
         /// <summary>
         /// Decreases the job count by 1.
         /// </summary>
-        void DecrementActiveJobs();
+        void DecrementActiveMessages();
     }
 
     /// <summary>
     /// In memory implementation of ITrackActiveJobs interface.
     /// </summary>
-    public class InMemoryJobTracker : ITrackActiveJobs
+    public class InMemoryActiveMessageTracker : ITrackActiveMessages
     {
-        private long activeJobsCount = 0;
+        private long activeMessagesCount = 0;
 
         /// <inheritdoc />
-        public long ActiveJobsCount
+        public long ActiveMessagesCount
         {
             get
             {
-                return Interlocked.Read(ref this.activeJobsCount);
+                return Interlocked.Read(ref this.activeMessagesCount);
             }
         }
 
         /// <inheritdoc />
-        public void IncrementActiveJobs()
+        public void IncrementActiveMessages()
         {
-            Interlocked.Increment(ref this.activeJobsCount);
+            Interlocked.Increment(ref this.activeMessagesCount);
         }
 
         /// <inheritdoc />
-        public void DecrementActiveJobs()
+        public void DecrementActiveMessages()
         {
-            Interlocked.Decrement(ref this.activeJobsCount);
+            Interlocked.Decrement(ref this.activeMessagesCount);
         }
     }
 }

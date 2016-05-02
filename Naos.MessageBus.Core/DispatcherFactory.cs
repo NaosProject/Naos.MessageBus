@@ -15,6 +15,7 @@ namespace Naos.MessageBus.Core
 
     using Its.Log.Instrumentation;
 
+    using Naos.Diagnostics.Domain;
     using Naos.MessageBus.DataContract;
     using Naos.MessageBus.HandlingContract;
     using Naos.MessageBus.SendingContract;
@@ -37,51 +38,47 @@ namespace Naos.MessageBus.Core
 
         private readonly TimeSpan messageDispatcherWaitThreadSleepTime;
 
-        private readonly ITrackActiveJobs tracker;
+        private readonly HarnessStaticDetails harnessStaticDetails;
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="DispatcherFactory"/> class.
-        /// </summary>
-        /// <param name="servicedChannels">Channels being monitored.</param>
-        /// <param name="messageSenderBuilder">Function to build a message sender to supply to the dispatcher.</param>
-        /// <param name="typeMatchStrategy">Strategy on how to match types.</param>
-        /// <param name="messageDispatcherWaitThreadSleepTime">Amount of time to sleep while waiting on messages to be handled.</param>
-        public DispatcherFactory(ICollection<Channel> servicedChannels, Func<ISendMessages> messageSenderBuilder, TypeMatchStrategy typeMatchStrategy, TimeSpan messageDispatcherWaitThreadSleepTime)
-        {
-            this.servicedChannels = servicedChannels;
-            this.typeMatchStrategy = typeMatchStrategy;
-            this.messageDispatcherWaitThreadSleepTime = messageDispatcherWaitThreadSleepTime;
+        private readonly IPostmaster postmaster;
 
-            // register sender as it might need to send other messages in a sequence.
-            this.simpleInjectorContainer.Register(messageSenderBuilder);
-
-            var typesInFile = typeof(DispatcherFactory).Assembly.GetTypes();
-            var handlerTypeMap = typesInFile.GetTypeMapsOfImplementersOfGenericType(typeof(IHandleMessages<>));
-            this.LoadContainer(handlerTypeMap);
-        }
+        private readonly ITrackActiveMessages activeMessageTracker;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="DispatcherFactory"/> class.
         /// </summary>
         /// <param name="handlerAssemblyPath">Path to the assemblies being searched through to be loaded as message handlers.</param>
         /// <param name="servicedChannels">Channels being monitored.</param>
-        /// <param name="messageSenderBuilder">Function to build a message sender to supply to the dispatcher.</param>
         /// <param name="typeMatchStrategy">Strategy on how to match types.</param>
         /// <param name="messageDispatcherWaitThreadSleepTime">Amount of time to sleep while waiting on messages to be handled.</param>
-        /// <param name="tracker">Tracker to keep track of active jobs.</param>
-        public DispatcherFactory(string handlerAssemblyPath, ICollection<Channel> servicedChannels, Func<ISendMessages> messageSenderBuilder, TypeMatchStrategy typeMatchStrategy, TimeSpan messageDispatcherWaitThreadSleepTime, ITrackActiveJobs tracker = null)
+        /// <param name="postmaster">Interface for managing life of the parcels.</param>
+        /// <param name="activeMessageTracker">Interface to track active messages to know if handler harness can shutdown.</param>
+        public DispatcherFactory(string handlerAssemblyPath, ICollection<Channel> servicedChannels, TypeMatchStrategy typeMatchStrategy, TimeSpan messageDispatcherWaitThreadSleepTime, IPostmaster postmaster, ITrackActiveMessages activeMessageTracker)
         {
+            if (postmaster == null)
+            {
+                throw new ArgumentException("Courier can't be null");
+            }
+
             this.servicedChannels = servicedChannels;
             this.typeMatchStrategy = typeMatchStrategy;
             this.messageDispatcherWaitThreadSleepTime = messageDispatcherWaitThreadSleepTime;
-            this.tracker = tracker;
-
-            // register sender as it might need to send other messages in a sequence.
-            this.simpleInjectorContainer.Register(messageSenderBuilder);
+            this.postmaster = postmaster;
+            this.activeMessageTracker = activeMessageTracker;
 
             // find all assemblies files to search for handlers.
             var filesRaw = Directory.GetFiles(handlerAssemblyPath, "*.dll", SearchOption.AllDirectories);
-            
+
+            // initialize the details about this handler.
+            var assemblies = filesRaw.Select(AssemblyDetails.CreateFromFile).ToList();
+            var machineDetails = MachineDetails.Create();
+            this.harnessStaticDetails = new HarnessStaticDetails
+                                      {
+                                          MachineDetails = machineDetails,
+                                          ExecutingUser = Environment.UserDomainName + "\\" + Environment.UserName,
+                                          Assemblies = assemblies
+                                      };
+
             // prune out the Microsoft.Bcl nonsense (if present)
             var files = filesRaw.Where(_ => !_.Contains("Microsoft.Bcl")).ToList();
 
@@ -89,19 +86,19 @@ namespace Naos.MessageBus.Core
 
             // add an unknown assembly resolver to go try to find the dll in one of the files we have discovered...
             AppDomain.CurrentDomain.AssemblyResolve += (sender, args) =>
-            {
-                var dllNameWithoutExtension = args.Name.Split(',')[0];
-                var dllName = dllNameWithoutExtension + ".dll";
-                var fullDllPath = files.FirstOrDefault(_ => _.EndsWith(dllName));
-                if (fullDllPath == null)
                 {
-                    throw new TypeInitializationException(args.Name, null);
-                }
+                    var dllNameWithoutExtension = args.Name.Split(',')[0];
+                    var dllName = dllNameWithoutExtension + ".dll";
+                    var fullDllPath = files.FirstOrDefault(_ => _.EndsWith(dllName));
+                    if (fullDllPath == null)
+                    {
+                        throw new TypeInitializationException(args.Name, null);
+                    }
 
-                // Can't use Assembly.Load() here because it fails when you have different versions of N-level dependencies...I have no idea why Assembly.LoadFrom works.
-                Log.Write(() => "Loaded Assembly (in AppDomain.CurrentDomain.AssemblyResolve): " + dllNameWithoutExtension + " From: " + fullDllPath);
-                return Assembly.LoadFrom(fullDllPath);
-            };
+                    // Can't use Assembly.Load() here because it fails when you have different versions of N-level dependencies...I have no idea why Assembly.LoadFrom works.
+                    Log.Write(() => "Loaded Assembly (in AppDomain.CurrentDomain.AssemblyResolve): " + dllNameWithoutExtension + " From: " + fullDllPath);
+                    return Assembly.LoadFrom(fullDllPath);
+                };
 
             var handlerTypeMap = new List<TypeMap>();
             foreach (var filePathToPotentialHandlerAssembly in files)
@@ -109,8 +106,7 @@ namespace Naos.MessageBus.Core
                 try
                 {
                     var fullDllPath = filePathToPotentialHandlerAssembly;
-                    var dllNameWithoutExtension =
-                        (Path.GetFileName(filePathToPotentialHandlerAssembly) ?? string.Empty).Replace(".dll", string.Empty);
+                    var dllNameWithoutExtension = (Path.GetFileName(filePathToPotentialHandlerAssembly) ?? string.Empty).Replace(".dll", string.Empty);
 
                     // Can't use Assembly.LoadFrom() here because it fails for some reason.
                     var assembly = GetAssembly(dllNameWithoutExtension, pdbFiles, fullDllPath);
@@ -142,18 +138,15 @@ namespace Naos.MessageBus.Core
             // if we weren't in hangfire we'd just persist the dispatcher and keep these two fields inside of it...
             this.simpleInjectorContainer.Register<IDispatchMessages>(
                 () =>
-                    {
-                        var nullAction = new Action(() => { });
-
-                        return new MessageDispatcher(
-                              this.simpleInjectorContainer,
-                              this.sharedStateMap,
-                              this.servicedChannels,
-                              this.typeMatchStrategy,
-                              this.messageDispatcherWaitThreadSleepTime,
-                              this.tracker == null ? nullAction : this.tracker.IncrementActiveJobs,
-                              this.tracker == null ? nullAction : this.tracker.DecrementActiveJobs);
-                    });
+                new MessageDispatcher(
+                    this.simpleInjectorContainer,
+                    this.sharedStateMap,
+                    this.servicedChannels,
+                    this.typeMatchStrategy,
+                    this.messageDispatcherWaitThreadSleepTime,
+                    this.harnessStaticDetails,
+                    this.postmaster,
+                    this.activeMessageTracker));
 
             foreach (var registration in this.simpleInjectorContainer.GetCurrentRegistrations())
             {

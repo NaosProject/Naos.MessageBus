@@ -1,5 +1,5 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="ISendMessages.cs" company="Naos">
+// <copyright file="ISendParcels.cs" company="Naos">
 //   Copyright 2015 Naos
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
@@ -12,7 +12,7 @@ namespace Naos.MessageBus.SendingContract
     /// <summary>
     /// Interface for sending messages through the bus.
     /// </summary>
-    public interface ISendMessages
+    public interface ISendParcels
     {
         /// <summary>
         /// Send a message that should be handled as soon as possible.

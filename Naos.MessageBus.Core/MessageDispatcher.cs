@@ -9,13 +9,13 @@ namespace Naos.MessageBus.Core
     using System;
     using System.Collections.Concurrent;
     using System.Collections.Generic;
-    using System.Collections.ObjectModel;
     using System.Linq;
     using System.Threading;
     using System.Threading.Tasks;
 
     using Its.Log.Instrumentation;
 
+    using Naos.Diagnostics.Domain;
     using Naos.MessageBus.DataContract;
     using Naos.MessageBus.DataContract.Exceptions;
     using Naos.MessageBus.HandlingContract;
@@ -36,9 +36,11 @@ namespace Naos.MessageBus.Core
 
         private readonly TimeSpan messageDispatcherWaitThreadSleepTime;
 
-        private readonly Action onStartDispatch;
+        private readonly HarnessStaticDetails harnessStaticDetails;
 
-        private readonly Action onFinishDispatch;
+        private readonly IPostmaster postmaster;
+
+        private readonly ITrackActiveMessages activeMessageTracker;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="MessageDispatcher"/> class.
@@ -48,39 +50,44 @@ namespace Naos.MessageBus.Core
         /// <param name="servicedChannels">Channels being services by this dispatcher.</param>
         /// <param name="typeMatchStrategy">Message type match strategy for use when selecting a handler.</param>
         /// <param name="messageDispatcherWaitThreadSleepTime">Amount of time to sleep while waiting on messages to be handled.</param>
-        /// <param name="onStartDispatch">Action fired when dispatch started.</param>
-        /// <param name="onFinishDispatch">Action fired when dispatch finished.</param>
-        public MessageDispatcher(Container simpleInjectorContainer, ConcurrentDictionary<Type, object> handlerSharedStateMap, ICollection<Channel> servicedChannels, TypeMatchStrategy typeMatchStrategy, TimeSpan messageDispatcherWaitThreadSleepTime, Action onStartDispatch = null, Action onFinishDispatch = null)
+        /// <param name="harnessStaticDetails">Details about the harness.</param>
+        /// <param name="postmaster">Courier to track parcel events.</param>
+        /// <param name="activeMessageTracker">Interface to track active messages to know if handler harness can shutdown.</param>
+        public MessageDispatcher(Container simpleInjectorContainer, ConcurrentDictionary<Type, object> handlerSharedStateMap, ICollection<Channel> servicedChannels, TypeMatchStrategy typeMatchStrategy, TimeSpan messageDispatcherWaitThreadSleepTime, HarnessStaticDetails harnessStaticDetails, IPostmaster postmaster, ITrackActiveMessages activeMessageTracker)
         {
             this.simpleInjectorContainer = simpleInjectorContainer;
             this.handlerSharedStateMap = handlerSharedStateMap;
             this.servicedChannels = servicedChannels;
             this.typeMatchStrategy = typeMatchStrategy;
             this.messageDispatcherWaitThreadSleepTime = messageDispatcherWaitThreadSleepTime;
-            this.onStartDispatch = onStartDispatch;
-            this.onFinishDispatch = onFinishDispatch;
+
+            this.harnessStaticDetails = harnessStaticDetails;
+            this.postmaster = postmaster;
+            this.activeMessageTracker = activeMessageTracker;
         }
 
         /// <inheritdoc />
-        public void Dispatch(string displayName, Parcel parcel)
+        public void Dispatch(TrackingCode trackingCode, string displayName, Parcel parcel)
         {
-            var fireEvents = this.onStartDispatch != null && this.onFinishDispatch != null;
-
-            if (fireEvents)
-            {
-                this.onStartDispatch();
-            }
-
             try
             {
+                this.activeMessageTracker.IncrementActiveMessages();
+
+                var dispatchDetails = new HarnessDynamicDetails { AvailablePhysicalMemoryInGb = MachineDetails.GetAvailablePhysicalMemoryInGb() };
+
+                this.postmaster.TrackAttemptingDelivery(trackingCode, this.harnessStaticDetails, dispatchDetails);
+
                 this.InternalDispatch(parcel);
+
+                this.postmaster.TrackAccepted(trackingCode);
+            }
+            catch (Exception ex)
+            {
+                this.postmaster.TrackRejected(trackingCode, ex);
             }
             finally
             {
-                if (fireEvents)
-                {
-                    this.onFinishDispatch();
-                }
+                this.activeMessageTracker.DecrementActiveMessages();
             }
         }
 
@@ -99,7 +106,7 @@ namespace Naos.MessageBus.Core
             // make sure the message was routed correctly (if not then reroute)
             if (this.servicedChannels.SingleOrDefault(_ => _.Name == parcel.Envelopes.First().Channel.Name) == null)
             {
-                var rerouteMessageSender = this.simpleInjectorContainer.GetInstance<ISendMessages>();
+                var rerouteMessageSender = HandlerToolShed.GetParcelSender();
 
                 // any schedule should already be set and NOT reset...
                 rerouteMessageSender.Send(parcel);
@@ -200,7 +207,7 @@ namespace Naos.MessageBus.Core
                         }
 
                         activity.Trace(() => "Sending remaining messages in sequence.");
-                        var sender = this.simpleInjectorContainer.GetInstance<ISendMessages>();
+                        var sender = HandlerToolShed.GetParcelSender();
 
                         var remainingEnvelopesParcel = new Parcel
                                                            {

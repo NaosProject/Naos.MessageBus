@@ -53,17 +53,19 @@ namespace Naos.MessageBus.Hangfire.Console
 
             if (executorRoleSettings != null)
             {
-                Func<ISendMessages> messageSenderBuilder = () => new MessageSender(messageBusHandlerSettings.PersistenceConnectionString);
-                SenderFactory.Initialize(messageSenderBuilder);
+                var postmaster = new InMemoryPostmaster();
+                var activeMessageTracker = new InMemoryActiveMessageTracker();
+                var messageSender = new ParcelSender(postmaster, messageBusHandlerSettings.PersistenceConnectionString);
 
-                var tracker = new InMemoryJobTracker();
+                HandlerToolShed.Initialize(() => messageSender, () => postmaster);
+
                 var dispatcherFactory = new DispatcherFactory(
                     executorRoleSettings.HandlerAssemblyPath,
                     executorRoleSettings.ChannelsToMonitor,
-                    SenderFactory.GetMessageSender,
                     executorRoleSettings.TypeMatchStrategy,
                     executorRoleSettings.MessageDispatcherWaitThreadSleepTime,
-                    tracker);
+                    postmaster,
+                    activeMessageTracker);
 
                 // configure hangfire to use the DispatcherFactory for getting IDispatchMessages calls
                 GlobalConfiguration.Configuration.UseActivator(new DispatcherFactoryJobActivator(dispatcherFactory));
@@ -101,7 +103,7 @@ namespace Naos.MessageBus.Hangfire.Console
 
                     // once the timeout has been achieved with no active jobs the process will exit (this assumes that a scheduled task will restart the process)
                     //    the main impetus for this was the fact that Hangfire won't reconnect correctly so we must periodically initiate an entire reconnect.
-                    while (tracker.ActiveJobsCount != 0 || (DateTime.UtcNow < timeout))
+                    while (activeMessageTracker.ActiveMessagesCount != 0 || (DateTime.UtcNow < timeout))
                     {
                         Thread.Sleep(executorRoleSettings.PollingTimeSpan);
                     }

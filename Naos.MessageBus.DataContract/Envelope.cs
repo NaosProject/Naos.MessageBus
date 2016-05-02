@@ -12,6 +12,11 @@ namespace Naos.MessageBus.DataContract
     public sealed class Envelope
     {
         /// <summary>
+        /// Gets or sets the ID of the envelope (must be unique in the parcel).
+        /// </summary>
+        public string Id { get; set; }
+
+        /// <summary>
         /// Gets or sets the description of the message in the envelope.
         /// </summary>
         public string Description { get; set; }

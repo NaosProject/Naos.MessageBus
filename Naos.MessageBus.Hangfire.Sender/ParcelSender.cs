@@ -21,41 +21,70 @@ namespace Naos.MessageBus.Hangfire.Sender
     using Naos.MessageBus.SendingContract;
 
     /// <inheritdoc />
-    public class MessageSender : ISendMessages
+    public class ParcelSender : ISendParcels
     {
         private const int HangfireQueueNameMaxLength = 20;
 
         private const string HangfireQueueNameAllowedRegex = "^[a-z0-9_]*$";
 
-        private readonly Func<Parcel, ScheduleBase, Channel, string, string> sendingLambda;
+        private readonly IPostmaster postmaster;
+
+        private readonly Func<Parcel, ScheduleBase, string, TrackingCode> sendingLambda;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="MessageSender"/> class.
+        /// Initializes a new instance of the <see cref="ParcelSender"/> class.
         /// </summary>
+        /// <param name="postmaster">Interface for managing life of the parcels.</param>
         /// <param name="messageBusPersistenceConnectionString">Connection string to the message bus persistence storage.</param>
-        public MessageSender(string messageBusPersistenceConnectionString)
+        public ParcelSender(IPostmaster postmaster, string messageBusPersistenceConnectionString)
         {
+            this.postmaster = postmaster;
             GlobalConfiguration.Configuration.UseSqlServerStorage(messageBusPersistenceConnectionString);
             this.sendingLambda =
-                (Parcel parcel, ScheduleBase recurringSchedule, Channel firstEnvelopeChannel, string displayName) =>
+                (Parcel parcel, ScheduleBase recurringSchedule, string displayName) =>
                     {
+                        var firstEnvelope = parcel.Envelopes.First();
+                        var firstEnvelopeChannel = firstEnvelope.Channel;
+                        ThrowIfInvalidChannel(firstEnvelopeChannel);
+
                         var client = new BackgroundJobClient();
                         var state = new EnqueuedState { Queue = firstEnvelopeChannel.Name, };
 
-                        Expression<Action<IDispatchMessages>> methodCall = _ => _.Dispatch(displayName, parcel);
-                        var id = client.Create<IDispatchMessages>(methodCall, state);
+                        var trackingCode = new TrackingCode { ParcelId = parcel.Id, EnvelopeId = firstEnvelope.Id };
+                        Expression<Action<IDispatchMessages>> methodCall = _ => _.Dispatch(trackingCode, displayName, parcel);
+                        var hangfireId = client.Create<IDispatchMessages>(methodCall, state);
+
+                        var metadata = new Dictionary<string, string> { { "HangfireJobId", hangfireId }, { "DisplayName", displayName } };
+
+                        // in the future we'll probably support unaddressed envelopes so addressing will have to be a supported separate step - however for now we'll just immediately mark it addressed...
+
+                        // -------------- THIS -------------------
+                        //assumes autopersistance
+                        this.postmaster.CreateAggregate(trackingCode);
+                        this.postmaster.GetAggregate(trackingCode).EnactCommand(new SendCommand());
+                        this.postmaster.GetAggregate(trackingCode).EnactCommand(new AddressCommand());
+
+                        // --------------- OR -------------------
+                        var aggregate = this.postmaster.CreateAndGetAggregate(trackingCode);
+                        aggregate.EnactCommand(new SendCommand());
+                        aggregate.EnactCommand(new AddressCommand());
+                        this.postmaster.Persist(aggregate);
+
+                        // --------------- OR -------------------
+                        this.postmaster.TrackSent(trackingCode, parcel, metadata);
+                        this.postmaster.TrackAddressed(trackingCode, firstEnvelopeChannel);
 
                         if (recurringSchedule.GetType() != typeof(NullSchedule))
                         {
                             Func<string> cronExpression = recurringSchedule.ToCronExpression;
-                            RecurringJob.AddOrUpdate(id, methodCall, cronExpression);
+                            RecurringJob.AddOrUpdate(hangfireId, methodCall, cronExpression);
                         }
 
-                        return id;
+                        return trackingCode;
                     };
         }
 
-        internal MessageSender(Func<Parcel, ScheduleBase, Channel, string, string> sendingLambda)
+        internal ParcelSender(Func<Parcel, ScheduleBase, string, TrackingCode> sendingLambda)
         {
             this.sendingLambda = sendingLambda;
         }
@@ -63,7 +92,7 @@ namespace Naos.MessageBus.Hangfire.Sender
         /// <inheritdoc />
         public TrackingCode Send(IMessage message, Channel channel)
         {
-            var messageSequenceId = Guid.NewGuid();
+            var messageSequenceId = Guid.NewGuid().ToString().ToUpperInvariant();
             var messageSequence = new MessageSequence
                                       {
                                           Id = messageSequenceId,
@@ -90,7 +119,7 @@ namespace Naos.MessageBus.Hangfire.Sender
         /// <inheritdoc />
         public TrackingCode SendRecurring(IMessage message, Channel channel, ScheduleBase recurringSchedule)
         {
-            var messageSequenceId = Guid.NewGuid();
+            var messageSequenceId = Guid.NewGuid().ToString().ToUpperInvariant();
             var messageSequence = new MessageSequence
                                       {
                                           Id = messageSequenceId,
@@ -111,12 +140,18 @@ namespace Naos.MessageBus.Hangfire.Sender
         /// <inheritdoc />
         public TrackingCode SendRecurring(MessageSequence messageSequence, ScheduleBase recurringSchedule)
         {
+            if (string.IsNullOrEmpty(messageSequence.Id))
+            {
+                throw new ArgumentException("Must set the Id of the MessageSequence");
+            }
+
             var envelopesFromSequence = messageSequence.ChanneledMessages.Select(
                 channeledMessage =>
                     {
                         var messageType = channeledMessage.Message.GetType();
                         return new Envelope()
                                    {
+                                       Id = Guid.NewGuid().ToString().ToUpperInvariant(),
                                        Description = channeledMessage.Message.Description,
                                        MessageAsJson = Serializer.Serialize(channeledMessage.Message),
                                        MessageType = messageType.ToTypeDescription(),
@@ -143,17 +178,31 @@ namespace Naos.MessageBus.Hangfire.Sender
         /// <inheritdoc />
         public TrackingCode SendRecurring(Parcel parcel, ScheduleBase recurringSchedule)
         {
+            if (string.IsNullOrEmpty(parcel.Id))
+            {
+                throw new ArgumentException("Must set the Id of the Parcel");
+            }
+
+            var distinctEnvelopeIds = parcel.Envelopes.Select(_ => _.Id).Distinct().ToList();
+            if (distinctEnvelopeIds.Any(string.IsNullOrEmpty))
+            {
+                throw new ArgumentException("Must set the Id of each Envelope in the parcel.");
+            }
+
+            if (distinctEnvelopeIds.Count != parcel.Envelopes.Count)
+            {
+                throw new ArgumentException("Envelope Id's must be unique in the parcel.");
+            }
+
             var firstEnvelope = parcel.Envelopes.First();
-            var firstEnvelopeChannel = firstEnvelope.Channel;
-            ThrowIfInvalidChannel(firstEnvelopeChannel);
 
             var firstEnvelopeDescription = firstEnvelope.Description;
 
             var displayName = "Sequence " + parcel.Id + " - " + firstEnvelopeDescription;
             
-            var id = this.sendingLambda(parcel, recurringSchedule, firstEnvelopeChannel, displayName);
+            var trackingCode = this.sendingLambda(parcel, recurringSchedule, displayName);
 
-            return new TrackingCode { Code = id };
+            return trackingCode;
         }
 
         /// <summary>

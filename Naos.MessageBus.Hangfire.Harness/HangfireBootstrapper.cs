@@ -8,7 +8,6 @@
 
 namespace Naos.MessageBus.Hangfire.Harness
 {
-    using System;
     using System.Linq;
     using System.Web.Hosting;
 
@@ -69,15 +68,19 @@ namespace Naos.MessageBus.Hangfire.Harness
             string persistenceConnectionString,
             MessageBusHarnessRoleSettingsExecutor executorRoleSettings)
         {
-            Func<ISendMessages> messageSenderBuilder = () => new MessageSender(persistenceConnectionString);
-            SenderFactory.Initialize(messageSenderBuilder);
+            var activeMessageTracker = new InMemoryActiveMessageTracker();
+            var postmaster = new InMemoryPostmaster();
+            var messageSender = new ParcelSender(postmaster, persistenceConnectionString);
+
+            HandlerToolShed.Initialize(() => messageSender, () => postmaster);
 
             this.dispatcherFactory = new DispatcherFactory(
                 executorRoleSettings.HandlerAssemblyPath,
                 executorRoleSettings.ChannelsToMonitor,
-                SenderFactory.GetMessageSender,
                 executorRoleSettings.TypeMatchStrategy,
-                executorRoleSettings.MessageDispatcherWaitThreadSleepTime);
+                executorRoleSettings.MessageDispatcherWaitThreadSleepTime,
+                postmaster,
+                activeMessageTracker);
 
             // configure hangfire to use the DispatcherFactory for getting IDispatchMessages calls
             GlobalConfiguration.Configuration.UseActivator(new DispatcherFactoryJobActivator(this.dispatcherFactory));
