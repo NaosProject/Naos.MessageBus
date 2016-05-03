@@ -1,4 +1,4 @@
-namespace Naos.MessageBus.SendingContract
+namespace Naos.MessageBus.Persistence
 {
     using System;
 
@@ -10,14 +10,14 @@ namespace Naos.MessageBus.SendingContract
     /// <summary>
     /// 
     /// </summary>
-    public class AcceptCommand : Command<Delivery>
+    public class Deliver : Command<Shipment>
     {
         /// <inheritdoc />
-        public override IValidationRule<Delivery> Validator
+        public override IValidationRule<Shipment> Validator
         {
             get
             {
-                return new ValidationPlan<Delivery> { ValidationRules.IsOutForDelivery };
+                return new ValidationPlan<Shipment> { ValidationRules.IsOutForDelivery };
             }
         }
 
@@ -26,7 +26,7 @@ namespace Naos.MessageBus.SendingContract
         {
             get
             {
-                return new ValidationPlan<AcceptCommand>();
+                return new ValidationPlan<Deliver>();
             }
         }
     }

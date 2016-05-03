@@ -17,7 +17,7 @@ namespace Naos.MessageBus.DataContract
         /// <summary>
         /// Gets or sets the ID of the message sequence (important when you have multiple messages to collate).
         /// </summary>
-        public string Id { get; set; }
+        public Guid Id { get; set; }
 
         /// <summary>
         /// Gets or sets the messages to run in order.

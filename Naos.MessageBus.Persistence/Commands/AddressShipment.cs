@@ -1,4 +1,4 @@
-namespace Naos.MessageBus.SendingContract
+namespace Naos.MessageBus.Persistence
 {
     using System;
     using System.Runtime.CompilerServices;
@@ -13,14 +13,14 @@ namespace Naos.MessageBus.SendingContract
     /// <summary>
     /// 
     /// </summary>
-    public class AddressCommand : Command<Delivery>
+    public class AddressShipment : Command<Shipment>
     {
         /// <inheritdoc />
-        public override IValidationRule<Delivery> Validator
+        public override IValidationRule<Shipment> Validator
         {
             get
             {
-                return new ValidationPlan<Delivery> { ValidationRules.IsSent };
+                return new ValidationPlan<Shipment> { ValidationRules.IsSent };
             }
         }
 
@@ -29,9 +29,9 @@ namespace Naos.MessageBus.SendingContract
         {
             get
             {
-                var addressSet = Validate.That<AddressCommand>(cmd => cmd.Address != null).WithErrorMessage("Address must be specified.");
+                var addressSet = Validate.That<AddressShipment>(cmd => cmd.Address != null).WithErrorMessage("Address must be specified.");
 
-                return new ValidationPlan<AddressCommand> { addressSet };
+                return new ValidationPlan<AddressShipment> { addressSet };
             }
         }
 

@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 2013
-VisualStudioVersion = 12.0.31101.0
+# Visual Studio 14
+VisualStudioVersion = 14.0.25123.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Naos.MessageBus.HandlingContract", "Naos.MessageBus.HandlingContract\Naos.MessageBus.HandlingContract.csproj", "{A4C4CA47-1299-4770-9063-559E6C5B17F8}"
 EndProject
@@ -22,6 +22,8 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Naos.MessageBus.Core", "Naos.MessageBus.Core\Naos.MessageBus.Core.csproj", "{D0F8244E-3833-4DE4-A2B9-6E9B9A33C72A}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Naos.MessageBus.Hangfire.Console", "Naos.MessageBus.Hangfire.Console\Naos.MessageBus.Hangfire.Console.csproj", "{9F8C1504-3F42-4224-A42B-09EA9FBF00E4}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Naos.MessageBus.Persistence", "Naos.MessageBus.Persistence\Naos.MessageBus.Persistence.csproj", "{79C72D99-9C0C-45FA-9BC3-F2B36F63FFB3}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -69,6 +71,10 @@ Global
 		{9F8C1504-3F42-4224-A42B-09EA9FBF00E4}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{9F8C1504-3F42-4224-A42B-09EA9FBF00E4}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{9F8C1504-3F42-4224-A42B-09EA9FBF00E4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{79C72D99-9C0C-45FA-9BC3-F2B36F63FFB3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{79C72D99-9C0C-45FA-9BC3-F2B36F63FFB3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{79C72D99-9C0C-45FA-9BC3-F2B36F63FFB3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{79C72D99-9C0C-45FA-9BC3-F2B36F63FFB3}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

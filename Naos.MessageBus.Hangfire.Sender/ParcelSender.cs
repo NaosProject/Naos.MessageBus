@@ -57,20 +57,6 @@ namespace Naos.MessageBus.Hangfire.Sender
                         var metadata = new Dictionary<string, string> { { "HangfireJobId", hangfireId }, { "DisplayName", displayName } };
 
                         // in the future we'll probably support unaddressed envelopes so addressing will have to be a supported separate step - however for now we'll just immediately mark it addressed...
-
-                        // -------------- THIS -------------------
-                        //assumes autopersistance
-                        this.postmaster.CreateAggregate(trackingCode);
-                        this.postmaster.GetAggregate(trackingCode).EnactCommand(new SendCommand());
-                        this.postmaster.GetAggregate(trackingCode).EnactCommand(new AddressCommand());
-
-                        // --------------- OR -------------------
-                        var aggregate = this.postmaster.CreateAndGetAggregate(trackingCode);
-                        aggregate.EnactCommand(new SendCommand());
-                        aggregate.EnactCommand(new AddressCommand());
-                        this.postmaster.Persist(aggregate);
-
-                        // --------------- OR -------------------
                         this.postmaster.TrackSent(trackingCode, parcel, metadata);
                         this.postmaster.TrackAddressed(trackingCode, firstEnvelopeChannel);
 
@@ -92,7 +78,7 @@ namespace Naos.MessageBus.Hangfire.Sender
         /// <inheritdoc />
         public TrackingCode Send(IMessage message, Channel channel)
         {
-            var messageSequenceId = Guid.NewGuid().ToString().ToUpperInvariant();
+            var messageSequenceId = Guid.NewGuid();
             var messageSequence = new MessageSequence
                                       {
                                           Id = messageSequenceId,
@@ -119,7 +105,7 @@ namespace Naos.MessageBus.Hangfire.Sender
         /// <inheritdoc />
         public TrackingCode SendRecurring(IMessage message, Channel channel, ScheduleBase recurringSchedule)
         {
-            var messageSequenceId = Guid.NewGuid().ToString().ToUpperInvariant();
+            var messageSequenceId = Guid.NewGuid();
             var messageSequence = new MessageSequence
                                       {
                                           Id = messageSequenceId,
@@ -140,7 +126,7 @@ namespace Naos.MessageBus.Hangfire.Sender
         /// <inheritdoc />
         public TrackingCode SendRecurring(MessageSequence messageSequence, ScheduleBase recurringSchedule)
         {
-            if (string.IsNullOrEmpty(messageSequence.Id))
+            if (messageSequence.Id == default(Guid))
             {
                 throw new ArgumentException("Must set the Id of the MessageSequence");
             }
@@ -178,7 +164,7 @@ namespace Naos.MessageBus.Hangfire.Sender
         /// <inheritdoc />
         public TrackingCode SendRecurring(Parcel parcel, ScheduleBase recurringSchedule)
         {
-            if (string.IsNullOrEmpty(parcel.Id))
+            if (parcel.Id == default(Guid))
             {
                 throw new ArgumentException("Must set the Id of the Parcel");
             }

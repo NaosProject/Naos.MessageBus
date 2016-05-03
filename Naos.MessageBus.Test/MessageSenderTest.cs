@@ -60,13 +60,13 @@ namespace Naos.MessageBus.Test
             var sender = new ParcelSender(sendingLambda);
             var trackingCode = sender.Send(new NullMessage(), new Channel { Name = "something" });
             Assert.Equal(envelopeId, trackingCode.EnvelopeId);
-            Assert.NotEqual(default(string), localParcel.Id);
+            Assert.NotEqual(default(Guid), localParcel.Id);
         }
 
         [Fact]
         public static void SendRecurring_Message_AddsSequenceId()
         {
-            var trackingId = Guid.NewGuid().ToString();
+            var trackingId = Guid.NewGuid().ToString().ToUpperInvariant();
             Parcel localParcel = null;
             Func<Parcel, ScheduleBase, string, TrackingCode> sendingLambda = (parcel, schedule, displayName) =>
             {
@@ -76,7 +76,7 @@ namespace Naos.MessageBus.Test
             var sender = new ParcelSender(sendingLambda);
             var trackingCode = sender.SendRecurring(new NullMessage(), new Channel { Name = "something" }, new DailyScheduleInUtc());
             Assert.Equal(trackingId, trackingCode.EnvelopeId);
-            Assert.NotEqual(default(string), localParcel.Id);
+            Assert.NotEqual(default(Guid), localParcel.Id);
         }
 
         [Fact]

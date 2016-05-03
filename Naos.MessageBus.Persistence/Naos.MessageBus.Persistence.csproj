@@ -1,40 +1,47 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project ToolsVersion="14.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{7EBD065F-CD10-4B9C-B511-89B01F6EC5DA}</ProjectGuid>
+    <ProjectGuid>{79C72D99-9C0C-45FA-9BC3-F2B36F63FFB3}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Naos.MessageBus.SendingContract</RootNamespace>
-    <AssemblyName>Naos.MessageBus.SendingContract</AssemblyName>
+    <RootNamespace>Naos.MessageBus.Persistence</RootNamespace>
+    <AssemblyName>Naos.MessageBus.Persistence</AssemblyName>
     <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
-    <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
     <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>
-    </DefineConstants>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-    <DocumentationFile>bin\Debug\Naos.MessageBus.SendingContract.XML</DocumentationFile>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
-    <Optimize>false</Optimize>
+    <Optimize>true</Optimize>
     <OutputPath>bin\Release\</OutputPath>
-    <DefineConstants>
-    </DefineConstants>
+    <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-    <DocumentationFile>bin\Release\Naos.MessageBus.SendingContract.XML</DocumentationFile>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="EntityFramework, Version=6.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089, processorArchitecture=MSIL">
+      <HintPath>..\packages\EntityFramework.6.1.3\lib\net45\EntityFramework.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="EntityFramework.SqlServer, Version=6.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089, processorArchitecture=MSIL">
+      <HintPath>..\packages\EntityFramework.6.1.3\lib\net45\EntityFramework.SqlServer.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Its.Log, Version=2.7.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Its.Log.2.9.13\lib\net451\Its.Log.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="Its.Validation, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\Its.Validation.1.3.0\lib\net45\Its.Validation.dll</HintPath>
       <Private>True</Private>
@@ -43,19 +50,16 @@
       <HintPath>..\packages\Its.Domain.0.14.19-beta\lib\net452\Microsoft.Its.Domain.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="Naos.Cron, Version=1.0.10.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\packages\Naos.Cron.1.0.10\lib\net45\Naos.Cron.dll</HintPath>
-    </Reference>
-    <Reference Include="Naos.Diagnostics.Domain, Version=1.0.2.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Naos.Diagnostics.Domain.1.0.2\lib\net45\Naos.Diagnostics.Domain.dll</HintPath>
+    <Reference Include="Microsoft.Its.Domain.Sql, Version=0.14.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Its.Domain.Sql.0.14.19-beta\lib\net452\Microsoft.Its.Domain.Sql.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="Newtonsoft.Json, Version=4.5.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
-      <HintPath>..\packages\Newtonsoft.Json.4.5.11\lib\net40\Newtonsoft.Json.dll</HintPath>
+    <Reference Include="Newtonsoft.Json, Version=6.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <HintPath>..\packages\Newtonsoft.Json.6.0.8\lib\net45\Newtonsoft.Json.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="System" />
+    <Reference Include="System.ComponentModel.DataAnnotations" />
     <Reference Include="System.Core" />
     <Reference Include="System.Reactive.Core, Version=2.2.5.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
       <HintPath>..\packages\Rx-Core.2.2.5\lib\net45\System.Reactive.Core.dll</HintPath>
@@ -73,36 +77,49 @@
       <HintPath>..\packages\Rx-PlatformServices.2.2.5\lib\net45\System.Reactive.PlatformServices.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="System.Runtime.Serialization" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="System.Data" />
+    <Reference Include="System.Net.Http" />
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="HarnessDynamicDetails.cs" />
-    <Compile Include="HarnessStaticDetails.cs" />
-    <Compile Include="ITrackParcels.cs" />
-    <Compile Include="ParcelStatus.cs" />
-    <Compile Include="IPostmaster.cs" />
-    <Compile Include="ISendParcels.cs" />
+    <Compile Include="CommandHandlers\Shipment.AcceptCommandHandler.cs" />
+    <Compile Include="CommandHandlers\Shipment.AddressCommandHandler.cs" />
+    <Compile Include="CommandHandlers\Shipment.AttemptCommandHandler.cs" />
+    <Compile Include="CommandHandlers\Shipment.EnactCommand.cs" />
+    <Compile Include="CommandHandlers\Shipment.RejectCommandHandler.cs" />
+    <Compile Include="Commands\AddressShipment.cs" />
+    <Compile Include="Commands\AttemptDelivery.cs" />
+    <Compile Include="Commands\CreateShipment.cs" />
+    <Compile Include="Commands\Deliver.cs" />
+    <Compile Include="Commands\RejectDelivery.cs" />
+    <Compile Include="Commands\ValidationRules.cs" />
+    <Compile Include="Events\Shipment.Addressed.cs" />
+    <Compile Include="Events\Shipment.AttemptedDelivery.cs" />
+    <Compile Include="Events\Shipment.Created.cs" />
+    <Compile Include="Events\Shipment.Delivered.cs" />
+    <Compile Include="Events\Shipment.RejectedDelivery.cs" />
+    <Compile Include="Postmaster.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="HandlerToolShed.cs" />
-    <Compile Include="HarnessDetails.cs" />
+    <Compile Include="Shipment.cs" />
+    <Compile Include="ShipmentSnapshot.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="App.config" />
+    <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Naos.MessageBus.DataContract\Naos.MessageBus.DataContract.csproj">
-      <Project>{77981A7E-D1B2-4A09-AE35-367BB5421E2B}</Project>
+      <Project>{77981a7e-d1b2-4a09-ae35-367bb5421e2b}</Project>
       <Name>Naos.MessageBus.DataContract</Name>
     </ProjectReference>
+    <ProjectReference Include="..\Naos.MessageBus.SendingContract\Naos.MessageBus.SendingContract.csproj">
+      <Project>{7ebd065f-cd10-4b9c-b511-89b01f6ec5da}</Project>
+      <Name>Naos.MessageBus.SendingContract</Name>
+    </ProjectReference>
   </ItemGroup>
-  <ItemGroup>
-    <None Include="app.config" />
-    <None Include="packages.config" />
-    <None Include="Settings.StyleCop" />
-  </ItemGroup>
-  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

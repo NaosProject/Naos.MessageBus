@@ -74,8 +74,9 @@ namespace Naos.MessageBus.Core
                 this.activeMessageTracker.IncrementActiveMessages();
 
                 var dispatchDetails = new HarnessDynamicDetails { AvailablePhysicalMemoryInGb = MachineDetails.GetAvailablePhysicalMemoryInGb() };
+                var harnessDetails = new HarnessDetails { StaticDetails = this.harnessStaticDetails, DynamicDetails = dispatchDetails };
 
-                this.postmaster.TrackAttemptingDelivery(trackingCode, this.harnessStaticDetails, dispatchDetails);
+                this.postmaster.TrackAttemptingDelivery(trackingCode, harnessDetails);
 
                 this.InternalDispatch(parcel);
 
@@ -83,7 +84,7 @@ namespace Naos.MessageBus.Core
             }
             catch (Exception ex)
             {
-                this.postmaster.TrackRejected(trackingCode, ex);
+                this.postmaster.TrackRejectedDelivery(trackingCode, ex);
             }
             finally
             {

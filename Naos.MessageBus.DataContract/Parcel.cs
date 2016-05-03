@@ -17,7 +17,7 @@ namespace Naos.MessageBus.DataContract
         /// <summary>
         /// Gets or sets the ID of the parcel (important when you have multiple envelopes to collate).
         /// </summary>
-        public string Id { get; set; }
+        public Guid Id { get; set; }
 
         /// <summary>
         /// Gets or sets a collection of envelopes to run in order.

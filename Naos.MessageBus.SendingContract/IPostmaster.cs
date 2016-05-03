@@ -35,31 +35,21 @@ namespace Naos.MessageBus.SendingContract
         /// Delivery is attempted on a handler, handler details provided.
         /// </summary>
         /// <param name="trackingCode">Tracking code of the parcel.</param>
-        /// <param name="harnessStaticDetails">Details about the harness it is being delivered to.</param>
-        /// <param name="harnessDynamicDetails">Details about the dispatch.</param>
-        void TrackAttemptingDelivery(TrackingCode trackingCode, HarnessStaticDetails harnessStaticDetails, HarnessDynamicDetails harnessDynamicDetails);
+        /// <param name="harnessDetails">Details about the harness it is being delivered to.</param>
+        void TrackAttemptingDelivery(TrackingCode trackingCode, HarnessDetails harnessDetails);
 
         /// <summary>
         /// Delivery was rejected by the harness.
         /// </summary>
         /// <param name="trackingCode">Tracking code of the parcel.</param>
         /// <param name="exception">Exception that occurred.</param>
-        void TrackRejected(TrackingCode trackingCode, Exception exception);
+        void TrackRejectedDelivery(TrackingCode trackingCode, Exception exception);
 
         /// <summary>
         /// Delivery was accepted by the harness.
         /// </summary>
         /// <param name="trackingCode">Tracking code of the parcel.</param>
         void TrackAccepted(TrackingCode trackingCode);
-
-        //not sure if we need these...
-        void CreateAggregate(TrackingCode trackingCode);
-
-        Delivery CreateAndGetAggregate(TrackingCode trackingCode);
-
-        Delivery GetAggregate(TrackingCode trackingCode);
-
-        void Persist(Delivery aggregate);
     }
 
     /// <summary>
@@ -68,7 +58,7 @@ namespace Naos.MessageBus.SendingContract
     public class NullPostmaster : IPostmaster
     {
         /// <inheritdoc />
-        public void TrackAttemptingDelivery(TrackingCode trackingCode, HarnessStaticDetails harnessStaticDetails, HarnessDynamicDetails harnessDynamicDetails)
+        public void TrackAttemptingDelivery(TrackingCode trackingCode, HarnessDetails harnessDetails)
         {
             /* no-op */
         }
@@ -77,26 +67,6 @@ namespace Naos.MessageBus.SendingContract
         public void TrackAccepted(TrackingCode trackingCode)
         {
             /* no-op */
-        }
-
-        public void CreateAggregate(TrackingCode trackingCode)
-        {
-            throw new NotImplementedException();
-        }
-
-        public Delivery CreateAndGetAggregate(TrackingCode trackingCode)
-        {
-            throw new NotImplementedException();
-        }
-
-        public Delivery GetAggregate(TrackingCode trackingCode)
-        {
-            throw new NotImplementedException();
-        }
-
-        public void Persist(Delivery aggregate)
-        {
-            throw new NotImplementedException();
         }
 
         /// <inheritdoc />
@@ -112,7 +82,7 @@ namespace Naos.MessageBus.SendingContract
         }
 
         /// <inheritdoc />
-        public void TrackRejected(TrackingCode trackingCode, Exception exception)
+        public void TrackRejectedDelivery(TrackingCode trackingCode, Exception exception)
         {
             /* no-op */
         }

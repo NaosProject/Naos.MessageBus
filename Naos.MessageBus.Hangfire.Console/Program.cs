@@ -7,6 +7,7 @@
 namespace Naos.MessageBus.Hangfire.Console
 {
     using System;
+    using System.Data.SqlClient;
     using System.Linq;
     using System.Threading;
 
@@ -21,6 +22,7 @@ namespace Naos.MessageBus.Hangfire.Console
     using Naos.MessageBus.DataContract.Exceptions;
     using Naos.MessageBus.HandlingContract;
     using Naos.MessageBus.Hangfire.Sender;
+    using Naos.MessageBus.Persistence;
     using Naos.MessageBus.SendingContract;
 
     using Serializer = Naos.MessageBus.Core.Serializer;
@@ -53,7 +55,11 @@ namespace Naos.MessageBus.Hangfire.Console
 
             if (executorRoleSettings != null)
             {
-                var postmaster = new InMemoryPostmaster();
+                var trackingConnectionBuilder = new SqlConnectionStringBuilder(messageBusHandlerSettings.PersistenceConnectionString);
+                trackingConnectionBuilder.InitialCatalog = "Tracking";
+                var trackingConnectionString = trackingConnectionBuilder.ConnectionString;
+                var postmaster = new Postmaster(trackingConnectionString);
+
                 var activeMessageTracker = new InMemoryActiveMessageTracker();
                 var messageSender = new ParcelSender(postmaster, messageBusHandlerSettings.PersistenceConnectionString);
 

@@ -1,12 +1,13 @@
-namespace Naos.MessageBus.SendingContract
+namespace Naos.MessageBus.Persistence
 {
     using System;
 
     using Microsoft.Its.Domain;
 
     using Naos.MessageBus.DataContract;
+    using Naos.MessageBus.SendingContract;
 
-    public class DeliverySnapshot : ISnapshot
+    public class ShipmentSnapshot : ISnapshot
     {
         public Guid AggregateId { get; set; }
 

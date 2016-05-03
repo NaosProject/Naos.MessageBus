@@ -1,16 +1,18 @@
-﻿namespace Naos.MessageBus.SendingContract
+﻿namespace Naos.MessageBus.Persistence
 {
     using System;
 
     using Microsoft.Its.Domain;
 
-    public partial class Delivery
+    using Naos.MessageBus.SendingContract;
+
+    public partial class Shipment
     {
-        public class Rejected : Event<Delivery>
+        public class RejectedDelivery : Event<Shipment>
         {
             public Exception Exception { get; set; }
 
-            public override void Update(Delivery aggregate)
+            public override void Update(Shipment aggregate)
             {
                 aggregate.Exception = this.Exception;
                 aggregate.Status = ParcelStatus.Rejected;

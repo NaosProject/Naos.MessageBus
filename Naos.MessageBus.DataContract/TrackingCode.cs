@@ -17,7 +17,7 @@ namespace Naos.MessageBus.DataContract
         /// <summary>
         /// Gets or sets the parcel ID.
         /// </summary>
-        public string ParcelId { get; set; }
+        public Guid ParcelId { get; set; }
 
         /// <summary>
         /// Gets or sets the envelope ID, unique in the parcel.

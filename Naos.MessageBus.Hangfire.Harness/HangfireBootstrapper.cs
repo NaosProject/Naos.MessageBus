@@ -8,6 +8,7 @@
 
 namespace Naos.MessageBus.Hangfire.Harness
 {
+    using System.Data.SqlClient;
     using System.Linq;
     using System.Web.Hosting;
 
@@ -17,6 +18,7 @@ namespace Naos.MessageBus.Hangfire.Harness
     using Naos.MessageBus.Core;
     using Naos.MessageBus.HandlingContract;
     using Naos.MessageBus.Hangfire.Sender;
+    using Naos.MessageBus.Persistence;
     using Naos.MessageBus.SendingContract;
 
     /// <inheritdoc />
@@ -68,8 +70,12 @@ namespace Naos.MessageBus.Hangfire.Harness
             string persistenceConnectionString,
             MessageBusHarnessRoleSettingsExecutor executorRoleSettings)
         {
+            var trackingConnectionBuilder = new SqlConnectionStringBuilder(persistenceConnectionString);
+            trackingConnectionBuilder.InitialCatalog = "Tracking";
+            var trackingConnectionString = trackingConnectionBuilder.ConnectionString;
+            var postmaster = new Postmaster(trackingConnectionString);
+
             var activeMessageTracker = new InMemoryActiveMessageTracker();
-            var postmaster = new InMemoryPostmaster();
             var messageSender = new ParcelSender(postmaster, persistenceConnectionString);
 
             HandlerToolShed.Initialize(() => messageSender, () => postmaster);

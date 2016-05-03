@@ -15,7 +15,7 @@ namespace Naos.MessageBus.DataContract.Test
         [Fact]
         public void Equal_AreEqual()
         {
-            var firstParcelId = Guid.NewGuid().ToString().ToUpper();
+            var firstParcelId = Guid.NewGuid();
             var firstCode = Guid.NewGuid().ToString().ToUpper();
 
             var first = new TrackingCode { EnvelopeId = firstCode, ParcelId = firstParcelId };
@@ -35,11 +35,11 @@ namespace Naos.MessageBus.DataContract.Test
         [Fact]
         public void NotEqualAreNotEqual_ParcelId()
         {
-            var firstParcelId = Guid.NewGuid().ToString().ToUpper();
+            var firstParcelId = Guid.NewGuid();
             var firstCode = Guid.NewGuid().ToString().ToUpper();
             var first = new TrackingCode { EnvelopeId = firstCode, ParcelId = firstParcelId };
 
-            var secondParcelId = Guid.NewGuid().ToString().ToUpper();
+            var secondParcelId = Guid.NewGuid();
             var secondCode = firstCode;
             var second = new TrackingCode { EnvelopeId = secondCode, ParcelId = secondParcelId };
 
@@ -54,7 +54,7 @@ namespace Naos.MessageBus.DataContract.Test
         [Fact]
         public void NotEqualAreNotEqual_Code()
         {
-            var firstParcelId = Guid.NewGuid().ToString().ToUpper();
+            var firstParcelId = Guid.NewGuid();
             var firstCode = Guid.NewGuid().ToString().ToUpper();
             var first = new TrackingCode { EnvelopeId = firstCode, ParcelId = firstParcelId };
 

@@ -39,7 +39,6 @@ namespace Naos.MessageBus.Test
             var senderConstructor = GetInMemorySender(trackingSends);
             container.Register(senderConstructor);
 
-            var postmaster = new InMemoryPostmaster();
             var channel = new Channel { Name = "el-channel" };
 
             container.Register<IHandleMessages<FirstEnumMessage>, FirstEnumHandler>();
@@ -52,7 +51,7 @@ namespace Naos.MessageBus.Test
                 TypeMatchStrategy.NamespaceAndName,
                 TimeSpan.FromSeconds(.5),
                 new HarnessStaticDetails(),
-                postmaster,
+                new NullPostmaster(),
                 new InMemoryActiveMessageTracker());
 
             var firstMessage = new FirstEnumMessage() { Description = "RunMe 1", SeedValue = MyEnum.OtherValue };
@@ -301,7 +300,6 @@ namespace Naos.MessageBus.Test
             var senderConstructor = GetInMemorySender(trackingSends);
             container.Register(senderConstructor);
 
-            var postmaster = new InMemoryPostmaster();
             var activeMessageTracker = new InMemoryActiveMessageTracker();
 
             var dispatcher = new MessageDispatcher(
@@ -311,7 +309,7 @@ namespace Naos.MessageBus.Test
                 TypeMatchStrategy.NamespaceAndName,
                 TimeSpan.FromSeconds(.01),
                 new HarnessStaticDetails(),
-                postmaster,
+                new NullPostmaster(),
                 activeMessageTracker);
             return dispatcher;
         }
@@ -319,7 +317,6 @@ namespace Naos.MessageBus.Test
         [Fact]
         public static void Dispatch_IncrementsAndDecrementsTracker()
         {
-            var postmaster = new InMemoryPostmaster();
             var activeMessageTracker = new InMemoryActiveMessageTracker();
             var channel = new Channel { Name = "el-channel" };
             var container = new Container();
@@ -331,7 +328,7 @@ namespace Naos.MessageBus.Test
                 TypeMatchStrategy.NamespaceAndName,
                 TimeSpan.FromSeconds(.5),
                 new HarnessStaticDetails(),
-                postmaster,
+                new NullPostmaster(), 
                 activeMessageTracker);
 
             var message = new WaitMessage { Description = "RunMe", TimeToWait = TimeSpan.FromSeconds(3) };

@@ -4,6 +4,6 @@ namespace Naos.MessageBus.SendingContract
     {
         public HarnessStaticDetails StaticDetails { get; set; }
 
-        public HarnessDynamicDetails Details { get; set; }
+        public HarnessDynamicDetails DynamicDetails { get; set; }
     }
 }
