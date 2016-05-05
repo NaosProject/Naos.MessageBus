@@ -39,7 +39,7 @@ namespace Naos.MessageBus.Test
             var eventRepository = GetEventSourcedRepository(eventConnectionString);
 
             var parcel = this.GetParcel();
-            var trackingCode = new TrackingCode { ParcelId = parcel.Id, EnvelopeId = "Something" };
+            var trackingCode = new TrackingCode { ParcelId = parcel.Id, EnvelopeId = parcel.Envelopes.Single().Id };
 
             var postmaster = new Postmaster(eventConnectionString, commandConnectionString, readConnectionString);
 
