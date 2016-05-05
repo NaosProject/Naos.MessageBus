@@ -7,14 +7,17 @@ namespace Naos.MessageBus.Persistence
 
     using Naos.MessageBus.DataContract;
 
-    public class CreateShipment : ConstructorCommand<Shipment>
+    /// <summary>
+    /// 
+    /// </summary>
+    public class Send : Command<Shipment>
     {
         /// <inheritdoc />
         public override IValidationRule<Shipment> Validator
         {
             get
             {
-                return new ValidationPlan<Shipment>();
+                return new ValidationPlan<Shipment> { ValidationRules.IsUnknown(this.TrackingCode) };
             }
         }
 
@@ -23,12 +26,12 @@ namespace Naos.MessageBus.Persistence
         {
             get
             {
-                var parcelIsSet = Validate.That<CreateShipment>(cmd => cmd.Parcel != null).WithErrorMessage("Parcel must be specified.");
+                var trackingCodeSet = Validate.That<Send>(cmd => cmd.TrackingCode != null).WithErrorMessage("TrackingCode must be specified.");
 
-                return new ValidationPlan<CreateShipment> { parcelIsSet };
+                return new ValidationPlan<Send> { trackingCodeSet };
             }
         }
 
-        public Parcel Parcel { get; set; }
+        public TrackingCode TrackingCode { get; set; }
     }
 }

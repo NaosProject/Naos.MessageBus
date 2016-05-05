@@ -4,6 +4,8 @@
 
     using Microsoft.Its.Domain;
 
+    using Naos.MessageBus.SendingContract;
+
     public partial class Shipment
     {
         /// <summary>
@@ -14,7 +16,7 @@
         {
             public Task EnactCommand(Shipment target, AttemptDelivery command)
             {
-                return Task.FromResult(target.RecordEvent(new AttemptedDelivery { Recipient = command.Recipient }));
+                return Task.FromResult(target.RecordEvent(new AttemptedDelivery { TrackingCode = command.TrackingCode, NewStatus = ParcelStatus.OutForDelivery, Recipient = command.Recipient }));
             }
 
             public Task HandleScheduledCommandException(Shipment target, CommandFailed<AttemptDelivery> command)

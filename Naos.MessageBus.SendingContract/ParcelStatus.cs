@@ -34,7 +34,7 @@ namespace Naos.MessageBus.SendingContract
         /// <summary>
         /// Parcel was accepted.
         /// </summary>
-        Accepted,
+        Delivered,
 
         /// <summary>
         /// Parcel was rejected.

@@ -1,11 +1,11 @@
 namespace Naos.MessageBus.Persistence
 {
-    using System;
-
     using Its.Validation;
     using Its.Validation.Configuration;
 
     using Microsoft.Its.Domain;
+
+    using Naos.MessageBus.DataContract;
 
     /// <summary>
     /// 
@@ -17,7 +17,7 @@ namespace Naos.MessageBus.Persistence
         {
             get
             {
-                return new ValidationPlan<Shipment> { ValidationRules.IsOutForDelivery };
+                return new ValidationPlan<Shipment> { ValidationRules.IsOutForDelivery(this.TrackingCode) };
             }
         }
 
@@ -26,8 +26,11 @@ namespace Naos.MessageBus.Persistence
         {
             get
             {
-                return new ValidationPlan<Deliver>();
+                var trackingCodeSet = Validate.That<Deliver>(cmd => cmd.TrackingCode != null).WithErrorMessage("TrackingCode must be specified.");
+
+                return new ValidationPlan<Deliver> { trackingCodeSet };
             }
         }
+        public TrackingCode TrackingCode { get; set; }
     }
 }

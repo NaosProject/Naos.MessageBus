@@ -70,10 +70,11 @@ namespace Naos.MessageBus.Hangfire.Harness
             string persistenceConnectionString,
             MessageBusHarnessRoleSettingsExecutor executorRoleSettings)
         {
-            var trackingConnectionBuilder = new SqlConnectionStringBuilder(persistenceConnectionString);
-            trackingConnectionBuilder.InitialCatalog = "Tracking";
-            var trackingConnectionString = trackingConnectionBuilder.ConnectionString;
-            var postmaster = new Postmaster(trackingConnectionString);
+            var eventConnectionString = new SqlConnectionStringBuilder(persistenceConnectionString) { InitialCatalog = "PostmasterEvents" }.ConnectionString;
+            var commandConnectionString = new SqlConnectionStringBuilder(persistenceConnectionString) { InitialCatalog = "PostmasterCommands" }.ConnectionString;
+            var readModelConnectionString = new SqlConnectionStringBuilder(persistenceConnectionString) { InitialCatalog = "PostmasterReadModels" }.ConnectionString;
+
+            var postmaster = new Postmaster(eventConnectionString, commandConnectionString, readModelConnectionString);
 
             var activeMessageTracker = new InMemoryActiveMessageTracker();
             var messageSender = new ParcelSender(postmaster, persistenceConnectionString);

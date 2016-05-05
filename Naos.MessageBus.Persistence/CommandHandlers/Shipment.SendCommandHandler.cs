@@ -12,14 +12,14 @@
         /// Enacts a command.
         /// </summary>
         /// <param name="command">Command.</param>
-        public class DeliverCommandHandler : ICommandHandler<Shipment, Deliver>
+        public class SendCommandHandler : ICommandHandler<Shipment, Send>
         {
-            public Task EnactCommand(Shipment target, Deliver command)
+            public Task EnactCommand(Shipment target, Send command)
             {
-                return Task.FromResult(target.RecordEvent(new Delivered { TrackingCode = command.TrackingCode, NewStatus = ParcelStatus.Delivered }));
+                return Task.FromResult(target.RecordEvent(new Sent { TrackingCode = command.TrackingCode, NewStatus = ParcelStatus.Sent }));
             }
 
-            public Task HandleScheduledCommandException(Shipment target, CommandFailed<Deliver> command)
+            public Task HandleScheduledCommandException(Shipment target, CommandFailed<Send> command)
             {
                 return Task.Run(() => command.Cancel());
             }

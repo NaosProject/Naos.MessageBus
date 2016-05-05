@@ -5,6 +5,7 @@ namespace Naos.MessageBus.Persistence
 
     using Microsoft.Its.Domain;
 
+    using Naos.MessageBus.DataContract;
     using Naos.MessageBus.SendingContract;
 
     public class AttemptDelivery : Command<Shipment>
@@ -14,7 +15,7 @@ namespace Naos.MessageBus.Persistence
         {
             get
             {
-                return new ValidationPlan<Shipment> { ValidationRules.IsInTransit };
+                return new ValidationPlan<Shipment> { ValidationRules.IsInTransit(this.TrackingCode) };
             }
         }
 
@@ -23,11 +24,14 @@ namespace Naos.MessageBus.Persistence
         {
             get
             {
+                var trackingCodeSet = Validate.That<AttemptDelivery>(cmd => cmd.TrackingCode != null).WithErrorMessage("TrackingCode must be specified.");
                 var recipientSet = Validate.That<AttemptDelivery>(cmd => cmd.Recipient != null).WithErrorMessage("Recipient must be specified.");
 
-                return new ValidationPlan<AttemptDelivery> { recipientSet };
+                return new ValidationPlan<AttemptDelivery> { trackingCodeSet, recipientSet };
             }
         }
+
+        public TrackingCode TrackingCode { get; set; }
 
         public HarnessDetails Recipient { get; set; }
     }

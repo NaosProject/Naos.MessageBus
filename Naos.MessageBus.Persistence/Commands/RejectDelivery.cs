@@ -7,6 +7,8 @@ namespace Naos.MessageBus.Persistence
 
     using Microsoft.Its.Domain;
 
+    using Naos.MessageBus.DataContract;
+
     public class RejectDelivery : Command<Shipment>
     {
         /// <inheritdoc />
@@ -14,7 +16,7 @@ namespace Naos.MessageBus.Persistence
         {
             get
             {
-                return new ValidationPlan<Shipment> { ValidationRules.IsOutForDelivery };
+                return new ValidationPlan<Shipment> { ValidationRules.IsOutForDelivery(this.TrackingCode) };
             }
         }
 
@@ -23,11 +25,14 @@ namespace Naos.MessageBus.Persistence
         {
             get
             {
+                var trackingCodeSet = Validate.That<RejectDelivery>(cmd => cmd.TrackingCode != null).WithErrorMessage("TrackingCode must be specified.");
                 var exceptionIsSet = Validate.That<RejectDelivery>(cmd => cmd.Exception != null).WithErrorMessage("Exception must be specified.");
 
-                return new ValidationPlan<RejectDelivery> { exceptionIsSet };
+                return new ValidationPlan<RejectDelivery> { trackingCodeSet, exceptionIsSet };
             }
         }
+
+        public TrackingCode TrackingCode { get; set; }
 
         public Exception Exception { get; set; }
     }

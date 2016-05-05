@@ -49,7 +49,7 @@ namespace Naos.MessageBus.SendingContract
         /// Delivery was accepted by the harness.
         /// </summary>
         /// <param name="trackingCode">Tracking code of the parcel.</param>
-        void TrackAccepted(TrackingCode trackingCode);
+        void MarkDelivered(TrackingCode trackingCode);
     }
 
     /// <summary>
@@ -64,7 +64,7 @@ namespace Naos.MessageBus.SendingContract
         }
 
         /// <inheritdoc />
-        public void TrackAccepted(TrackingCode trackingCode)
+        public void MarkDelivered(TrackingCode trackingCode)
         {
             /* no-op */
         }

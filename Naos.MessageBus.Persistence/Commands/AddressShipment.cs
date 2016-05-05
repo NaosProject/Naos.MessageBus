@@ -20,7 +20,7 @@ namespace Naos.MessageBus.Persistence
         {
             get
             {
-                return new ValidationPlan<Shipment> { ValidationRules.IsSent };
+                return new ValidationPlan<Shipment> { ValidationRules.IsSent(this.TrackingCode) };
             }
         }
 
@@ -29,13 +29,15 @@ namespace Naos.MessageBus.Persistence
         {
             get
             {
+                var trackingCodeSet = Validate.That<AddressShipment>(cmd => cmd.TrackingCode != null).WithErrorMessage("TrackingCode must be specified.");
                 var addressSet = Validate.That<AddressShipment>(cmd => cmd.Address != null).WithErrorMessage("Address must be specified.");
 
-                return new ValidationPlan<AddressShipment> { addressSet };
+                return new ValidationPlan<AddressShipment> { trackingCodeSet, addressSet };
             }
         }
 
-        //[Required] is this necessary? Why?
+        public TrackingCode TrackingCode { get; set; }
+
         public Channel Address { get; set; }
     }
 }

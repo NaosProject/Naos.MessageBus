@@ -2,51 +2,82 @@
 {
     using System;
     using System.Collections.Generic;
-
-    using Its.Log.Instrumentation;
+    using System.Linq;
 
     using Microsoft.Its.Domain;
     using Microsoft.Its.Domain.Sql;
+    using Microsoft.Its.Domain.Sql.CommandScheduler;
 
     using Naos.MessageBus.DataContract;
-    using Naos.MessageBus.Persistence;
     using Naos.MessageBus.SendingContract;
 
     public class Postmaster : IPostmaster, ITrackParcels
     {
+        private readonly string readModelConnectionString;
+
         private readonly Configuration configuration;
 
-        public Postmaster(string eventConnectionString)
+        public Postmaster(string eventConnectionString, string commandConnectionString, string readModelConnectionString)
         {
-            EventStoreDbContext.NameOrConnectionString = eventConnectionString;
+            this.readModelConnectionString = readModelConnectionString;
 
-            using (var context = new EventStoreDbContext())
+            // create methods to get a new event and command database (used for initialization/migration and dependencies of the persistence layer)
+            Func<EventStoreDbContext> createEventStoreDbContext = () => new EventStoreDbContext(eventConnectionString);
+            Func<CommandSchedulerDbContext> createCommandSchedulerContext = () => new CommandSchedulerDbContext(commandConnectionString);
+
+            // run the migration if necessary (this will create the database if missing - DO NOT CREATE THE DATABASE FIRST, it will fail to initialize)
+            using (var context = createEventStoreDbContext())
             {
                 new EventStoreDatabaseInitializer<EventStoreDbContext>().InitializeDatabase(context);
             }
 
-            Action<IScheduledCommand> onScheduling = command => Log.Write(command.ToString);
-            Action<IScheduledCommand> onScheduled = command => Log.Write(command.ToString);
-            Action<IScheduledCommand> onDelivering = command => Log.Write(command.ToString);
-            Action<IScheduledCommand> onDelivered = command => Log.Write(command.ToString);
+            using (var context = createCommandSchedulerContext())
+            {
+                new CommandSchedulerDatabaseInitializer().InitializeDatabase(context);
+            }
 
+            // the event bus is needed for projection events to be proliferated
+            var eventBus = new InProcessEventBus();
+
+            // update handler to synchronously process updates to read models (using the IUpdateProjectionWhen<TEvent> interface)
+            var updateTrackedShipment = new UpdateTrackedShipment(this.readModelConnectionString);
+
+            // subscribe handler to bus to get updates
+            eventBus.Subscribe(updateTrackedShipment);
+
+            // create a new event sourced repository to seed the config DI with for commands to interact with
+            IEventSourcedRepository<Shipment> eventSourcedRepository = new SqlEventSourcedRepository<Shipment>(eventBus, createEventStoreDbContext);
+
+            // CreateCommand will throw without having authorization - just opening for all in this example
+            Authorization.AuthorizeAllCommands();
+
+            // setup the configuration which can be used to retrieve the repository when needed
             this.configuration =
-                new Configuration().UseSqlEventStore()
-                    .UseSqlStorageForScheduledCommands()
-                    .UseDependency(t => (IEventSourcedRepository<Shipment>)new SqlEventSourcedRepository<Shipment>())
-                    .TraceScheduledCommands(onScheduling, onScheduled, onDelivering, onDelivered);
-
+                new Configuration()
+                    .UseSqlEventStore()
+                    //.UseSqlStorageForScheduledCommands()
+                    .UseDependency(t => eventSourcedRepository)
+                    .UseDependency(t => createEventStoreDbContext())
+                    .UseDependency(t => createCommandSchedulerContext())
+                    .UseEventBus(eventBus);
         }
 
         public void TrackSent(TrackingCode trackingCode, Parcel parcel, IReadOnlyDictionary<string, string> metadata)
         {
-            var shipment = new Shipment(parcel.Id);
+            // shipment may already exist and this is just another envelope to deal with...
+            var shipment = this.FetchShipment(trackingCode);
+            if (shipment == null)
+            {
+                var commandCreate = new CreateShipment { AggregateId = parcel.Id, Parcel = parcel };
+                //shipment = new Shipment(command);//throws nullrefexception...
+                shipment = new Shipment(parcel.Id);
+                shipment.EnactCommand(commandCreate);
+            }
 
-            var command = new CreateShipment { AggregateId = parcel.Id, Parcel = parcel };
-
-            //THROWS unauthorized???it is the "right" way? - var shipment = new Shipment(command);
-            shipment.EnactCommand(command);
-
+            //need a command to create an envelope status update
+            var command = new Send { TrackingCode = trackingCode };
+            var handler = new Shipment.SendCommandHandler();
+            handler.EnactCommand(shipment, command);
             this.SaveShipment(shipment);
         }
 
@@ -54,7 +85,7 @@
         {
             var shipment = this.FetchShipment(trackingCode);
 
-            var command = new AddressShipment { Address = assignedChannel };
+            var command = new AddressShipment { TrackingCode = trackingCode, Address = assignedChannel };
 
             var handler = new Shipment.AddressCommandHandler();
             handler.EnactCommand(shipment, command);
@@ -66,7 +97,7 @@
         {
             var shipment = this.FetchShipment(trackingCode);
 
-            var command = new AttemptDelivery { Recipient = harnessDetails };
+            var command = new AttemptDelivery { TrackingCode = trackingCode, Recipient = harnessDetails };
 
             var handler = new Shipment.AttemptCommandHandler();
             handler.EnactCommand(shipment, command);
@@ -78,7 +109,7 @@
         {
             var shipment = this.FetchShipment(trackingCode);
 
-            var command = new RejectDelivery { Exception = exception };
+            var command = new RejectDelivery { TrackingCode = trackingCode, Exception = exception };
 
             var handler = new Shipment.RejectCommandHandler();
             handler.EnactCommand(shipment, command);
@@ -86,13 +117,14 @@
             this.SaveShipment(shipment);
         }
 
-        public void TrackAccepted(TrackingCode trackingCode)
+        public void MarkDelivered(TrackingCode trackingCode)
         {
             var shipment = this.FetchShipment(trackingCode);
 
-            var command = new Deliver();
+            var command = new Deliver { TrackingCode = trackingCode };
 
             var handler = new Shipment.DeliverCommandHandler();
+
             handler.EnactCommand(shipment, command);
 
             this.SaveShipment(shipment);
@@ -111,9 +143,13 @@
             this.configuration.Repository<Shipment>().Save(shipment).Wait();
         }
 
-        public IReadOnlyCollection<ShipmentTracking> Track(IReadOnlyCollection<TrackingCode> trackingCodes)
+        public IReadOnlyCollection<TrackedShipment> Track(IReadOnlyCollection<TrackingCode> trackingCodes)
         {
-            throw new NotImplementedException();
+            using (var dbContext = new TrackedShipmentDbContext(this.readModelConnectionString))
+            {
+                var parcelIds = trackingCodes.Select(_ => _.ParcelId).Distinct().ToList();
+                return dbContext.Shipments.Where(_ => parcelIds.Contains(_.ParcelId)).ToList();
+            }
         }
     }
 }

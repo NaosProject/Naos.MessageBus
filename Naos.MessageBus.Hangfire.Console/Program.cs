@@ -55,10 +55,11 @@ namespace Naos.MessageBus.Hangfire.Console
 
             if (executorRoleSettings != null)
             {
-                var trackingConnectionBuilder = new SqlConnectionStringBuilder(messageBusHandlerSettings.PersistenceConnectionString);
-                trackingConnectionBuilder.InitialCatalog = "Tracking";
-                var trackingConnectionString = trackingConnectionBuilder.ConnectionString;
-                var postmaster = new Postmaster(trackingConnectionString);
+                var eventConnectionString = new SqlConnectionStringBuilder(messageBusHandlerSettings.PersistenceConnectionString) { InitialCatalog = "PostmasterEvents" }.ConnectionString;
+                var commandConnectionString = new SqlConnectionStringBuilder(messageBusHandlerSettings.PersistenceConnectionString) { InitialCatalog = "PostmasterCommands" }.ConnectionString;
+                var readModelConnectionString = new SqlConnectionStringBuilder(messageBusHandlerSettings.PersistenceConnectionString) { InitialCatalog = "PostmasterReadModels" }.ConnectionString;
+
+                var postmaster = new Postmaster(eventConnectionString, commandConnectionString, readModelConnectionString);
 
                 var activeMessageTracker = new InMemoryActiveMessageTracker();
                 var messageSender = new ParcelSender(postmaster, messageBusHandlerSettings.PersistenceConnectionString);

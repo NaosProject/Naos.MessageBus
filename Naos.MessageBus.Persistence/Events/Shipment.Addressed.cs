@@ -9,12 +9,16 @@
     {
         public class Addressed : Event<Shipment>
         {
+            public TrackingCode TrackingCode { get; set; }
+
             public Channel Address { get; set; }
+
+            public ParcelStatus NewStatus { get; set; }
 
             public override void Update(Shipment aggregate)
             {
-                aggregate.Address = this.Address;
-                aggregate.Status = ParcelStatus.InTransit;
+                aggregate.Tracking[this.TrackingCode].Address = this.Address;
+                aggregate.Tracking[this.TrackingCode].Status = this.NewStatus;
             }
         }
     }

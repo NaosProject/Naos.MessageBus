@@ -4,7 +4,7 @@
     {
         public void EnactCommand(CreateShipment command)
         {
-            this.RecordEvent(new Created { Parcel = command.Parcel, TrackingCode = command.TrackingCode });
+            this.RecordEvent(new Created { Parcel = command.Parcel });
         }
     }
 }

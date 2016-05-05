@@ -20,14 +20,10 @@ namespace Naos.MessageBus.SendingContract
         /// </summary>
         /// <param name="trackingCodes">Tracking codes of parcels.</param>
         /// <returns>Tracking reports for parcels.</returns>
-        IReadOnlyCollection<ShipmentTracking> Track(IReadOnlyCollection<TrackingCode> trackingCodes);
+        IReadOnlyCollection<TrackedShipment> Track(IReadOnlyCollection<TrackingCode> trackingCodes);
 
         //IReadOnlyCollection<TrackingReport> Track(string[] parcelIds);
 
         //IReadOnlyCollection<TrackingReport> Track(TypeDescription messageType);
-    }
-
-    public class ShipmentTracking
-    {
     }
 }

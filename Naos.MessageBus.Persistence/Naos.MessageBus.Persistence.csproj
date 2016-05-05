@@ -43,7 +43,7 @@
       <Private>True</Private>
     </Reference>
     <Reference Include="Its.Validation, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Its.Validation.1.3.0\lib\net45\Its.Validation.dll</HintPath>
+      <HintPath>..\packages\Its.Validation.1.4.3\lib\net45\Its.Validation.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="Microsoft.Its.Domain, Version=0.14.0.0, Culture=neutral, processorArchitecture=MSIL">
@@ -54,8 +54,8 @@
       <HintPath>..\packages\Its.Domain.Sql.0.14.19-beta\lib\net452\Microsoft.Its.Domain.Sql.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="Newtonsoft.Json, Version=6.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
-      <HintPath>..\packages\Newtonsoft.Json.6.0.8\lib\net45\Newtonsoft.Json.dll</HintPath>
+    <Reference Include="Newtonsoft.Json, Version=8.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <HintPath>..\packages\Newtonsoft.Json.8.0.3\lib\net45\Newtonsoft.Json.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="System" />
@@ -85,17 +85,21 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Authorization.cs" />
+    <Compile Include="CommandHandlers\Shipment.SendCommandHandler.cs" />
     <Compile Include="CommandHandlers\Shipment.AcceptCommandHandler.cs" />
     <Compile Include="CommandHandlers\Shipment.AddressCommandHandler.cs" />
     <Compile Include="CommandHandlers\Shipment.AttemptCommandHandler.cs" />
     <Compile Include="CommandHandlers\Shipment.EnactCommand.cs" />
     <Compile Include="CommandHandlers\Shipment.RejectCommandHandler.cs" />
+    <Compile Include="Commands\Send.cs" />
     <Compile Include="Commands\AddressShipment.cs" />
     <Compile Include="Commands\AttemptDelivery.cs" />
     <Compile Include="Commands\CreateShipment.cs" />
     <Compile Include="Commands\Deliver.cs" />
     <Compile Include="Commands\RejectDelivery.cs" />
     <Compile Include="Commands\ValidationRules.cs" />
+    <Compile Include="Events\Shipment.Sent.cs" />
     <Compile Include="Events\Shipment.Addressed.cs" />
     <Compile Include="Events\Shipment.AttemptedDelivery.cs" />
     <Compile Include="Events\Shipment.Created.cs" />
@@ -103,8 +107,12 @@
     <Compile Include="Events\Shipment.RejectedDelivery.cs" />
     <Compile Include="Postmaster.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Change.cs" />
+    <Compile Include="TrackedShipmentDbContext.cs" />
     <Compile Include="Shipment.cs" />
     <Compile Include="ShipmentSnapshot.cs" />
+    <Compile Include="TrackingDetails.cs" />
+    <Compile Include="UpdateTrackedShipment.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />

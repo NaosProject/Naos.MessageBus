@@ -30,36 +30,61 @@ namespace Naos.MessageBus.Test
         [Fact]
         public async Task Do()
         {
-            var eventConnectionString = @"Data Source=(local)\SQLExpress; Integrated Security=True; MultipleActiveResultSets=False; Initial Catalog=PostmasterEvents";
+            var messages = new List<LogEntry>();
+            Log.EntryPosted += (sender, args) => messages.Add(args.LogEntry);
 
-            this.InitializeDatabaseConnectionStrings(eventConnectionString);
+            var eventConnectionString = @"Data Source=(local)\SQLExpress; Integrated Security=True; MultipleActiveResultSets=False; Initial Catalog=PostmasterEvents";
+            var commandConnectionString = @"Data Source=(local)\SQLExpress; Integrated Security=True; MultipleActiveResultSets=False; Initial Catalog=PostmasterCommands";
+            var readConnectionString = @"Data Source=(local)\SQLExpress; Integrated Security=True; MultipleActiveResultSets=False; Initial Catalog=PostmasterReadModel";
+            var eventRepository = GetEventSourcedRepository(eventConnectionString);
+
+            var parcel = this.GetParcel();
+            var trackingCode = new TrackingCode { ParcelId = parcel.Id, EnvelopeId = "Something" };
+
+            var postmaster = new Postmaster(eventConnectionString, commandConnectionString, readConnectionString);
+
+            postmaster.TrackSent(trackingCode, parcel, new Dictionary<string, string>());
+            (await eventRepository.GetLatest(parcel.Id)).Tracking[trackingCode].Status.Should().Be(ParcelStatus.Sent);
+            postmaster.Track(new[] { trackingCode }).Single().Status.Should().Be(ParcelStatus.Unknown);
+
+            postmaster.TrackAddressed(trackingCode, parcel.Envelopes.First().Channel);
+            (await eventRepository.GetLatest(parcel.Id)).Tracking[trackingCode].Status.Should().Be(ParcelStatus.InTransit);
+            postmaster.Track(new[] { trackingCode }).Single().Status.Should().Be(ParcelStatus.Unknown);
+
+            postmaster.TrackAttemptingDelivery(trackingCode, new HarnessDetails());
+            (await eventRepository.GetLatest(parcel.Id)).Tracking[trackingCode].Status.Should().Be(ParcelStatus.OutForDelivery);
+            postmaster.Track(new[] { trackingCode }).Single().Status.Should().Be(ParcelStatus.Unknown);
+
+            postmaster.TrackRejectedDelivery(trackingCode, new NotImplementedException("Not here yet"));
+            (await eventRepository.GetLatest(parcel.Id)).Tracking[trackingCode].Status.Should().Be(ParcelStatus.Rejected);
+            postmaster.Track(new[] { trackingCode }).Single().Status.Should().Be(ParcelStatus.Rejected);
+
+            postmaster.MarkDelivered(trackingCode);
+            (await eventRepository.GetLatest(parcel.Id)).Tracking[trackingCode].Status.Should().Be(ParcelStatus.Delivered);
+            postmaster.Track(new[] { trackingCode }).Single().Status.Should().Be(ParcelStatus.Delivered);
+        }
+
+        private static IEventSourcedRepository<Shipment> GetEventSourcedRepository(string eventConnectionString)
+        {
+            EventStoreDbContext.NameOrConnectionString = eventConnectionString;
+
+            using (var context = new EventStoreDbContext())
+            {
+                new EventStoreDatabaseInitializer<EventStoreDbContext>().InitializeDatabase(context);
+            }
 
             Action<IScheduledCommand> onScheduling = command => Log.Write(command.ToString);
             Action<IScheduledCommand> onScheduled = command => Log.Write(command.ToString);
             Action<IScheduledCommand> onDelivering = command => Log.Write(command.ToString);
             Action<IScheduledCommand> onDelivered = command => Log.Write(command.ToString);
 
-            var eventRepository = new Configuration()
-                .UseSqlEventStore()
-                .UseSqlStorageForScheduledCommands()
-                .UseDependency(t => (IEventSourcedRepository<Shipment>)new SqlEventSourcedRepository<Shipment>())
-                .TraceScheduledCommands(onScheduling, onScheduled, onDelivering, onDelivered).Repository<Shipment>();
-
-            var parcel = this.GetParcel();
-            var trackingCode = new TrackingCode { ParcelId = parcel.Id };
-
-            var postmaster = new Postmaster(eventConnectionString);
-
-            postmaster.TrackSent(trackingCode, parcel, new Dictionary<string, string>());
-            (await eventRepository.GetLatest(parcel.Id)).Status.Should().Be(ParcelStatus.Sent);
-            postmaster.TrackAddressed(trackingCode, parcel.Envelopes.First().Channel);
-            (await eventRepository.GetLatest(parcel.Id)).Status.Should().Be(ParcelStatus.InTransit);
-            postmaster.TrackAttemptingDelivery(trackingCode, new HarnessDetails());
-            (await eventRepository.GetLatest(parcel.Id)).Status.Should().Be(ParcelStatus.OutForDelivery);
-            postmaster.TrackRejectedDelivery(trackingCode, new NotImplementedException("Not here yet"));
-            (await eventRepository.GetLatest(parcel.Id)).Status.Should().Be(ParcelStatus.Rejected);
-            postmaster.TrackAccepted(trackingCode);
-            (await eventRepository.GetLatest(parcel.Id)).Status.Should().Be(ParcelStatus.Accepted);
+            var eventRepository =
+                new Configuration().UseSqlEventStore()
+                    .UseSqlStorageForScheduledCommands()
+                    .UseDependency(t => (IEventSourcedRepository<Shipment>)new SqlEventSourcedRepository<Shipment>())
+                    .TraceScheduledCommands(onScheduling, onScheduled, onDelivering, onDelivered)
+                    .Repository<Shipment>();
+            return eventRepository;
         }
 
         private Parcel GetParcel()
@@ -81,17 +106,6 @@ namespace Naos.MessageBus.Test
                                       }
                           };
             return ret;
-        }
-
-        public void InitializeDatabaseConnectionStrings(string eventConnectionString)
-        {
-            // local
-            EventStoreDbContext.NameOrConnectionString = eventConnectionString;
-
-            using (var context = new EventStoreDbContext())
-            {
-                new EventStoreDatabaseInitializer<EventStoreDbContext>().InitializeDatabase(context);
-            }
         }
     }
 }
