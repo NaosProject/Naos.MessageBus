@@ -22,34 +22,34 @@ namespace Naos.MessageBus.SendingContract
         /// <param name="trackingCode">Tracking code of the parcel.</param>
         /// <param name="parcel">Parcel that was sent.</param>
         /// <param name="metadata">Metadata about the sending or the parcel.</param>
-        void TrackSent(TrackingCode trackingCode, Parcel parcel, IReadOnlyDictionary<string, string> metadata);
+        void Sent(TrackingCode trackingCode, Parcel parcel, IReadOnlyDictionary<string, string> metadata);
 
         /// <summary>
         /// Parcel was addressed.
         /// </summary>
         /// <param name="trackingCode">Tracking code of the parcel.</param>
         /// <param name="assignedChannel">Channel the parcel is being sent to.</param>
-        void TrackAddressed(TrackingCode trackingCode, Channel assignedChannel);
+        void Addressed(TrackingCode trackingCode, Channel assignedChannel);
 
         /// <summary>
         /// Delivery is attempted on a handler, handler details provided.
         /// </summary>
         /// <param name="trackingCode">Tracking code of the parcel.</param>
         /// <param name="harnessDetails">Details about the harness it is being delivered to.</param>
-        void TrackAttemptingDelivery(TrackingCode trackingCode, HarnessDetails harnessDetails);
+        void Attempting(TrackingCode trackingCode, HarnessDetails harnessDetails);
 
         /// <summary>
         /// Delivery was rejected by the harness.
         /// </summary>
         /// <param name="trackingCode">Tracking code of the parcel.</param>
         /// <param name="exception">Exception that occurred.</param>
-        void TrackRejectedDelivery(TrackingCode trackingCode, Exception exception);
+        void Rejected(TrackingCode trackingCode, Exception exception);
 
         /// <summary>
         /// Delivery was accepted by the harness.
         /// </summary>
         /// <param name="trackingCode">Tracking code of the parcel.</param>
-        void MarkDelivered(TrackingCode trackingCode);
+        void Delivered(TrackingCode trackingCode);
     }
 
     /// <summary>
@@ -58,31 +58,31 @@ namespace Naos.MessageBus.SendingContract
     public class NullPostmaster : IPostmaster
     {
         /// <inheritdoc />
-        public void TrackAttemptingDelivery(TrackingCode trackingCode, HarnessDetails harnessDetails)
+        public void Attempting(TrackingCode trackingCode, HarnessDetails harnessDetails)
         {
             /* no-op */
         }
 
         /// <inheritdoc />
-        public void MarkDelivered(TrackingCode trackingCode)
+        public void Delivered(TrackingCode trackingCode)
         {
             /* no-op */
         }
 
         /// <inheritdoc />
-        public void TrackSent(TrackingCode trackingCode, Parcel parcel, IReadOnlyDictionary<string, string> metadata)
+        public void Sent(TrackingCode trackingCode, Parcel parcel, IReadOnlyDictionary<string, string> metadata)
         {
             /* no-op */
         }
 
         /// <inheritdoc />
-        public void TrackAddressed(TrackingCode trackingCode, Channel assignedChannel)
+        public void Addressed(TrackingCode trackingCode, Channel assignedChannel)
         {
             /* no-op */
         }
 
         /// <inheritdoc />
-        public void TrackRejectedDelivery(TrackingCode trackingCode, Exception exception)
+        public void Rejected(TrackingCode trackingCode, Exception exception)
         {
             /* no-op */
         }

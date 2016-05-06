@@ -13,6 +13,7 @@ namespace Naos.MessageBus.Test
 
     using Naos.MessageBus.Core;
     using Naos.MessageBus.HandlingContract;
+    using Naos.MessageBus.SendingContract;
 
     using Xunit;
 

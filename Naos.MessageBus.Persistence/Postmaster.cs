@@ -62,13 +62,13 @@
                     .UseEventBus(eventBus);
         }
 
-        public void TrackSent(TrackingCode trackingCode, Parcel parcel, IReadOnlyDictionary<string, string> metadata)
+        public void Sent(TrackingCode trackingCode, Parcel parcel, IReadOnlyDictionary<string, string> metadata)
         {
             // shipment may already exist and this is just another envelope to deal with...
             var shipment = this.FetchShipment(trackingCode);
             if (shipment == null)
             {
-                var commandCreate = new CreateShipment { AggregateId = parcel.Id, Parcel = parcel };
+                var commandCreate = new CreateShipment { AggregateId = parcel.Id, Parcel = parcel, MetaData = metadata };
                 //shipment = new Shipment(command);//throws nullrefexception...
                 shipment = new Shipment(parcel.Id);
                 shipment.EnactCommand(commandCreate);
@@ -81,7 +81,7 @@
             this.SaveShipment(shipment);
         }
 
-        public void TrackAddressed(TrackingCode trackingCode, Channel assignedChannel)
+        public void Addressed(TrackingCode trackingCode, Channel assignedChannel)
         {
             var shipment = this.FetchShipment(trackingCode);
 
@@ -93,31 +93,31 @@
             this.SaveShipment(shipment);
         }
 
-        public void TrackAttemptingDelivery(TrackingCode trackingCode, HarnessDetails harnessDetails)
+        public void Attempting(TrackingCode trackingCode, HarnessDetails harnessDetails)
         {
             var shipment = this.FetchShipment(trackingCode);
 
             var command = new AttemptDelivery { TrackingCode = trackingCode, Recipient = harnessDetails };
 
-            var handler = new Shipment.AttemptCommandHandler();
+            var handler = new Shipment.AttemptDeliveryCommandHandler();
             handler.EnactCommand(shipment, command);
 
             this.SaveShipment(shipment);
         }
 
-        public void TrackRejectedDelivery(TrackingCode trackingCode, Exception exception)
+        public void Rejected(TrackingCode trackingCode, Exception exception)
         {
             var shipment = this.FetchShipment(trackingCode);
 
             var command = new RejectDelivery { TrackingCode = trackingCode, Exception = exception };
 
-            var handler = new Shipment.RejectCommandHandler();
+            var handler = new Shipment.RejectDeliveryCommandHandler();
             handler.EnactCommand(shipment, command);
 
             this.SaveShipment(shipment);
         }
 
-        public void MarkDelivered(TrackingCode trackingCode)
+        public void Delivered(TrackingCode trackingCode)
         {
             var shipment = this.FetchShipment(trackingCode);
 
@@ -143,12 +143,22 @@
             this.configuration.Repository<Shipment>().Save(shipment).Wait();
         }
 
-        public IReadOnlyCollection<TrackedShipment> Track(IReadOnlyCollection<TrackingCode> trackingCodes)
+        public IReadOnlyCollection<ParcelTrackingReport> Track(IReadOnlyCollection<TrackingCode> trackingCodes)
         {
             using (var dbContext = new TrackedShipmentDbContext(this.readModelConnectionString))
             {
                 var parcelIds = trackingCodes.Select(_ => _.ParcelId).Distinct().ToList();
                 return dbContext.Shipments.Where(_ => parcelIds.Contains(_.ParcelId)).ToList();
+            }
+        }
+
+        public IReadOnlyDictionary<string, Notice> GetLatestNotices(string groupKey)
+        {
+            using (var dbContext = new TrackedShipmentDbContext(this.readModelConnectionString))
+            {
+                var mostRecentCertifiedNotice = dbContext.CertifiedNotices.Where(_ => _.GroupKey == groupKey).OrderBy(_ => _.DeliveredDateUtc).Last();
+                var message = Serializer.Deserialize<CertifiedNoticeMessage>(mostRecentCertifiedNotice.Envelope.MessageAsJson);
+                return message.Notices;
             }
         }
     }

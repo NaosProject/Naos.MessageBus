@@ -13,6 +13,7 @@ namespace Naos.MessageBus.Core
     using Naos.MessageBus.DataContract;
     using Naos.MessageBus.DataContract.Exceptions;
     using Naos.MessageBus.HandlingContract;
+    using Naos.MessageBus.SendingContract;
 
     /// <summary>
     /// Code to handle merging IShare properties.

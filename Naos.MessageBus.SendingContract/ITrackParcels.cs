@@ -20,10 +20,13 @@ namespace Naos.MessageBus.SendingContract
         /// </summary>
         /// <param name="trackingCodes">Tracking codes of parcels.</param>
         /// <returns>Tracking reports for parcels.</returns>
-        IReadOnlyCollection<TrackedShipment> Track(IReadOnlyCollection<TrackingCode> trackingCodes);
+        IReadOnlyCollection<ParcelTrackingReport> Track(IReadOnlyCollection<TrackingCode> trackingCodes);
 
-        //IReadOnlyCollection<TrackingReport> Track(string[] parcelIds);
-
-        //IReadOnlyCollection<TrackingReport> Track(TypeDescription messageType);
+        /// <summary>
+        /// Gets the latest certified notices in a group.
+        /// </summary>
+        /// <param name="groupKey">Group key to get notices by.</param>
+        /// <returns>Notices keyed on their context key.</returns>
+        IReadOnlyDictionary<string, Notice> GetLatestNotices(string groupKey);
     }
 }

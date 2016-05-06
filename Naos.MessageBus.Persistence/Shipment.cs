@@ -39,6 +39,8 @@
 
         public Parcel Parcel { get; private set; }
 
+        public IReadOnlyDictionary<string, string> CreationMetaData { get; set; }
+
         public IDictionary<TrackingCode, TrackingDetails> Tracking { get; set; }
     }
 }

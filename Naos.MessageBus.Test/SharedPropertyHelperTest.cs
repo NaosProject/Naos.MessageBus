@@ -16,6 +16,7 @@ namespace Naos.MessageBus.Test
     using Naos.MessageBus.DataContract;
     using Naos.MessageBus.DataContract.Exceptions;
     using Naos.MessageBus.HandlingContract;
+    using Naos.MessageBus.SendingContract;
 
     using Xunit;
 

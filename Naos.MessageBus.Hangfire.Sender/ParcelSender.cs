@@ -57,8 +57,8 @@ namespace Naos.MessageBus.Hangfire.Sender
                         var metadata = new Dictionary<string, string> { { "HangfireJobId", hangfireId }, { "DisplayName", displayName } };
 
                         // in the future we'll probably support unaddressed envelopes so addressing will have to be a supported separate step - however for now we'll just immediately mark it addressed...
-                        this.postmaster.TrackSent(trackingCode, parcel, metadata);
-                        this.postmaster.TrackAddressed(trackingCode, firstEnvelopeChannel);
+                        this.postmaster.Sent(trackingCode, parcel, metadata);
+                        this.postmaster.Addressed(trackingCode, firstEnvelopeChannel);
 
                         if (recurringSchedule.GetType() != typeof(NullSchedule))
                         {

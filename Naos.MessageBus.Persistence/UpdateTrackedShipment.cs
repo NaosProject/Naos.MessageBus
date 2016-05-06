@@ -10,7 +10,8 @@ namespace Naos.MessageBus.Persistence
     public class UpdateTrackedShipment : 
         IUpdateProjectionWhen<Shipment.Created>,
         IUpdateProjectionWhen<Shipment.Rejected>,
-        IUpdateProjectionWhen<Shipment.Delivered>
+        IUpdateProjectionWhen<Shipment.Delivered>,
+        IUpdateProjectionWhen<Shipment.Certified>
     {
         private readonly string connectionString;
 
@@ -23,7 +24,7 @@ namespace Naos.MessageBus.Persistence
         {
             using (var dbContext = new TrackedShipmentDbContext(this.connectionString))
             {
-                var entry = new TrackedShipment { ParcelId = @event.Parcel.Id, LastEnvelopeId = @event.Parcel.Envelopes.Last().Id };
+                var entry = new ParcelTrackingReport { ParcelId = @event.Parcel.Id, LastEnvelopeId = @event.Parcel.Envelopes.Last().Id };
                 dbContext.Shipments.AddOrUpdate(entry);
                 dbContext.SaveChanges();
             }
@@ -52,6 +53,22 @@ namespace Naos.MessageBus.Persistence
                     entry.Status = @event.NewStatus;
                     dbContext.SaveChanges();
                 }
+            }
+        }
+
+        public void UpdateProjection(Shipment.Certified @event)
+        {
+            using (var dbContext = new TrackedShipmentDbContext(this.connectionString))
+            {
+                var entry = new CertifiedNotice
+                                {
+                                    GroupKey = @event.FilingKey,
+                                    Envelope = @event.Envelope,
+                                    DeliveredDateUtc = @event.Timestamp.UtcDateTime
+                                };
+
+                dbContext.CertifiedNotices.Add(entry);
+                dbContext.SaveChanges();
             }
         }
     }

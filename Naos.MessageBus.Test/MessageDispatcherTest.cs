@@ -89,7 +89,7 @@ namespace Naos.MessageBus.Test
                                    {
                                        Description = channeledMessage.Message.Description,
                                        MessageAsJson =
-                                           Hangfire.Sender.Serializer.Serialize(channeledMessage.Message),
+                                           Serializer.Serialize(channeledMessage.Message),
                                        MessageType = messageType.ToTypeDescription(),
                                        Channel = channeledMessage.Channel
                                    };
@@ -146,7 +146,7 @@ namespace Naos.MessageBus.Test
                                                     {
                                                         Description = firstMessage.Description,
                                                         MessageAsJson =
-                                                            Hangfire.Sender.Serializer.Serialize(firstMessage),
+                                                            Serializer.Serialize(firstMessage),
                                                         MessageType =
                                                             firstMessage.GetType().ToTypeDescription(),
                                                         Channel = channel
@@ -205,7 +205,7 @@ namespace Naos.MessageBus.Test
                                                     {
                                                         Description = firstMessage.Description,
                                                         MessageAsJson =
-                                                            Hangfire.Sender.Serializer.Serialize(firstMessage),
+                                                            Serializer.Serialize(firstMessage),
                                                         MessageType =
                                                             firstMessage.GetType().ToTypeDescription(),
                                                         Channel = channel
@@ -214,7 +214,7 @@ namespace Naos.MessageBus.Test
                                                     {
                                                         Description = secondMessage.Description,
                                                         MessageAsJson =
-                                                            Hangfire.Sender.Serializer.Serialize(secondMessage),
+                                                            Serializer.Serialize(secondMessage),
                                                         MessageType =
                                                             secondMessage.GetType().ToTypeDescription(),
                                                         Channel = channel
@@ -264,7 +264,7 @@ namespace Naos.MessageBus.Test
                                                     {
                                                         Description = firstMessage.Description,
                                                         MessageAsJson =
-                                                            Hangfire.Sender.Serializer.Serialize(firstMessage),
+                                                            Serializer.Serialize(firstMessage),
                                                         MessageType =
                                                             firstMessage.GetType().ToTypeDescription(),
                                                         Channel = channel
@@ -273,7 +273,7 @@ namespace Naos.MessageBus.Test
                                                     {
                                                         Description = secondMessage.Description,
                                                         MessageAsJson =
-                                                            Hangfire.Sender.Serializer.Serialize(secondMessage),
+                                                            Serializer.Serialize(secondMessage),
                                                         MessageType =
                                                             secondMessage.GetType().ToTypeDescription(),
                                                         Channel = channel

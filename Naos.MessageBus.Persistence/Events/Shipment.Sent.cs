@@ -15,7 +15,7 @@
 
             public override void Update(Shipment aggregate)
             {
-                aggregate.Tracking.Add(this.TrackingCode, new TrackingDetails { Status = this.NewStatus });
+                aggregate.Tracking[this.TrackingCode].Status = this.NewStatus;
             }
         }
     }

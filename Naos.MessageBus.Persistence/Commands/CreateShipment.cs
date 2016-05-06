@@ -1,5 +1,7 @@
 namespace Naos.MessageBus.Persistence
 {
+    using System.Collections.Generic;
+
     using Its.Validation;
     using Its.Validation.Configuration;
 
@@ -30,5 +32,7 @@ namespace Naos.MessageBus.Persistence
         }
 
         public Parcel Parcel { get; set; }
+
+        public IReadOnlyDictionary<string, string> MetaData { get; set; }
     }
 }

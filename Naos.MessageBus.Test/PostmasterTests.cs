@@ -43,23 +43,23 @@ namespace Naos.MessageBus.Test
 
             var postmaster = new Postmaster(eventConnectionString, commandConnectionString, readConnectionString);
 
-            postmaster.TrackSent(trackingCode, parcel, new Dictionary<string, string>());
+            postmaster.Sent(trackingCode, parcel, new Dictionary<string, string>());
             (await eventRepository.GetLatest(parcel.Id)).Tracking[trackingCode].Status.Should().Be(ParcelStatus.Sent);
             postmaster.Track(new[] { trackingCode }).Single().Status.Should().Be(ParcelStatus.Unknown);
 
-            postmaster.TrackAddressed(trackingCode, parcel.Envelopes.First().Channel);
+            postmaster.Addressed(trackingCode, parcel.Envelopes.First().Channel);
             (await eventRepository.GetLatest(parcel.Id)).Tracking[trackingCode].Status.Should().Be(ParcelStatus.InTransit);
             postmaster.Track(new[] { trackingCode }).Single().Status.Should().Be(ParcelStatus.Unknown);
 
-            postmaster.TrackAttemptingDelivery(trackingCode, new HarnessDetails());
+            postmaster.Attempting(trackingCode, new HarnessDetails());
             (await eventRepository.GetLatest(parcel.Id)).Tracking[trackingCode].Status.Should().Be(ParcelStatus.OutForDelivery);
             postmaster.Track(new[] { trackingCode }).Single().Status.Should().Be(ParcelStatus.Unknown);
 
-            postmaster.TrackRejectedDelivery(trackingCode, new NotImplementedException("Not here yet"));
+            postmaster.Rejected(trackingCode, new NotImplementedException("Not here yet"));
             (await eventRepository.GetLatest(parcel.Id)).Tracking[trackingCode].Status.Should().Be(ParcelStatus.Rejected);
             postmaster.Track(new[] { trackingCode }).Single().Status.Should().Be(ParcelStatus.Rejected);
 
-            postmaster.MarkDelivered(trackingCode);
+            postmaster.Delivered(trackingCode);
             (await eventRepository.GetLatest(parcel.Id)).Tracking[trackingCode].Status.Should().Be(ParcelStatus.Delivered);
             postmaster.Track(new[] { trackingCode }).Single().Status.Should().Be(ParcelStatus.Delivered);
         }

@@ -12,7 +12,7 @@
         /// Enacts a command.
         /// </summary>
         /// <param name="command">Command.</param>
-        public class RejectCommandHandler : ICommandHandler<Shipment, RejectDelivery>
+        public class RejectDeliveryCommandHandler : ICommandHandler<Shipment, RejectDelivery>
         {
             public Task EnactCommand(Shipment target, RejectDelivery command)
             {

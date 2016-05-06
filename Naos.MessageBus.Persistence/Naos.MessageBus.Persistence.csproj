@@ -86,12 +86,13 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Authorization.cs" />
+    <Compile Include="CertifiedNotice.cs" />
     <Compile Include="CommandHandlers\Shipment.SendCommandHandler.cs" />
-    <Compile Include="CommandHandlers\Shipment.AcceptCommandHandler.cs" />
+    <Compile Include="CommandHandlers\Shipment.DeliverCommandHandler.cs" />
     <Compile Include="CommandHandlers\Shipment.AddressCommandHandler.cs" />
-    <Compile Include="CommandHandlers\Shipment.AttemptCommandHandler.cs" />
+    <Compile Include="CommandHandlers\Shipment.AttemptDeliveryCommandHandler.cs" />
     <Compile Include="CommandHandlers\Shipment.EnactCommand.cs" />
-    <Compile Include="CommandHandlers\Shipment.RejectCommandHandler.cs" />
+    <Compile Include="CommandHandlers\Shipment.RejectDeliveryCommandHandler.cs" />
     <Compile Include="Commands\Send.cs" />
     <Compile Include="Commands\AddressShipment.cs" />
     <Compile Include="Commands\AttemptDelivery.cs" />
@@ -99,6 +100,7 @@
     <Compile Include="Commands\Deliver.cs" />
     <Compile Include="Commands\RejectDelivery.cs" />
     <Compile Include="Commands\ValidationRules.cs" />
+    <Compile Include="Events\Shipment.Certified.cs" />
     <Compile Include="Events\Shipment.Sent.cs" />
     <Compile Include="Events\Shipment.Addressed.cs" />
     <Compile Include="Events\Shipment.AttemptedDelivery.cs" />
@@ -107,7 +109,6 @@
     <Compile Include="Events\Shipment.RejectedDelivery.cs" />
     <Compile Include="Postmaster.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Change.cs" />
     <Compile Include="TrackedShipmentDbContext.cs" />
     <Compile Include="Shipment.cs" />
     <Compile Include="ShipmentSnapshot.cs" />

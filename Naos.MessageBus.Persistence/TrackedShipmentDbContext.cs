@@ -2,6 +2,7 @@
 {
     using System.Data.Entity;
 
+    using Naos.MessageBus.DataContract;
     using Naos.MessageBus.SendingContract;
 
     public class TrackedShipmentDbContext : DbContext
@@ -10,11 +11,16 @@
         {
         }
 
-        public virtual DbSet<TrackedShipment> Shipments { get; set; }
+        public virtual DbSet<ParcelTrackingReport> Shipments { get; set; }
+
+        public virtual DbSet<CertifiedNotice> CertifiedNotices { get; set; }
+
+        public virtual DbSet<Envelope> Envelopes { get; set; }
 
         protected override void OnModelCreating(DbModelBuilder modelBuilder)
         {
-            modelBuilder.Entity<TrackedShipment>().HasKey(s => s.ParcelId);
+            modelBuilder.Entity<ParcelTrackingReport>().HasKey(s => s.ParcelId);
+            modelBuilder.Entity<CertifiedNotice>().HasKey(s => s.Id);
         }
     }
 }

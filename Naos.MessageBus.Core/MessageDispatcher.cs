@@ -69,6 +69,31 @@ namespace Naos.MessageBus.Core
         /// <inheritdoc />
         public void Dispatch(TrackingCode trackingCode, string displayName, Parcel parcel)
         {
+            try
+            {
+                this.activeMessageTracker.IncrementActiveMessages();
+
+                var dynamicDetails = new HarnessDynamicDetails { AvailablePhysicalMemoryInGb = MachineDetails.GetAvailablePhysicalMemoryInGb() };
+                var harnessDetails = new HarnessDetails { StaticDetails = this.harnessStaticDetails, DynamicDetails = dynamicDetails };
+
+                this.postmaster.Attempting(trackingCode, harnessDetails);
+
+                this.InternalDispatch(parcel);
+
+                this.postmaster.Delivered(trackingCode);
+            }
+            catch (Exception ex)
+            {
+                this.postmaster.Rejected(trackingCode, ex);
+            }
+            finally
+            {
+                this.activeMessageTracker.DecrementActiveMessages();
+            }
+        }
+
+        private void InternalDispatch(Parcel parcel)
+        {
             if (parcel == null)
             {
                 throw new DispatchException("Parcel cannot be null");
@@ -90,31 +115,6 @@ namespace Naos.MessageBus.Core
                 return;
             }
 
-            try
-            {
-                this.activeMessageTracker.IncrementActiveMessages();
-
-                var dispatchDetails = new HarnessDynamicDetails { AvailablePhysicalMemoryInGb = MachineDetails.GetAvailablePhysicalMemoryInGb() };
-                var harnessDetails = new HarnessDetails { StaticDetails = this.harnessStaticDetails, DynamicDetails = dispatchDetails };
-
-                this.postmaster.TrackAttemptingDelivery(trackingCode, harnessDetails);
-
-                this.InternalDispatch(parcel);
-
-                this.postmaster.MarkDelivered(trackingCode);
-            }
-            catch (Exception ex)
-            {
-                this.postmaster.TrackRejectedDelivery(trackingCode, ex);
-            }
-            finally
-            {
-                this.activeMessageTracker.DecrementActiveMessages();
-            }
-        }
-
-        private void InternalDispatch(Parcel parcel)
-        {
             var firstEnvelope = parcel.Envelopes.First();
             var remainingEnvelopes = parcel.Envelopes.Skip(1).ToList();
             var firstChanneledMessage = this.DeserializeEnvelopeIntoChanneledMessage(firstEnvelope);

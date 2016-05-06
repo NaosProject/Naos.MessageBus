@@ -25,8 +25,6 @@ namespace Naos.MessageBus.Hangfire.Console
     using Naos.MessageBus.Persistence;
     using Naos.MessageBus.SendingContract;
 
-    using Serializer = Naos.MessageBus.Core.Serializer;
-
     /// <summary>
     /// Main entry point of the application.
     /// </summary>

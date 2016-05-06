@@ -8,12 +8,10 @@ namespace Naos.MessageBus.SendingContract
 {
     using System;
 
-    using Naos.MessageBus.DataContract;
-
     /// <summary>
     /// Model object to hold details that can be retrieved about a tracked shipment.
     /// </summary>
-    public class TrackedShipment
+    public class ParcelTrackingReport
     {
         /// <summary>
         /// Gets or sets the parcel's ID.
@@ -25,6 +23,9 @@ namespace Naos.MessageBus.SendingContract
         /// </summary>
         public ParcelStatus Status { get; set; }
 
+        /// <summary>
+        /// The ID of the last envelope in the parcel.
+        /// </summary>
         public string LastEnvelopeId { get; set; }
     }
 }

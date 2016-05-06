@@ -19,6 +19,7 @@ namespace Naos.MessageBus.Hangfire.Harness
 
     using Naos.MessageBus.Core;
     using Naos.MessageBus.HandlingContract;
+    using Naos.MessageBus.SendingContract;
 
     /// <inheritdoc />
     public class ApplicationPreload : IProcessHostPreloadClient

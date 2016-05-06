@@ -14,5 +14,9 @@
         public Exception Exception { get; internal set; }
 
         public ParcelStatus Status { get; internal set; }
+
+        public CertifiedNotice Certified { get; internal set; }
+
+        public Envelope Envelope { get; internal set; }
     }
 }

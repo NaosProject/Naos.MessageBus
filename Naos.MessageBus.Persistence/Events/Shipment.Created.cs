@@ -1,6 +1,7 @@
 ﻿namespace Naos.MessageBus.Persistence
 {
     using System.Collections.Generic;
+    using System.Linq;
 
     using Microsoft.Its.Domain;
 
@@ -12,10 +13,15 @@
         {
             public Parcel Parcel { get; set; }
 
+            public IReadOnlyDictionary<string, string> MetaData { get; set; }
+
             public override void Update(Shipment aggregate)
             {
                 aggregate.Parcel = this.Parcel;
-                aggregate.Tracking = new Dictionary<TrackingCode, TrackingDetails>();
+                aggregate.CreationMetaData = this.MetaData ?? new Dictionary<string, string>();
+                aggregate.Tracking = this.Parcel.Envelopes.ToDictionary(
+                    key => new TrackingCode { ParcelId = this.Parcel.Id, EnvelopeId = key.Id },
+                    val => new TrackingDetails { Envelope = val });
             }
         }
     }

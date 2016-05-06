@@ -4,7 +4,7 @@
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
-namespace Naos.MessageBus.Core
+namespace Naos.MessageBus.SendingContract
 {
     using System;
 

@@ -57,6 +57,7 @@
     <Compile Include="SharedProperty.cs" />
     <Compile Include="SharedInterfaceState.cs" />
     <Compile Include="TypeDescription.cs" />
+    <Compile Include="CertifiedNoticeMessage.cs" />
     <Compile Include="WaitMessage.cs" />
     <Compile Include="Parcel.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
