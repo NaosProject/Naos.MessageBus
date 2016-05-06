@@ -74,7 +74,7 @@ namespace Naos.MessageBus.Test
             postmaster.GetLatestCertifiedNotice(certifiedKey).Notices.Count.Should().Be(1);
         }
 
-        private Parcel GetParcel(string certifiedKey)
+        private Parcel GetParcel(string topic)
         {
             var ret = new Parcel
                           {
@@ -101,7 +101,7 @@ namespace Naos.MessageBus.Test
                                                           new CertifiedNoticeMessage
                                                               {
                                                                   Description = "Hello",
-                                                                  GroupKey = certifiedKey,
+                                                                  Topic = topic,
                                                                   Notices =
                                                                       new List<Notice>
                                                                           {

@@ -15,7 +15,7 @@ namespace Naos.MessageBus.Domain
     public class CertifiedNotice
     {
         /// <summary>
-        /// Gets or sets the group.
+        /// Gets or sets the topic.
         /// </summary>
         public string Topic { get; set; }
 

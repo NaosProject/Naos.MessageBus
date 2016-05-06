@@ -22,7 +22,7 @@ namespace Naos.MessageBus.Persistence
         {
             public TrackingCode TrackingCode { get; set; }
 
-            public string GroupKey { get; set; }
+            public string Topic { get; set; }
 
             public Envelope Envelope { get; set; }
 
@@ -32,7 +32,7 @@ namespace Naos.MessageBus.Persistence
                 var envelope = aggregate.Parcel.Envelopes.Single(_ => _.Id == this.TrackingCode.EnvelopeId);
                 aggregate.Tracking[this.TrackingCode].Certified = new CertifiedNoticeForDatabase
                                                                       {
-                                                                          GroupKey = this.GroupKey,
+                                                                          Topic = this.Topic,
                                                                           Envelope = envelope,
                                                                           DeliveredDateUtc = DateTime.UtcNow
                                                                       };

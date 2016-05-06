@@ -17,9 +17,9 @@ namespace Naos.MessageBus.Domain
         public string Description { get; set; }
 
         /// <summary>
-        /// Gets or sets the group key to log the certified message under.
+        /// Gets or sets the topic of the notice.
         /// </summary>
-        public string GroupKey { get; set; }
+        public string Topic { get; set; }
 
         /// <summary>
         /// Gets or sets a collection of <see cref="Notice"/> which can be used to determine if action is necessary.

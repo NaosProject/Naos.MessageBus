@@ -79,7 +79,7 @@ namespace Naos.MessageBus.Persistence
             {
                 var entry = new CertifiedNoticeForDatabase
                                 {
-                                    GroupKey = @event.GroupKey,
+                                    Topic = @event.Topic,
                                     Envelope = @event.Envelope,
                                     DeliveredDateUtc = @event.Timestamp.UtcDateTime
                                 };

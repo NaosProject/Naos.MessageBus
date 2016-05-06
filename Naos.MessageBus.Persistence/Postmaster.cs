@@ -150,20 +150,20 @@ namespace Naos.MessageBus.Persistence
         }
 
         /// <inheritdoc />
-        public CertifiedNotice GetLatestCertifiedNotice(string groupKey)
+        public CertifiedNotice GetLatestCertifiedNotice(string topic)
         {
             using (var db = new TrackedShipmentDbContext(this.readModelConnectionString))
             {
-                var noticesForGroup = db.CertifiedNotices.Where(_ => _.GroupKey == groupKey).OrderBy(_ => _.DeliveredDateUtc).ToList();
-                if (noticesForGroup.Count == 0)
+                var noticesForTopic = db.CertifiedNotices.Where(_ => _.Topic == topic).OrderBy(_ => _.DeliveredDateUtc).ToList();
+                if (noticesForTopic.Count == 0)
                 {
                     return new CertifiedNotice { Notices = new List<Notice>() };
                 }
                 else
                 {
-                    var certifiedNotice = noticesForGroup.Last();
+                    var certifiedNotice = noticesForTopic.Last();
                     var message = Serializer.Deserialize<CertifiedNoticeMessage>(certifiedNotice.Envelope.MessageAsJson);
-                    return new CertifiedNotice { Topic = certifiedNotice.GroupKey, DeliveredDateUtc = certifiedNotice.DeliveredDateUtc, Notices = message.Notices };
+                    return new CertifiedNotice { Topic = certifiedNotice.Topic, DeliveredDateUtc = certifiedNotice.DeliveredDateUtc, Notices = message.Notices };
                 }
             }
         }

@@ -21,9 +21,9 @@ namespace Naos.MessageBus.Persistence
         public Guid Id { get; set; }
 
         /// <summary>
-        /// Gets or sets the group.
+        /// Gets or sets the topic.
         /// </summary>
-        public string GroupKey { get; set; }
+        public string Topic { get; set; }
 
         /// <summary>
         /// Gets or sets the time in UTC that the notice was delivered.

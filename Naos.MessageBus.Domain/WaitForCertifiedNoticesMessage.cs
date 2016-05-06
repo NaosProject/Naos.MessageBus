@@ -18,9 +18,9 @@ namespace Naos.MessageBus.Domain
         public string Description { get; set; }
 
         /// <summary>
-        /// Gets or sets the groups to wait for.
+        /// Gets or sets the topics to check.
         /// </summary>
-        public IReadOnlyCollection<GroupCheck> Groups { get; set; }
+        public IReadOnlyCollection<TopicCheck> TopicChecks { get; set; }
 
         /// <summary>
         /// Gets or sets the wait time between checks on updates. 
@@ -31,12 +31,12 @@ namespace Naos.MessageBus.Domain
     /// <summary>
     /// Check scope for certified notices.
     /// </summary>
-    public class GroupCheck
+    public class TopicCheck
     {
         /// <summary>
-        /// Gets or sets the group to check.
+        /// Gets or sets the topic.
         /// </summary>
-        public string GroupKey { get; set; }
+        public string Topic { get; set; }
 
         /// <summary>
         /// Gets or sets how recent the notice was delivered.

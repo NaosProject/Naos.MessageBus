@@ -23,10 +23,10 @@ namespace Naos.MessageBus.Core
             var reschedule = true;
             var tracker = HandlerToolShed.GetParcelTracker();
 
-            foreach (var group in message.Groups)
+            foreach (var topicCheck in message.TopicChecks)
             {
-                var latest = tracker.GetLatestCertifiedNotice(group.GroupKey);
-                if (DateTime.UtcNow.Subtract(latest.DeliveredDateUtc) <= group.RecentnessThreshold)
+                var latest = tracker.GetLatestCertifiedNotice(topicCheck.Topic);
+                if (DateTime.UtcNow.Subtract(latest.DeliveredDateUtc) <= topicCheck.RecentnessThreshold)
                 {
                     reschedule = false;
                 }

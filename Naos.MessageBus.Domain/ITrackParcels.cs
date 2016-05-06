@@ -21,10 +21,10 @@ namespace Naos.MessageBus.Domain
         IReadOnlyCollection<ParcelTrackingReport> Track(IReadOnlyCollection<TrackingCode> trackingCodes);
 
         /// <summary>
-        /// Gets the latest certified notices in a group.
+        /// Gets the latest certified notices on a topic.
         /// </summary>
-        /// <param name="groupKey">Group key to get notices by.</param>
-        /// <returns>Latest notices for the provided group.</returns>
-        CertifiedNotice GetLatestCertifiedNotice(string groupKey);
+        /// <param name="topic">Topic to get latest certified notice for.</param>
+        /// <returns>Latest notices for the provided topic.</returns>
+        CertifiedNotice GetLatestCertifiedNotice(string topic);
     }
 }

@@ -67,7 +67,7 @@ namespace Naos.MessageBus.Persistence
             if (isCertified)
             {
                 var message = Serializer.Deserialize<CertifiedNoticeMessage>(deliveredEnvelope.MessageAsJson);
-                this.RecordEvent(new Certified { TrackingCode = command.TrackingCode, GroupKey = message.GroupKey, Envelope = deliveredEnvelope });
+                this.RecordEvent(new Certified { TrackingCode = command.TrackingCode, Topic = message.Topic, Envelope = deliveredEnvelope });
             }
         }
     }
