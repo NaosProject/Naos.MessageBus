@@ -16,10 +16,8 @@ namespace Naos.MessageBus.Core
     using Its.Log.Instrumentation;
 
     using Naos.Diagnostics.Domain;
-    using Naos.MessageBus.DataContract;
-    using Naos.MessageBus.DataContract.Exceptions;
-    using Naos.MessageBus.HandlingContract;
-    using Naos.MessageBus.SendingContract;
+    using Naos.MessageBus.Domain;
+    using Naos.MessageBus.Domain.Exceptions;
 
     using SimpleInjector;
 
@@ -42,6 +40,8 @@ namespace Naos.MessageBus.Core
 
         private readonly ITrackActiveMessages activeMessageTracker;
 
+        private readonly ISendParcels parcelSender;
+
         /// <summary>
         /// Initializes a new instance of the <see cref="MessageDispatcher"/> class.
         /// </summary>
@@ -53,7 +53,8 @@ namespace Naos.MessageBus.Core
         /// <param name="harnessStaticDetails">Details about the harness.</param>
         /// <param name="postmaster">Courier to track parcel events.</param>
         /// <param name="activeMessageTracker">Interface to track active messages to know if handler harness can shutdown.</param>
-        public MessageDispatcher(Container simpleInjectorContainer, ConcurrentDictionary<Type, object> handlerSharedStateMap, ICollection<Channel> servicedChannels, TypeMatchStrategy typeMatchStrategy, TimeSpan messageDispatcherWaitThreadSleepTime, HarnessStaticDetails harnessStaticDetails, IPostmaster postmaster, ITrackActiveMessages activeMessageTracker)
+        /// <param name="parcelSender">Interface to send parcels.</param>
+        public MessageDispatcher(Container simpleInjectorContainer, ConcurrentDictionary<Type, object> handlerSharedStateMap, ICollection<Channel> servicedChannels, TypeMatchStrategy typeMatchStrategy, TimeSpan messageDispatcherWaitThreadSleepTime, HarnessStaticDetails harnessStaticDetails, IPostmaster postmaster, ITrackActiveMessages activeMessageTracker, ISendParcels parcelSender)
         {
             this.simpleInjectorContainer = simpleInjectorContainer;
             this.handlerSharedStateMap = handlerSharedStateMap;
@@ -64,6 +65,7 @@ namespace Naos.MessageBus.Core
             this.harnessStaticDetails = harnessStaticDetails;
             this.postmaster = postmaster;
             this.activeMessageTracker = activeMessageTracker;
+            this.parcelSender = parcelSender;
         }
 
         /// <inheritdoc />
@@ -85,6 +87,7 @@ namespace Naos.MessageBus.Core
             catch (Exception ex)
             {
                 this.postmaster.Rejected(trackingCode, ex);
+                throw;
             }
             finally
             {
@@ -107,10 +110,8 @@ namespace Naos.MessageBus.Core
             // make sure the message was routed correctly (if not then reroute)
             if (this.servicedChannels.SingleOrDefault(_ => _.Name == parcel.Envelopes.First().Channel.Name) == null)
             {
-                var rerouteMessageSender = HandlerToolShed.GetParcelSender();
-
                 // any schedule should already be set and NOT reset...
-                rerouteMessageSender.Send(parcel);
+                this.parcelSender.Send(parcel);
 
                 return;
             }
@@ -208,7 +209,6 @@ namespace Naos.MessageBus.Core
                         }
 
                         activity.Trace(() => "Sending remaining messages in sequence.");
-                        var sender = HandlerToolShed.GetParcelSender();
 
                         var remainingEnvelopesParcel = new Parcel
                                                            {
@@ -217,7 +217,7 @@ namespace Naos.MessageBus.Core
                                                                SharedInterfaceStates = shareSets
                                                            };
 
-                        sender.Send(remainingEnvelopesParcel);
+                        this.parcelSender.Send(remainingEnvelopesParcel);
 
                         activity.Confirm(() => "Finished sending remaining messages in sequence.");
                     }

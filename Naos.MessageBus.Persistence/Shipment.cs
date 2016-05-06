@@ -1,13 +1,21 @@
-﻿namespace Naos.MessageBus.Persistence
+﻿// --------------------------------------------------------------------------------------------------------------------
+// <copyright file="Shipment.cs" company="Naos">
+//   Copyright 2015 Naos
+// </copyright>
+// --------------------------------------------------------------------------------------------------------------------
+
+namespace Naos.MessageBus.Persistence
 {
     using System;
     using System.Collections.Generic;
-    using System.Threading.Tasks;
 
     using Microsoft.Its.Domain;
 
-    using Naos.MessageBus.DataContract;
+    using Naos.MessageBus.Domain;
 
+    /// <summary>
+    /// Aggregate for capturing shipment tracking events.
+    /// </summary>
     public partial class Shipment : EventSourcedAggregate<Shipment>
     {
         /// <summary>
@@ -39,7 +47,7 @@
 
         public Parcel Parcel { get; private set; }
 
-        public IReadOnlyDictionary<string, string> CreationMetaData { get; set; }
+        public IReadOnlyDictionary<string, string> CreationMetadata { get; set; }
 
         public IDictionary<TrackingCode, TrackingDetails> Tracking { get; set; }
     }

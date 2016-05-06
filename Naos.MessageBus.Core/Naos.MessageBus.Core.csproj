@@ -86,6 +86,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ShareTrackingCodesMessageHandler.cs" />
+    <Compile Include="WaitForTrackingCodesMessageHandler.cs" />
+    <Compile Include="WaitForCertifiedNoticesMessageHandler.cs" />
     <Compile Include="DispatcherFactory.cs" />
     <Compile Include="ITrackActiveMessages.cs" />
     <Compile Include="Logging.cs" />
@@ -103,17 +106,9 @@
     <Content Include="Settings.StyleCop" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Naos.MessageBus.DataContract\Naos.MessageBus.DataContract.csproj">
-      <Project>{77981A7E-D1B2-4A09-AE35-367BB5421E2B}</Project>
-      <Name>Naos.MessageBus.DataContract</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\Naos.MessageBus.HandlingContract\Naos.MessageBus.HandlingContract.csproj">
-      <Project>{A4C4CA47-1299-4770-9063-559E6C5B17F8}</Project>
-      <Name>Naos.MessageBus.HandlingContract</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\Naos.MessageBus.SendingContract\Naos.MessageBus.SendingContract.csproj">
-      <Project>{7ebd065f-cd10-4b9c-b511-89b01f6ec5da}</Project>
-      <Name>Naos.MessageBus.SendingContract</Name>
+    <ProjectReference Include="..\Naos.MessageBus.Domain\Naos.MessageBus.Domain.csproj">
+      <Project>{c4a9e41b-29f7-48c7-a77f-3642d66df2d8}</Project>
+      <Name>Naos.MessageBus.Domain</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

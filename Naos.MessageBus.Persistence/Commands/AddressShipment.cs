@@ -1,17 +1,20 @@
+// --------------------------------------------------------------------------------------------------------------------
+// <copyright file="AddressShipment.cs" company="Naos">
+//   Copyright 2015 Naos
+// </copyright>
+// --------------------------------------------------------------------------------------------------------------------
+
 namespace Naos.MessageBus.Persistence
 {
-    using System;
-    using System.Runtime.CompilerServices;
-
     using Its.Validation;
     using Its.Validation.Configuration;
 
     using Microsoft.Its.Domain;
 
-    using Naos.MessageBus.DataContract;
+    using Naos.MessageBus.Domain;
 
     /// <summary>
-    /// 
+    /// Address command for a <see cref="Shipment"/>.
     /// </summary>
     public class AddressShipment : Command<Shipment>
     {
@@ -36,8 +39,14 @@ namespace Naos.MessageBus.Persistence
             }
         }
 
+        /// <summary>
+        /// Gets or sets the tracking code of the shipment.
+        /// </summary>
         public TrackingCode TrackingCode { get; set; }
 
+        /// <summary>
+        /// Gets or sets the channel the shipment should go to.
+        /// </summary>
         public Channel Address { get; set; }
     }
 }

@@ -9,85 +9,72 @@ namespace Naos.MessageBus.Test
     using System;
     using System.Collections.Generic;
     using System.Linq;
-    using System.Threading.Tasks;
 
     using FluentAssertions;
 
     using Its.Log.Instrumentation;
 
-    using Microsoft.Its.Domain;
-    using Microsoft.Its.Domain.Sql;
-
-    using Naos.MessageBus.Core;
-    using Naos.MessageBus.DataContract;
+    using Naos.MessageBus.Domain;
     using Naos.MessageBus.Persistence;
-    using Naos.MessageBus.SendingContract;
 
     using Xunit;
 
     public class PostmasterTests
     {
-        [Fact]
-        public async Task Do()
+        [Fact(Skip = "Debug test designed to run while connected through VPN.")]
+        public void Do()
         {
             var messages = new List<LogEntry>();
             Log.EntryPosted += (sender, args) => messages.Add(args.LogEntry);
 
             var eventConnectionString = @"Data Source=(local)\SQLExpress; Integrated Security=True; MultipleActiveResultSets=False; Initial Catalog=PostmasterEvents";
-            var commandConnectionString = @"Data Source=(local)\SQLExpress; Integrated Security=True; MultipleActiveResultSets=False; Initial Catalog=PostmasterCommands";
             var readConnectionString = @"Data Source=(local)\SQLExpress; Integrated Security=True; MultipleActiveResultSets=False; Initial Catalog=PostmasterReadModel";
-            var eventRepository = GetEventSourcedRepository(eventConnectionString);
 
-            var parcel = this.GetParcel();
-            var trackingCode = new TrackingCode { ParcelId = parcel.Id, EnvelopeId = parcel.Envelopes.Single().Id };
+            var certifiedKey = Guid.NewGuid().ToString().ToUpperInvariant().Substring(0, 5);
+            var parcel = this.GetParcel(certifiedKey);
 
-            var postmaster = new Postmaster(eventConnectionString, commandConnectionString, readConnectionString);
+            var trackingCode = new TrackingCode { ParcelId = parcel.Id, EnvelopeId = parcel.Envelopes.First().Id };
+            var postmaster = new Postmaster(eventConnectionString, readConnectionString);
 
             postmaster.Sent(trackingCode, parcel, new Dictionary<string, string>());
-            (await eventRepository.GetLatest(parcel.Id)).Tracking[trackingCode].Status.Should().Be(ParcelStatus.Sent);
             postmaster.Track(new[] { trackingCode }).Single().Status.Should().Be(ParcelStatus.Unknown);
+            postmaster.GetLatestCertifiedNotice(certifiedKey).Notices.Count.Should().Be(0);
 
             postmaster.Addressed(trackingCode, parcel.Envelopes.First().Channel);
-            (await eventRepository.GetLatest(parcel.Id)).Tracking[trackingCode].Status.Should().Be(ParcelStatus.InTransit);
             postmaster.Track(new[] { trackingCode }).Single().Status.Should().Be(ParcelStatus.Unknown);
+            postmaster.GetLatestCertifiedNotice(certifiedKey).Notices.Count.Should().Be(0);
 
             postmaster.Attempting(trackingCode, new HarnessDetails());
-            (await eventRepository.GetLatest(parcel.Id)).Tracking[trackingCode].Status.Should().Be(ParcelStatus.OutForDelivery);
             postmaster.Track(new[] { trackingCode }).Single().Status.Should().Be(ParcelStatus.Unknown);
-
-            postmaster.Rejected(trackingCode, new NotImplementedException("Not here yet"));
-            (await eventRepository.GetLatest(parcel.Id)).Tracking[trackingCode].Status.Should().Be(ParcelStatus.Rejected);
-            postmaster.Track(new[] { trackingCode }).Single().Status.Should().Be(ParcelStatus.Rejected);
+            postmaster.GetLatestCertifiedNotice(certifiedKey).Notices.Count.Should().Be(0);
 
             postmaster.Delivered(trackingCode);
-            (await eventRepository.GetLatest(parcel.Id)).Tracking[trackingCode].Status.Should().Be(ParcelStatus.Delivered);
-            postmaster.Track(new[] { trackingCode }).Single().Status.Should().Be(ParcelStatus.Delivered);
+            postmaster.Track(new[] { trackingCode }).Single().Status.Should().Be(ParcelStatus.Unknown);
+            postmaster.GetLatestCertifiedNotice(certifiedKey).Notices.Count.Should().Be(0);
+
+            var trackingCode2 = new TrackingCode { ParcelId = parcel.Id, EnvelopeId = parcel.Envelopes.Last().Id };
+            postmaster.Sent(trackingCode2, parcel, new Dictionary<string, string>());
+            postmaster.Track(new[] { trackingCode2 }).Single().Status.Should().Be(ParcelStatus.Unknown);
+            postmaster.GetLatestCertifiedNotice(certifiedKey).Notices.Count.Should().Be(0);
+
+            postmaster.Addressed(trackingCode2, parcel.Envelopes.First().Channel);
+            postmaster.Track(new[] { trackingCode2 }).Single().Status.Should().Be(ParcelStatus.Unknown);
+            postmaster.GetLatestCertifiedNotice(certifiedKey).Notices.Count.Should().Be(0);
+
+            postmaster.Attempting(trackingCode2, new HarnessDetails());
+            postmaster.Track(new[] { trackingCode2 }).Single().Status.Should().Be(ParcelStatus.Unknown);
+            postmaster.GetLatestCertifiedNotice(certifiedKey).Notices.Count.Should().Be(0);
+
+            postmaster.Rejected(trackingCode2, new NotImplementedException("Not here yet"));
+            postmaster.Track(new[] { trackingCode2 }).Single().Status.Should().Be(ParcelStatus.Rejected);
+            postmaster.GetLatestCertifiedNotice(certifiedKey).Notices.Count.Should().Be(0);
+
+            postmaster.Delivered(trackingCode2);
+            postmaster.Track(new[] { trackingCode2 }).Single().Status.Should().Be(ParcelStatus.Delivered);
+            postmaster.GetLatestCertifiedNotice(certifiedKey).Notices.Count.Should().Be(1);
         }
 
-        private static IEventSourcedRepository<Shipment> GetEventSourcedRepository(string eventConnectionString)
-        {
-            EventStoreDbContext.NameOrConnectionString = eventConnectionString;
-
-            using (var context = new EventStoreDbContext())
-            {
-                new EventStoreDatabaseInitializer<EventStoreDbContext>().InitializeDatabase(context);
-            }
-
-            Action<IScheduledCommand> onScheduling = command => Log.Write(command.ToString);
-            Action<IScheduledCommand> onScheduled = command => Log.Write(command.ToString);
-            Action<IScheduledCommand> onDelivering = command => Log.Write(command.ToString);
-            Action<IScheduledCommand> onDelivered = command => Log.Write(command.ToString);
-
-            var eventRepository =
-                new Configuration().UseSqlEventStore()
-                    .UseSqlStorageForScheduledCommands()
-                    .UseDependency(t => (IEventSourcedRepository<Shipment>)new SqlEventSourcedRepository<Shipment>())
-                    .TraceScheduledCommands(onScheduling, onScheduled, onDelivering, onDelivered)
-                    .Repository<Shipment>();
-            return eventRepository;
-        }
-
-        private Parcel GetParcel()
+        private Parcel GetParcel(string certifiedKey)
         {
             var ret = new Parcel
                           {
@@ -102,6 +89,30 @@ namespace Naos.MessageBus.Test
                                                   Description = "Fake envelope",
                                                   MessageType = typeof(string).ToTypeDescription(),
                                                   MessageAsJson = Serializer.Serialize("message")
+                                              },
+                                          new Envelope
+                                              {
+                                                  Id = Guid.NewGuid().ToString().ToUpper(),
+                                                  Channel = new Channel { Name = "channel" },
+                                                  Description = "Fake certified envelope",
+                                                  MessageType = typeof(CertifiedNoticeMessage).ToTypeDescription(),
+                                                  MessageAsJson =
+                                                      Serializer.Serialize(
+                                                          new CertifiedNoticeMessage
+                                                              {
+                                                                  Description = "Hello",
+                                                                  GroupKey = certifiedKey,
+                                                                  Notices =
+                                                                      new List<Notice>
+                                                                          {
+                                                                                  new Notice
+                                                                                      {
+                                                                                          ImpactedId = "123",
+                                                                                          ImpactedTimeStart = new DateTime(2015, 01, 01, 0, 0, 0, DateTimeKind.Unspecified),
+                                                                                          ImpactedTimeEnd = new DateTime(2015, 03, 31, 0, 0, 0, DateTimeKind.Unspecified)
+                                                                                      }
+                                                                          }
+                                                              })
                                               }
                                       }
                           };

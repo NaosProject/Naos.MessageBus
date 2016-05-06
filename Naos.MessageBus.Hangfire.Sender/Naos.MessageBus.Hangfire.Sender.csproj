@@ -48,7 +48,7 @@
       <Private>True</Private>
     </Reference>
     <Reference Include="Microsoft.Its.Domain, Version=0.14.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Its.Domain.0.14.19-beta\lib\net452\Microsoft.Its.Domain.dll</HintPath>
+      <HintPath>..\packages\Its.Domain.0.14.21-beta\lib\net452\Microsoft.Its.Domain.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="Naos.Cron, Version=1.0.10.0, Culture=neutral, processorArchitecture=MSIL">
@@ -97,17 +97,9 @@
     <None Include="Settings.StyleCop" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Naos.MessageBus.DataContract\Naos.MessageBus.DataContract.csproj">
-      <Project>{77981A7E-D1B2-4A09-AE35-367BB5421E2B}</Project>
-      <Name>Naos.MessageBus.DataContract</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\Naos.MessageBus.HandlingContract\Naos.MessageBus.HandlingContract.csproj">
-      <Project>{A4C4CA47-1299-4770-9063-559E6C5B17F8}</Project>
-      <Name>Naos.MessageBus.HandlingContract</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\Naos.MessageBus.SendingContract\Naos.MessageBus.SendingContract.csproj">
-      <Project>{7EBD065F-CD10-4B9C-B511-89B01F6EC5DA}</Project>
-      <Name>Naos.MessageBus.SendingContract</Name>
+    <ProjectReference Include="..\Naos.MessageBus.Domain\Naos.MessageBus.Domain.csproj">
+      <Project>{c4a9e41b-29f7-48c7-a77f-3642d66df2d8}</Project>
+      <Name>Naos.MessageBus.Domain</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

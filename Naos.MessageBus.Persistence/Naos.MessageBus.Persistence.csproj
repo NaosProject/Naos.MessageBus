@@ -47,11 +47,11 @@
       <Private>True</Private>
     </Reference>
     <Reference Include="Microsoft.Its.Domain, Version=0.14.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Its.Domain.0.14.19-beta\lib\net452\Microsoft.Its.Domain.dll</HintPath>
+      <HintPath>..\packages\Its.Domain.0.14.21-beta\lib\net452\Microsoft.Its.Domain.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="Microsoft.Its.Domain.Sql, Version=0.14.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Its.Domain.Sql.0.14.19-beta\lib\net452\Microsoft.Its.Domain.Sql.dll</HintPath>
+      <HintPath>..\packages\Its.Domain.Sql.0.14.21-beta\lib\net452\Microsoft.Its.Domain.Sql.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="Newtonsoft.Json, Version=8.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
@@ -86,47 +86,38 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Authorization.cs" />
-    <Compile Include="CertifiedNotice.cs" />
-    <Compile Include="CommandHandlers\Shipment.SendCommandHandler.cs" />
-    <Compile Include="CommandHandlers\Shipment.DeliverCommandHandler.cs" />
-    <Compile Include="CommandHandlers\Shipment.AddressCommandHandler.cs" />
-    <Compile Include="CommandHandlers\Shipment.AttemptDeliveryCommandHandler.cs" />
-    <Compile Include="CommandHandlers\Shipment.EnactCommand.cs" />
-    <Compile Include="CommandHandlers\Shipment.RejectDeliveryCommandHandler.cs" />
+    <Compile Include="CertifiedNoticeForDatabase.cs" />
+    <Compile Include="Shipment.EnactCommand.cs" />
     <Compile Include="Commands\Send.cs" />
     <Compile Include="Commands\AddressShipment.cs" />
-    <Compile Include="Commands\AttemptDelivery.cs" />
+    <Compile Include="Commands\Attempt.cs" />
     <Compile Include="Commands\CreateShipment.cs" />
     <Compile Include="Commands\Deliver.cs" />
-    <Compile Include="Commands\RejectDelivery.cs" />
+    <Compile Include="Commands\Reject.cs" />
     <Compile Include="Commands\ValidationRules.cs" />
     <Compile Include="Events\Shipment.Certified.cs" />
     <Compile Include="Events\Shipment.Sent.cs" />
     <Compile Include="Events\Shipment.Addressed.cs" />
-    <Compile Include="Events\Shipment.AttemptedDelivery.cs" />
+    <Compile Include="Events\Shipment.Attempted.cs" />
     <Compile Include="Events\Shipment.Created.cs" />
     <Compile Include="Events\Shipment.Delivered.cs" />
-    <Compile Include="Events\Shipment.RejectedDelivery.cs" />
+    <Compile Include="Events\Shipment.Rejected.cs" />
     <Compile Include="Postmaster.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="TrackedShipmentDbContext.cs" />
     <Compile Include="Shipment.cs" />
-    <Compile Include="ShipmentSnapshot.cs" />
     <Compile Include="TrackingDetails.cs" />
     <Compile Include="UpdateTrackedShipment.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
     <None Include="packages.config" />
+    <None Include="Settings.StyleCop" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Naos.MessageBus.DataContract\Naos.MessageBus.DataContract.csproj">
-      <Project>{77981a7e-d1b2-4a09-ae35-367bb5421e2b}</Project>
-      <Name>Naos.MessageBus.DataContract</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\Naos.MessageBus.SendingContract\Naos.MessageBus.SendingContract.csproj">
-      <Project>{7ebd065f-cd10-4b9c-b511-89b01f6ec5da}</Project>
-      <Name>Naos.MessageBus.SendingContract</Name>
+    <ProjectReference Include="..\Naos.MessageBus.Domain\Naos.MessageBus.Domain.csproj">
+      <Project>{c4a9e41b-29f7-48c7-a77f-3642d66df2d8}</Project>
+      <Name>Naos.MessageBus.Domain</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

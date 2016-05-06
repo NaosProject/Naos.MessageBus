@@ -10,7 +10,7 @@ namespace Naos.MessageBus.Test
     using System.Diagnostics;
 
     using Naos.MessageBus.Core;
-    using Naos.MessageBus.DataContract;
+    using Naos.MessageBus.Domain;
 
     using Xunit;
 

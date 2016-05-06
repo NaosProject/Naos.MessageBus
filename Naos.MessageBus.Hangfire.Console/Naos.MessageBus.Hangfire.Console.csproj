@@ -98,13 +98,9 @@
       <Project>{D0F8244E-3833-4DE4-A2B9-6E9B9A33C72A}</Project>
       <Name>Naos.MessageBus.Core</Name>
     </ProjectReference>
-    <ProjectReference Include="..\Naos.MessageBus.DataContract\Naos.MessageBus.DataContract.csproj">
-      <Project>{77981A7E-D1B2-4A09-AE35-367BB5421E2B}</Project>
-      <Name>Naos.MessageBus.DataContract</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\Naos.MessageBus.HandlingContract\Naos.MessageBus.HandlingContract.csproj">
-      <Project>{A4C4CA47-1299-4770-9063-559E6C5B17F8}</Project>
-      <Name>Naos.MessageBus.HandlingContract</Name>
+    <ProjectReference Include="..\Naos.MessageBus.Domain\Naos.MessageBus.Domain.csproj">
+      <Project>{c4a9e41b-29f7-48c7-a77f-3642d66df2d8}</Project>
+      <Name>Naos.MessageBus.Domain</Name>
     </ProjectReference>
     <ProjectReference Include="..\Naos.MessageBus.Hangfire.Sender\Naos.MessageBus.Hangfire.Sender.csproj">
       <Project>{D52056F4-FD46-47C5-B768-EADBF93B0BA9}</Project>
@@ -113,10 +109,6 @@
     <ProjectReference Include="..\Naos.MessageBus.Persistence\Naos.MessageBus.Persistence.csproj">
       <Project>{79c72d99-9c0c-45fa-9bc3-f2b36f63ffb3}</Project>
       <Name>Naos.MessageBus.Persistence</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\Naos.MessageBus.SendingContract\Naos.MessageBus.SendingContract.csproj">
-      <Project>{7EBD065F-CD10-4B9C-B511-89B01F6EC5DA}</Project>
-      <Name>Naos.MessageBus.SendingContract</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

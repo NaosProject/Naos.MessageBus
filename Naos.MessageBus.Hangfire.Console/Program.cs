@@ -19,11 +19,10 @@ namespace Naos.MessageBus.Hangfire.Console
     using Its.Log.Instrumentation;
 
     using Naos.MessageBus.Core;
-    using Naos.MessageBus.DataContract.Exceptions;
-    using Naos.MessageBus.HandlingContract;
+    using Naos.MessageBus.Domain;
+    using Naos.MessageBus.Domain.Exceptions;
     using Naos.MessageBus.Hangfire.Sender;
     using Naos.MessageBus.Persistence;
-    using Naos.MessageBus.SendingContract;
 
     /// <summary>
     /// Main entry point of the application.
@@ -54,15 +53,15 @@ namespace Naos.MessageBus.Hangfire.Console
             if (executorRoleSettings != null)
             {
                 var eventConnectionString = new SqlConnectionStringBuilder(messageBusHandlerSettings.PersistenceConnectionString) { InitialCatalog = "PostmasterEvents" }.ConnectionString;
-                var commandConnectionString = new SqlConnectionStringBuilder(messageBusHandlerSettings.PersistenceConnectionString) { InitialCatalog = "PostmasterCommands" }.ConnectionString;
                 var readModelConnectionString = new SqlConnectionStringBuilder(messageBusHandlerSettings.PersistenceConnectionString) { InitialCatalog = "PostmasterReadModels" }.ConnectionString;
 
-                var postmaster = new Postmaster(eventConnectionString, commandConnectionString, readModelConnectionString);
+                var postmaster = new Postmaster(eventConnectionString, readModelConnectionString);
 
                 var activeMessageTracker = new InMemoryActiveMessageTracker();
-                var messageSender = new ParcelSender(postmaster, messageBusHandlerSettings.PersistenceConnectionString);
+                var parcelSender = new ParcelSender(postmaster, messageBusHandlerSettings.PersistenceConnectionString);
 
-                HandlerToolShed.Initialize(() => messageSender, () => postmaster);
+                HandlerToolShed.InitializeSender(() => parcelSender);
+                HandlerToolShed.InitializeTracker(() => postmaster);
 
                 var dispatcherFactory = new DispatcherFactory(
                     executorRoleSettings.HandlerAssemblyPath,
@@ -70,7 +69,8 @@ namespace Naos.MessageBus.Hangfire.Console
                     executorRoleSettings.TypeMatchStrategy,
                     executorRoleSettings.MessageDispatcherWaitThreadSleepTime,
                     postmaster,
-                    activeMessageTracker);
+                    activeMessageTracker,
+                    parcelSender);
 
                 // configure hangfire to use the DispatcherFactory for getting IDispatchMessages calls
                 GlobalConfiguration.Configuration.UseActivator(new DispatcherFactoryJobActivator(dispatcherFactory));

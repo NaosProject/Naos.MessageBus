@@ -10,10 +10,8 @@ namespace Naos.MessageBus.Core
     using System.Collections.Generic;
     using System.Linq;
 
-    using Naos.MessageBus.DataContract;
-    using Naos.MessageBus.DataContract.Exceptions;
-    using Naos.MessageBus.HandlingContract;
-    using Naos.MessageBus.SendingContract;
+    using Naos.MessageBus.Domain;
+    using Naos.MessageBus.Domain.Exceptions;
 
     /// <summary>
     /// Code to handle merging IShare properties.

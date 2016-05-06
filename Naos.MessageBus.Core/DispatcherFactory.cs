@@ -16,9 +16,7 @@ namespace Naos.MessageBus.Core
     using Its.Log.Instrumentation;
 
     using Naos.Diagnostics.Domain;
-    using Naos.MessageBus.DataContract;
-    using Naos.MessageBus.HandlingContract;
-    using Naos.MessageBus.SendingContract;
+    using Naos.MessageBus.Domain;
 
     using SimpleInjector;
 
@@ -44,6 +42,8 @@ namespace Naos.MessageBus.Core
 
         private readonly ITrackActiveMessages activeMessageTracker;
 
+        private readonly ISendParcels parcelSender;
+
         /// <summary>
         /// Initializes a new instance of the <see cref="DispatcherFactory"/> class.
         /// </summary>
@@ -53,11 +53,22 @@ namespace Naos.MessageBus.Core
         /// <param name="messageDispatcherWaitThreadSleepTime">Amount of time to sleep while waiting on messages to be handled.</param>
         /// <param name="postmaster">Interface for managing life of the parcels.</param>
         /// <param name="activeMessageTracker">Interface to track active messages to know if handler harness can shutdown.</param>
-        public DispatcherFactory(string handlerAssemblyPath, ICollection<Channel> servicedChannels, TypeMatchStrategy typeMatchStrategy, TimeSpan messageDispatcherWaitThreadSleepTime, IPostmaster postmaster, ITrackActiveMessages activeMessageTracker)
+        /// <param name="parcelSender">Interface to send parcels.</param>
+        public DispatcherFactory(string handlerAssemblyPath, ICollection<Channel> servicedChannels, TypeMatchStrategy typeMatchStrategy, TimeSpan messageDispatcherWaitThreadSleepTime, IPostmaster postmaster, ITrackActiveMessages activeMessageTracker, ISendParcels parcelSender)
         {
             if (postmaster == null)
             {
-                throw new ArgumentException("Courier can't be null");
+                throw new ArgumentException("Postmaster can't be null");
+            }
+
+            if (activeMessageTracker == null)
+            {
+                throw new ArgumentException("Active message tracker can't be null");
+            }
+
+            if (parcelSender == null)
+            {
+                throw new ArgumentException("Parcel sender can't be null");
             }
 
             this.servicedChannels = servicedChannels;
@@ -65,6 +76,7 @@ namespace Naos.MessageBus.Core
             this.messageDispatcherWaitThreadSleepTime = messageDispatcherWaitThreadSleepTime;
             this.postmaster = postmaster;
             this.activeMessageTracker = activeMessageTracker;
+            this.parcelSender = parcelSender;
 
             // find all assemblies files to search for handlers.
             var filesRaw = Directory.GetFiles(handlerAssemblyPath, "*.dll", SearchOption.AllDirectories);
@@ -146,17 +158,15 @@ namespace Naos.MessageBus.Core
                     this.messageDispatcherWaitThreadSleepTime,
                     this.harnessStaticDetails,
                     this.postmaster,
-                    this.activeMessageTracker));
+                    this.activeMessageTracker,
+                    this.parcelSender));
 
             foreach (var registration in this.simpleInjectorContainer.GetCurrentRegistrations())
             {
                 var localScopeRegistration = registration;
                 Log.Write(
                     () =>
-                    string.Format(
-                        "Registered Type in SimpleInjector: {0} -> {1}",
-                        localScopeRegistration.ServiceType.FullName,
-                        localScopeRegistration.Registration.ImplementationType.FullName));
+                    $"Registered Type in SimpleInjector: {localScopeRegistration.ServiceType.FullName} -> {localScopeRegistration.Registration.ImplementationType.FullName}");
             }
         }
 

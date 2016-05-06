@@ -13,7 +13,7 @@ namespace Naos.MessageBus.Core
 
     using Its.Log.Instrumentation;
 
-    using Naos.MessageBus.HandlingContract;
+    using Naos.MessageBus.Domain;
 
     /// <summary>
     /// Logging setup logic manager.

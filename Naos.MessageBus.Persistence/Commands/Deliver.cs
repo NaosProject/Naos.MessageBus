@@ -1,3 +1,9 @@
+// --------------------------------------------------------------------------------------------------------------------
+// <copyright file="Deliver.cs" company="Naos">
+//   Copyright 2015 Naos
+// </copyright>
+// --------------------------------------------------------------------------------------------------------------------
+
 namespace Naos.MessageBus.Persistence
 {
     using Its.Validation;
@@ -5,10 +11,10 @@ namespace Naos.MessageBus.Persistence
 
     using Microsoft.Its.Domain;
 
-    using Naos.MessageBus.DataContract;
+    using Naos.MessageBus.Domain;
 
     /// <summary>
-    /// 
+    /// Deliver command for a <see cref="Shipment"/>.
     /// </summary>
     public class Deliver : Command<Shipment>
     {
@@ -31,6 +37,10 @@ namespace Naos.MessageBus.Persistence
                 return new ValidationPlan<Deliver> { trackingCodeSet };
             }
         }
+
+        /// <summary>
+        /// Gets or sets the tracking code of the shipment.
+        /// </summary>
         public TrackingCode TrackingCode { get; set; }
     }
 }

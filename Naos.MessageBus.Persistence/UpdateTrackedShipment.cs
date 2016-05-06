@@ -1,3 +1,9 @@
+// --------------------------------------------------------------------------------------------------------------------
+// <copyright file="UpdateTrackedShipment.cs" company="Naos">
+//   Copyright 2015 Naos
+// </copyright>
+// --------------------------------------------------------------------------------------------------------------------
+
 namespace Naos.MessageBus.Persistence
 {
     using System.Data.Entity.Migrations;
@@ -5,8 +11,11 @@ namespace Naos.MessageBus.Persistence
 
     using Microsoft.Its.Domain;
 
-    using Naos.MessageBus.SendingContract;
+    using Naos.MessageBus.Domain;
 
+    /// <summary>
+    /// Handler to keep TrackedShipment read model updated as events come in.
+    /// </summary>
     public class UpdateTrackedShipment : 
         IUpdateProjectionWhen<Shipment.Created>,
         IUpdateProjectionWhen<Shipment.Rejected>,
@@ -15,60 +24,73 @@ namespace Naos.MessageBus.Persistence
     {
         private readonly string connectionString;
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="UpdateTrackedShipment"/> class.
+        /// </summary>
+        /// <param name="connectionString">Connection string to the read model database.</param>
         public UpdateTrackedShipment(string connectionString)
         {
             this.connectionString = connectionString;
         }
 
+        /// <inheritdoc />
         public void UpdateProjection(Shipment.Created @event)
         {
-            using (var dbContext = new TrackedShipmentDbContext(this.connectionString))
+            using (var db = new TrackedShipmentDbContext(this.connectionString))
             {
                 var entry = new ParcelTrackingReport { ParcelId = @event.Parcel.Id, LastEnvelopeId = @event.Parcel.Envelopes.Last().Id };
-                dbContext.Shipments.AddOrUpdate(entry);
-                dbContext.SaveChanges();
+                db.Shipments.AddOrUpdate(entry);
+                db.SaveChanges();
             }
         }
 
+        /// <inheritdoc />
         public void UpdateProjection(Shipment.Rejected @event)
         {
-            using (var dbContext = new TrackedShipmentDbContext(this.connectionString))
+            using (var db = new TrackedShipmentDbContext(this.connectionString))
             {
                 // any failure will kill the message sequence
-                var entry = dbContext.Shipments.Single(_ => _.ParcelId == @event.AggregateId);
+                var entry = db.Shipments.Single(_ => _.ParcelId == @event.AggregateId);
                 entry.Status = @event.NewStatus;
-                dbContext.SaveChanges();
+                db.SaveChanges();
             }
         }
 
+        /// <inheritdoc />
         public void UpdateProjection(Shipment.Delivered @event)
         {
-            using (var dbContext = new TrackedShipmentDbContext(this.connectionString))
+            using (var db = new TrackedShipmentDbContext(this.connectionString))
             {
-                var entry = dbContext.Shipments.Single(_ => _.ParcelId == @event.AggregateId);
+                var entry = db.Shipments.Single(_ => _.ParcelId == @event.AggregateId);
 
                 // if it's the last envelope then update
                 if (entry.LastEnvelopeId == @event.TrackingCode.EnvelopeId)
                 {
                     entry.Status = @event.NewStatus;
-                    dbContext.SaveChanges();
+                    db.SaveChanges();
                 }
             }
         }
 
+        /// <inheritdoc />
         public void UpdateProjection(Shipment.Certified @event)
         {
-            using (var dbContext = new TrackedShipmentDbContext(this.connectionString))
+            using (var db = new TrackedShipmentDbContext(this.connectionString))
             {
-                var entry = new CertifiedNotice
+                var entry = new CertifiedNoticeForDatabase
                                 {
-                                    GroupKey = @event.FilingKey,
+                                    GroupKey = @event.GroupKey,
                                     Envelope = @event.Envelope,
                                     DeliveredDateUtc = @event.Timestamp.UtcDateTime
                                 };
 
-                dbContext.CertifiedNotices.Add(entry);
-                dbContext.SaveChanges();
+                if (entry.Envelope != null)
+                {
+                    db.Envelopes.Add(entry.Envelope);
+                }
+
+                db.CertifiedNotices.Add(entry);
+                db.SaveChanges();
             }
         }
     }

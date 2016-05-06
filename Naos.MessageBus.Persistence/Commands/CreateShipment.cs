@@ -1,3 +1,9 @@
+// --------------------------------------------------------------------------------------------------------------------
+// <copyright file="CreateShipment.cs" company="Naos">
+//   Copyright 2015 Naos
+// </copyright>
+// --------------------------------------------------------------------------------------------------------------------
+
 namespace Naos.MessageBus.Persistence
 {
     using System.Collections.Generic;
@@ -7,8 +13,11 @@ namespace Naos.MessageBus.Persistence
 
     using Microsoft.Its.Domain;
 
-    using Naos.MessageBus.DataContract;
+    using Naos.MessageBus.Domain;
 
+    /// <summary>
+    /// Create command for a <see cref="Shipment"/>.
+    /// </summary>
     public class CreateShipment : ConstructorCommand<Shipment>
     {
         /// <inheritdoc />
@@ -31,8 +40,14 @@ namespace Naos.MessageBus.Persistence
             }
         }
 
+        /// <summary>
+        /// Gets or sets the parcel of the shipment.
+        /// </summary>
         public Parcel Parcel { get; set; }
 
-        public IReadOnlyDictionary<string, string> MetaData { get; set; }
+        /// <summary>
+        /// Gets or sets any creation metadata.
+        /// </summary>
+        public IReadOnlyDictionary<string, string> CreationMetadata { get; set; }
     }
 }

@@ -9,9 +9,8 @@ namespace Naos.MessageBus.Test
     using System;
 
     using Naos.Cron;
-    using Naos.MessageBus.DataContract;
+    using Naos.MessageBus.Domain;
     using Naos.MessageBus.Hangfire.Sender;
-    using Naos.MessageBus.SendingContract;
 
     using Xunit;
 
@@ -28,7 +27,7 @@ namespace Naos.MessageBus.Test
             // assert
             Assert.IsType<ArgumentException>(ex);
             Assert.Equal(
-                "MessageSenderBuilder is not initialized.",
+                "Factory not initialized for ISendParcels.",
                 ex.Message);
         }
 
@@ -43,7 +42,7 @@ namespace Naos.MessageBus.Test
             // assert
             Assert.IsType<ArgumentException>(ex);
             Assert.Equal(
-                "MessageSenderBuilder is not initialized.",
+                "Factory not initialized for ITrackParcels.",
                 ex.Message);
         }
 

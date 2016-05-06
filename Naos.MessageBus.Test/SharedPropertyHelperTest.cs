@@ -13,10 +13,8 @@ namespace Naos.MessageBus.Test
     using System.Threading.Tasks;
 
     using Naos.MessageBus.Core;
-    using Naos.MessageBus.DataContract;
-    using Naos.MessageBus.DataContract.Exceptions;
-    using Naos.MessageBus.HandlingContract;
-    using Naos.MessageBus.SendingContract;
+    using Naos.MessageBus.Domain;
+    using Naos.MessageBus.Domain.Exceptions;
 
     using Xunit;
 

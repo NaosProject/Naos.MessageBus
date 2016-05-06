@@ -9,8 +9,7 @@ namespace Naos.MessageBus.Core
     using System;
     using System.Collections.Generic;
 
-    using Naos.MessageBus.DataContract;
-    using Naos.MessageBus.HandlingContract;
+    using Naos.MessageBus.Domain;
 
     /// <summary>
     /// Type comparer using the provided strategy.

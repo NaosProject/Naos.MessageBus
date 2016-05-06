@@ -6,14 +6,11 @@
 
 namespace Naos.MessageBus.Core
 {
-    using System;
-    using System.Threading;
     using System.Threading.Tasks;
 
     using Its.Log.Instrumentation;
 
-    using Naos.MessageBus.DataContract;
-    using Naos.MessageBus.HandlingContract;
+    using Naos.MessageBus.Domain;
 
     /// <summary>
     /// No implementation handler to handle WaitMessages.

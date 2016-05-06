@@ -11,11 +11,7 @@ namespace Naos.MessageBus.Test
     using System.Linq;
 
     using Naos.MessageBus.Core;
-    using Naos.MessageBus.DataContract;
-    using Naos.MessageBus.HandlingContract;
-    using Naos.MessageBus.SendingContract;
-
-    using Newtonsoft.Json;
+    using Naos.MessageBus.Domain;
 
     using Xunit;
 

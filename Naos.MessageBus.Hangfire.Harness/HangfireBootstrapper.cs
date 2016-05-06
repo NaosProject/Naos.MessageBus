@@ -16,10 +16,9 @@ namespace Naos.MessageBus.Hangfire.Harness
     using global::Hangfire.SqlServer;
 
     using Naos.MessageBus.Core;
-    using Naos.MessageBus.HandlingContract;
+    using Naos.MessageBus.Domain;
     using Naos.MessageBus.Hangfire.Sender;
     using Naos.MessageBus.Persistence;
-    using Naos.MessageBus.SendingContract;
 
     /// <inheritdoc />
     public class HangfireBootstrapper : IRegisteredObject
@@ -71,15 +70,15 @@ namespace Naos.MessageBus.Hangfire.Harness
             MessageBusHarnessRoleSettingsExecutor executorRoleSettings)
         {
             var eventConnectionString = new SqlConnectionStringBuilder(persistenceConnectionString) { InitialCatalog = "PostmasterEvents" }.ConnectionString;
-            var commandConnectionString = new SqlConnectionStringBuilder(persistenceConnectionString) { InitialCatalog = "PostmasterCommands" }.ConnectionString;
             var readModelConnectionString = new SqlConnectionStringBuilder(persistenceConnectionString) { InitialCatalog = "PostmasterReadModels" }.ConnectionString;
 
-            var postmaster = new Postmaster(eventConnectionString, commandConnectionString, readModelConnectionString);
+            var postmaster = new Postmaster(eventConnectionString, readModelConnectionString);
 
             var activeMessageTracker = new InMemoryActiveMessageTracker();
-            var messageSender = new ParcelSender(postmaster, persistenceConnectionString);
+            var parcelSender = new ParcelSender(postmaster, persistenceConnectionString);
 
-            HandlerToolShed.Initialize(() => messageSender, () => postmaster);
+            HandlerToolShed.InitializeSender(() => parcelSender);
+            HandlerToolShed.InitializeTracker(() => postmaster);
 
             this.dispatcherFactory = new DispatcherFactory(
                 executorRoleSettings.HandlerAssemblyPath,
@@ -87,7 +86,8 @@ namespace Naos.MessageBus.Hangfire.Harness
                 executorRoleSettings.TypeMatchStrategy,
                 executorRoleSettings.MessageDispatcherWaitThreadSleepTime,
                 postmaster,
-                activeMessageTracker);
+                activeMessageTracker,
+                parcelSender);
 
             // configure hangfire to use the DispatcherFactory for getting IDispatchMessages calls
             GlobalConfiguration.Configuration.UseActivator(new DispatcherFactoryJobActivator(this.dispatcherFactory));

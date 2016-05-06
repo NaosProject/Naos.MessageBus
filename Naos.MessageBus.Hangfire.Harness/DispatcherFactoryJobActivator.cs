@@ -11,8 +11,8 @@ namespace Naos.MessageBus.Hangfire.Harness
     using global::Hangfire;
 
     using Naos.MessageBus.Core;
-    using Naos.MessageBus.DataContract.Exceptions;
-    using Naos.MessageBus.HandlingContract;
+    using Naos.MessageBus.Domain;
+    using Naos.MessageBus.Domain.Exceptions;
 
     /// <summary>
     /// Hangfire job activator that will lookup the correct implementation of the Hangfire job via SimpleInjector DI container.

@@ -11,9 +11,7 @@ namespace Naos.MessageBus.Test
 
     using Its.Configuration;
 
-    using Naos.MessageBus.Core;
-    using Naos.MessageBus.HandlingContract;
-    using Naos.MessageBus.SendingContract;
+    using Naos.MessageBus.Domain;
 
     using Xunit;
 

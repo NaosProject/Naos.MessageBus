@@ -1,5 +1,5 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="MessageSender.cs" company="Naos">
+// <copyright file="ParcelSender.cs" company="Naos">
 //   Copyright 2015 Naos
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
@@ -16,9 +16,7 @@ namespace Naos.MessageBus.Hangfire.Sender
     using global::Hangfire.States;
 
     using Naos.Cron;
-    using Naos.MessageBus.DataContract;
-    using Naos.MessageBus.HandlingContract;
-    using Naos.MessageBus.SendingContract;
+    using Naos.MessageBus.Domain;
 
     /// <inheritdoc />
     public class ParcelSender : ISendParcels
