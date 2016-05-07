@@ -1,5 +1,5 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="WaitForCertifiedNoticesMessage.cs" company="Naos">
+// <copyright file="RescheduleIfNoNewCertifiedNoticesMessage.cs" company="Naos">
 //   Copyright 2015 Naos
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
@@ -12,7 +12,7 @@ namespace Naos.MessageBus.Domain
     /// <summary>
     /// Message to wait for certified notices to come in.
     /// </summary>
-    public class WaitForCertifiedNoticesMessage : IMessage
+    public class RescheduleIfNoNewCertifiedNoticesMessage : IMessage
     {
         /// <inheritdoc />
         public string Description { get; set; }
@@ -25,7 +25,33 @@ namespace Naos.MessageBus.Domain
         /// <summary>
         /// Gets or sets the wait time between checks on updates. 
         /// </summary>
-        public TimeSpan WaitTimeBetweenChecks { get; set; }
+        public TimeSpan WaitTimeBeforeRescheduling { get; set; }
+
+        /// <summary>
+        /// Gets or sets the strategy for checking for new notices.
+        /// </summary>
+        public TopicCheckStrategy CheckStrategy { get; set; }
+    }
+
+    /// <summary>
+    /// Enumeration of the different strategies.
+    /// </summary>
+    public enum TopicCheckStrategy
+    {
+        /// <summary>
+        /// No strategy specified.
+        /// </summary>
+        Unspecified,
+
+        /// <summary>
+        /// Consider it passed when any are updated.
+        /// </summary>
+        Any,
+
+        /// <summary>
+        /// Consider it passed when all are updated.
+        /// </summary>
+        All
     }
 
     /// <summary>

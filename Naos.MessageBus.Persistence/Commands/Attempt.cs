@@ -19,13 +19,10 @@ namespace Naos.MessageBus.Persistence
     public class Attempt : Command<Shipment>
     {
         /// <inheritdoc />
-        public override IValidationRule<Shipment> Validator
-        {
-            get
-            {
-                return new ValidationPlan<Shipment> { ValidationRules.IsInTransit(this.TrackingCode) };
-            }
-        }
+        public override IValidationRule<Shipment> Validator => new ValidationPlan<Shipment>
+                                                                   {
+                                                                       ValidationRules.IsInTransit(this.TrackingCode)
+                                                                   };
 
         /// <inheritdoc />
         public override IValidationRule CommandValidator

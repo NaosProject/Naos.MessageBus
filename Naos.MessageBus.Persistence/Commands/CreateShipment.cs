@@ -21,13 +21,7 @@ namespace Naos.MessageBus.Persistence
     public class CreateShipment : ConstructorCommand<Shipment>
     {
         /// <inheritdoc />
-        public override IValidationRule<Shipment> Validator
-        {
-            get
-            {
-                return new ValidationPlan<Shipment>();
-            }
-        }
+        public override IValidationRule<Shipment> Validator => new ValidationPlan<Shipment>();
 
         /// <inheritdoc />
         public override IValidationRule CommandValidator

@@ -21,13 +21,10 @@ namespace Naos.MessageBus.Persistence
     public class Reject : Command<Shipment>
     {
         /// <inheritdoc />
-        public override IValidationRule<Shipment> Validator
-        {
-            get
-            {
-                return new ValidationPlan<Shipment> { ValidationRules.IsOutForDelivery(this.TrackingCode) };
-            }
-        }
+        public override IValidationRule<Shipment> Validator => new ValidationPlan<Shipment>
+                                                                   {
+                                                                       ValidationRules.IsOutForDelivery(this.TrackingCode)
+                                                                   };
 
         /// <inheritdoc />
         public override IValidationRule CommandValidator

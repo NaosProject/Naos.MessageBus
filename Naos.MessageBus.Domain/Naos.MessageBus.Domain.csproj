@@ -66,6 +66,7 @@
     <Compile Include="Channel.cs" />
     <Compile Include="ChanneledMessage.cs" />
     <Compile Include="Envelope.cs" />
+    <Compile Include="Exceptions\RescheduleParcelException.cs" />
     <Compile Include="Exceptions\DispatchException.cs" />
     <Compile Include="Exceptions\HarnessStartupException.cs" />
     <Compile Include="Exceptions\MessageBusExceptionBase.cs" />
@@ -101,7 +102,7 @@
     <Compile Include="TypeDescription.cs" />
     <Compile Include="TypeMap.cs" />
     <Compile Include="TypeMatchStrategy.cs" />
-    <Compile Include="WaitForCertifiedNoticesMessage.cs" />
+    <Compile Include="RescheduleIfNoNewCertifiedNoticesMessage.cs" />
     <Compile Include="WaitForTrackingCodesMessage.cs" />
     <Compile Include="WaitMessage.cs" />
   </ItemGroup>

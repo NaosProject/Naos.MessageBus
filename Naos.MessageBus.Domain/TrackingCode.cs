@@ -7,7 +7,6 @@
 namespace Naos.MessageBus.Domain
 {
     using System;
-    using System.Collections.Generic;
 
     /// <summary>
     /// Result of sending a message with information to lookup status.
@@ -23,6 +22,14 @@ namespace Naos.MessageBus.Domain
         /// Gets or sets the envelope ID, unique in the parcel.
         /// </summary>
         public string EnvelopeId { get; set; }
+
+        /// <inheritdoc />
+        public override string ToString()
+        {
+            var envelopeId = this.EnvelopeId ?? "[null]";
+
+            return $"Parcel ID: {this.ParcelId}, Envelope ID: {envelopeId}";
+        }
 
         #region Equality
 

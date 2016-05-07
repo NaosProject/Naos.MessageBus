@@ -32,6 +32,13 @@ namespace Naos.MessageBus.Persistence
             Validate.That<Shipment>(_ => _.Tracking[trackingCode].Status == ParcelStatus.Sent).WithErrorMessage("Must be Sent to put InTransit.");
 
         /// <summary>
+        /// Validate status is sent or attempting.
+        /// </summary>
+        public static readonly Func<TrackingCode, IValidationRule<Shipment>> IsSentOrAttempted =
+            trackingCode =>
+            Validate.That<Shipment>(_ => _.Tracking[trackingCode].Status == ParcelStatus.Sent || _.Tracking[trackingCode].Status == ParcelStatus.OutForDelivery).WithErrorMessage("Must be Sent to put InTransit or OutForDelivery.");
+
+        /// <summary>
         /// Validate status is in transit.
         /// </summary>
         public static readonly Func<TrackingCode, IValidationRule<Shipment>> IsInTransit =

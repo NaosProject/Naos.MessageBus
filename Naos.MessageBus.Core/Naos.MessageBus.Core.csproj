@@ -84,7 +84,7 @@
   <ItemGroup>
     <Compile Include="ShareTrackingCodesMessageHandler.cs" />
     <Compile Include="WaitForTrackingCodesMessageHandler.cs" />
-    <Compile Include="WaitForCertifiedNoticesMessageHandler.cs" />
+    <Compile Include="RescheduleIfNoNewCertifiedNoticesMessageHandler.cs" />
     <Compile Include="DispatcherFactory.cs" />
     <Compile Include="ITrackActiveMessages.cs" />
     <Compile Include="Logging.cs" />

@@ -84,6 +84,12 @@ namespace Naos.MessageBus.Core
 
                 this.postmaster.Delivered(trackingCode);
             }
+            catch (RescheduleParcelException rescheduleParcelException)
+            {
+                Log.Write("Rescheduling parcel; TrackingCode: " + trackingCode + ", Exception:" + rescheduleParcelException);
+                this.parcelSender.Send(parcel);
+                this.postmaster.Addressed(trackingCode, parcel.Envelopes.First().Channel);
+            }
             catch (Exception ex)
             {
                 this.postmaster.Rejected(trackingCode, ex);
