@@ -8,7 +8,6 @@
 
 namespace Naos.MessageBus.Hangfire.Harness
 {
-    using System.Data.SqlClient;
     using System.Linq;
     using System.Web.Hosting;
 
@@ -44,10 +43,10 @@ namespace Naos.MessageBus.Hangfire.Harness
         /// <summary>
         /// Perform a start.
         /// </summary>
-        /// <param name="persistenceConnectionString">Connection string to hangfire persistence.</param>
+        /// <param name="connectionConfig">Connection information to connect to persistence.</param>
         /// <param name="executorRoleSettings">Executor role settings.</param>
         public void Start(
-            string persistenceConnectionString,
+            MessageBusConnectionConfiguration connectionConfig,
             MessageBusHarnessRoleSettingsExecutor executorRoleSettings)
         {
             lock (this.lockObject)
@@ -61,24 +60,22 @@ namespace Naos.MessageBus.Hangfire.Harness
 
                 HostingEnvironment.RegisterObject(this);
 
-                this.LaunchHangfire(persistenceConnectionString, executorRoleSettings);
+                this.LaunchHangfire(connectionConfig, executorRoleSettings);
             }
         }
 
         private void LaunchHangfire(
-            string persistenceConnectionString,
+            MessageBusConnectionConfiguration connectionConfig,
             MessageBusHarnessRoleSettingsExecutor executorRoleSettings)
         {
-            var eventConnectionString = new SqlConnectionStringBuilder(persistenceConnectionString) { InitialCatalog = "PostmasterEvents" }.ConnectionString;
-            var readModelConnectionString = new SqlConnectionStringBuilder(persistenceConnectionString) { InitialCatalog = "PostmasterReadModels" }.ConnectionString;
-
-            var postmaster = new Postmaster(eventConnectionString, readModelConnectionString);
-
             var activeMessageTracker = new InMemoryActiveMessageTracker();
-            var parcelSender = new ParcelSender(postmaster, persistenceConnectionString);
 
-            HandlerToolShed.InitializeSender(() => parcelSender);
-            HandlerToolShed.InitializeTracker(() => postmaster);
+            var postmaster = new Postmaster(connectionConfig.PostmasterEventsConnectionString, connectionConfig.PostmasterReadModelConnectionString);
+            var courier = new HangfireCourier(postmaster, connectionConfig.CourierConnectionString);
+            var postOffice = new PostOffice(courier);
+
+            HandlerToolShed.InitializePostOffice(() => postOffice);
+            HandlerToolShed.InitializePostmaster(() => postmaster);
 
             this.dispatcherFactory = new DispatcherFactory(
                 executorRoleSettings.HandlerAssemblyPath,
@@ -87,7 +84,7 @@ namespace Naos.MessageBus.Hangfire.Harness
                 executorRoleSettings.MessageDispatcherWaitThreadSleepTime,
                 postmaster,
                 activeMessageTracker,
-                parcelSender);
+                postOffice);
 
             // configure hangfire to use the DispatcherFactory for getting IDispatchMessages calls
             GlobalConfiguration.Configuration.UseActivator(new DispatcherFactoryJobActivator(this.dispatcherFactory));
@@ -101,7 +98,7 @@ namespace Naos.MessageBus.Hangfire.Harness
                               };
 
             GlobalConfiguration.Configuration.UseSqlServerStorage(
-                persistenceConnectionString,
+                connectionConfig.CourierConnectionString,
                 new SqlServerStorageOptions());
 
             this.backgroundJobServer = new BackgroundJobServer(options);

@@ -42,7 +42,7 @@ namespace Naos.MessageBus.Core
 
         private readonly ITrackActiveMessages activeMessageTracker;
 
-        private readonly ISendParcels parcelSender;
+        private readonly IPostOffice postOffice;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="DispatcherFactory"/> class.
@@ -53,8 +53,8 @@ namespace Naos.MessageBus.Core
         /// <param name="messageDispatcherWaitThreadSleepTime">Amount of time to sleep while waiting on messages to be handled.</param>
         /// <param name="postmaster">Interface for managing life of the parcels.</param>
         /// <param name="activeMessageTracker">Interface to track active messages to know if handler harness can shutdown.</param>
-        /// <param name="parcelSender">Interface to send parcels.</param>
-        public DispatcherFactory(string handlerAssemblyPath, ICollection<Channel> servicedChannels, TypeMatchStrategy typeMatchStrategy, TimeSpan messageDispatcherWaitThreadSleepTime, IPostmaster postmaster, ITrackActiveMessages activeMessageTracker, ISendParcels parcelSender)
+        /// <param name="postOffice">Interface to send parcels.</param>
+        public DispatcherFactory(string handlerAssemblyPath, ICollection<Channel> servicedChannels, TypeMatchStrategy typeMatchStrategy, TimeSpan messageDispatcherWaitThreadSleepTime, IPostmaster postmaster, ITrackActiveMessages activeMessageTracker, IPostOffice postOffice)
         {
             if (postmaster == null)
             {
@@ -66,9 +66,9 @@ namespace Naos.MessageBus.Core
                 throw new ArgumentException("Active message tracker can't be null");
             }
 
-            if (parcelSender == null)
+            if (postOffice == null)
             {
-                throw new ArgumentException("Parcel sender can't be null");
+                throw new ArgumentException("Post Office can't be null");
             }
 
             this.servicedChannels = servicedChannels;
@@ -76,7 +76,7 @@ namespace Naos.MessageBus.Core
             this.messageDispatcherWaitThreadSleepTime = messageDispatcherWaitThreadSleepTime;
             this.postmaster = postmaster;
             this.activeMessageTracker = activeMessageTracker;
-            this.parcelSender = parcelSender;
+            this.postOffice = postOffice;
 
             // find all assemblies files to search for handlers.
             var filesRaw = Directory.GetFiles(handlerAssemblyPath, "*.dll", SearchOption.AllDirectories);
@@ -159,7 +159,7 @@ namespace Naos.MessageBus.Core
                     this.harnessStaticDetails,
                     this.postmaster,
                     this.activeMessageTracker,
-                    this.parcelSender));
+                    this.postOffice));
 
             foreach (var registration in this.simpleInjectorContainer.GetCurrentRegistrations())
             {

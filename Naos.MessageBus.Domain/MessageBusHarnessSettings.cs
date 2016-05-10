@@ -81,9 +81,9 @@ namespace Naos.MessageBus.Domain
     public class MessageBusHarnessSettings
     {
         /// <summary>
-        /// Gets or sets the connection string to the message bus persistence.
+        /// Gets or sets the connection configuration to the message bus persistence.
         /// </summary>
-        public string PersistenceConnectionString { get; set; }
+        public MessageBusConnectionConfiguration ConnectionConfiguration { get; set; }
 
         /// <summary>
         /// Gets or sets the role settings of the harness.

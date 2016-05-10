@@ -51,7 +51,7 @@ namespace Naos.MessageBus.Core
             {
                 Thread.Sleep(message.WaitTimeBeforeRescheduling);
 
-                throw new RescheduleParcelException("Planned reschedule due to missing notice.");
+                throw new AbortAndRescheduleParcelException("Planned reschedule due to missing notice.");
             }
 
             /* no-op */

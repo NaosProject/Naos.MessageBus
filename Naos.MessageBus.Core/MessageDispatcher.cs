@@ -40,7 +40,7 @@ namespace Naos.MessageBus.Core
 
         private readonly ITrackActiveMessages activeMessageTracker;
 
-        private readonly ISendParcels parcelSender;
+        private readonly IPostOffice postOffice;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="MessageDispatcher"/> class.
@@ -53,8 +53,8 @@ namespace Naos.MessageBus.Core
         /// <param name="harnessStaticDetails">Details about the harness.</param>
         /// <param name="postmaster">Courier to track parcel events.</param>
         /// <param name="activeMessageTracker">Interface to track active messages to know if handler harness can shutdown.</param>
-        /// <param name="parcelSender">Interface to send parcels.</param>
-        public MessageDispatcher(Container simpleInjectorContainer, ConcurrentDictionary<Type, object> handlerSharedStateMap, ICollection<Channel> servicedChannels, TypeMatchStrategy typeMatchStrategy, TimeSpan messageDispatcherWaitThreadSleepTime, HarnessStaticDetails harnessStaticDetails, IPostmaster postmaster, ITrackActiveMessages activeMessageTracker, ISendParcels parcelSender)
+        /// <param name="postOffice">Interface to send parcels.</param>
+        public MessageDispatcher(Container simpleInjectorContainer, ConcurrentDictionary<Type, object> handlerSharedStateMap, ICollection<Channel> servicedChannels, TypeMatchStrategy typeMatchStrategy, TimeSpan messageDispatcherWaitThreadSleepTime, HarnessStaticDetails harnessStaticDetails, IPostmaster postmaster, ITrackActiveMessages activeMessageTracker, IPostOffice postOffice)
         {
             this.simpleInjectorContainer = simpleInjectorContainer;
             this.handlerSharedStateMap = handlerSharedStateMap;
@@ -65,7 +65,7 @@ namespace Naos.MessageBus.Core
             this.harnessStaticDetails = harnessStaticDetails;
             this.postmaster = postmaster;
             this.activeMessageTracker = activeMessageTracker;
-            this.parcelSender = parcelSender;
+            this.postOffice = postOffice;
         }
 
         /// <inheritdoc />
@@ -84,10 +84,10 @@ namespace Naos.MessageBus.Core
 
                 this.postmaster.Delivered(trackingCode);
             }
-            catch (RescheduleParcelException rescheduleParcelException)
+            catch (AbortAndRescheduleParcelException rescheduleParcelException)
             {
                 Log.Write("Rescheduling parcel; TrackingCode: " + trackingCode + ", Exception:" + rescheduleParcelException);
-                this.parcelSender.Send(parcel);
+                this.postOffice.Send(parcel);
                 this.postmaster.Addressed(trackingCode, parcel.Envelopes.First().Channel);
             }
             catch (Exception ex)
@@ -117,7 +117,7 @@ namespace Naos.MessageBus.Core
             if (this.servicedChannels.SingleOrDefault(_ => _.Name == parcel.Envelopes.First().Channel.Name) == null)
             {
                 // any schedule should already be set and NOT reset...
-                this.parcelSender.Send(parcel);
+                this.postOffice.Send(parcel);
 
                 return;
             }
@@ -223,7 +223,7 @@ namespace Naos.MessageBus.Core
                                                                SharedInterfaceStates = shareSets
                                                            };
 
-                        this.parcelSender.Send(remainingEnvelopesParcel);
+                        this.postOffice.Send(remainingEnvelopesParcel);
 
                         activity.Confirm(() => "Finished sending remaining messages in sequence.");
                     }

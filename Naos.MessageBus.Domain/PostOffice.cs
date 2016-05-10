@@ -1,76 +1,29 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="ParcelSender.cs" company="Naos">
+// <copyright file="PostOffice.cs" company="Naos">
 //   Copyright 2015 Naos
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
-namespace Naos.MessageBus.Hangfire.Sender
+namespace Naos.MessageBus.Domain
 {
     using System;
     using System.Collections.Generic;
     using System.Linq;
-    using System.Linq.Expressions;
-    using System.Text.RegularExpressions;
-
-    using global::Hangfire;
-    using global::Hangfire.States;
 
     using Naos.Cron;
-    using Naos.MessageBus.Domain;
 
     /// <inheritdoc />
-    public class ParcelSender : ISendParcels
+    public class PostOffice : IPostOffice
     {
-        private const int HangfireQueueNameMaxLength = 20;
-
-        private const string HangfireQueueNameAllowedRegex = "^[a-z0-9_]*$";
-
-        private readonly IPostmaster postmaster;
-
-        private readonly Func<Parcel, ScheduleBase, string, TrackingCode> sendingLambda;
+        private readonly ICourier courier;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="ParcelSender"/> class.
+        /// Initializes a new instance of the <see cref="PostOffice"/> class.
         /// </summary>
-        /// <param name="postmaster">Interface for managing life of the parcels.</param>
-        /// <param name="messageBusPersistenceConnectionString">Connection string to the message bus persistence storage.</param>
-        public ParcelSender(IPostmaster postmaster, string messageBusPersistenceConnectionString)
+        /// <param name="courier">Interface for transporting parcels.</param>
+        public PostOffice(ICourier courier)
         {
-            this.postmaster = postmaster;
-            GlobalConfiguration.Configuration.UseSqlServerStorage(messageBusPersistenceConnectionString);
-            this.sendingLambda =
-                (Parcel parcel, ScheduleBase recurringSchedule, string displayName) =>
-                    {
-                        var firstEnvelope = parcel.Envelopes.First();
-                        var firstEnvelopeChannel = firstEnvelope.Channel;
-                        ThrowIfInvalidChannel(firstEnvelopeChannel);
-
-                        var client = new BackgroundJobClient();
-                        var state = new EnqueuedState { Queue = firstEnvelopeChannel.Name, };
-
-                        var trackingCode = new TrackingCode { ParcelId = parcel.Id, EnvelopeId = firstEnvelope.Id };
-                        Expression<Action<IDispatchMessages>> methodCall = _ => _.Dispatch(trackingCode, displayName, parcel);
-                        var hangfireId = client.Create<IDispatchMessages>(methodCall, state);
-
-                        var metadata = new Dictionary<string, string> { { "HangfireJobId", hangfireId }, { "DisplayName", displayName } };
-
-                        // in the future we'll probably support unaddressed envelopes so addressing will have to be a supported separate step - however for now we'll just immediately mark it addressed...
-                        this.postmaster.Sent(trackingCode, parcel, metadata);
-                        this.postmaster.Addressed(trackingCode, firstEnvelopeChannel);
-
-                        if (recurringSchedule.GetType() != typeof(NullSchedule))
-                        {
-                            Func<string> cronExpression = recurringSchedule.ToCronExpression;
-                            RecurringJob.AddOrUpdate(hangfireId, methodCall, cronExpression);
-                        }
-
-                        return trackingCode;
-                    };
-        }
-
-        internal ParcelSender(Func<Parcel, ScheduleBase, string, TrackingCode> sendingLambda)
-        {
-            this.sendingLambda = sendingLambda;
+            this.courier = courier;
         }
 
         /// <inheritdoc />
@@ -182,38 +135,22 @@ namespace Naos.MessageBus.Hangfire.Sender
 
             var firstEnvelopeDescription = firstEnvelope.Description;
 
-            var displayName = "Sequence " + parcel.Id + " - " + firstEnvelopeDescription;
-            
-            var trackingCode = this.sendingLambda(parcel, recurringSchedule, displayName);
+            var lable = "Sequence " + parcel.Id + " - " + firstEnvelopeDescription;
+
+            var trackingCode = new TrackingCode { ParcelId = parcel.Id, EnvelopeId = firstEnvelope.Id };
+
+            var crate = new Crate
+                            {
+                                TrackingCode = trackingCode,
+                                Address = firstEnvelope.Channel,
+                                Label = lable,
+                                Parcel = parcel,
+                                RecurringSchedule = recurringSchedule
+                            };
+
+            this.courier.Send(crate);
 
             return trackingCode;
-        }
-
-        /// <summary>
-        /// Throws an exception if the channel is invalid in its structure.
-        /// </summary>
-        /// <param name="channelToTest">The channel to examine.</param>
-        public static void ThrowIfInvalidChannel(Channel channelToTest)
-        {
-            if (string.IsNullOrEmpty(channelToTest.Name))
-            {
-                throw new ArgumentException("Cannot use null channel name.");
-            }
-
-            if (channelToTest.Name.Length > HangfireQueueNameMaxLength)
-            {
-                throw new ArgumentException(
-                    "Cannot use a channel name longer than " + HangfireQueueNameMaxLength
-                    + " characters.  The supplied channel name: " + channelToTest.Name + " is "
-                    + channelToTest.Name.Length + " characters long.");
-            }
-
-            if (!Regex.IsMatch(channelToTest.Name, HangfireQueueNameAllowedRegex, RegexOptions.None))
-            {
-                throw new ArgumentException(
-                    "Channel name must be lowercase alphanumeric with underscores ONLY.  The supplied channel name: "
-                    + channelToTest.Name);
-            }
         }
     }
 }

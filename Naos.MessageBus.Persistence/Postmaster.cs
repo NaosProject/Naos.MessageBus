@@ -18,7 +18,7 @@ namespace Naos.MessageBus.Persistence
     /// <summary>
     /// Implementation of the <see cref="IPostmaster"/> using Its.CQRS.
     /// </summary>
-    public class Postmaster : IPostmaster, ITrackParcels
+    public class Postmaster : IPostmaster
     {
         private readonly string readModelConnectionString;
 

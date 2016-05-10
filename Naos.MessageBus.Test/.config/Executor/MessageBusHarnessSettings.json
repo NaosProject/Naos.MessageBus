@@ -1,14 +1,21 @@
 ﻿{
-    "persistenceConnectionString": "server=localhost",
+    "connectionConfiguration": {
+        "courierConnectionString": "server=localhost1",
+        "postmasterEventsConnectionString": "server=localhost2",
+        "postmasterReadModelConnectionString": "server=localhost3",
+    },
     "roleSettings": [
         {
-            "channelsToMonitor": [ { "Name": "monkeys" }, { "Name": "pandas" } ],
+            "channelsToMonitor": [
+                { "Name": "monkeys" },
+                { "Name": "pandas" }
+            ],
             "workerCount": 4,
             "handlerAssemblyPath": "I:\\Gets\\My\\Dlls\\Here",
             "pollingTimeSpan": "00:01:00",
             "harnessProcessTimeToLive": "00:10:00",
-            "typeMatchStrategy":  "namespaceAndName",
-            "messageDispatcherWaitThreadSleepTime":  "00:00:01",
+            "typeMatchStrategy": "namespaceAndName",
+            "messageDispatcherWaitThreadSleepTime": "00:00:01",
             "retryCount": 0
         }
     ]

@@ -36,7 +36,7 @@ namespace Naos.MessageBus.Hangfire.Harness
             if (executorRoleSettings != null)
             {
                 HangfireBootstrapper.Instance.Start(
-                    messageBusHandlerSettings.PersistenceConnectionString,
+                    messageBusHandlerSettings.ConnectionConfiguration,
                     executorRoleSettings);
             }
         }

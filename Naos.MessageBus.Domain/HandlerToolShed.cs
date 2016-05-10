@@ -14,44 +14,44 @@ namespace Naos.MessageBus.Domain
     /// </summary>
     public static class HandlerToolShed
     {
-        private static readonly object SenderBuilderSync = new object();
-        private static readonly object TrackerBuilderSync = new object();
+        private static readonly object PostOfficeBuilderSync = new object();
+        private static readonly object PostmasterBuilderSync = new object();
 
-        private static Func<ISendParcels> senderBuilder;
-        private static Func<ITrackParcels> trackerBuilder;
+        private static Func<IPostOffice> internalPostOfficeBuilder;
+        private static Func<IPostmaster> internalPostmasterBuilder;
 
         /// <summary>
-        /// Initializes a message sender builder to be used by handlers during execution if needed (seeded by harness OR test code).
+        /// Initializes an implementation of <see cref="IPostOffice"/> for use by a handler if needed (seeded by harness OR test code).
         /// </summary>
-        /// <param name="messageSenderBuilder">Function to get an implementation of <see cref="ISendParcels"/>.</param>
-        public static void InitializeSender(Func<ISendParcels> messageSenderBuilder)
+        /// <param name="postOfficeBuilder">Function to get an implementation of <see cref="IPostOffice"/>.</param>
+        public static void InitializePostOffice(Func<IPostOffice> postOfficeBuilder)
         {
-            senderBuilder = messageSenderBuilder;
+            internalPostOfficeBuilder = postOfficeBuilder;
         }
 
         /// <summary>
-        /// Initializes a message sender builder to be used by handlers during execution if needed (seeded by harness OR test code).
+        /// Initializes an implementation of <see cref="IPostmaster"/> for use by a handler if needed (seeded by harness OR test code).
         /// </summary>
-        /// <param name="messageTrackerBuilder">Function to get and implementation of <see cref="ITrackParcels"/>.</param>
-        public static void InitializeTracker(Func<ITrackParcels> messageTrackerBuilder)
+        /// <param name="postmasterBuilder">Function to get and implementation of <see cref="IPostmaster"/>.</param>
+        public static void InitializePostmaster(Func<IPostmaster> postmasterBuilder)
         {
-            trackerBuilder = messageTrackerBuilder;
+            internalPostmasterBuilder = postmasterBuilder;
         }
 
         /// <summary>
-        /// Gets an implementation of <see cref="ISendParcels"/>.
+        /// Gets an implementation of <see cref="IPostOffice"/>.
         /// </summary>
-        /// <returns>An implementation of <see cref="ISendParcels"/>.</returns>
-        public static ISendParcels GetParcelSender()
+        /// <returns>An implementation of <see cref="IPostOffice"/>.</returns>
+        public static IPostOffice GetParcelSender()
         {
-            lock (SenderBuilderSync)
+            lock (PostOfficeBuilderSync)
             {
-                if (senderBuilder == null)
+                if (internalPostOfficeBuilder == null)
                 {
-                    throw new ArgumentException("Factory not initialized for ISendParcels.");
+                    throw new ArgumentException("Factory not initialized for IPostOffice.");
                 }
 
-                return senderBuilder();
+                return internalPostOfficeBuilder();
             }
         }
 
@@ -61,14 +61,14 @@ namespace Naos.MessageBus.Domain
         /// <returns>An implementation of <see cref="ITrackParcels"/>.</returns>
         public static ITrackParcels GetParcelTracker()
         {
-            lock (TrackerBuilderSync)
+            lock (PostmasterBuilderSync)
             {
-                if (trackerBuilder == null)
+                if (internalPostmasterBuilder == null)
                 {
                     throw new ArgumentException("Factory not initialized for ITrackParcels.");
                 }
 
-                return trackerBuilder();
+                return internalPostmasterBuilder();
             }
         }
     }

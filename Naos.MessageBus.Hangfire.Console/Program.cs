@@ -52,16 +52,14 @@ namespace Naos.MessageBus.Hangfire.Console
 
             if (executorRoleSettings != null)
             {
-                var eventConnectionString = new SqlConnectionStringBuilder(messageBusHandlerSettings.PersistenceConnectionString) { InitialCatalog = "PostmasterEvents" }.ConnectionString;
-                var readModelConnectionString = new SqlConnectionStringBuilder(messageBusHandlerSettings.PersistenceConnectionString) { InitialCatalog = "PostmasterReadModels" }.ConnectionString;
-
-                var postmaster = new Postmaster(eventConnectionString, readModelConnectionString);
-
                 var activeMessageTracker = new InMemoryActiveMessageTracker();
-                var parcelSender = new ParcelSender(postmaster, messageBusHandlerSettings.PersistenceConnectionString);
 
-                HandlerToolShed.InitializeSender(() => parcelSender);
-                HandlerToolShed.InitializeTracker(() => postmaster);
+                var postmaster = new Postmaster(messageBusHandlerSettings.ConnectionConfiguration.PostmasterEventsConnectionString, messageBusHandlerSettings.ConnectionConfiguration.PostmasterReadModelConnectionString);
+                var courier = new HangfireCourier(postmaster, messageBusHandlerSettings.ConnectionConfiguration.CourierConnectionString);
+                var postOffice = new PostOffice(courier);
+
+                HandlerToolShed.InitializePostOffice(() => postOffice);
+                HandlerToolShed.InitializePostmaster(() => postmaster);
 
                 var dispatcherFactory = new DispatcherFactory(
                     executorRoleSettings.HandlerAssemblyPath,
@@ -70,7 +68,7 @@ namespace Naos.MessageBus.Hangfire.Console
                     executorRoleSettings.MessageDispatcherWaitThreadSleepTime,
                     postmaster,
                     activeMessageTracker,
-                    parcelSender);
+                    postOffice);
 
                 // configure hangfire to use the DispatcherFactory for getting IDispatchMessages calls
                 GlobalConfiguration.Configuration.UseActivator(new DispatcherFactoryJobActivator(dispatcherFactory));
@@ -84,7 +82,7 @@ namespace Naos.MessageBus.Hangfire.Console
                 };
 
                 GlobalConfiguration.Configuration.UseSqlServerStorage(
-                    messageBusHandlerSettings.PersistenceConnectionString,
+                    messageBusHandlerSettings.ConnectionConfiguration.CourierConnectionString,
                     new SqlServerStorageOptions());
 
                 var timeToLive = executorRoleSettings.HarnessProcessTimeToLive;

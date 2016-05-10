@@ -121,7 +121,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="NullParcelSender.cs" />
+    <Compile Include="PostOfficeTests.cs" />
     <Compile Include="PostmasterTests.cs" />
     <Compile Include="TrackingCodeTest.cs" />
     <Compile Include="TypeDescriptionTests.cs" />

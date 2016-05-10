@@ -1,5 +1,9 @@
 ﻿{
-    "persistenceConnectionString": "server=localhost",
+    "connectionConfiguration": {
+        "courierConnectionString": "server=localhost1",
+        "postmasterEventsConnectionString": "server=localhost2",
+        "postmasterReadModelConnectionString": "server=localhost3",
+    },
     "roleSettings": [
         {
             "runDashboard": true

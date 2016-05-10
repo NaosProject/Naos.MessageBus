@@ -12,7 +12,7 @@ namespace Naos.MessageBus.Domain
     /// <summary>
     /// Interface for tracking parcels in the bus.
     /// </summary>
-    public interface IPostmaster
+    public interface IPostmaster : ITrackParcels
     {
         /// <summary>
         /// Begins tracking a parcel.
@@ -83,6 +83,18 @@ namespace Naos.MessageBus.Domain
         public void Rejected(TrackingCode trackingCode, Exception exception)
         {
             /* no-op */
+        }
+
+        /// <inheritdoc />
+        public IReadOnlyCollection<ParcelTrackingReport> Track(IReadOnlyCollection<TrackingCode> trackingCodes)
+        {
+            return new List<ParcelTrackingReport>();
+        }
+
+        /// <inheritdoc />
+        public CertifiedNotice GetLatestCertifiedNotice(string topic)
+        {
+            return null;
         }
     }
 }

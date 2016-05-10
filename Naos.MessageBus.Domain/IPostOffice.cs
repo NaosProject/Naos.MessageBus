@@ -1,5 +1,5 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="ISendParcels.cs" company="Naos">
+// <copyright file="IPostOffice.cs" company="Naos">
 //   Copyright 2015 Naos
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
@@ -9,9 +9,9 @@ namespace Naos.MessageBus.Domain
     using Naos.Cron;
 
     /// <summary>
-    /// Interface for sending messages through the bus.
+    /// Interface for brokering message and parcels to a courier.
     /// </summary>
-    public interface ISendParcels
+    public interface IPostOffice
     {
         /// <summary>
         /// Send a message that should be handled as soon as possible.

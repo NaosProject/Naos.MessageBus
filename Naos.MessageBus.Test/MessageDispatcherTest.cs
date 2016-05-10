@@ -326,9 +326,9 @@ namespace Naos.MessageBus.Test
                 TypeMatchStrategy.NamespaceAndName,
                 TimeSpan.FromSeconds(.5),
                 new HarnessStaticDetails(),
-                new NullPostmaster(), 
+                new NullPostmaster(),
                 activeMessageTracker,
-                new NullParcelSender());
+                new PostOffice(new NullCourier()));
 
             var message = new WaitMessage { Description = "RunMe", TimeToWait = TimeSpan.FromSeconds(3) };
             var jsonMessage = Serializer.Serialize(message);
@@ -404,21 +404,21 @@ namespace Naos.MessageBus.Test
             Assert.Equal(1, trackingSends.Count);
         }
 
-        private static Func<ISendParcels> GetInMemorySender(List<Parcel> trackingSends)
+        private static Func<IPostOffice> GetInMemorySender(List<Parcel> trackingSends)
         {
-            Func<ISendParcels> senderConstructor = () =>
-                {
-                    dynamic dynamicObject = new ExpandoObject();
-                    dynamicObject.Send = Return<TrackingCode>.Arguments<Parcel>(
-                        (parcel) =>
-                            {
-                                trackingSends.Add(parcel);
-                                return null;
-                            });
+            Func<IPostOffice> senderConstructor = () =>
+            {
+                dynamic dynamicObject = new ExpandoObject();
+                dynamicObject.Send = Return<TrackingCode>.Arguments<Parcel>(
+                    (parcel) =>
+                    {
+                        trackingSends.Add(parcel);
+                        return null;
+                    });
 
-                    ISendParcels ret = Impromptu.ActLike(dynamicObject);
-                    return ret;
-                };
+                IPostOffice ret = Impromptu.ActLike(dynamicObject);
+                return ret;
+            };
             return senderConstructor;
         }
 
@@ -429,7 +429,7 @@ namespace Naos.MessageBus.Test
             container.Register<IHandleMessages<NullMessage>, NullMessageHandler>();
 
             var trackingSends = new List<Parcel>();
-            Func<ISendParcels> senderConstructor = () =>
+            Func<IPostOffice> senderConstructor = () =>
             {
                 dynamic dynamicObject = new ExpandoObject();
                 dynamicObject.SendRecurring = Return<TrackingCode>.Arguments<Parcel, ScheduleBase>(
@@ -446,7 +446,7 @@ namespace Naos.MessageBus.Test
                             return null;
                         });
 
-                ISendParcels ret = Impromptu.ActLike(dynamicObject);
+                IPostOffice ret = Impromptu.ActLike(dynamicObject);
                 return ret;
             };
 
@@ -615,7 +615,7 @@ namespace Naos.MessageBus.Test
             var messageJson = Serializer.Serialize(message);
 
             var channel = new Channel { Name = "fakeChannel" };
-            var messageDispatcher = new MessageDispatcher(simpleInjectorContainer, new ConcurrentDictionary<Type, object>(), new[] { channel }, TypeMatchStrategy.NamespaceAndName, TimeSpan.FromSeconds(.5), new HarnessStaticDetails(), new NullPostmaster(), new InMemoryActiveMessageTracker(), new NullParcelSender());
+            var messageDispatcher = new MessageDispatcher(simpleInjectorContainer, new ConcurrentDictionary<Type, object>(), new[] { channel }, TypeMatchStrategy.NamespaceAndName, TimeSpan.FromSeconds(.5), new HarnessStaticDetails(), new NullPostmaster(), new InMemoryActiveMessageTracker(), new PostOffice(new NullCourier()));
             var parcel = new Parcel
                              {
                                  Envelopes =
@@ -649,7 +649,7 @@ namespace Naos.MessageBus.Test
             var messageJson = Serializer.Serialize(message);
 
             var channel = new Channel { Name = "fakeChannel" };
-            var messageDispatcher = new MessageDispatcher(simpleInjectorContainer, new ConcurrentDictionary<Type, object>(), new[] { channel }, TypeMatchStrategy.NamespaceAndName, TimeSpan.FromSeconds(.5), new HarnessStaticDetails(), new NullPostmaster(), new InMemoryActiveMessageTracker(), new NullParcelSender());
+            var messageDispatcher = new MessageDispatcher(simpleInjectorContainer, new ConcurrentDictionary<Type, object>(), new[] { channel }, TypeMatchStrategy.NamespaceAndName, TimeSpan.FromSeconds(.5), new HarnessStaticDetails(), new NullPostmaster(), new InMemoryActiveMessageTracker(), new PostOffice(new NullCourier()));
             var parcel = new Parcel
                              {
                                  Envelopes =
@@ -743,7 +743,7 @@ namespace Naos.MessageBus.Test
                 container = new Container();
             }
 
-            return new MessageDispatcher(container, new ConcurrentDictionary<Type, object>(), channels, TypeMatchStrategy.NamespaceAndName, TimeSpan.FromSeconds(.5), new HarnessStaticDetails(), new NullPostmaster(), new InMemoryActiveMessageTracker(), new NullParcelSender());
+            return new MessageDispatcher(container, new ConcurrentDictionary<Type, object>(), channels, TypeMatchStrategy.NamespaceAndName, TimeSpan.FromSeconds(.5), new HarnessStaticDetails(), new NullPostmaster(), new InMemoryActiveMessageTracker(), new PostOffice(new NullCourier()));
         }
 
         public class StateHandler : IHandleMessages<InitialStateMessage>, INeedSharedState<string>
