@@ -42,7 +42,7 @@ namespace Naos.MessageBus.Domain
         /// Gets an implementation of <see cref="IPostOffice"/>.
         /// </summary>
         /// <returns>An implementation of <see cref="IPostOffice"/>.</returns>
-        public static IPostOffice GetParcelSender()
+        public static IPostOffice GetPostOffice()
         {
             lock (PostOfficeBuilderSync)
             {

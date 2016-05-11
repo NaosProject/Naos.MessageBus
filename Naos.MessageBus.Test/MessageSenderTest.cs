@@ -22,7 +22,7 @@ namespace Naos.MessageBus.Test
             // arrange
 
             // act
-            var ex = Assert.Throws<ArgumentException>(() => HandlerToolShed.GetParcelSender());
+            var ex = Assert.Throws<ArgumentException>(() => HandlerToolShed.GetPostOffice());
 
             // assert
             Assert.IsType<ArgumentException>(ex);
