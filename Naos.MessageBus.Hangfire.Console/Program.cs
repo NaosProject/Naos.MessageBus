@@ -54,12 +54,12 @@ namespace Naos.MessageBus.Hangfire.Console
             {
                 var activeMessageTracker = new InMemoryActiveMessageTracker();
 
-                var postmaster = new Postmaster(messageBusHandlerSettings.ConnectionConfiguration.PostmasterEventsConnectionString, messageBusHandlerSettings.ConnectionConfiguration.PostmasterReadModelConnectionString);
+                var postmaster = new ParcelTrackingSystem(messageBusHandlerSettings.ConnectionConfiguration.ParcelTrackingEventsConnectionString, messageBusHandlerSettings.ConnectionConfiguration.ParcelTrackingReadModelConnectionString);
                 var courier = new HangfireCourier(postmaster, messageBusHandlerSettings.ConnectionConfiguration.CourierConnectionString);
                 var postOffice = new PostOffice(courier);
 
                 HandlerToolShed.InitializePostOffice(() => postOffice);
-                HandlerToolShed.InitializePostmaster(() => postmaster);
+                HandlerToolShed.InitializeParcelTracking(() => postmaster);
 
                 var dispatcherFactory = new DispatcherFactory(
                     executorRoleSettings.HandlerAssemblyPath,

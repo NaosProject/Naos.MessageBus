@@ -17,17 +17,21 @@
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
     <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <DefineConstants>
+    </DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <DocumentationFile>bin\Debug\Naos.MessageBus.Persistence.XML</DocumentationFile>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
-    <Optimize>true</Optimize>
+    <Optimize>false</Optimize>
     <OutputPath>bin\Release\</OutputPath>
-    <DefineConstants>TRACE</DefineConstants>
+    <DefineConstants>
+    </DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <DocumentationFile>bin\Release\Naos.MessageBus.Persistence.XML</DocumentationFile>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="EntityFramework, Version=6.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089, processorArchitecture=MSIL">
@@ -87,22 +91,23 @@
   <ItemGroup>
     <Compile Include="Authorization.cs" />
     <Compile Include="CertifiedNoticeForDatabase.cs" />
+    <Compile Include="Events\Shipment.ParcelDelivered.cs" />
     <Compile Include="Shipment.EnactCommand.cs" />
     <Compile Include="Commands\Send.cs" />
-    <Compile Include="Commands\AddressShipment.cs" />
+    <Compile Include="Commands\UpdateAddress.cs" />
     <Compile Include="Commands\Attempt.cs" />
-    <Compile Include="Commands\CreateShipment.cs" />
+    <Compile Include="Commands\Create.cs" />
     <Compile Include="Commands\Deliver.cs" />
     <Compile Include="Commands\Reject.cs" />
     <Compile Include="Commands\ValidationRules.cs" />
-    <Compile Include="Events\Shipment.Certified.cs" />
-    <Compile Include="Events\Shipment.Sent.cs" />
-    <Compile Include="Events\Shipment.Addressed.cs" />
-    <Compile Include="Events\Shipment.Attempted.cs" />
+    <Compile Include="Events\Shipment.CertifiedEnvelopeDelivered.cs" />
+    <Compile Include="Events\Shipment.EnvelopeSent.cs" />
+    <Compile Include="Events\Shipment.EnvelopeAddressed.cs" />
+    <Compile Include="Events\Shipment.EnvelopeDeliveryAttempted.cs" />
     <Compile Include="Events\Shipment.Created.cs" />
-    <Compile Include="Events\Shipment.Delivered.cs" />
-    <Compile Include="Events\Shipment.Rejected.cs" />
-    <Compile Include="Postmaster.cs" />
+    <Compile Include="Events\Shipment.EnvelopeDelivered.cs" />
+    <Compile Include="Events\Shipment.EnvelopeDeliveryRejected.cs" />
+    <Compile Include="ParcelTrackingSystem.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="TrackedShipmentDbContext.cs" />
     <Compile Include="Shipment.cs" />

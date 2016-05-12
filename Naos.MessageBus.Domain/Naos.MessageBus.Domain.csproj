@@ -82,12 +82,12 @@
     <Compile Include="IHandleMessages.cs" />
     <Compile Include="IMessage.cs" />
     <Compile Include="INeedSharedState.cs" />
-    <Compile Include="IPostmaster.cs" />
+    <Compile Include="IParcelTrackingSystem.cs" />
     <Compile Include="ICourier.cs" />
     <Compile Include="IPostOffice.cs" />
     <Compile Include="IShare.cs" />
     <Compile Include="IShareTrackingCodes.cs" />
-    <Compile Include="ITrackParcels.cs" />
+    <Compile Include="IGetTrackingReports.cs" />
     <Compile Include="LogProcessorSettings.cs" />
     <Compile Include="MessageBusHarnessSettings.cs" />
     <Compile Include="MessageSequence.cs" />

@@ -22,10 +22,5 @@ namespace Naos.MessageBus.Domain
         /// Gets or sets the status of the parcel.
         /// </summary>
         public ParcelStatus Status { get; set; }
-
-        /// <summary>
-        /// Gets or sets the ID of the last envelope in the parcel.
-        /// </summary>
-        public string LastEnvelopeId { get; set; }
     }
 }

@@ -24,18 +24,18 @@ namespace Naos.MessageBus.Hangfire.Sender
 
         private const string HangfireQueueNameAllowedRegex = "^[a-z0-9_]*$";
 
-        private readonly IPostmaster postmaster;
+        private readonly IParcelTrackingSystem parcelTrackingSystem;
 
         private readonly string hangfireConnectionString;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="HangfireCourier"/> class.
         /// </summary>
-        /// <param name="postmaster">Postmaster to track parcels.</param>
+        /// <param name="parcelTrackingSystem">System to track parcels.</param>
         /// <param name="hangfireConnectionString">Hangfire persistence connection string.</param>
-        public HangfireCourier(IPostmaster postmaster, string hangfireConnectionString)
+        public HangfireCourier(IParcelTrackingSystem parcelTrackingSystem, string hangfireConnectionString)
         {
-            this.postmaster = postmaster;
+            this.parcelTrackingSystem = parcelTrackingSystem;
             this.hangfireConnectionString = hangfireConnectionString;
         }
 
@@ -65,12 +65,12 @@ namespace Naos.MessageBus.Hangfire.Sender
                 metadata.Add("CronSchedule", cronExpression());
             }
 
-            this.postmaster.Sent(crate.TrackingCode, parcel, metadata);
+            this.parcelTrackingSystem.Sent(crate.TrackingCode, parcel, metadata);
 
             // if not addressed it will be sent to default for addressing
             if (wasAddressed)
             {
-                this.postmaster.Addressed(crate.TrackingCode, channel);
+                this.parcelTrackingSystem.Addressed(crate.TrackingCode, channel);
             }
         }
 

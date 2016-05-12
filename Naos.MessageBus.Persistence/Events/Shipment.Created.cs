@@ -18,10 +18,19 @@ namespace Naos.MessageBus.Persistence
     /// </summary>
     public partial class Shipment
     {
+        /// <summary>
+        /// A shipment was created.
+        /// </summary>
         public class Created : Event<Shipment>
         {
+            /// <summary>
+            /// Gets or sets the parcel being shipped.
+            /// </summary>
             public Parcel Parcel { get; set; }
 
+            /// <summary>
+            /// Gets or sets the metadata from the creation of the shipment.
+            /// </summary>
             public IReadOnlyDictionary<string, string> CreationMetadata { get; set; }
 
             /// <inheritdoc />

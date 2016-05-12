@@ -1,5 +1,5 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="Postmaster.cs" company="Naos">
+// <copyright file="ParcelTrackingSystem.cs" company="Naos">
 //   Copyright 2015 Naos
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
@@ -16,20 +16,20 @@ namespace Naos.MessageBus.Persistence
     using Naos.MessageBus.Domain;
 
     /// <summary>
-    /// Implementation of the <see cref="IPostmaster"/> using Its.CQRS.
+    /// Implementation of the <see cref="IParcelTrackingSystem"/> using Its.CQRS.
     /// </summary>
-    public class Postmaster : IPostmaster
+    public class ParcelTrackingSystem : IParcelTrackingSystem
     {
         private readonly string readModelConnectionString;
 
         private readonly Configuration configuration;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="Postmaster"/> class.
+        /// Initializes a new instance of the <see cref="ParcelTrackingSystem"/> class.
         /// </summary>
         /// <param name="eventConnectionString">Connection string to the event persistence.</param>
         /// <param name="readModelConnectionString">Connection string to the read model persistence.</param>
-        public Postmaster(string eventConnectionString, string readModelConnectionString)
+        public ParcelTrackingSystem(string eventConnectionString, string readModelConnectionString)
         {
             this.readModelConnectionString = readModelConnectionString;
 
@@ -73,7 +73,7 @@ namespace Naos.MessageBus.Persistence
             var shipment = this.FetchShipment(trackingCode);
             if (shipment == null)
             {
-                var commandCreate = new CreateShipment { AggregateId = parcel.Id, Parcel = parcel, CreationMetadata = metadata };
+                var commandCreate = new Create { AggregateId = parcel.Id, Parcel = parcel, CreationMetadata = metadata };
                 shipment = new Shipment(commandCreate);
             }
 
@@ -87,7 +87,7 @@ namespace Naos.MessageBus.Persistence
         {
             var shipment = this.FetchShipment(trackingCode);
 
-            var command = new AddressShipment { TrackingCode = trackingCode, Address = assignedChannel };
+            var command = new UpdateAddress { TrackingCode = trackingCode, Address = assignedChannel };
             shipment.EnactCommand(command);
 
             this.SaveShipment(shipment);
@@ -140,7 +140,7 @@ namespace Naos.MessageBus.Persistence
         }
 
         /// <inheritdoc />
-        public IReadOnlyCollection<ParcelTrackingReport> Track(IReadOnlyCollection<TrackingCode> trackingCodes)
+        public IReadOnlyCollection<ParcelTrackingReport> GetTrackingReport(IReadOnlyCollection<TrackingCode> trackingCodes)
         {
             using (var db = new TrackedShipmentDbContext(this.readModelConnectionString))
             {

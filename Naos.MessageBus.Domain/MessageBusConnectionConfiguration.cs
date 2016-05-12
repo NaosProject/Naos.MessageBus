@@ -17,13 +17,13 @@ namespace Naos.MessageBus.Domain
         public string CourierConnectionString { get; set; }
 
         /// <summary>
-        /// Gets or sets the connections string for postmaster event persistence.
+        /// Gets or sets the connections string for Parcel Tracking System event persistence.
         /// </summary>
-        public string PostmasterEventsConnectionString { get; set; }
+        public string ParcelTrackingEventsConnectionString { get; set; }
 
         /// <summary>
-        /// Gets or sets the connections string for postmaster read model persistence.
+        /// Gets or sets the connections string for Parcel Tracking System read model persistence.
         /// </summary>
-        public string PostmasterReadModelConnectionString { get; set; }
+        public string ParcelTrackingReadModelConnectionString { get; set; }
     }
 }

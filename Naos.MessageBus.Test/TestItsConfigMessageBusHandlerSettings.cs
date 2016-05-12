@@ -24,8 +24,8 @@ namespace Naos.MessageBus.Test
 
             Assert.NotNull(settings);
             Assert.Equal("server=localhost1", settings.ConnectionConfiguration.CourierConnectionString);
-            Assert.Equal("server=localhost2", settings.ConnectionConfiguration.PostmasterEventsConnectionString);
-            Assert.Equal("server=localhost3", settings.ConnectionConfiguration.PostmasterReadModelConnectionString);
+            Assert.Equal("server=localhost2", settings.ConnectionConfiguration.ParcelTrackingEventsConnectionString);
+            Assert.Equal("server=localhost3", settings.ConnectionConfiguration.ParcelTrackingReadModelConnectionString);
             var hostSettings = settings.RoleSettings.OfType<MessageBusHarnessRoleSettingsHost>().SingleOrDefault();
             Assert.NotNull(hostSettings);
             Assert.Equal(true, hostSettings.RunDashboard);
@@ -38,8 +38,8 @@ namespace Naos.MessageBus.Test
 
             Assert.NotNull(settings);
             Assert.Equal("server=localhost1", settings.ConnectionConfiguration.CourierConnectionString);
-            Assert.Equal("server=localhost2", settings.ConnectionConfiguration.PostmasterEventsConnectionString);
-            Assert.Equal("server=localhost3", settings.ConnectionConfiguration.PostmasterReadModelConnectionString);
+            Assert.Equal("server=localhost2", settings.ConnectionConfiguration.ParcelTrackingEventsConnectionString);
+            Assert.Equal("server=localhost3", settings.ConnectionConfiguration.ParcelTrackingReadModelConnectionString);
             var hostSettings = settings.RoleSettings.OfType<MessageBusHarnessRoleSettingsHost>().SingleOrDefault();
             Assert.Null(hostSettings);
             var executorSettings = settings.RoleSettings.OfType<MessageBusHarnessRoleSettingsExecutor>().SingleOrDefault();

@@ -1,5 +1,5 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="IPostmaster.cs" company="Naos">
+// <copyright file="IParcelTrackingSystem.cs" company="Naos">
 //   Copyright 2015 Naos
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
@@ -12,7 +12,7 @@ namespace Naos.MessageBus.Domain
     /// <summary>
     /// Interface for tracking parcels in the bus.
     /// </summary>
-    public interface IPostmaster : ITrackParcels
+    public interface IParcelTrackingSystem : IGetTrackingReports
     {
         /// <summary>
         /// Begins tracking a parcel.
@@ -51,9 +51,9 @@ namespace Naos.MessageBus.Domain
     }
 
     /// <summary>
-    /// Null implementation of <see cref="IPostmaster"/>.
+    /// Null implementation of <see cref="IParcelTrackingSystem"/>.
     /// </summary>
-    public class NullPostmaster : IPostmaster
+    public class NullParcelTrackingSystem : IParcelTrackingSystem
     {
         /// <inheritdoc />
         public void Attempting(TrackingCode trackingCode, HarnessDetails harnessDetails)
@@ -86,7 +86,7 @@ namespace Naos.MessageBus.Domain
         }
 
         /// <inheritdoc />
-        public IReadOnlyCollection<ParcelTrackingReport> Track(IReadOnlyCollection<TrackingCode> trackingCodes)
+        public IReadOnlyCollection<ParcelTrackingReport> GetTrackingReport(IReadOnlyCollection<TrackingCode> trackingCodes)
         {
             return new List<ParcelTrackingReport>();
         }

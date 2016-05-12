@@ -15,10 +15,10 @@ namespace Naos.MessageBus.Domain
     public static class HandlerToolShed
     {
         private static readonly object PostOfficeBuilderSync = new object();
-        private static readonly object PostmasterBuilderSync = new object();
+        private static readonly object ParcelTrackingBuilderSync = new object();
 
         private static Func<IPostOffice> internalPostOfficeBuilder;
-        private static Func<IPostmaster> internalPostmasterBuilder;
+        private static Func<IParcelTrackingSystem> internalParcelTrackingBuilder;
 
         /// <summary>
         /// Initializes an implementation of <see cref="IPostOffice"/> for use by a handler if needed (seeded by harness OR test code).
@@ -30,12 +30,12 @@ namespace Naos.MessageBus.Domain
         }
 
         /// <summary>
-        /// Initializes an implementation of <see cref="IPostmaster"/> for use by a handler if needed (seeded by harness OR test code).
+        /// Initializes an implementation of <see cref="IParcelTrackingSystem"/> for use by a handler if needed (seeded by harness OR test code).
         /// </summary>
-        /// <param name="postmasterBuilder">Function to get and implementation of <see cref="IPostmaster"/>.</param>
-        public static void InitializePostmaster(Func<IPostmaster> postmasterBuilder)
+        /// <param name="parcelTrackingBuilder">Function to get and implementation of <see cref="IParcelTrackingSystem"/>.</param>
+        public static void InitializeParcelTracking(Func<IParcelTrackingSystem> parcelTrackingBuilder)
         {
-            internalPostmasterBuilder = postmasterBuilder;
+            internalParcelTrackingBuilder = parcelTrackingBuilder;
         }
 
         /// <summary>
@@ -56,19 +56,19 @@ namespace Naos.MessageBus.Domain
         }
 
         /// <summary>
-        /// Gets an implementation of <see cref="ITrackParcels"/>.
+        /// Gets an implementation of <see cref="IGetTrackingReports"/>.
         /// </summary>
-        /// <returns>An implementation of <see cref="ITrackParcels"/>.</returns>
-        public static ITrackParcels GetParcelTracker()
+        /// <returns>An implementation of <see cref="IGetTrackingReports"/>.</returns>
+        public static IGetTrackingReports GetParcelTracker()
         {
-            lock (PostmasterBuilderSync)
+            lock (ParcelTrackingBuilderSync)
             {
-                if (internalPostmasterBuilder == null)
+                if (internalParcelTrackingBuilder == null)
                 {
                     throw new ArgumentException("Factory not initialized for ITrackParcels.");
                 }
 
-                return internalPostmasterBuilder();
+                return internalParcelTrackingBuilder();
             }
         }
     }

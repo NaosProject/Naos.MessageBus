@@ -1,5 +1,5 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="PostmasterTests.cs" company="Naos">
+// <copyright file="TrackingSystemTests.cs" company="Naos">
 //   Copyright 2015 Naos
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
@@ -19,7 +19,7 @@ namespace Naos.MessageBus.Test
 
     using Xunit;
 
-    public class PostmasterTests
+    public class TrackingSystemTests
     {
         [Fact(Skip = "Debug test designed to run while connected through VPN.")]
         public void Do()
@@ -34,43 +34,43 @@ namespace Naos.MessageBus.Test
             var parcel = this.GetParcel(certifiedKey);
 
             var trackingCode = new TrackingCode { ParcelId = parcel.Id, EnvelopeId = parcel.Envelopes.First().Id };
-            var postmaster = new Postmaster(eventConnectionString, readConnectionString);
+            var postmaster = new ParcelTrackingSystem(eventConnectionString, readConnectionString);
 
             postmaster.Sent(trackingCode, parcel, new Dictionary<string, string>());
-            postmaster.Track(new[] { trackingCode }).Single().Status.Should().Be(ParcelStatus.Unknown);
+            postmaster.GetTrackingReport(new[] { trackingCode }).Single().Status.Should().Be(ParcelStatus.Unknown);
             postmaster.GetLatestCertifiedNotice(certifiedKey).Notices.Count.Should().Be(0);
 
             postmaster.Addressed(trackingCode, parcel.Envelopes.First().Channel);
-            postmaster.Track(new[] { trackingCode }).Single().Status.Should().Be(ParcelStatus.Unknown);
+            postmaster.GetTrackingReport(new[] { trackingCode }).Single().Status.Should().Be(ParcelStatus.Unknown);
             postmaster.GetLatestCertifiedNotice(certifiedKey).Notices.Count.Should().Be(0);
 
             postmaster.Attempting(trackingCode, new HarnessDetails());
-            postmaster.Track(new[] { trackingCode }).Single().Status.Should().Be(ParcelStatus.Unknown);
+            postmaster.GetTrackingReport(new[] { trackingCode }).Single().Status.Should().Be(ParcelStatus.Unknown);
             postmaster.GetLatestCertifiedNotice(certifiedKey).Notices.Count.Should().Be(0);
 
             postmaster.Delivered(trackingCode);
-            postmaster.Track(new[] { trackingCode }).Single().Status.Should().Be(ParcelStatus.Unknown);
+            postmaster.GetTrackingReport(new[] { trackingCode }).Single().Status.Should().Be(ParcelStatus.Unknown);
             postmaster.GetLatestCertifiedNotice(certifiedKey).Notices.Count.Should().Be(0);
 
             var trackingCode2 = new TrackingCode { ParcelId = parcel.Id, EnvelopeId = parcel.Envelopes.Last().Id };
             postmaster.Sent(trackingCode2, parcel, new Dictionary<string, string>());
-            postmaster.Track(new[] { trackingCode2 }).Single().Status.Should().Be(ParcelStatus.Unknown);
+            postmaster.GetTrackingReport(new[] { trackingCode2 }).Single().Status.Should().Be(ParcelStatus.Unknown);
             postmaster.GetLatestCertifiedNotice(certifiedKey).Notices.Count.Should().Be(0);
 
             postmaster.Addressed(trackingCode2, parcel.Envelopes.First().Channel);
-            postmaster.Track(new[] { trackingCode2 }).Single().Status.Should().Be(ParcelStatus.Unknown);
+            postmaster.GetTrackingReport(new[] { trackingCode2 }).Single().Status.Should().Be(ParcelStatus.Unknown);
             postmaster.GetLatestCertifiedNotice(certifiedKey).Notices.Count.Should().Be(0);
 
             postmaster.Attempting(trackingCode2, new HarnessDetails());
-            postmaster.Track(new[] { trackingCode2 }).Single().Status.Should().Be(ParcelStatus.Unknown);
+            postmaster.GetTrackingReport(new[] { trackingCode2 }).Single().Status.Should().Be(ParcelStatus.Unknown);
             postmaster.GetLatestCertifiedNotice(certifiedKey).Notices.Count.Should().Be(0);
 
             postmaster.Rejected(trackingCode2, new NotImplementedException("Not here yet"));
-            postmaster.Track(new[] { trackingCode2 }).Single().Status.Should().Be(ParcelStatus.Rejected);
+            postmaster.GetTrackingReport(new[] { trackingCode2 }).Single().Status.Should().Be(ParcelStatus.Rejected);
             postmaster.GetLatestCertifiedNotice(certifiedKey).Notices.Count.Should().Be(0);
 
             postmaster.Delivered(trackingCode2);
-            postmaster.Track(new[] { trackingCode2 }).Single().Status.Should().Be(ParcelStatus.Delivered);
+            postmaster.GetTrackingReport(new[] { trackingCode2 }).Single().Status.Should().Be(ParcelStatus.Delivered);
             postmaster.GetLatestCertifiedNotice(certifiedKey).Notices.Count.Should().Be(1);
         }
 

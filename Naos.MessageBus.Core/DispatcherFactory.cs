@@ -38,7 +38,7 @@ namespace Naos.MessageBus.Core
 
         private readonly HarnessStaticDetails harnessStaticDetails;
 
-        private readonly IPostmaster postmaster;
+        private readonly IParcelTrackingSystem parcelTrackingSystem;
 
         private readonly ITrackActiveMessages activeMessageTracker;
 
@@ -51,14 +51,14 @@ namespace Naos.MessageBus.Core
         /// <param name="servicedChannels">Channels being monitored.</param>
         /// <param name="typeMatchStrategy">Strategy on how to match types.</param>
         /// <param name="messageDispatcherWaitThreadSleepTime">Amount of time to sleep while waiting on messages to be handled.</param>
-        /// <param name="postmaster">Interface for managing life of the parcels.</param>
+        /// <param name="parcelTrackingSystem">Interface for managing life of the parcels.</param>
         /// <param name="activeMessageTracker">Interface to track active messages to know if handler harness can shutdown.</param>
         /// <param name="postOffice">Interface to send parcels.</param>
-        public DispatcherFactory(string handlerAssemblyPath, ICollection<Channel> servicedChannels, TypeMatchStrategy typeMatchStrategy, TimeSpan messageDispatcherWaitThreadSleepTime, IPostmaster postmaster, ITrackActiveMessages activeMessageTracker, IPostOffice postOffice)
+        public DispatcherFactory(string handlerAssemblyPath, ICollection<Channel> servicedChannels, TypeMatchStrategy typeMatchStrategy, TimeSpan messageDispatcherWaitThreadSleepTime, IParcelTrackingSystem parcelTrackingSystem, ITrackActiveMessages activeMessageTracker, IPostOffice postOffice)
         {
-            if (postmaster == null)
+            if (parcelTrackingSystem == null)
             {
-                throw new ArgumentException("Postmaster can't be null");
+                throw new ArgumentException("Parcel tracking system can't be null");
             }
 
             if (activeMessageTracker == null)
@@ -74,7 +74,7 @@ namespace Naos.MessageBus.Core
             this.servicedChannels = servicedChannels;
             this.typeMatchStrategy = typeMatchStrategy;
             this.messageDispatcherWaitThreadSleepTime = messageDispatcherWaitThreadSleepTime;
-            this.postmaster = postmaster;
+            this.parcelTrackingSystem = parcelTrackingSystem;
             this.activeMessageTracker = activeMessageTracker;
             this.postOffice = postOffice;
 
@@ -157,7 +157,7 @@ namespace Naos.MessageBus.Core
                     this.typeMatchStrategy,
                     this.messageDispatcherWaitThreadSleepTime,
                     this.harnessStaticDetails,
-                    this.postmaster,
+                    this.parcelTrackingSystem,
                     this.activeMessageTracker,
                     this.postOffice));
 

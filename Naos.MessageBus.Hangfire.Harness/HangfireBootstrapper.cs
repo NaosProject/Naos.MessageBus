@@ -70,19 +70,19 @@ namespace Naos.MessageBus.Hangfire.Harness
         {
             var activeMessageTracker = new InMemoryActiveMessageTracker();
 
-            var postmaster = new Postmaster(connectionConfig.PostmasterEventsConnectionString, connectionConfig.PostmasterReadModelConnectionString);
-            var courier = new HangfireCourier(postmaster, connectionConfig.CourierConnectionString);
+            var parcelTrackingSystem = new ParcelTrackingSystem(connectionConfig.ParcelTrackingEventsConnectionString, connectionConfig.ParcelTrackingReadModelConnectionString);
+            var courier = new HangfireCourier(parcelTrackingSystem, connectionConfig.CourierConnectionString);
             var postOffice = new PostOffice(courier);
 
             HandlerToolShed.InitializePostOffice(() => postOffice);
-            HandlerToolShed.InitializePostmaster(() => postmaster);
+            HandlerToolShed.InitializeParcelTracking(() => parcelTrackingSystem);
 
             this.dispatcherFactory = new DispatcherFactory(
                 executorRoleSettings.HandlerAssemblyPath,
                 executorRoleSettings.ChannelsToMonitor,
                 executorRoleSettings.TypeMatchStrategy,
                 executorRoleSettings.MessageDispatcherWaitThreadSleepTime,
-                postmaster,
+                parcelTrackingSystem,
                 activeMessageTracker,
                 postOffice);
 

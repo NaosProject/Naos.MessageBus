@@ -41,14 +41,28 @@ namespace Naos.MessageBus.Persistence
         /// Initializes a new instance of the <see cref="Shipment"/> class.
         /// </summary>
         /// <param name="create">Constructor command to create the new shipment.</param>
-        public Shipment(CreateShipment create) : base(create)
+        public Shipment(Create create) : base(create)
         {
         }
 
+        /// <summary>
+        /// Gets the parcel of the shipment.
+        /// </summary>
         public Parcel Parcel { get; private set; }
 
-        public IReadOnlyDictionary<string, string> CreationMetadata { get; set; }
+        /// <summary>
+        /// Gets the metadata about the creation of the shipment for the courier.
+        /// </summary>
+        public IReadOnlyDictionary<string, string> CreationMetadata { get; private set; }
 
-        public IDictionary<TrackingCode, TrackingDetails> Tracking { get; set; }
+        /// <summary>
+        /// Gets a dictionary of the envelopes to keep details of each envelope in the parcel.
+        /// </summary>
+        public IDictionary<TrackingCode, TrackingDetails> Tracking { get; private set; }
+
+        /// <summary>
+        /// Gets the status of the parcel as a whole.
+        /// </summary>
+        public ParcelStatus Status { get; private set; }
     }
 }

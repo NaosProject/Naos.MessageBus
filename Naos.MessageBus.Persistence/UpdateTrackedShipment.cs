@@ -18,9 +18,9 @@ namespace Naos.MessageBus.Persistence
     /// </summary>
     public class UpdateTrackedShipment : 
         IUpdateProjectionWhen<Shipment.Created>,
-        IUpdateProjectionWhen<Shipment.Rejected>,
-        IUpdateProjectionWhen<Shipment.Delivered>,
-        IUpdateProjectionWhen<Shipment.Certified>
+        IUpdateProjectionWhen<Shipment.EnvelopeDeliveryRejected>,
+        IUpdateProjectionWhen<Shipment.ParcelDelivered>,
+        IUpdateProjectionWhen<Shipment.CertifiedEnvelopeDelivered>
     {
         private readonly string connectionString;
 
@@ -38,18 +38,18 @@ namespace Naos.MessageBus.Persistence
         {
             using (var db = new TrackedShipmentDbContext(this.connectionString))
             {
-                var entry = new ParcelTrackingReport { ParcelId = @event.Parcel.Id, LastEnvelopeId = @event.Parcel.Envelopes.Last().Id };
+                var entry = new ParcelTrackingReport { ParcelId = @event.Parcel.Id };
                 db.Shipments.AddOrUpdate(entry);
                 db.SaveChanges();
             }
         }
 
         /// <inheritdoc />
-        public void UpdateProjection(Shipment.Rejected @event)
+        public void UpdateProjection(Shipment.EnvelopeDeliveryRejected @event)
         {
             using (var db = new TrackedShipmentDbContext(this.connectionString))
             {
-                // any failure will kill the message sequence
+                // any failure will stop the rest of the parcel
                 var entry = db.Shipments.Single(_ => _.ParcelId == @event.AggregateId);
                 entry.Status = @event.NewStatus;
                 db.SaveChanges();
@@ -57,23 +57,18 @@ namespace Naos.MessageBus.Persistence
         }
 
         /// <inheritdoc />
-        public void UpdateProjection(Shipment.Delivered @event)
+        public void UpdateProjection(Shipment.ParcelDelivered @event)
         {
             using (var db = new TrackedShipmentDbContext(this.connectionString))
             {
                 var entry = db.Shipments.Single(_ => _.ParcelId == @event.AggregateId);
-
-                // if it's the last envelope then update
-                if (entry.LastEnvelopeId == @event.TrackingCode.EnvelopeId)
-                {
-                    entry.Status = @event.NewStatus;
-                    db.SaveChanges();
-                }
+                entry.Status = @event.NewStatus;
+                db.SaveChanges();
             }
         }
 
         /// <inheritdoc />
-        public void UpdateProjection(Shipment.Certified @event)
+        public void UpdateProjection(Shipment.CertifiedEnvelopeDelivered @event)
         {
             using (var db = new TrackedShipmentDbContext(this.connectionString))
             {

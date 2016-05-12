@@ -1,5 +1,5 @@
 // --------------------------------------------------------------------------------------------------------------------
-// <copyright file="CreateShipment.cs" company="Naos">
+// <copyright file="Create.cs" company="Naos">
 //   Copyright 2015 Naos
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
@@ -18,7 +18,7 @@ namespace Naos.MessageBus.Persistence
     /// <summary>
     /// Create command for a <see cref="Shipment"/>.
     /// </summary>
-    public class CreateShipment : ConstructorCommand<Shipment>
+    public class Create : ConstructorCommand<Shipment>
     {
         /// <inheritdoc />
         public override IValidationRule<Shipment> Validator => new ValidationPlan<Shipment>();
@@ -28,9 +28,9 @@ namespace Naos.MessageBus.Persistence
         {
             get
             {
-                var parcelIsSet = Validate.That<CreateShipment>(cmd => cmd.Parcel != null).WithErrorMessage("Parcel must be specified.");
+                var parcelIsSet = Validate.That<Create>(cmd => cmd.Parcel != null).WithErrorMessage("Parcel must be specified.");
 
-                return new ValidationPlan<CreateShipment> { parcelIsSet };
+                return new ValidationPlan<Create> { parcelIsSet };
             }
         }
 

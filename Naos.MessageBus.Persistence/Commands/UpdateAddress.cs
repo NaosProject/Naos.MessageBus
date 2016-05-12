@@ -1,5 +1,5 @@
 // --------------------------------------------------------------------------------------------------------------------
-// <copyright file="AddressShipment.cs" company="Naos">
+// <copyright file="UpdateAddress.cs" company="Naos">
 //   Copyright 2015 Naos
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
@@ -16,7 +16,7 @@ namespace Naos.MessageBus.Persistence
     /// <summary>
     /// Address command for a <see cref="Shipment"/>.
     /// </summary>
-    public class AddressShipment : Command<Shipment>
+    public class UpdateAddress : Command<Shipment>
     {
         /// <inheritdoc />
         public override IValidationRule<Shipment> Validator => new ValidationPlan<Shipment>
@@ -29,10 +29,10 @@ namespace Naos.MessageBus.Persistence
         {
             get
             {
-                var trackingCodeSet = Validate.That<AddressShipment>(cmd => cmd.TrackingCode != null).WithErrorMessage("TrackingCode must be specified.");
-                var addressSet = Validate.That<AddressShipment>(cmd => cmd.Address != null).WithErrorMessage("Address must be specified.");
+                var trackingCodeSet = Validate.That<UpdateAddress>(cmd => cmd.TrackingCode != null).WithErrorMessage("TrackingCode must be specified.");
+                var addressSet = Validate.That<UpdateAddress>(cmd => cmd.Address != null).WithErrorMessage("Address must be specified.");
 
-                return new ValidationPlan<AddressShipment> { trackingCodeSet, addressSet };
+                return new ValidationPlan<UpdateAddress> { trackingCodeSet, addressSet };
             }
         }
 

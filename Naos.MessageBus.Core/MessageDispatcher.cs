@@ -36,7 +36,7 @@ namespace Naos.MessageBus.Core
 
         private readonly HarnessStaticDetails harnessStaticDetails;
 
-        private readonly IPostmaster postmaster;
+        private readonly IParcelTrackingSystem parcelTrackingSystem;
 
         private readonly ITrackActiveMessages activeMessageTracker;
 
@@ -51,10 +51,10 @@ namespace Naos.MessageBus.Core
         /// <param name="typeMatchStrategy">Message type match strategy for use when selecting a handler.</param>
         /// <param name="messageDispatcherWaitThreadSleepTime">Amount of time to sleep while waiting on messages to be handled.</param>
         /// <param name="harnessStaticDetails">Details about the harness.</param>
-        /// <param name="postmaster">Courier to track parcel events.</param>
+        /// <param name="parcelTrackingSystem">Courier to track parcel events.</param>
         /// <param name="activeMessageTracker">Interface to track active messages to know if handler harness can shutdown.</param>
         /// <param name="postOffice">Interface to send parcels.</param>
-        public MessageDispatcher(Container simpleInjectorContainer, ConcurrentDictionary<Type, object> handlerSharedStateMap, ICollection<Channel> servicedChannels, TypeMatchStrategy typeMatchStrategy, TimeSpan messageDispatcherWaitThreadSleepTime, HarnessStaticDetails harnessStaticDetails, IPostmaster postmaster, ITrackActiveMessages activeMessageTracker, IPostOffice postOffice)
+        public MessageDispatcher(Container simpleInjectorContainer, ConcurrentDictionary<Type, object> handlerSharedStateMap, ICollection<Channel> servicedChannels, TypeMatchStrategy typeMatchStrategy, TimeSpan messageDispatcherWaitThreadSleepTime, HarnessStaticDetails harnessStaticDetails, IParcelTrackingSystem parcelTrackingSystem, ITrackActiveMessages activeMessageTracker, IPostOffice postOffice)
         {
             this.simpleInjectorContainer = simpleInjectorContainer;
             this.handlerSharedStateMap = handlerSharedStateMap;
@@ -63,7 +63,7 @@ namespace Naos.MessageBus.Core
             this.messageDispatcherWaitThreadSleepTime = messageDispatcherWaitThreadSleepTime;
 
             this.harnessStaticDetails = harnessStaticDetails;
-            this.postmaster = postmaster;
+            this.parcelTrackingSystem = parcelTrackingSystem;
             this.activeMessageTracker = activeMessageTracker;
             this.postOffice = postOffice;
         }
@@ -78,21 +78,21 @@ namespace Naos.MessageBus.Core
                 var dynamicDetails = new HarnessDynamicDetails { AvailablePhysicalMemoryInGb = MachineDetails.GetAvailablePhysicalMemoryInGb() };
                 var harnessDetails = new HarnessDetails { StaticDetails = this.harnessStaticDetails, DynamicDetails = dynamicDetails };
 
-                this.postmaster.Attempting(trackingCode, harnessDetails);
+                this.parcelTrackingSystem.Attempting(trackingCode, harnessDetails);
 
                 this.InternalDispatch(parcel);
 
-                this.postmaster.Delivered(trackingCode);
+                this.parcelTrackingSystem.Delivered(trackingCode);
             }
             catch (AbortAndRescheduleParcelException rescheduleParcelException)
             {
                 Log.Write("Rescheduling parcel; TrackingCode: " + trackingCode + ", Exception:" + rescheduleParcelException);
                 this.postOffice.Send(parcel);
-                this.postmaster.Addressed(trackingCode, parcel.Envelopes.First().Channel);
+                this.parcelTrackingSystem.Addressed(trackingCode, parcel.Envelopes.First().Channel);
             }
             catch (Exception ex)
             {
-                this.postmaster.Rejected(trackingCode, ex);
+                this.parcelTrackingSystem.Rejected(trackingCode, ex);
                 throw;
             }
             finally
