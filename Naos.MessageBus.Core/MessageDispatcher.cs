@@ -181,8 +181,16 @@ namespace Naos.MessageBus.Core
 
                     if (task.Status == TaskStatus.Faulted)
                     {
-                        var exception = task.Exception ?? new AggregateException("No exception came back from task");
-                        throw exception.InnerException ?? exception;
+                        var exception = task.Exception ?? new AggregateException("No exception came back from task but status was Faulted.");
+                        if (exception.GetType() == typeof(AggregateException) && exception.InnerExceptions.Count == 1 && exception.InnerException != null)
+                        {
+                            // if this is just wrapping a single exception then no need to keep the wrapper...
+                            throw exception.InnerException;
+                        }
+                        else
+                        {
+                            throw exception;
+                        }
                     }
 
                     activity.Confirm(() => "Successfully handled message. Task ended with status: " + task.Status);
