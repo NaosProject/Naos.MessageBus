@@ -126,6 +126,17 @@ namespace Naos.MessageBus.Persistence
             this.SaveShipment(shipment);
         }
 
+        /// <inheritdoc />
+        public void Abort(TrackingCode trackingCode, string reason)
+        {
+            var shipment = this.FetchShipment(trackingCode);
+
+            var command = new Abort { TrackingCode = trackingCode };
+            shipment.EnactCommand(command);
+
+            this.SaveShipment(shipment);
+        }
+
         private Shipment FetchShipment(TrackingCode trackingCode)
         {
             var shipmentTask = this.configuration.Repository<Shipment>().GetLatest(trackingCode.ParcelId);

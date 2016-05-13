@@ -32,6 +32,11 @@ namespace Naos.MessageBus.Domain
         OutForDelivery,
 
         /// <summary>
+        /// Parcel delivery was aborted.
+        /// </summary>
+        Aborted,
+
+        /// <summary>
         /// Parcel was accepted.
         /// </summary>
         Delivered,

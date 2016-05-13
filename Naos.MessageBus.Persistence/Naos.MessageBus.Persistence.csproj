@@ -91,6 +91,8 @@
   <ItemGroup>
     <Compile Include="Authorization.cs" />
     <Compile Include="CertifiedNoticeForDatabase.cs" />
+    <Compile Include="Commands\Abort.cs" />
+    <Compile Include="Events\Shipment.EnvelopeDeliveryAborted.cs" />
     <Compile Include="Events\Shipment.ParcelDelivered.cs" />
     <Compile Include="Shipment.EnactCommand.cs" />
     <Compile Include="Commands\Send.cs" />

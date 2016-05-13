@@ -14,6 +14,10 @@ namespace Naos.MessageBus.Test
     using System.Threading;
     using System.Threading.Tasks;
 
+    using FakeItEasy;
+
+    using FluentAssertions;
+
     using ImpromptuInterface;
     using ImpromptuInterface.Dynamic;
 
@@ -402,6 +406,68 @@ namespace Naos.MessageBus.Test
             Assert.Equal(0, trackingSends.Count);
             dispatcher.Dispatch(new TrackingCode(), "InvalidParcel", invalidParcel);
             Assert.Equal(1, trackingSends.Count);
+        }
+
+        [Fact]
+        public void AbortAndRescheduleParcelException_CausesResend()
+        {
+            // arrange
+            var trackingSends = new List<Parcel>();
+            var senderConstructor = GetInMemorySender(trackingSends);
+
+            var tracker = A.Fake<IGetTrackingReports>();
+            HandlerToolShed.InitializeParcelTracking(() => tracker);
+            var topic = "topic";
+            A.CallTo(() => tracker.GetLatestCertifiedNotice(topic))
+                .Returns(new CertifiedNotice { DeliveredDateUtc = DateTime.UtcNow.Subtract(TimeSpan.FromDays(1)) });
+
+            var channel = new Channel { Name = "el-channel" };
+
+            var container = new Container();
+            container.Register<IHandleMessages<RescheduleIfNoNewCertifiedNoticesMessage>, RescheduleIfNoNewCertifiedNoticesMessageHandler>();
+
+            var message = new RescheduleIfNoNewCertifiedNoticesMessage
+                              {
+                                  Description = A.Dummy<string>(),
+                                  CheckStrategy = TopicCheckStrategy.Any,
+                                  TopicChecks =
+                                      new[]
+                                          { new TopicCheck { Topic = topic, RecentnessThreshold = TimeSpan.FromMinutes(1) } },
+                                  WaitTimeBeforeRescheduling = TimeSpan.FromSeconds(1)
+                              };
+
+            var parcel = new Parcel
+                             {
+                                 Envelopes =
+                                     new[]
+                                         {
+                                             new Envelope
+                                                 {
+                                                     Channel = channel,
+                                                     MessageType = message.GetType().ToTypeDescription(),
+                                                     MessageAsJson = Serializer.Serialize(message)
+                                                 }
+                                         }
+                             };
+
+            var dispatcher = new MessageDispatcher(
+                container,
+                new ConcurrentDictionary<Type, object>(),
+                new[] { channel },
+                TypeMatchStrategy.NamespaceAndName,
+                TimeSpan.FromSeconds(.5),
+                new HarnessStaticDetails(),
+                new NullParcelTrackingSystem(),
+                new InMemoryActiveMessageTracker(),
+                senderConstructor());
+
+            var trackingCode = new TrackingCode();
+
+            // act
+            dispatcher.Dispatch(trackingCode, "Name", parcel);
+
+            // assert
+            trackingSends.Should().Contain(parcel);
         }
 
         private static Func<IPostOffice> GetInMemorySender(List<Parcel> trackingSends)

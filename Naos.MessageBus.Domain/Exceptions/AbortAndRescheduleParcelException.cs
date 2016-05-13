@@ -32,5 +32,10 @@ namespace Naos.MessageBus.Domain.Exceptions
             : base(message, innerException)
         {
         }
+
+        /// <summary>
+        /// Gets the reason for aborting.
+        /// </summary>
+        public string Reason => this.Message;
     }
 }

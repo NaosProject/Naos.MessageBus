@@ -48,6 +48,13 @@ namespace Naos.MessageBus.Domain
         /// </summary>
         /// <param name="trackingCode">Tracking code of the parcel.</param>
         void Delivered(TrackingCode trackingCode);
+
+        /// <summary>
+        /// Delivery was aborted by the handler.
+        /// </summary>
+        /// <param name="trackingCode">Tracking code of the parcel.</param>
+        /// <param name="reason">Reason for aborting.</param>
+        void Abort(TrackingCode trackingCode, string reason);
     }
 
     /// <summary>
@@ -63,6 +70,12 @@ namespace Naos.MessageBus.Domain
 
         /// <inheritdoc />
         public void Delivered(TrackingCode trackingCode)
+        {
+            /* no-op */
+        }
+
+        /// <inheritdoc />
+        public void Abort(TrackingCode trackingCode, string reason)
         {
             /* no-op */
         }

@@ -86,6 +86,8 @@ namespace Naos.MessageBus.Core
             }
             catch (AbortAndRescheduleParcelException rescheduleParcelException)
             {
+                this.parcelTrackingSystem.Abort(trackingCode, rescheduleParcelException.Reason);
+
                 Log.Write("Rescheduling parcel; TrackingCode: " + trackingCode + ", Exception:" + rescheduleParcelException);
                 this.postOffice.Send(parcel);
                 this.parcelTrackingSystem.Addressed(trackingCode, parcel.Envelopes.First().Channel);
@@ -180,7 +182,7 @@ namespace Naos.MessageBus.Core
                     if (task.Status == TaskStatus.Faulted)
                     {
                         var exception = task.Exception ?? new AggregateException("No exception came back from task");
-                        throw exception;
+                        throw exception.InnerException ?? exception;
                     }
 
                     activity.Confirm(() => "Successfully handled message. Task ended with status: " + task.Status);

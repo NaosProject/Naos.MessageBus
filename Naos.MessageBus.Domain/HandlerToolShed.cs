@@ -9,8 +9,7 @@ namespace Naos.MessageBus.Domain
     using System;
 
     /// <summary>
-    /// Factory that can be seeded with an expression to build a sender, used as a shim to connect a sender from 
-    /// a harness to the handler if needed.
+    /// Factory that can be seeded in harness for use in the handlers if needed.
     /// </summary>
     public static class HandlerToolShed
     {
@@ -18,7 +17,7 @@ namespace Naos.MessageBus.Domain
         private static readonly object ParcelTrackingBuilderSync = new object();
 
         private static Func<IPostOffice> internalPostOfficeBuilder;
-        private static Func<IParcelTrackingSystem> internalParcelTrackingBuilder;
+        private static Func<IGetTrackingReports> internalParcelTrackingBuilder;
 
         /// <summary>
         /// Initializes an implementation of <see cref="IPostOffice"/> for use by a handler if needed (seeded by harness OR test code).
@@ -30,10 +29,10 @@ namespace Naos.MessageBus.Domain
         }
 
         /// <summary>
-        /// Initializes an implementation of <see cref="IParcelTrackingSystem"/> for use by a handler if needed (seeded by harness OR test code).
+        /// Initializes an implementation of <see cref="IGetTrackingReports"/> for use by a handler if needed (seeded by harness OR test code).
         /// </summary>
-        /// <param name="parcelTrackingBuilder">Function to get and implementation of <see cref="IParcelTrackingSystem"/>.</param>
-        public static void InitializeParcelTracking(Func<IParcelTrackingSystem> parcelTrackingBuilder)
+        /// <param name="parcelTrackingBuilder">Function to get and implementation of <see cref="IGetTrackingReports"/>.</param>
+        public static void InitializeParcelTracking(Func<IGetTrackingReports> parcelTrackingBuilder)
         {
             internalParcelTrackingBuilder = parcelTrackingBuilder;
         }

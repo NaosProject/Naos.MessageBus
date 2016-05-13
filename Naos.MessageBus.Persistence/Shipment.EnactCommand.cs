@@ -52,6 +52,15 @@ namespace Naos.MessageBus.Persistence
         }
 
         /// <summary>
+        /// Enact the <see cref="Abort"/> command.
+        /// </summary>
+        /// <param name="command">Command to enact on aggregate.</param>
+        public void EnactCommand(Abort command)
+        {
+            this.RecordEvent(new EnvelopeDeliveryAborted { TrackingCode = command.TrackingCode, NewStatus = ParcelStatus.Aborted, Reason = command.Reason });
+        }
+
+        /// <summary>
         /// Enact the <see cref="Reject"/> command.
         /// </summary>
         /// <param name="command">Command to enact on aggregate.</param>
