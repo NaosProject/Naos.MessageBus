@@ -114,7 +114,7 @@ namespace Naos.MessageBus.Persistence
 
         private void RunWithRetry(Action action)
         {
-            Policy.Handle<Exception>().WaitAndRetryAsync(this.retryCount, attempt => TimeSpan.FromSeconds(attempt * 5)).Execute(action);
+            Policy.Handle<Exception>().WaitAndRetry(this.retryCount, attempt => TimeSpan.FromSeconds(attempt * 5)).Execute(action);
         }
     }
 }
