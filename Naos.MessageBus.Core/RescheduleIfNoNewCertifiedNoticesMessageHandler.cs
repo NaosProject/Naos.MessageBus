@@ -24,6 +24,17 @@ namespace Naos.MessageBus.Core
         {
             var tracker = HandlerToolShed.GetParcelTracker();
 
+            await this.HandleAsync(message, tracker);
+        }
+
+        /// <summary>
+        /// Handle <see cref="RescheduleIfNoNewCertifiedNoticesMessage"/> message.
+        /// </summary>
+        /// <param name="message">Message to handle.</param>
+        /// <param name="tracker">Tracker to get certified notices.</param>
+        /// <returns>Task for async.</returns>
+        public async Task HandleAsync(RescheduleIfNoNewCertifiedNoticesMessage message, IGetTrackingReports tracker)
+        {
             var topicRecentResults = message.TopicChecks.ToDictionary(
                 key => key.Topic,
                 val =>
