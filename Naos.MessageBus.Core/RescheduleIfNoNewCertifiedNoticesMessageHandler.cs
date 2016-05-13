@@ -39,7 +39,9 @@ namespace Naos.MessageBus.Core
                 key => key.Topic,
                 val =>
                     {
-                        var latest = tracker.GetLatestCertifiedNotice(val.Topic);
+                        var latestCertifiedNoticeTask = tracker.GetLatestCertifiedNotice(val.Topic);
+                        latestCertifiedNoticeTask.Wait();
+                        var latest = latestCertifiedNoticeTask.Result;
                         var isRecent = DateTime.UtcNow.Subtract(latest.DeliveredDateUtc) <= val.RecentnessThreshold;
                         return isRecent;
                     });

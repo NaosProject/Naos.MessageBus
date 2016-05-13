@@ -9,11 +9,14 @@ namespace Naos.MessageBus.Persistence
     using System;
     using System.Collections.Generic;
     using System.Linq;
+    using System.Threading.Tasks;
 
     using Microsoft.Its.Domain;
     using Microsoft.Its.Domain.Sql;
 
     using Naos.MessageBus.Domain;
+
+    using Polly;
 
     /// <summary>
     /// Implementation of the <see cref="IParcelTrackingSystem"/> using Its.CQRS.
@@ -22,6 +25,8 @@ namespace Naos.MessageBus.Persistence
     {
         private readonly string readModelConnectionString;
 
+        private readonly int retryCount;
+
         private readonly Configuration configuration;
 
         /// <summary>
@@ -29,9 +34,11 @@ namespace Naos.MessageBus.Persistence
         /// </summary>
         /// <param name="eventConnectionString">Connection string to the event persistence.</param>
         /// <param name="readModelConnectionString">Connection string to the read model persistence.</param>
-        public ParcelTrackingSystem(string eventConnectionString, string readModelConnectionString)
+        /// <param name="retryCount">Number of retries to perform if error encountered (default is 5).</param>
+        public ParcelTrackingSystem(string eventConnectionString, string readModelConnectionString, int retryCount = 5)
         {
             this.readModelConnectionString = readModelConnectionString;
+            this.retryCount = retryCount;
 
             // create methods to get a new event and command database (used for initialization/migration and dependencies of the persistence layer)
             Func<EventStoreDbContext> createEventStoreDbContext = () => new EventStoreDbContext(eventConnectionString);
@@ -67,10 +74,10 @@ namespace Naos.MessageBus.Persistence
         }
 
         /// <inheritdoc />
-        public void Sent(TrackingCode trackingCode, Parcel parcel, IReadOnlyDictionary<string, string> metadata)
+        public async Task Sent(TrackingCode trackingCode, Parcel parcel, IReadOnlyDictionary<string, string> metadata)
         {
             // shipment may already exist and this is just another envelope to deal with...
-            var shipment = this.FetchShipment(trackingCode);
+            var shipment = await this.FetchShipmentAsync(trackingCode);
             if (shipment == null)
             {
                 var commandCreate = new Create { AggregateId = parcel.Id, Parcel = parcel, CreationMetadata = metadata };
@@ -79,104 +86,127 @@ namespace Naos.MessageBus.Persistence
 
             var command = new Send { TrackingCode = trackingCode };
             shipment.EnactCommand(command);
-            this.SaveShipment(shipment);
+            await this.SaveShipmentAsync(shipment);
         }
 
         /// <inheritdoc />
-        public void Addressed(TrackingCode trackingCode, Channel assignedChannel)
+        public async Task Addressed(TrackingCode trackingCode, Channel assignedChannel)
         {
-            var shipment = this.FetchShipment(trackingCode);
+            var shipment = await this.FetchShipmentAsync(trackingCode);
 
             var command = new UpdateAddress { TrackingCode = trackingCode, Address = assignedChannel };
             shipment.EnactCommand(command);
 
-            this.SaveShipment(shipment);
+            await this.SaveShipmentAsync(shipment);
         }
 
         /// <inheritdoc />
-        public void Attempting(TrackingCode trackingCode, HarnessDetails harnessDetails)
+        public async Task Attempting(TrackingCode trackingCode, HarnessDetails harnessDetails)
         {
-            var shipment = this.FetchShipment(trackingCode);
+            var shipment = await this.FetchShipmentAsync(trackingCode);
 
             var command = new Attempt { TrackingCode = trackingCode, Recipient = harnessDetails };
             shipment.EnactCommand(command);
 
-            this.SaveShipment(shipment);
+            await this.SaveShipmentAsync(shipment);
         }
 
         /// <inheritdoc />
-        public void Rejected(TrackingCode trackingCode, Exception exception)
+        public async Task Rejected(TrackingCode trackingCode, Exception exception)
         {
-            var shipment = this.FetchShipment(trackingCode);
+            var shipment = await this.FetchShipmentAsync(trackingCode);
 
             var command = new Reject { TrackingCode = trackingCode, Exception = exception };
             shipment.EnactCommand(command);
 
-            this.SaveShipment(shipment);
+            await this.SaveShipmentAsync(shipment);
         }
 
         /// <inheritdoc />
-        public void Delivered(TrackingCode trackingCode)
+        public async Task Delivered(TrackingCode trackingCode)
         {
-            var shipment = this.FetchShipment(trackingCode);
+            var shipment = await this.FetchShipmentAsync(trackingCode);
 
             var command = new Deliver { TrackingCode = trackingCode };
             shipment.EnactCommand(command);
 
-            this.SaveShipment(shipment);
+            await this.SaveShipmentAsync(shipment);
         }
 
         /// <inheritdoc />
-        public void Abort(TrackingCode trackingCode, string reason)
+        public async Task Abort(TrackingCode trackingCode, string reason)
         {
-            var shipment = this.FetchShipment(trackingCode);
+            var shipment = await this.FetchShipmentAsync(trackingCode);
 
             var command = new Abort { TrackingCode = trackingCode };
             shipment.EnactCommand(command);
 
-            this.SaveShipment(shipment);
+            await this.SaveShipmentAsync(shipment);
         }
 
-        private Shipment FetchShipment(TrackingCode trackingCode)
+        private async Task<Shipment> FetchShipmentAsync(TrackingCode trackingCode)
         {
-            var shipmentTask = this.configuration.Repository<Shipment>().GetLatest(trackingCode.ParcelId);
-            shipmentTask.Wait();
-            var shipment = shipmentTask.Result;
+            var shipment = await this.RunWithRetryAsync(() => this.configuration.Repository<Shipment>().GetLatest(trackingCode.ParcelId));
             return shipment;
         }
 
-        private void SaveShipment(Shipment shipment)
+        private async Task SaveShipmentAsync(Shipment shipment)
         {
-            this.configuration.Repository<Shipment>().Save(shipment).Wait();
+            await this.RunWithRetryAsync(() => this.configuration.Repository<Shipment>().Save(shipment));
         }
 
         /// <inheritdoc />
-        public IReadOnlyCollection<ParcelTrackingReport> GetTrackingReport(IReadOnlyCollection<TrackingCode> trackingCodes)
+        public async Task<IReadOnlyCollection<ParcelTrackingReport>> GetTrackingReport(IReadOnlyCollection<TrackingCode> trackingCodes)
         {
-            using (var db = new TrackedShipmentDbContext(this.readModelConnectionString))
-            {
-                var parcelIds = trackingCodes.Select(_ => _.ParcelId).Distinct().ToList();
-                return db.Shipments.Where(_ => parcelIds.Contains(_.ParcelId)).ToList();
-            }
+            return await this.RunWithRetryAsync(
+                () =>
+                    {
+                        using (var db = new TrackedShipmentDbContext(this.readModelConnectionString))
+                        {
+                            var parcelIds = trackingCodes.Select(_ => _.ParcelId).Distinct().ToList();
+                            return Task.FromResult(db.Shipments.Where(_ => parcelIds.Contains(_.ParcelId)).ToList());
+                        }
+                    });
         }
 
         /// <inheritdoc />
-        public CertifiedNotice GetLatestCertifiedNotice(string topic)
+        public async Task<CertifiedNotice> GetLatestCertifiedNotice(string topic)
         {
-            using (var db = new TrackedShipmentDbContext(this.readModelConnectionString))
-            {
-                var noticesForTopic = db.CertifiedNotices.Where(_ => _.Topic == topic).OrderBy(_ => _.DeliveredDateUtc).ToList();
-                if (noticesForTopic.Count == 0)
-                {
-                    return new CertifiedNotice { Notices = new List<Notice>() };
-                }
-                else
-                {
-                    var certifiedNotice = noticesForTopic.Last();
-                    var message = Serializer.Deserialize<CertifiedNoticeMessage>(certifiedNotice.Envelope.MessageAsJson);
-                    return new CertifiedNotice { Topic = certifiedNotice.Topic, DeliveredDateUtc = certifiedNotice.DeliveredDateUtc, Notices = message.Notices };
-                }
-            }
+            return await this.RunWithRetryAsync(
+                () =>
+                    {
+                        using (var db = new TrackedShipmentDbContext(this.readModelConnectionString))
+                        {
+                            var noticesForTopic = db.CertifiedNotices.Where(_ => _.Topic == topic).OrderBy(_ => _.DeliveredDateUtc).ToList();
+                            if (noticesForTopic.Count == 0)
+                            {
+                                return Task.FromResult(new CertifiedNotice { Notices = new List<Notice>() });
+                            }
+                            else
+                            {
+                                var certifiedNotice = noticesForTopic.Last();
+                                var message = Serializer.Deserialize<CertifiedNoticeMessage>(certifiedNotice.Envelope.MessageAsJson);
+                                return
+                                    Task.FromResult(
+                                        new CertifiedNotice
+                                            {
+                                                Topic = certifiedNotice.Topic,
+                                                DeliveredDateUtc = certifiedNotice.DeliveredDateUtc,
+                                                Notices = message.Notices
+                                            });
+                            }
+                        }
+                    });
+        }
+
+        private async Task<T> RunWithRetryAsync<T>(Func<Task<T>> func)
+        {
+            return await Policy.Handle<Exception>().WaitAndRetryAsync(this.retryCount, attempt => TimeSpan.FromSeconds(attempt * 5)).ExecuteAsync(func);
+        }
+
+        private async Task RunWithRetryAsync(Func<Task> func)
+        {
+            await Policy.Handle<Exception>().WaitAndRetryAsync(this.retryCount, attempt => TimeSpan.FromSeconds(attempt * 5)).ExecuteAsync(func);
         }
     }
 }

@@ -6,7 +6,6 @@
 
 namespace Naos.MessageBus.Core
 {
-    using System;
     using System.Linq;
     using System.Threading;
     using System.Threading.Tasks;
@@ -27,7 +26,7 @@ namespace Naos.MessageBus.Core
                 Thread.Sleep(message.WaitTimeBetweenChecks);
                 var expected = message.AllowedStatuses.OrderBy(_ => _).ToArray();
 
-                var reports = HandlerToolShed.GetParcelTracker().GetTrackingReport(message.TrackingCodes);
+                var reports = await HandlerToolShed.GetParcelTracker().GetTrackingReport(message.TrackingCodes);
                 var actual = reports.Select(_ => _.Status).Distinct().OrderBy(_ => _).ToArray();
 
                 allStatusesAreAcceptable = expected.SequenceEqual(actual);

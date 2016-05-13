@@ -6,87 +6,115 @@
 
 namespace Naos.MessageBus.Persistence
 {
+    using System;
     using System.Data.Entity.Migrations;
     using System.Linq;
+    using System.Threading.Tasks;
 
     using Microsoft.Its.Domain;
 
     using Naos.MessageBus.Domain;
 
+    using Polly;
+
     /// <summary>
     /// Handler to keep TrackedShipment read model updated as events come in.
     /// </summary>
-    public class UpdateTrackedShipment : 
-        IUpdateProjectionWhen<Shipment.Created>,
-        IUpdateProjectionWhen<Shipment.EnvelopeDeliveryRejected>,
-        IUpdateProjectionWhen<Shipment.ParcelDelivered>,
-        IUpdateProjectionWhen<Shipment.CertifiedEnvelopeDelivered>
+    public class UpdateTrackedShipment : IUpdateProjectionWhen<Shipment.Created>,
+                                         IUpdateProjectionWhen<Shipment.EnvelopeDeliveryRejected>,
+                                         IUpdateProjectionWhen<Shipment.ParcelDelivered>,
+                                         IUpdateProjectionWhen<Shipment.CertifiedEnvelopeDelivered>
     {
         private readonly string connectionString;
+
+        private readonly int retryCount;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="UpdateTrackedShipment"/> class.
         /// </summary>
         /// <param name="connectionString">Connection string to the read model database.</param>
-        public UpdateTrackedShipment(string connectionString)
+        /// <param name="retryCount">Number of retries to attempt if error encountered (default if 5).</param>
+        public UpdateTrackedShipment(string connectionString, int retryCount = 5)
         {
             this.connectionString = connectionString;
+            this.retryCount = retryCount;
         }
 
         /// <inheritdoc />
         public void UpdateProjection(Shipment.Created @event)
         {
-            using (var db = new TrackedShipmentDbContext(this.connectionString))
-            {
-                var entry = new ParcelTrackingReport { ParcelId = @event.Parcel.Id };
-                db.Shipments.AddOrUpdate(entry);
-                db.SaveChanges();
-            }
+            this.RunWithRetry(
+                () =>
+                    {
+                        using (var db = new TrackedShipmentDbContext(this.connectionString))
+                        {
+                            var entry = new ParcelTrackingReport { ParcelId = @event.Parcel.Id };
+                            db.Shipments.AddOrUpdate(entry);
+                            db.SaveChanges();
+                        }
+                    });
         }
 
         /// <inheritdoc />
         public void UpdateProjection(Shipment.EnvelopeDeliveryRejected @event)
         {
-            using (var db = new TrackedShipmentDbContext(this.connectionString))
-            {
-                // any failure will stop the rest of the parcel
-                var entry = db.Shipments.Single(_ => _.ParcelId == @event.AggregateId);
-                entry.Status = @event.NewStatus;
-                db.SaveChanges();
-            }
+            this.RunWithRetry(
+                () =>
+                    {
+                        using (var db = new TrackedShipmentDbContext(this.connectionString))
+                        {
+                            // any failure will stop the rest of the parcel
+                            var entry = db.Shipments.Single(_ => _.ParcelId == @event.AggregateId);
+                            entry.Status = @event.NewStatus;
+                            db.SaveChanges();
+                        }
+                    });
         }
 
         /// <inheritdoc />
         public void UpdateProjection(Shipment.ParcelDelivered @event)
         {
-            using (var db = new TrackedShipmentDbContext(this.connectionString))
-            {
-                var entry = db.Shipments.Single(_ => _.ParcelId == @event.AggregateId);
-                entry.Status = @event.NewStatus;
-                db.SaveChanges();
-            }
+            this.RunWithRetry(
+                () =>
+                    {
+                        using (var db = new TrackedShipmentDbContext(this.connectionString))
+                        {
+                            var entry = db.Shipments.Single(_ => _.ParcelId == @event.AggregateId);
+                            entry.Status = @event.NewStatus;
+                            db.SaveChanges();
+                        }
+                    });
         }
 
         /// <inheritdoc />
         public void UpdateProjection(Shipment.CertifiedEnvelopeDelivered @event)
         {
-            using (var db = new TrackedShipmentDbContext(this.connectionString))
-            {
-                var entry = new CertifiedNoticeForDatabase
-                                {
-                                    Topic = @event.Topic,
-                                    Envelope = @event.Envelope,
-                                    DeliveredDateUtc = @event.Timestamp.UtcDateTime
-                                };
+            this.RunWithRetry(
+                () =>
+                    {
+                        using (var db = new TrackedShipmentDbContext(this.connectionString))
+                        {
+                            var entry = new CertifiedNoticeForDatabase
+                                            {
+                                                Topic = @event.Topic,
+                                                Envelope = @event.Envelope,
+                                                DeliveredDateUtc = @event.Timestamp.UtcDateTime
+                                            };
 
-                if (entry.Envelope != null)
-                {
-                    db.Envelopes.Add(entry.Envelope);
-                }
+                            if (entry.Envelope != null)
+                            {
+                                db.Envelopes.Add(entry.Envelope);
+                            }
 
-                db.CertifiedNotices.Add(entry);
-                db.SaveChanges();
-            }
+                            db.CertifiedNotices.Add(entry);
+                            db.SaveChanges();
+                        }
+                    });
+        }
+
+        private void RunWithRetry(Action action)
+        {
+            Policy.Handle<Exception>().WaitAndRetryAsync(this.retryCount, attempt => TimeSpan.FromSeconds(attempt * 5)).Execute(action);
         }
     }
 }
