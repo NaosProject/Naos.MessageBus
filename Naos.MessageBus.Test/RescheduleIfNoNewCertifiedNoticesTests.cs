@@ -178,7 +178,7 @@ namespace Naos.MessageBus.Test
 
             var certifiedData = topics.Where(_ => _ != succeedingOne).ToDictionary(
                 key => key,
-                val => new CertifiedNotice { Topic = val, DeliveredDateUtc = DateTime.UtcNow.Subtract(recentness.Add(TimeSpan.FromSeconds(10))) });
+                val => new CertifiedNotice { Topic = val, DeliveredDateUtc = DateTime.UtcNow.Subtract(recentness.Add(TimeSpan.FromSeconds(30))) });
 
             certifiedData.Add(succeedingOne, new CertifiedNotice { DeliveredDateUtc = DateTime.UtcNow.Subtract(recentness), Topic = succeedingOne });
 
