@@ -22,7 +22,7 @@ namespace Naos.MessageBus.Test
 
     public class TrackingSystemTests
     {
-        [Fact(Skip = "Debug test designed to run while connected through VPN.")]
+        [Fact(Skip = "Debug test designed to run against persistence.")]
         public async Task Do()
         {
             var messages = new List<LogEntry>();

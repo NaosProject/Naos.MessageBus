@@ -62,7 +62,7 @@
     <Compile Include=".Spritely.Recipes\SecureString.cs" />
     <Compile Include=".Spritely.Recipes\SecureStringJsonConverter.cs" />
     <Compile Include="CertifiedNotice.cs" />
-    <Compile Include="ShareNowAsExpirationMessage.cs" />
+    <Compile Include="ShareNowPlusTimeAsExpirationMessage.cs" />
     <Compile Include="CertifiedNoticeMessage.cs" />
     <Compile Include="Channel.cs" />
     <Compile Include="ChanneledMessage.cs" />

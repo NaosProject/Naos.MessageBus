@@ -82,7 +82,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="ShareNowAsExpirationMessageHandler.cs" />
+    <Compile Include="ShareNowPlusTimeAsExpirationMessageHandler.cs" />
     <Compile Include="ShareTrackingCodesMessageHandler.cs" />
     <Compile Include="WaitForTrackingCodesMessageHandler.cs" />
     <Compile Include="RescheduleIfNoNewCertifiedNoticesMessageHandler.cs" />

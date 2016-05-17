@@ -1,5 +1,5 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="ShareNowAsExpirationMessageHandler.cs" company="Naos">
+// <copyright file="ShareNowPlusTimeAsExpirationMessageHandler.cs" company="Naos">
 //   Copyright 2015 Naos
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
@@ -14,12 +14,12 @@ namespace Naos.MessageBus.Core
     /// <summary>
     /// No implementation handler to handle NullMessages.
     /// </summary>
-    public class ShareNowAsExpirationMessageHandler : IHandleMessages<ShareNowAsExpirationMessage>, IShareExpirationDate
+    public class ShareNowPlusTimeAsExpirationMessageHandler : IHandleMessages<ShareNowPlusTimeAsExpirationMessage>, IShareExpirationDate
     {
         /// <inheritdoc />
-        public async Task HandleAsync(ShareNowAsExpirationMessage message)
+        public async Task HandleAsync(ShareNowPlusTimeAsExpirationMessage message)
         {
-            this.ExpirationDateTimeUtc = DateTime.UtcNow;
+            this.ExpirationDateTimeUtc = DateTime.UtcNow.Add(message.TimeToAdd);
 
             await Task.FromResult<object>(null);
         }
