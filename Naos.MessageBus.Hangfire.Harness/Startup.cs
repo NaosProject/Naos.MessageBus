@@ -47,7 +47,7 @@ namespace Naos.MessageBus.Hangfire.Harness
             if (hostRoleSettings != null)
             {
                 GlobalConfiguration.Configuration.UseSqlServerStorage(
-                    messageBusHandlerSettings.ConnectionConfiguration.CourierConnectionString,
+                    messageBusHandlerSettings.ConnectionConfiguration.CourierPersistenceConnectionConfiguration.ToSqlServerConnectionString(),
                     new SqlServerStorageOptions());
 
                 // need one worker here to run the default queue (currently only intended to process NullMessages or requeue messages...)

@@ -54,8 +54,8 @@ namespace Naos.MessageBus.Hangfire.Console
             {
                 var activeMessageTracker = new InMemoryActiveMessageTracker();
 
-                var parcelTrackingSystem = new ParcelTrackingSystem(messageBusHandlerSettings.ConnectionConfiguration.ParcelTrackingEventsConnectionString, messageBusHandlerSettings.ConnectionConfiguration.ParcelTrackingReadModelConnectionString);
-                var courier = new HangfireCourier(parcelTrackingSystem, messageBusHandlerSettings.ConnectionConfiguration.CourierConnectionString);
+                var parcelTrackingSystem = new ParcelTrackingSystem(messageBusHandlerSettings.ConnectionConfiguration.EventPersistenceConnectionConfiguration, messageBusHandlerSettings.ConnectionConfiguration.ReadModelPersistenceConnectionConfiguration);
+                var courier = new HangfireCourier(parcelTrackingSystem, messageBusHandlerSettings.ConnectionConfiguration.CourierPersistenceConnectionConfiguration);
                 var postOffice = new PostOffice(courier);
 
                 HandlerToolShed.InitializePostOffice(() => postOffice);
@@ -82,7 +82,7 @@ namespace Naos.MessageBus.Hangfire.Console
                 };
 
                 GlobalConfiguration.Configuration.UseSqlServerStorage(
-                    messageBusHandlerSettings.ConnectionConfiguration.CourierConnectionString,
+                    messageBusHandlerSettings.ConnectionConfiguration.CourierPersistenceConnectionConfiguration.ToSqlServerConnectionString(),
                     new SqlServerStorageOptions());
 
                 var timeToLive = executorRoleSettings.HarnessProcessTimeToLive;

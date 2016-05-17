@@ -70,8 +70,8 @@ namespace Naos.MessageBus.Hangfire.Harness
         {
             var activeMessageTracker = new InMemoryActiveMessageTracker();
 
-            var parcelTrackingSystem = new ParcelTrackingSystem(connectionConfig.ParcelTrackingEventsConnectionString, connectionConfig.ParcelTrackingReadModelConnectionString);
-            var courier = new HangfireCourier(parcelTrackingSystem, connectionConfig.CourierConnectionString);
+            var parcelTrackingSystem = new ParcelTrackingSystem(connectionConfig.EventPersistenceConnectionConfiguration, connectionConfig.ReadModelPersistenceConnectionConfiguration);
+            var courier = new HangfireCourier(parcelTrackingSystem, connectionConfig.CourierPersistenceConnectionConfiguration);
             var postOffice = new PostOffice(courier);
 
             HandlerToolShed.InitializePostOffice(() => postOffice);
@@ -98,7 +98,7 @@ namespace Naos.MessageBus.Hangfire.Harness
                               };
 
             GlobalConfiguration.Configuration.UseSqlServerStorage(
-                connectionConfig.CourierConnectionString,
+                connectionConfig.CourierPersistenceConnectionConfiguration.ToSqlServerConnectionString(),
                 new SqlServerStorageOptions());
 
             this.backgroundJobServer = new BackgroundJobServer(options);

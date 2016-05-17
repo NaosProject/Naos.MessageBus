@@ -28,20 +28,37 @@ namespace Naos.MessageBus.Test
             var messages = new List<LogEntry>();
             Log.EntryPosted += (sender, args) => messages.Add(args.LogEntry);
 
-            var eventConnectionString = @"Data Source=(local)\SQLExpress; Integrated Security=True; MultipleActiveResultSets=False; Initial Catalog=ParcelTrackingEvents";
-            var readConnectionString = @"Data Source=(local)\SQLExpress; Integrated Security=True; MultipleActiveResultSets=False; Initial Catalog=ParcelTrackingReadModel";
+            var eventConnectionConfiguration = new EventPersistenceConnectionConfiguration
+                {
+                    Server = "(local)\\SQLExpress",
+                    Database = "ParcelTrackingEvents",
+                };
+
+            var readModelConnectionConfiguration = new ReadModelPersistenceConnectionConfiguration
+                {
+                    Server = "(local)\\SQLExpress",
+                    Database = "ParcelTrackingReadModel",
+                };
 
             var certifiedKey = Guid.NewGuid().ToString().ToUpperInvariant().Substring(0, 5);
             var parcel = this.GetParcel(certifiedKey);
 
             var trackingCode = new TrackingCode { ParcelId = parcel.Id, EnvelopeId = parcel.Envelopes.First().Id };
-            var parcelTrackingSystem = new ParcelTrackingSystem(eventConnectionString, readConnectionString);
+            var parcelTrackingSystem = new ParcelTrackingSystem(eventConnectionConfiguration, readModelConnectionConfiguration);
 
             await parcelTrackingSystem.Sent(trackingCode, parcel, new Dictionary<string, string>());
             (await parcelTrackingSystem.GetTrackingReport(new[] { trackingCode })).Single().Status.Should().Be(ParcelStatus.Unknown);
             (await parcelTrackingSystem.GetLatestCertifiedNotice(certifiedKey)).Notices.Count.Should().Be(0);
 
             await parcelTrackingSystem.Addressed(trackingCode, parcel.Envelopes.First().Channel);
+            (await parcelTrackingSystem.GetTrackingReport(new[] { trackingCode })).Single().Status.Should().Be(ParcelStatus.Unknown);
+            (await parcelTrackingSystem.GetLatestCertifiedNotice(certifiedKey)).Notices.Count.Should().Be(0);
+
+            await parcelTrackingSystem.Attempting(trackingCode, new HarnessDetails());
+            (await parcelTrackingSystem.GetTrackingReport(new[] { trackingCode })).Single().Status.Should().Be(ParcelStatus.Unknown);
+            (await parcelTrackingSystem.GetLatestCertifiedNotice(certifiedKey)).Notices.Count.Should().Be(0);
+
+            await parcelTrackingSystem.Abort(trackingCode, "Try another day");
             (await parcelTrackingSystem.GetTrackingReport(new[] { trackingCode })).Single().Status.Should().Be(ParcelStatus.Unknown);
             (await parcelTrackingSystem.GetLatestCertifiedNotice(certifiedKey)).Notices.Count.Should().Be(0);
 
@@ -73,6 +90,8 @@ namespace Naos.MessageBus.Test
             await parcelTrackingSystem.Delivered(trackingCode2);
             (await parcelTrackingSystem.GetTrackingReport(new[] { trackingCode2 })).Single().Status.Should().Be(ParcelStatus.Delivered);
             (await parcelTrackingSystem.GetLatestCertifiedNotice(certifiedKey)).Notices.Count.Should().Be(1);
+
+            messages.Count.Should().Be(0);
         }
 
         private Parcel GetParcel(string topic)

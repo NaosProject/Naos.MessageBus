@@ -8,8 +8,11 @@ namespace Naos.MessageBus.Persistence
 {
     using System;
     using System.Collections.Generic;
+    using System.Diagnostics;
     using System.Linq;
     using System.Threading.Tasks;
+
+    using Its.Log.Instrumentation;
 
     using Microsoft.Its.Domain;
     using Microsoft.Its.Domain.Sql;
@@ -23,7 +26,7 @@ namespace Naos.MessageBus.Persistence
     /// </summary>
     public class ParcelTrackingSystem : IParcelTrackingSystem
     {
-        private readonly string readModelConnectionString;
+        private readonly ReadModelPersistenceConnectionConfiguration readModelPersistenceConnectionConfiguration;
 
         private readonly int retryCount;
 
@@ -32,16 +35,17 @@ namespace Naos.MessageBus.Persistence
         /// <summary>
         /// Initializes a new instance of the <see cref="ParcelTrackingSystem"/> class.
         /// </summary>
-        /// <param name="eventConnectionString">Connection string to the event persistence.</param>
-        /// <param name="readModelConnectionString">Connection string to the read model persistence.</param>
+        /// <param name="eventPersistenceConnectionConfiguration">Connection string to the event persistence.</param>
+        /// <param name="readModelPersistenceConnectionConfiguration">Connection string to the read model persistence.</param>
         /// <param name="retryCount">Number of retries to perform if error encountered (default is 5).</param>
-        public ParcelTrackingSystem(string eventConnectionString, string readModelConnectionString, int retryCount = 5)
+        public ParcelTrackingSystem(EventPersistenceConnectionConfiguration eventPersistenceConnectionConfiguration, ReadModelPersistenceConnectionConfiguration readModelPersistenceConnectionConfiguration, int retryCount = 5)
         {
-            this.readModelConnectionString = readModelConnectionString;
+            this.readModelPersistenceConnectionConfiguration = readModelPersistenceConnectionConfiguration;
             this.retryCount = retryCount;
 
             // create methods to get a new event and command database (used for initialization/migration and dependencies of the persistence layer)
-            Func<EventStoreDbContext> createEventStoreDbContext = () => new EventStoreDbContext(eventConnectionString);
+            Func<EventStoreDbContext> createEventStoreDbContext =
+                () => new EventStoreDbContext(eventPersistenceConnectionConfiguration.ToSqlServerConnectionString());
 
             // run the migration if necessary (this will create the database if missing - DO NOT CREATE THE DATABASE FIRST, it will fail to initialize)
             using (var context = createEventStoreDbContext())
@@ -53,10 +57,12 @@ namespace Naos.MessageBus.Persistence
             var eventBus = new InProcessEventBus();
 
             // update handler to synchronously process updates to read models (using the IUpdateProjectionWhen<TEvent> interface)
-            var updateTrackedShipment = new UpdateTrackedShipment(this.readModelConnectionString);
+            var updateTrackedShipment = new UpdateTrackedShipment(this.readModelPersistenceConnectionConfiguration);
 
             // subscribe handler to bus to get updates
             eventBus.Subscribe(updateTrackedShipment);
+            eventBus.Errors.Subscribe(
+                e => Log.Write(new LogEntry(e.ToString(), e) { EventType = e.Exception != null ? TraceEventType.Error : TraceEventType.Information }));
 
             // create a new event sourced repository to seed the config DI with for commands to interact with
             IEventSourcedRepository<Shipment> eventSourcedRepository = new SqlEventSourcedRepository<Shipment>(eventBus, createEventStoreDbContext);
@@ -161,7 +167,7 @@ namespace Naos.MessageBus.Persistence
             return await this.RunWithRetryAsync(
                 () =>
                     {
-                        using (var db = new TrackedShipmentDbContext(this.readModelConnectionString))
+                        using (var db = new TrackedShipmentDbContext(this.readModelPersistenceConnectionConfiguration.ToSqlServerConnectionString()))
                         {
                             var parcelIds = trackingCodes.Select(_ => _.ParcelId).Distinct().ToList();
                             return Task.FromResult(db.Shipments.Where(_ => parcelIds.Contains(_.ParcelId)).ToList());
@@ -175,7 +181,7 @@ namespace Naos.MessageBus.Persistence
             return await this.RunWithRetryAsync(
                 () =>
                     {
-                        using (var db = new TrackedShipmentDbContext(this.readModelConnectionString))
+                        using (var db = new TrackedShipmentDbContext(this.readModelPersistenceConnectionConfiguration.ToSqlServerConnectionString()))
                         {
                             var noticesForTopic = db.CertifiedNotices.Where(_ => _.Topic == topic).OrderBy(_ => _.DeliveredDateUtc).ToList();
                             if (noticesForTopic.Count == 0)

@@ -26,23 +26,23 @@ namespace Naos.MessageBus.Hangfire.Sender
 
         private readonly IParcelTrackingSystem parcelTrackingSystem;
 
-        private readonly string hangfireConnectionString;
+        private readonly CourierPersistenceConnectionConfiguration courierPersistenceConnectionConfiguration;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="HangfireCourier"/> class.
         /// </summary>
         /// <param name="parcelTrackingSystem">System to track parcels.</param>
-        /// <param name="hangfireConnectionString">Hangfire persistence connection string.</param>
-        public HangfireCourier(IParcelTrackingSystem parcelTrackingSystem, string hangfireConnectionString)
+        /// <param name="courierPersistenceConnectionConfiguration">Hangfire persistence connection string.</param>
+        public HangfireCourier(IParcelTrackingSystem parcelTrackingSystem, CourierPersistenceConnectionConfiguration courierPersistenceConnectionConfiguration)
         {
             this.parcelTrackingSystem = parcelTrackingSystem;
-            this.hangfireConnectionString = hangfireConnectionString;
+            this.courierPersistenceConnectionConfiguration = courierPersistenceConnectionConfiguration;
         }
 
         /// <inheritdoc />
         public void Send(Crate crate)
         {
-            GlobalConfiguration.Configuration.UseSqlServerStorage(this.hangfireConnectionString);
+            GlobalConfiguration.Configuration.UseSqlServerStorage(this.courierPersistenceConnectionConfiguration.ToSqlServerConnectionString());
             var parcel = crate.Parcel;
 
             var wasAddressed = crate.Address != null;

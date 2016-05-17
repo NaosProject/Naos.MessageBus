@@ -34,5 +34,10 @@ namespace Naos.MessageBus.Persistence
         /// Gets or sets the envelope.
         /// </summary>
         public virtual Envelope Envelope { get; set; }
+
+        /// <summary>
+        /// Gets or sets the date time (in UTC) it was last updated.
+        /// </summary>
+        public DateTime LastUpdatedUtc { get; set; }
     }
 }

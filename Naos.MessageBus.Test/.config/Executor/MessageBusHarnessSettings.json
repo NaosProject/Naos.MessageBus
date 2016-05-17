@@ -1,8 +1,27 @@
 ﻿{
+    // Server = "server1", Database = "db", Credentials = new Credentials { User = "user", Password = "password".ToSecureString() } }
     "connectionConfiguration": {
-        "courierConnectionString": "server=localhost1",
-        "parcelTrackingEventsConnectionString": "server=localhost2",
-        "parcelTrackingReadModelConnectionString": "server=localhost3",
+        "courierPersistenceConnectionConfiguration": {
+            "server": "server1",
+            "credentials": {
+                "user": "user",
+                "password": "password"
+            }
+        },
+        "eventPersistenceConnectionConfiguration": {
+            "server": "server2",
+            "credentials": {
+                "user": "user",
+                "password": "password"
+            }
+        },
+        "readModelPersistenceConnectionConfiguration": {
+            "server": "server3",
+            "credentials": {
+                "user": "user",
+                "password": "password"
+            }
+        }
     },
     "roleSettings": [
         {

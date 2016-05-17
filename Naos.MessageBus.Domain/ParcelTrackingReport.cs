@@ -22,5 +22,10 @@ namespace Naos.MessageBus.Domain
         /// Gets or sets the status of the parcel.
         /// </summary>
         public ParcelStatus Status { get; set; }
+
+        /// <summary>
+        /// Gets or sets the date time (in UTC) it was last updated.
+        /// </summary>
+        public DateTime LastUpdatedUtc { get; set; }
     }
 }

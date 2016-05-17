@@ -13,6 +13,8 @@ namespace Naos.MessageBus.Test
 
     using Naos.MessageBus.Domain;
 
+    using Spritely.Recipes;
+
     using Xunit;
 
     public class TestItsConfigMessageBusHandlerSettings
@@ -23,9 +25,17 @@ namespace Naos.MessageBus.Test
             var settings = SetupItsConfigAndGetSettingsByPrecedence("Host");
 
             Assert.NotNull(settings);
-            Assert.Equal("server=localhost1", settings.ConnectionConfiguration.CourierConnectionString);
-            Assert.Equal("server=localhost2", settings.ConnectionConfiguration.ParcelTrackingEventsConnectionString);
-            Assert.Equal("server=localhost3", settings.ConnectionConfiguration.ParcelTrackingReadModelConnectionString);
+            var expectedConnectionConfiguration = new MessageBusConnectionConfiguration
+                                                      {
+                                                          CourierPersistenceConnectionConfiguration = new CourierPersistenceConnectionConfiguration { Server = "server1", Database = "db", Credentials = new Credentials { User = "user", Password = "password".ToSecureString() } },
+                                                          EventPersistenceConnectionConfiguration = new EventPersistenceConnectionConfiguration { Server = "server2", Database = "db", Credentials = new Credentials { User = "user", Password = "password".ToSecureString() } },
+                                                          ReadModelPersistenceConnectionConfiguration = new ReadModelPersistenceConnectionConfiguration { Server = "server3", Database = "db", Credentials = new Credentials { User = "user", Password = "password".ToSecureString() } }
+                                                      };
+
+            Assert.Equal(expectedConnectionConfiguration.CourierPersistenceConnectionConfiguration.Server, settings.ConnectionConfiguration.CourierPersistenceConnectionConfiguration.Server);
+            Assert.Equal(expectedConnectionConfiguration.EventPersistenceConnectionConfiguration.Server, settings.ConnectionConfiguration.EventPersistenceConnectionConfiguration.Server);
+            Assert.Equal(expectedConnectionConfiguration.ReadModelPersistenceConnectionConfiguration.Server, settings.ConnectionConfiguration.ReadModelPersistenceConnectionConfiguration.Server);
+
             var hostSettings = settings.RoleSettings.OfType<MessageBusHarnessRoleSettingsHost>().SingleOrDefault();
             Assert.NotNull(hostSettings);
             Assert.Equal(true, hostSettings.RunDashboard);
@@ -35,11 +45,17 @@ namespace Naos.MessageBus.Test
         public static void ItsConfigGetSettings_MessageBusHarnessSettingsExecutor_ComeOutCorrectly()
         {
             var settings = SetupItsConfigAndGetSettingsByPrecedence("Executor");
+            var expectedConnectionConfiguration = new MessageBusConnectionConfiguration
+            {
+                CourierPersistenceConnectionConfiguration = new CourierPersistenceConnectionConfiguration { Server = "server1", Database = "db", Credentials = new Credentials { User = "user", Password = "password".ToSecureString() } },
+                EventPersistenceConnectionConfiguration = new EventPersistenceConnectionConfiguration { Server = "server2", Database = "db", Credentials = new Credentials { User = "user", Password = "password".ToSecureString() } },
+                ReadModelPersistenceConnectionConfiguration = new ReadModelPersistenceConnectionConfiguration { Server = "server3", Database = "db", Credentials = new Credentials { User = "user", Password = "password".ToSecureString() } }
+            };
 
-            Assert.NotNull(settings);
-            Assert.Equal("server=localhost1", settings.ConnectionConfiguration.CourierConnectionString);
-            Assert.Equal("server=localhost2", settings.ConnectionConfiguration.ParcelTrackingEventsConnectionString);
-            Assert.Equal("server=localhost3", settings.ConnectionConfiguration.ParcelTrackingReadModelConnectionString);
+            Assert.Equal(expectedConnectionConfiguration.CourierPersistenceConnectionConfiguration.Server, settings.ConnectionConfiguration.CourierPersistenceConnectionConfiguration.Server);
+            Assert.Equal(expectedConnectionConfiguration.EventPersistenceConnectionConfiguration.Server, settings.ConnectionConfiguration.EventPersistenceConnectionConfiguration.Server);
+            Assert.Equal(expectedConnectionConfiguration.ReadModelPersistenceConnectionConfiguration.Server, settings.ConnectionConfiguration.ReadModelPersistenceConnectionConfiguration.Server);
+
             var hostSettings = settings.RoleSettings.OfType<MessageBusHarnessRoleSettingsHost>().SingleOrDefault();
             Assert.Null(hostSettings);
             var executorSettings = settings.RoleSettings.OfType<MessageBusHarnessRoleSettingsExecutor>().SingleOrDefault();

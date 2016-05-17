@@ -141,6 +141,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include=".Spritely.Recipes\SecureString\SecureString.cs" />
     <Compile Include="AutoFakeItEasyBootstrapper.cs" />
     <Compile Include="SharingHandlerTests.cs" />
     <Compile Include="RescheduleIfNoNewCertifiedNoticesTests.cs" />

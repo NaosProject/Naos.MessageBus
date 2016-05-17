@@ -14,16 +14,16 @@ namespace Naos.MessageBus.Domain
         /// <summary>
         /// Gets or sets the connections string for courier persistence.
         /// </summary>
-        public string CourierConnectionString { get; set; }
+        public CourierPersistenceConnectionConfiguration CourierPersistenceConnectionConfiguration { get; set; }
 
         /// <summary>
         /// Gets or sets the connections string for Parcel Tracking System event persistence.
         /// </summary>
-        public string ParcelTrackingEventsConnectionString { get; set; }
+        public EventPersistenceConnectionConfiguration EventPersistenceConnectionConfiguration { get; set; }
 
         /// <summary>
         /// Gets or sets the connections string for Parcel Tracking System read model persistence.
         /// </summary>
-        public string ParcelTrackingReadModelConnectionString { get; set; }
+        public ReadModelPersistenceConnectionConfiguration ReadModelPersistenceConnectionConfiguration { get; set; }
     }
 }
