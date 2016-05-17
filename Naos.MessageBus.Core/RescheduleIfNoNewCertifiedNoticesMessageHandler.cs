@@ -60,7 +60,7 @@ namespace Naos.MessageBus.Core
                     throw new NotSupportedException("Not supported TopicCheckStrategy: " + message.CheckStrategy);
             }
 
-            if (!dataIsRecent)
+            if (!dataIsRecent && DateTime.UtcNow < message.ExpirationDateTimeUtc)
             {
                 Thread.Sleep(message.WaitTimeBeforeRescheduling);
 

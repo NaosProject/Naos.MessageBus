@@ -12,10 +12,13 @@ namespace Naos.MessageBus.Domain
     /// <summary>
     /// Message to wait for certified notices to come in.
     /// </summary>
-    public class RescheduleIfNoNewCertifiedNoticesMessage : IMessage
+    public class RescheduleIfNoNewCertifiedNoticesMessage : IMessage, IShareExpirationDate
     {
         /// <inheritdoc />
         public string Description { get; set; }
+
+        /// <inheritdoc />
+        public DateTime ExpirationDateTimeUtc { get; set; }
 
         /// <summary>
         /// Gets or sets the topics to check.

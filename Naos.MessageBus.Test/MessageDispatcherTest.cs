@@ -433,7 +433,8 @@ namespace Naos.MessageBus.Test
                                   TopicChecks =
                                       new[]
                                           { new TopicCheck { Topic = topic, RecentnessThreshold = TimeSpan.FromMinutes(1) } },
-                                  WaitTimeBeforeRescheduling = TimeSpan.FromSeconds(1)
+                                  WaitTimeBeforeRescheduling = TimeSpan.FromSeconds(1),
+                                  ExpirationDateTimeUtc = DateTime.UtcNow.AddMinutes(5)
                               };
 
             var parcel = new Parcel

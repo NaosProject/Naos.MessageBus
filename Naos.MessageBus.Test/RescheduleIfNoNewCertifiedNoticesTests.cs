@@ -42,10 +42,10 @@ namespace Naos.MessageBus.Test
                                   Description = A.Dummy<string>(),
                                   CheckStrategy = A.Dummy<TopicCheckStrategy>().ThatIsNot(TopicCheckStrategy.Unspecified),
                                   TopicChecks =
-                                      topics.Select(
-                                          _ => new TopicCheck { Topic = _, RecentnessThreshold = recentness })
+                                      topics.Select(_ => new TopicCheck { Topic = _, RecentnessThreshold = recentness })
                                       .ToArray(),
-                                  WaitTimeBeforeRescheduling = waitTimeBeforeRescheduling
+                                  WaitTimeBeforeRescheduling = waitTimeBeforeRescheduling,
+                                  ExpirationDateTimeUtc = DateTime.UtcNow.AddMinutes(5)
                               };
 
             var tracker = GetTracker(certifiedData);
@@ -87,6 +87,40 @@ namespace Naos.MessageBus.Test
                                           _ => new TopicCheck { Topic = _, RecentnessThreshold = recentness })
                                       .ToArray(),
                                   WaitTimeBeforeRescheduling = waitTimeBeforeRescheduling
+                              };
+
+            var tracker = GetTracker(certifiedData);
+
+            var handler = new RescheduleIfNoNewCertifiedNoticesMessageHandler();
+
+            // act
+            await handler.HandleAsync(message, tracker);
+
+            // assert - by virtue of arriving here this will have succeeded
+        }
+
+        [Fact]
+        public async Task NoNewDataButExpired_NoException()
+        {
+            // arrange
+            var topics = Some.Dummies<string>();
+            var recentness = TimeSpan.FromSeconds(5);
+            var waitTimeBeforeRescheduling = TimeSpan.FromSeconds(1);
+
+            var certifiedData = topics.ToDictionary(
+                key => key,
+                val => new CertifiedNotice { Topic = val, DeliveredDateUtc = DateTime.Now.Subtract(recentness.Add(TimeSpan.FromSeconds(10))) });
+
+            var message = new RescheduleIfNoNewCertifiedNoticesMessage
+                              {
+                                  Description = A.Dummy<string>(),
+                                  CheckStrategy = TopicCheckStrategy.Any,
+                                  TopicChecks =
+                                      topics.Select(
+                                          _ => new TopicCheck { Topic = _, RecentnessThreshold = recentness })
+                                      .ToArray(),
+                                  WaitTimeBeforeRescheduling = waitTimeBeforeRescheduling,
+                                  ExpirationDateTimeUtc = DateTime.UtcNow
                               };
 
             var tracker = GetTracker(certifiedData);
@@ -153,10 +187,10 @@ namespace Naos.MessageBus.Test
                                   Description = A.Dummy<string>(),
                                   CheckStrategy = TopicCheckStrategy.Any,
                                   TopicChecks =
-                                      topics.Select(
-                                          _ => new TopicCheck { Topic = _, RecentnessThreshold = recentness })
+                                      topics.Select(_ => new TopicCheck { Topic = _, RecentnessThreshold = recentness })
                                       .ToArray(),
-                                  WaitTimeBeforeRescheduling = waitTimeBeforeRescheduling
+                                  WaitTimeBeforeRescheduling = waitTimeBeforeRescheduling,
+                                  ExpirationDateTimeUtc = DateTime.UtcNow.AddMinutes(5)
                               };
 
             var tracker = GetTracker(certifiedData);
