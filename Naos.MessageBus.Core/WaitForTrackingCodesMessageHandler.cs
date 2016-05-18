@@ -15,10 +15,10 @@ namespace Naos.MessageBus.Core
     /// <summary>
     /// No implementation handler to handle NullMessages.
     /// </summary>
-    public class WaitForTrackingCodesMessageHandler : IHandleMessages<WaitForTrackingCodesMessage>
+    public class WaitForTrackingCodesMessageHandler : IHandleMessages<WaitForTrackingCodesToBeInStatusMessage>
     {
         /// <inheritdoc />
-        public async Task HandleAsync(WaitForTrackingCodesMessage message)
+        public async Task HandleAsync(WaitForTrackingCodesToBeInStatusMessage message)
         {
             var allStatusesAreAcceptable = false;
             while (!allStatusesAreAcceptable)
@@ -26,7 +26,7 @@ namespace Naos.MessageBus.Core
                 Thread.Sleep(message.WaitTimeBetweenChecks);
                 var expected = message.AllowedStatuses.OrderBy(_ => _).ToArray();
 
-                var reports = await HandlerToolShed.GetParcelTracker().GetTrackingReport(message.TrackingCodes);
+                var reports = await HandlerToolShed.GetParcelTracker().GetTrackingReportAsync(message.TrackingCodes);
                 var actual = reports.Select(_ => _.Status).Distinct().OrderBy(_ => _).ToArray();
 
                 allStatusesAreAcceptable = expected.SequenceEqual(actual);

@@ -162,7 +162,7 @@ namespace Naos.MessageBus.Persistence
         }
 
         /// <inheritdoc />
-        public async Task<IReadOnlyCollection<ParcelTrackingReport>> GetTrackingReport(IReadOnlyCollection<TrackingCode> trackingCodes)
+        public async Task<IReadOnlyCollection<ParcelTrackingReport>> GetTrackingReportAsync(IReadOnlyCollection<TrackingCode> trackingCodes)
         {
             return await this.RunWithRetryAsync(
                 () =>
@@ -176,29 +176,57 @@ namespace Naos.MessageBus.Persistence
         }
 
         /// <inheritdoc />
-        public async Task<CertifiedNotice> GetLatestCertifiedNotice(string topic)
+        public async Task<Notice> GetLatestCertifiedNoticeAsync(string topic)
         {
             return await this.RunWithRetryAsync(
                 () =>
                     {
                         using (var db = new TrackedShipmentDbContext(this.readModelPersistenceConnectionConfiguration.ToSqlServerConnectionString()))
                         {
-                            var noticesForTopic = db.CertifiedNotices.Where(_ => _.Topic == topic).OrderBy(_ => _.DeliveredDateUtc).ToList();
-                            if (noticesForTopic.Count == 0)
+                            var mostRecentNotice = db.Notices.Where(_ => _.Topic == topic).OrderBy(_ => _.LastUpdatedUtc).ToList().LastOrDefault();
+                            if (mostRecentNotice == null)
                             {
-                                return Task.FromResult(new CertifiedNotice { Notices = new List<Notice>() });
+                                return Task.FromResult(new Notice { Items = new List<NoticeItem>() });
                             }
                             else
                             {
-                                var certifiedNotice = noticesForTopic.Last();
-                                var message = Serializer.Deserialize<CertifiedNoticeMessage>(certifiedNotice.Envelope.MessageAsJson);
+                                IReadOnlyCollection<NoticeItem> items;
+                                Notice[] dependantNotices;
+                                NoticeStatus status;
+
+                                if (mostRecentNotice.CertifiedEnvelope == null)
+                                {
+                                    if (mostRecentNotice.PendingEnvelope != null)
+                                    {
+                                        var messagePending = Serializer.Deserialize<PendingNoticeMessage>(mostRecentNotice.PendingEnvelope.MessageAsJson);
+                                        items = messagePending.Items;
+                                        dependantNotices = messagePending.Notices ?? new Notice[0];
+                                        status = NoticeStatus.Pending;
+                                    }
+                                    else
+                                    {
+                                        items = new List<NoticeItem>();
+                                        dependantNotices = new Notice[0];
+                                        status = NoticeStatus.Unknown;
+                                    }
+                                }
+                                else
+                                {
+                                    var messageCertified = Serializer.Deserialize<CertifiedNoticeMessage>(mostRecentNotice.CertifiedEnvelope.MessageAsJson);
+                                    items = messageCertified.Items;
+                                    dependantNotices = messageCertified.Notices ?? new Notice[0];
+                                    status = NoticeStatus.Certified;
+                                }
+
                                 return
                                     Task.FromResult(
-                                        new CertifiedNotice
+                                        new Notice
                                             {
-                                                Topic = certifiedNotice.Topic,
-                                                DeliveredDateUtc = certifiedNotice.DeliveredDateUtc,
-                                                Notices = message.Notices
+                                                Topic = topic,
+                                                CertifiedDateUtc = mostRecentNotice.CertifiedDateUtc,
+                                                Items = items,
+                                                Status = status,
+                                                DependantNotices = dependantNotices
                                             });
                             }
                         }

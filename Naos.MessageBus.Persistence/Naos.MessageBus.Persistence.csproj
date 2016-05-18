@@ -94,8 +94,9 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Authorization.cs" />
-    <Compile Include="CertifiedNoticeForDatabase.cs" />
+    <Compile Include="NoticeForDatabase.cs" />
     <Compile Include="Commands\Abort.cs" />
+    <Compile Include="Events\Shipment.PendingNoticeDelivered.cs" />
     <Compile Include="Events\Shipment.EnvelopeDeliveryAborted.cs" />
     <Compile Include="Events\Shipment.ParcelDelivered.cs" />
     <Compile Include="Shipment.EnactCommand.cs" />
@@ -106,7 +107,7 @@
     <Compile Include="Commands\Deliver.cs" />
     <Compile Include="Commands\Reject.cs" />
     <Compile Include="Commands\ValidationRules.cs" />
-    <Compile Include="Events\Shipment.CertifiedEnvelopeDelivered.cs" />
+    <Compile Include="Events\Shipment.CertifiedNoticeDelivered.cs" />
     <Compile Include="Events\Shipment.EnvelopeSent.cs" />
     <Compile Include="Events\Shipment.EnvelopeAddressed.cs" />
     <Compile Include="Events\Shipment.EnvelopeDeliveryAttempted.cs" />

@@ -22,7 +22,8 @@ namespace Naos.MessageBus.Persistence
     public class UpdateTrackedShipment : IUpdateProjectionWhen<Shipment.Created>,
                                          IUpdateProjectionWhen<Shipment.EnvelopeDeliveryRejected>,
                                          IUpdateProjectionWhen<Shipment.ParcelDelivered>,
-                                         IUpdateProjectionWhen<Shipment.CertifiedEnvelopeDelivered>
+                                         IUpdateProjectionWhen<Shipment.PendingNoticeDelivered>,
+                                         IUpdateProjectionWhen<Shipment.CertifiedNoticeDelivered>
     {
         private readonly ReadModelPersistenceConnectionConfiguration readModelPersistenceConnectionConfiguration;
 
@@ -88,31 +89,86 @@ namespace Naos.MessageBus.Persistence
         }
 
         /// <inheritdoc />
-        public void UpdateProjection(Shipment.CertifiedEnvelopeDelivered @event)
+        public void UpdateProjection(Shipment.PendingNoticeDelivered @event)
         {
             this.RunWithRetry(
                 () =>
                     {
                         using (var db = new TrackedShipmentDbContext(this.readModelPersistenceConnectionConfiguration.ToSqlServerConnectionString()))
                         {
-                            var entry = new CertifiedNoticeForDatabase
+                            var existingEntries = db.Notices.Where(_ => _.ParcelId == @event.TrackingCode.ParcelId).ToList();
+                            if (existingEntries.Count != 0)
+                            {
+                                var ids = existingEntries.Select(_ => _.Id).ToList();
+                                throw new ArgumentException(
+                                    "Found existing entries for the specified parcel id while trying to write a pending record; IDs: " + string.Join(",", ids));
+                            }
+
+                            var entry = new NoticeForDatabase
                                             {
                                                 Id = Guid.NewGuid(),
                                                 Topic = @event.Topic,
-                                                Envelope = @event.Envelope,
-                                                DeliveredDateUtc = @event.Timestamp.UtcDateTime,
+                                                Status = NoticeStatus.Pending,
+                                                ParcelId = @event.TrackingCode.ParcelId,
+                                                PendingEnvelope = @event.Envelope,
+                                                CertifiedDateUtc = @event.Timestamp.UtcDateTime,
                                                 LastUpdatedUtc = DateTime.UtcNow
                                             };
 
-                            if (entry.Envelope != null)
+                            if (entry.PendingEnvelope != null)
                             {
-                                db.Envelopes.Add(entry.Envelope);
+                                db.Envelopes.Add(entry.PendingEnvelope);
                             }
 
-                            db.CertifiedNotices.Add(entry);
+                            db.Notices.Add(entry);
                             db.SaveChanges();
                         }
                     });
+        }
+
+        /// <inheritdoc />
+        public void UpdateProjection(Shipment.CertifiedNoticeDelivered @event)
+        {
+            this.RunWithRetry(
+                () =>
+                {
+                    using (var db = new TrackedShipmentDbContext(this.readModelPersistenceConnectionConfiguration.ToSqlServerConnectionString()))
+                    {
+                        var existingEntries = db.Notices.Where(_ => _.ParcelId == @event.TrackingCode.ParcelId).ToList();
+                        if (existingEntries.Count > 1)
+                        {
+                            var ids = existingEntries.Select(_ => _.Id).ToList();
+                            throw new ArgumentException(
+                                "Found more than one existing entries for the specified parcel id while trying to write a certified record; IDs: "
+                                + string.Join(",", ids));
+                        }
+
+                        var entry = existingEntries.SingleOrDefault();
+                        if (entry == null)
+                        {
+                            entry = new NoticeForDatabase
+                                        {
+                                            Id = Guid.NewGuid(),
+                                            Topic = @event.Topic,
+                                            Status = NoticeStatus.Pending,
+                                            ParcelId = @event.TrackingCode.ParcelId,
+                                            LastUpdatedUtc = DateTime.UtcNow
+                                        };
+
+                            db.Notices.Add(entry);
+                        }
+
+                        entry.CertifiedDateUtc = @event.Timestamp.UtcDateTime;
+                        entry.CertifiedEnvelope = @event.Envelope;
+
+                        if (entry.CertifiedEnvelope != null)
+                        {
+                            db.Envelopes.Add(entry.CertifiedEnvelope);
+                        }
+
+                        db.SaveChanges();
+                    }
+                });
         }
 
         private void RunWithRetry(Action action)

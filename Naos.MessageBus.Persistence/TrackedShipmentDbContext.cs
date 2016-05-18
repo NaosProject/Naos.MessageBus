@@ -31,7 +31,7 @@ namespace Naos.MessageBus.Persistence
         /// <summary>
         /// Gets or sets the notices.
         /// </summary>
-        public virtual DbSet<CertifiedNoticeForDatabase> CertifiedNotices { get; set; }
+        public virtual DbSet<NoticeForDatabase> Notices { get; set; }
 
         /// <summary>
         /// Gets or sets the envelopes.
@@ -42,7 +42,7 @@ namespace Naos.MessageBus.Persistence
         protected override void OnModelCreating(DbModelBuilder modelBuilder)
         {
             modelBuilder.Entity<ParcelTrackingReport>().HasKey(s => s.ParcelId);
-            modelBuilder.Entity<CertifiedNoticeForDatabase>().HasKey(s => s.Id);
+            modelBuilder.Entity<NoticeForDatabase>().HasKey(s => s.Id);
             modelBuilder.Entity<Envelope>().HasKey(s => s.Id);
         }
     }

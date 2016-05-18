@@ -36,9 +36,9 @@ namespace Naos.MessageBus.Persistence
         public ParcelStatus Status { get; internal set; }
 
         /// <summary>
-        /// Gets any certified notices.
+        /// Gets the notice (if any).
         /// </summary>
-        public CertifiedNoticeForDatabase Certified { get; internal set; }
+        public NoticeForDatabase Notice { get; internal set; }
 
         /// <summary>
         /// Gets the envelope.

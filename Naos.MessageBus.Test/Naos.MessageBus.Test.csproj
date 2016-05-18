@@ -144,7 +144,7 @@
     <Compile Include=".Spritely.Recipes\SecureString\SecureString.cs" />
     <Compile Include="AutoFakeItEasyBootstrapper.cs" />
     <Compile Include="SharingHandlerTests.cs" />
-    <Compile Include="RescheduleIfNoNewCertifiedNoticesTests.cs" />
+    <Compile Include="AbortIfNoNewCertifiedNoticesMessageHandlerTests.cs" />
     <Compile Include="PostOfficeTests.cs" />
     <Compile Include="TrackingSystemTests.cs" />
     <Compile Include="TrackingCodeTest.cs" />

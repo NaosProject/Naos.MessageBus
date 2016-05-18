@@ -1,5 +1,5 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="Shipment.CertifiedEnvelopeDelivered.cs" company="Naos">
+// <copyright file="Shipment.PendingNoticeDelivered.cs" company="Naos">
 //   Copyright 2015 Naos
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
@@ -21,7 +21,7 @@ namespace Naos.MessageBus.Persistence
         /// <summary>
         /// Certified envelope was delivered.
         /// </summary>
-        public class CertifiedEnvelopeDelivered : Event<Shipment>
+        public class PendingNoticeDelivered : Event<Shipment>
         {
             /// <summary>
             /// Gets or sets the tracking code of the envelope.
@@ -41,13 +41,7 @@ namespace Naos.MessageBus.Persistence
             /// <inheritdoc />
             public override void Update(Shipment aggregate)
             {
-                var envelope = aggregate.Parcel.Envelopes.Single(_ => _.Id == this.TrackingCode.EnvelopeId);
-                aggregate.Tracking[this.TrackingCode].Certified = new CertifiedNoticeForDatabase
-                                                                      {
-                                                                          Topic = this.Topic,
-                                                                          Envelope = envelope,
-                                                                          DeliveredDateUtc = DateTime.UtcNow
-                                                                      };
+                /* no-op */
             }
         }
     }

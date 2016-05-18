@@ -1,5 +1,5 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="AbortAndRescheduleParcelException.cs" company="Naos">
+// <copyright file="AbortParcelDeliveryException.cs" company="Naos">
 //   Copyright 2015 Naos
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
@@ -12,23 +12,23 @@ namespace Naos.MessageBus.Domain.Exceptions
     /// Custom exception to trigger a reschedule, this is pretty dirty but really the only easy way to accommodate this weird idea.
     /// </summary>
     [Serializable]
-    public class AbortAndRescheduleParcelException : MessageBusExceptionBase
+    public class AbortParcelDeliveryException : MessageBusExceptionBase
     {
         /// <summary>
-        /// Initializes a new instance of the <see cref="AbortAndRescheduleParcelException"/> class.
+        /// Initializes a new instance of the <see cref="AbortParcelDeliveryException"/> class.
         /// </summary>
         /// <param name="message">Exception message.</param>
-        public AbortAndRescheduleParcelException(string message)
+        public AbortParcelDeliveryException(string message)
             : base(message)
         {
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="AbortAndRescheduleParcelException"/> class.
+        /// Initializes a new instance of the <see cref="AbortParcelDeliveryException"/> class.
         /// </summary>
         /// <param name="message">Exception message.</param>
         /// <param name="innerException">Inner exception.</param>
-        public AbortAndRescheduleParcelException(string message, Exception innerException)
+        public AbortParcelDeliveryException(string message, Exception innerException)
             : base(message, innerException)
         {
         }
@@ -37,5 +37,10 @@ namespace Naos.MessageBus.Domain.Exceptions
         /// Gets the reason for aborting.
         /// </summary>
         public string Reason => this.Message;
+
+        /// <summary>
+        /// Gets or sets a value indicating whether or not to reschedule.
+        /// </summary>
+        public bool Reschedule { get; set; }
     }
 }

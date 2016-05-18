@@ -47,49 +47,49 @@ namespace Naos.MessageBus.Test
             var parcelTrackingSystem = new ParcelTrackingSystem(eventConnectionConfiguration, readModelConnectionConfiguration);
 
             await parcelTrackingSystem.Sent(trackingCode, parcel, new Dictionary<string, string>());
-            (await parcelTrackingSystem.GetTrackingReport(new[] { trackingCode })).Single().Status.Should().Be(ParcelStatus.Unknown);
-            (await parcelTrackingSystem.GetLatestCertifiedNotice(certifiedKey)).Notices.Count.Should().Be(0);
+            (await parcelTrackingSystem.GetTrackingReportAsync(new[] { trackingCode })).Single().Status.Should().Be(ParcelStatus.Unknown);
+            (await parcelTrackingSystem.GetLatestCertifiedNoticeAsync(certifiedKey)).Items.Count.Should().Be(0);
 
             await parcelTrackingSystem.Addressed(trackingCode, parcel.Envelopes.First().Channel);
-            (await parcelTrackingSystem.GetTrackingReport(new[] { trackingCode })).Single().Status.Should().Be(ParcelStatus.Unknown);
-            (await parcelTrackingSystem.GetLatestCertifiedNotice(certifiedKey)).Notices.Count.Should().Be(0);
+            (await parcelTrackingSystem.GetTrackingReportAsync(new[] { trackingCode })).Single().Status.Should().Be(ParcelStatus.Unknown);
+            (await parcelTrackingSystem.GetLatestCertifiedNoticeAsync(certifiedKey)).Items.Count.Should().Be(0);
 
             await parcelTrackingSystem.Attempting(trackingCode, new HarnessDetails());
-            (await parcelTrackingSystem.GetTrackingReport(new[] { trackingCode })).Single().Status.Should().Be(ParcelStatus.Unknown);
-            (await parcelTrackingSystem.GetLatestCertifiedNotice(certifiedKey)).Notices.Count.Should().Be(0);
+            (await parcelTrackingSystem.GetTrackingReportAsync(new[] { trackingCode })).Single().Status.Should().Be(ParcelStatus.Unknown);
+            (await parcelTrackingSystem.GetLatestCertifiedNoticeAsync(certifiedKey)).Items.Count.Should().Be(0);
 
             await parcelTrackingSystem.Abort(trackingCode, "Try another day");
-            (await parcelTrackingSystem.GetTrackingReport(new[] { trackingCode })).Single().Status.Should().Be(ParcelStatus.Unknown);
-            (await parcelTrackingSystem.GetLatestCertifiedNotice(certifiedKey)).Notices.Count.Should().Be(0);
+            (await parcelTrackingSystem.GetTrackingReportAsync(new[] { trackingCode })).Single().Status.Should().Be(ParcelStatus.Unknown);
+            (await parcelTrackingSystem.GetLatestCertifiedNoticeAsync(certifiedKey)).Items.Count.Should().Be(0);
 
             await parcelTrackingSystem.Attempting(trackingCode, new HarnessDetails());
-            (await parcelTrackingSystem.GetTrackingReport(new[] { trackingCode })).Single().Status.Should().Be(ParcelStatus.Unknown);
-            (await parcelTrackingSystem.GetLatestCertifiedNotice(certifiedKey)).Notices.Count.Should().Be(0);
+            (await parcelTrackingSystem.GetTrackingReportAsync(new[] { trackingCode })).Single().Status.Should().Be(ParcelStatus.Unknown);
+            (await parcelTrackingSystem.GetLatestCertifiedNoticeAsync(certifiedKey)).Items.Count.Should().Be(0);
 
             await parcelTrackingSystem.Delivered(trackingCode);
-            (await parcelTrackingSystem.GetTrackingReport(new[] { trackingCode })).Single().Status.Should().Be(ParcelStatus.Unknown);
-            (await parcelTrackingSystem.GetLatestCertifiedNotice(certifiedKey)).Notices.Count.Should().Be(0);
+            (await parcelTrackingSystem.GetTrackingReportAsync(new[] { trackingCode })).Single().Status.Should().Be(ParcelStatus.Unknown);
+            (await parcelTrackingSystem.GetLatestCertifiedNoticeAsync(certifiedKey)).Items.Count.Should().Be(0);
 
             var trackingCode2 = new TrackingCode { ParcelId = parcel.Id, EnvelopeId = parcel.Envelopes.Last().Id };
             await parcelTrackingSystem.Sent(trackingCode2, parcel, new Dictionary<string, string>());
-            (await parcelTrackingSystem.GetTrackingReport(new[] { trackingCode2 })).Single().Status.Should().Be(ParcelStatus.Unknown);
-            (await parcelTrackingSystem.GetLatestCertifiedNotice(certifiedKey)).Notices.Count.Should().Be(0);
+            (await parcelTrackingSystem.GetTrackingReportAsync(new[] { trackingCode2 })).Single().Status.Should().Be(ParcelStatus.Unknown);
+            (await parcelTrackingSystem.GetLatestCertifiedNoticeAsync(certifiedKey)).Items.Count.Should().Be(0);
 
             await parcelTrackingSystem.Addressed(trackingCode2, parcel.Envelopes.First().Channel);
-            (await parcelTrackingSystem.GetTrackingReport(new[] { trackingCode2 })).Single().Status.Should().Be(ParcelStatus.Unknown);
-            (await parcelTrackingSystem.GetLatestCertifiedNotice(certifiedKey)).Notices.Count.Should().Be(0);
+            (await parcelTrackingSystem.GetTrackingReportAsync(new[] { trackingCode2 })).Single().Status.Should().Be(ParcelStatus.Unknown);
+            (await parcelTrackingSystem.GetLatestCertifiedNoticeAsync(certifiedKey)).Items.Count.Should().Be(0);
 
             await parcelTrackingSystem.Attempting(trackingCode2, new HarnessDetails());
-            (await parcelTrackingSystem.GetTrackingReport(new[] { trackingCode2 })).Single().Status.Should().Be(ParcelStatus.Unknown);
-            (await parcelTrackingSystem.GetLatestCertifiedNotice(certifiedKey)).Notices.Count.Should().Be(0);
+            (await parcelTrackingSystem.GetTrackingReportAsync(new[] { trackingCode2 })).Single().Status.Should().Be(ParcelStatus.Unknown);
+            (await parcelTrackingSystem.GetLatestCertifiedNoticeAsync(certifiedKey)).Items.Count.Should().Be(0);
 
             await parcelTrackingSystem.Rejected(trackingCode2, new NotImplementedException("Not here yet"));
-            (await parcelTrackingSystem.GetTrackingReport(new[] { trackingCode2 })).Single().Status.Should().Be(ParcelStatus.Rejected);
-            (await parcelTrackingSystem.GetLatestCertifiedNotice(certifiedKey)).Notices.Count.Should().Be(0);
+            (await parcelTrackingSystem.GetTrackingReportAsync(new[] { trackingCode2 })).Single().Status.Should().Be(ParcelStatus.Rejected);
+            (await parcelTrackingSystem.GetLatestCertifiedNoticeAsync(certifiedKey)).Items.Count.Should().Be(0);
 
             await parcelTrackingSystem.Delivered(trackingCode2);
-            (await parcelTrackingSystem.GetTrackingReport(new[] { trackingCode2 })).Single().Status.Should().Be(ParcelStatus.Delivered);
-            (await parcelTrackingSystem.GetLatestCertifiedNotice(certifiedKey)).Notices.Count.Should().Be(1);
+            (await parcelTrackingSystem.GetTrackingReportAsync(new[] { trackingCode2 })).Single().Status.Should().Be(ParcelStatus.Delivered);
+            (await parcelTrackingSystem.GetLatestCertifiedNoticeAsync(certifiedKey)).Items.Count.Should().Be(1);
 
             messages.Count.Should().Be(0);
         }
@@ -122,10 +122,10 @@ namespace Naos.MessageBus.Test
                                                               {
                                                                   Description = "Hello",
                                                                   Topic = topic,
-                                                                  Notices =
-                                                                      new List<Notice>
+                                                                  Items =
+                                                                      new List<NoticeItem>
                                                                           {
-                                                                                  new Notice
+                                                                                  new NoticeItem
                                                                                       {
                                                                                           ImpactedId = "123",
                                                                                           ImpactedTimeStart = new DateTime(2015, 01, 01, 0, 0, 0, DateTimeKind.Unspecified),

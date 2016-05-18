@@ -1,5 +1,5 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="CertifiedNotice.cs" company="Naos">
+// <copyright file="Notice.cs" company="Naos">
 //   Copyright 2015 Naos
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
@@ -12,7 +12,7 @@ namespace Naos.MessageBus.Domain
     /// <summary>
     /// Model object to hold a certified notice.
     /// </summary>
-    public class CertifiedNotice
+    public class Notice
     {
         /// <summary>
         /// Gets or sets the topic.
@@ -22,11 +22,21 @@ namespace Naos.MessageBus.Domain
         /// <summary>
         /// Gets or sets the notices.
         /// </summary>
-        public IReadOnlyCollection<Notice> Notices { get; set; }
+        public IReadOnlyCollection<NoticeItem> Items { get; set; }
+
+        /// <summary>
+        /// Gets or sets additional details.
+        /// </summary>
+        public NoticeStatus Status { get; set; }
 
         /// <summary>
         /// Gets or sets the time it was delivered in UTC.
         /// </summary>
-        public DateTime DeliveredDateUtc { get; set; }
+        public DateTime? CertifiedDateUtc { get; set; }
+
+        /// <summary>
+        /// Gets or sets the notices (if any) that were dependencies on this notice being produced.
+        /// </summary>
+        public Notice[] DependantNotices { get; set; }
     }
 }

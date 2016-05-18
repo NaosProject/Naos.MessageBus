@@ -1,5 +1,5 @@
 // --------------------------------------------------------------------------------------------------------------------
-// <copyright file="CertifiedNoticeForDatabase.cs" company="Naos">
+// <copyright file="NoticeForDatabase.cs" company="Naos">
 //   Copyright 2015 Naos
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
@@ -13,7 +13,7 @@ namespace Naos.MessageBus.Persistence
     /// <summary>
     /// Model class to hold info in the read model persistence.
     /// </summary>
-    public class CertifiedNoticeForDatabase
+    public class NoticeForDatabase
     {
         /// <summary>
         /// Gets or sets the ID.
@@ -26,14 +26,29 @@ namespace Naos.MessageBus.Persistence
         public string Topic { get; set; }
 
         /// <summary>
-        /// Gets or sets the time in UTC that the notice was delivered.
+        /// Gets or sets the ID of the parcel the notice came from.
         /// </summary>
-        public DateTime DeliveredDateUtc { get; set; }
+        public Guid ParcelId { get; set; }
 
         /// <summary>
-        /// Gets or sets the envelope.
+        /// Gets or sets the status.
         /// </summary>
-        public virtual Envelope Envelope { get; set; }
+        public NoticeStatus Status { get; set; }
+
+        /// <summary>
+        /// Gets or sets the time in UTC that the notice was certified.
+        /// </summary>
+        public DateTime? CertifiedDateUtc { get; set; }
+
+        /// <summary>
+        /// Gets or sets the envelope of the pending notice.
+        /// </summary>
+        public virtual Envelope PendingEnvelope { get; set; }
+
+        /// <summary>
+        /// Gets or sets the envelope of the certified notice.
+        /// </summary>
+        public virtual Envelope CertifiedEnvelope { get; set; }
 
         /// <summary>
         /// Gets or sets the date time (in UTC) it was last updated.

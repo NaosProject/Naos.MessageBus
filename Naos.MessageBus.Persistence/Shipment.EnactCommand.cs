@@ -83,11 +83,19 @@ namespace Naos.MessageBus.Persistence
             }
 
             var deliveredEnvelope = this.Tracking[command.TrackingCode].Envelope;
+
+            var isPendingNotice = deliveredEnvelope.MessageType == typeof(PendingNoticeMessage).ToTypeDescription();
+            if (isPendingNotice)
+            {
+                var message = Serializer.Deserialize<PendingNoticeMessage>(deliveredEnvelope.MessageAsJson);
+                this.RecordEvent(new PendingNoticeDelivered { TrackingCode = command.TrackingCode, Topic = message.Topic, Envelope = deliveredEnvelope });
+            }
+
             var isCertified = deliveredEnvelope.MessageType == typeof(CertifiedNoticeMessage).ToTypeDescription();
             if (isCertified)
             {
                 var message = Serializer.Deserialize<CertifiedNoticeMessage>(deliveredEnvelope.MessageAsJson);
-                this.RecordEvent(new CertifiedEnvelopeDelivered { TrackingCode = command.TrackingCode, Topic = message.Topic, Envelope = deliveredEnvelope });
+                this.RecordEvent(new CertifiedNoticeDelivered { TrackingCode = command.TrackingCode, Topic = message.Topic, Envelope = deliveredEnvelope });
             }
         }
     }

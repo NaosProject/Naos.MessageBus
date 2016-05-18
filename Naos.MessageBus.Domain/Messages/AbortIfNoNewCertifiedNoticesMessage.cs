@@ -1,5 +1,5 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="RescheduleIfNoNewCertifiedNoticesMessage.cs" company="Naos">
+// <copyright file="AbortIfNoNewCertifiedNoticesMessage.cs" company="Naos">
 //   Copyright 2015 Naos
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
@@ -12,23 +12,20 @@ namespace Naos.MessageBus.Domain
     /// <summary>
     /// Message to wait for certified notices to come in.
     /// </summary>
-    public class RescheduleIfNoNewCertifiedNoticesMessage : IMessage, IShareExpirationDate
+    public class AbortIfNoNewCertifiedNoticesMessage : IMessage
     {
         /// <inheritdoc />
         public string Description { get; set; }
 
-        /// <inheritdoc />
-        public DateTime ExpirationDateTimeUtc { get; set; }
+        /// <summary>
+        /// Gets or sets the topic that this sequence impacts.
+        /// </summary>
+        public string ImpactingTopic { get; set; }
 
         /// <summary>
         /// Gets or sets the topics to check.
         /// </summary>
         public IReadOnlyCollection<TopicCheck> TopicChecks { get; set; }
-
-        /// <summary>
-        /// Gets or sets the wait time between checks on updates. 
-        /// </summary>
-        public TimeSpan WaitTimeBeforeRescheduling { get; set; }
 
         /// <summary>
         /// Gets or sets the strategy for checking for new notices.
@@ -66,10 +63,5 @@ namespace Naos.MessageBus.Domain
         /// Gets or sets the topic.
         /// </summary>
         public string Topic { get; set; }
-
-        /// <summary>
-        /// Gets or sets how recent the notice was delivered.
-        /// </summary>
-        public TimeSpan RecentnessThreshold { get; set; }
     }
 }

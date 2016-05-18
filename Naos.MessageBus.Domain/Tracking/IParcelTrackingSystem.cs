@@ -112,15 +112,15 @@ namespace Naos.MessageBus.Domain
         }
 
         /// <inheritdoc />
-        public async Task<IReadOnlyCollection<ParcelTrackingReport>> GetTrackingReport(IReadOnlyCollection<TrackingCode> trackingCodes)
+        public async Task<IReadOnlyCollection<ParcelTrackingReport>> GetTrackingReportAsync(IReadOnlyCollection<TrackingCode> trackingCodes)
         {
             return await Task.FromResult(new List<ParcelTrackingReport>());
         }
 
         /// <inheritdoc />
-        public async Task<CertifiedNotice> GetLatestCertifiedNotice(string topic)
+        public async Task<Notice> GetLatestCertifiedNoticeAsync(string topic)
         {
-            return await Task.FromResult(null as CertifiedNotice);
+            return await Task.FromResult(null as Notice);
         }
     }
 }

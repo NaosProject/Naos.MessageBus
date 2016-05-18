@@ -19,13 +19,13 @@ namespace Naos.MessageBus.Domain
         /// </summary>
         /// <param name="trackingCodes">Tracking codes of parcels.</param>
         /// <returns>Tracking reports for parcels.</returns>
-        Task<IReadOnlyCollection<ParcelTrackingReport>> GetTrackingReport(IReadOnlyCollection<TrackingCode> trackingCodes);
+        Task<IReadOnlyCollection<ParcelTrackingReport>> GetTrackingReportAsync(IReadOnlyCollection<TrackingCode> trackingCodes);
 
         /// <summary>
         /// Gets the latest certified notices on a topic.
         /// </summary>
         /// <param name="topic">Topic to get latest certified notice for.</param>
         /// <returns>Latest notices for the provided topic.</returns>
-        Task<CertifiedNotice> GetLatestCertifiedNotice(string topic);
+        Task<Notice> GetLatestCertifiedNoticeAsync(string topic);
     }
 }

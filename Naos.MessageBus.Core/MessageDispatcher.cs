@@ -71,40 +71,6 @@ namespace Naos.MessageBus.Core
         /// <inheritdoc />
         public void Dispatch(TrackingCode trackingCode, string displayName, Parcel parcel)
         {
-            try
-            {
-                this.activeMessageTracker.IncrementActiveMessages();
-
-                var dynamicDetails = new HarnessDynamicDetails { AvailablePhysicalMemoryInGb = MachineDetails.GetAvailablePhysicalMemoryInGb() };
-                var harnessDetails = new HarnessDetails { StaticDetails = this.harnessStaticDetails, DynamicDetails = dynamicDetails };
-
-                this.parcelTrackingSystem.Attempting(trackingCode, harnessDetails);
-
-                this.InternalDispatch(parcel);
-
-                this.parcelTrackingSystem.Delivered(trackingCode);
-            }
-            catch (AbortAndRescheduleParcelException rescheduleParcelException)
-            {
-                this.parcelTrackingSystem.Abort(trackingCode, rescheduleParcelException.Reason);
-
-                Log.Write("Rescheduling parcel; TrackingCode: " + trackingCode + ", Exception:" + rescheduleParcelException);
-                this.postOffice.Send(parcel);
-                this.parcelTrackingSystem.Addressed(trackingCode, parcel.Envelopes.First().Channel);
-            }
-            catch (Exception ex)
-            {
-                this.parcelTrackingSystem.Rejected(trackingCode, ex);
-                throw;
-            }
-            finally
-            {
-                this.activeMessageTracker.DecrementActiveMessages();
-            }
-        }
-
-        private void InternalDispatch(Parcel parcel)
-        {
             if (parcel == null)
             {
                 throw new DispatchException("Parcel cannot be null");
@@ -124,6 +90,59 @@ namespace Naos.MessageBus.Core
                 return;
             }
 
+            try
+            {
+                this.activeMessageTracker.IncrementActiveMessages();
+
+                // this is a very special case and must be checked before marking any status changes to the parcel (otherwise it should be in InternalDispatch...)
+                var firstEnvelope = parcel.Envelopes.First();
+                if ((firstEnvelope.MessageType ?? new TypeDescription()).Equals(typeof(RecurringHeaderMessage).ToTypeDescription()))
+                {
+                    throw new RecurringParcelEncounteredException(firstEnvelope.Description);
+                }
+
+                var dynamicDetails = new HarnessDynamicDetails { AvailablePhysicalMemoryInGb = MachineDetails.GetAvailablePhysicalMemoryInGb() };
+                var harnessDetails = new HarnessDetails { StaticDetails = this.harnessStaticDetails, DynamicDetails = dynamicDetails };
+
+                this.parcelTrackingSystem.Attempting(trackingCode, harnessDetails);
+
+                this.InternalDispatch(parcel);
+
+                this.parcelTrackingSystem.Delivered(trackingCode);
+            }
+            catch (RecurringParcelEncounteredException recurringParcelEncounteredException)
+            {
+                // this is a very special case, this was invoked with a recurring header message as the next message, we need to reset the 
+                //        parcel id and then resend but we will not update any status because the new send with the new id will take care of that
+                Log.Write("Encountered recurring envelope: " + recurringParcelEncounteredException.Message);
+                var remainingEnvelopes = parcel.Envelopes.Skip(1).ToList();
+                this.SendEnvelopes(Guid.NewGuid(), remainingEnvelopes, parcel.SharedInterfaceStates);
+            }
+            catch (AbortParcelDeliveryException abortParcelDeliveryException)
+            {
+                Log.Write("Aborted parcel delivery; TrackingCode: " + trackingCode + ", Exception:" + abortParcelDeliveryException);
+                this.parcelTrackingSystem.Abort(trackingCode, abortParcelDeliveryException.Reason);
+
+                if (abortParcelDeliveryException.Reschedule)
+                {
+                    Log.Write("Rescheduling parcel; TrackingCode: " + trackingCode);
+                    this.postOffice.Send(parcel);
+                    this.parcelTrackingSystem.Addressed(trackingCode, parcel.Envelopes.First().Channel);
+                }
+            }
+            catch (Exception ex)
+            {
+                this.parcelTrackingSystem.Rejected(trackingCode, ex);
+                throw;
+            }
+            finally
+            {
+                this.activeMessageTracker.DecrementActiveMessages();
+            }
+        }
+
+        private void InternalDispatch(Parcel parcel)
+        {
             var firstEnvelope = parcel.Envelopes.First();
             var remainingEnvelopes = parcel.Envelopes.Skip(1).ToList();
             var firstChanneledMessage = this.DeserializeEnvelopeIntoChanneledMessage(firstEnvelope);
@@ -204,44 +223,49 @@ namespace Naos.MessageBus.Core
 
             if (remainingEnvelopes.Any())
             {
-                using (var activity = Log.Enter(() => new { RemainingEnvelopes = remainingEnvelopes }))
+                this.SendEnvelopes(parcel.Id, remainingEnvelopes, parcel.SharedInterfaceStates, handler);
+            }
+        }
+
+        private void SendEnvelopes(Guid parcelId, List<Envelope> envelopes, IList<SharedInterfaceState> existingSharedInterfaceStates, object handler = null)
+        {
+            using (var activity = Log.Enter(() => new { RemainingEnvelopes = envelopes }))
+            {
+                try
                 {
-                    try
+                    activity.Trace(() => "Found remaining messages in sequence.");
+
+                    var shareSets = new List<SharedInterfaceState>();
+                    if (existingSharedInterfaceStates != null)
                     {
-                        activity.Trace(() => "Found remaining messages in sequence.");
-
-                        var shareSets = new List<SharedInterfaceState>();
-                        if (parcel.SharedInterfaceStates != null)
-                        {
-                            shareSets.AddRange(parcel.SharedInterfaceStates);
-                        }
-
-                        var handlerAsShare = handler as IShare;
-                        if (handlerAsShare != null)
-                        {
-                            activity.Trace(() => "Handler is IShare, loading shared properties into parcel for future messages.");
-                            var newShareSets = SharedPropertyHelper.GetSharedInterfaceStates(handlerAsShare);
-                            shareSets.AddRange(newShareSets);
-                        }
-
-                        activity.Trace(() => "Sending remaining messages in sequence.");
-
-                        var remainingEnvelopesParcel = new Parcel
-                                                           {
-                                                               Id = parcel.Id, // persist the batch ID for collation
-                                                               Envelopes = remainingEnvelopes,
-                                                               SharedInterfaceStates = shareSets
-                                                           };
-
-                        this.postOffice.Send(remainingEnvelopesParcel);
-
-                        activity.Confirm(() => "Finished sending remaining messages in sequence.");
+                        shareSets.AddRange(existingSharedInterfaceStates);
                     }
-                    catch (Exception ex)
+
+                    var handlerAsShare = handler as IShare;
+                    if (handlerAsShare != null)
                     {
-                        activity.Trace(() => ex);
-                        throw;
+                        activity.Trace(() => "Handler is IShare, loading shared properties into parcel for future messages.");
+                        var newShareSets = SharedPropertyHelper.GetSharedInterfaceStates(handlerAsShare);
+                        shareSets.AddRange(newShareSets);
                     }
+
+                    activity.Trace(() => "Sending remaining messages in sequence.");
+
+                    var envelopesParcel = new Parcel
+                                                       {
+                                                           Id = parcelId, // persist the batch ID for collation
+                                                           Envelopes = envelopes,
+                                                           SharedInterfaceStates = shareSets
+                                                       };
+
+                    this.postOffice.Send(envelopesParcel);
+
+                    activity.Confirm(() => "Finished sending remaining messages in sequence.");
+                }
+                catch (Exception ex)
+                {
+                    activity.Trace(() => ex);
+                    throw;
                 }
             }
         }
@@ -364,7 +388,7 @@ namespace Naos.MessageBus.Core
 
         private ChanneledMessage DeserializeEnvelopeIntoChanneledMessage(Envelope envelope)
         {
-            if (envelope.MessageType == null || string.IsNullOrEmpty(envelope.MessageType.AssemblyQualifiedName) || string.IsNullOrEmpty(envelope.MessageType.Namespace) || string.IsNullOrEmpty(envelope.MessageType.Name))
+            if (string.IsNullOrEmpty(envelope.MessageType?.AssemblyQualifiedName) || string.IsNullOrEmpty(envelope.MessageType.Namespace) || string.IsNullOrEmpty(envelope.MessageType.Name))
             {
                 throw new DispatchException("Message type not specified in envelope");
             }

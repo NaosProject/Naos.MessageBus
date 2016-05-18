@@ -1,5 +1,5 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="WaitForTrackingCodesMessage.cs" company="Naos">
+// <copyright file="WaitForTrackingCodesToBeInStatusMessage.cs" company="Naos">
 //   Copyright 2015 Naos
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
@@ -11,7 +11,7 @@ namespace Naos.MessageBus.Domain
     /// <summary>
     /// Message to wait for tracking codes to be in a set of statuses.
     /// </summary>
-    public class WaitForTrackingCodesMessage : IMessage, IShareTrackingCodes
+    public class WaitForTrackingCodesToBeInStatusMessage : IMessage, IShareTrackingCodes
     {
         /// <inheritdoc />
         public string Description { get; set; }
