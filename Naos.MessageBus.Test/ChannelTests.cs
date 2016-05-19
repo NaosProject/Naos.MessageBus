@@ -9,6 +9,8 @@ namespace Naos.MessageBus.Test
     using System;
     using System.Linq;
 
+    using FluentAssertions;
+
     using Naos.MessageBus.Domain;
 
     using Xunit;
@@ -35,13 +37,10 @@ namespace Naos.MessageBus.Test
         {
             // arrange
             var first = new Channel { Name = "MonkeysRock" };
-            
-            // act
-            var rawEx = Record.Exception(() => first.CompareTo(null));
+            Action testCode = () => first.CompareTo(null);
 
-            // assert
-            var typedEx = Assert.IsType<ArgumentException>(rawEx);
-            Assert.Equal("Cannot compare a null channel.", typedEx.Message);
+            // act & assert
+            testCode.ShouldThrow<ArgumentException>().WithMessage("Cannot compare a null channel.");
         }
 
         [Fact]
@@ -92,13 +91,10 @@ namespace Naos.MessageBus.Test
         {
             // arrange
             var notReallyNeeded = new Channel();
+            Action testCode = () => notReallyNeeded.Equals(new Channel(), null);
 
-            // act
-            var rawEx = Record.Exception(() => notReallyNeeded.Equals(new Channel(), null));
-
-            // assert
-            var typedEx = Assert.IsType<ArgumentException>(rawEx);
-            Assert.Equal("Cannot compare null channels.", typedEx.Message);
+            // act & assert
+            testCode.ShouldThrow<ArgumentException>().WithMessage("Cannot compare null channels.");
         }
 
         [Fact]
@@ -106,13 +102,10 @@ namespace Naos.MessageBus.Test
         {
             // arrange
             var notReallyNeeded = new Channel();
+            Action testCode = () => notReallyNeeded.Equals(null, new Channel());
 
-            // act
-            var rawEx = Record.Exception(() => notReallyNeeded.Equals(null, new Channel()));
-
-            // assert
-            var typedEx = Assert.IsType<ArgumentException>(rawEx);
-            Assert.Equal("Cannot compare null channels.", typedEx.Message);
+            // act & assert
+            testCode.ShouldThrow<ArgumentException>().WithMessage("Cannot compare null channels.");
         }
 
         [Fact]
@@ -120,13 +113,10 @@ namespace Naos.MessageBus.Test
         {
             // arrange
             var notReallyNeeded = new Channel();
+            Action testCode = () => notReallyNeeded.Equals(null, null);
 
-            // act
-            var rawEx = Record.Exception(() => notReallyNeeded.Equals(null, null));
-
-            // assert
-            var typedEx = Assert.IsType<ArgumentException>(rawEx);
-            Assert.Equal("Cannot compare null channels.", typedEx.Message);
+            // act & assert
+            testCode.ShouldThrow<ArgumentException>().WithMessage("Cannot compare null channels.");
         }
 
         [Fact]
@@ -134,13 +124,10 @@ namespace Naos.MessageBus.Test
         {
             // arrange
             var first = new Channel();
+            Action testCode = () => first.Equals(null);
 
-            // act
-            var rawEx = Record.Exception(() => first.Equals(null));
-
-            // assert
-            var typedEx = Assert.IsType<ArgumentException>(rawEx);
-            Assert.Equal("Cannot compare a null channel.", typedEx.Message);
+            // act & assert
+            testCode.ShouldThrow<ArgumentException>().WithMessage("Cannot compare a null channel.");
         }
 
         [Fact]

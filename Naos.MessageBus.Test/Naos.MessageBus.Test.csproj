@@ -57,9 +57,6 @@
       <HintPath>..\packages\FluentAssertions.4.5.0\lib\net45\FluentAssertions.Core.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="ImpromptuInterface">
-      <HintPath>..\packages\ImpromptuInterface.6.2.2\lib\net40\ImpromptuInterface.dll</HintPath>
-    </Reference>
     <Reference Include="Its.Configuration, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\Its.Configuration.1.0.6\lib\net40\Its.Configuration.dll</HintPath>
       <Private>True</Private>

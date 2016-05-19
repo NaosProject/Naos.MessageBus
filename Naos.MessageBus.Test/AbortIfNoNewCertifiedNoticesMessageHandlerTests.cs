@@ -62,41 +62,48 @@ namespace Naos.MessageBus.Test
         }
 
         [Fact]
-        public async Task NoNewWithAnyCheck_Aborts()
+        public void NoNewWithAnyCheck_Aborts()
         {
             // arrange
-            var topics = Some.Dummies<string>();
+            var impactingTopic = "mine";
+            var topics = Some.Dummies<string>().Union(new[] { impactingTopic }).ToList();
 
             var certifiedData = topics.ToDictionary(
                 key => key,
                 val => new Notice { Topic = val, CertifiedDateUtc = DateTime.UtcNow });
 
-            var message = new AbortIfNoNewCertifiedNoticesMessage
+            var message = new AbortIfNoNewCertifiedNoticesAndShareResultsMessage
                               {
                                   Description = A.Dummy<string>(),
-                                  CheckStrategy = A.Dummy<TopicCheckStrategy>().ThatIsNot(TopicCheckStrategy.Unspecified),
-                                  TopicChecks = topics.Select(_ => new TopicCheck { Topic = _ }).ToArray()
+                                  ImpactingTopic = impactingTopic,
+                                  DependantTopicChecks =
+                                      topics.Select(
+                                          _ =>
+                                          new TopicCheck
+                                              {
+                                                  Topic = _,
+                                                  TopicCheckStrategy = TopicCheckStrategy.RequireNew
+                                              })
+                                      .ToArray()
                               };
 
             var tracker = GetTracker(certifiedData);
 
-            var handler = new AbortIfNoNewCertifiedNoticesMessageHandler();
+            var handler = new AbortIfNoNewCertifiedNoticesAndShareResultsMessageHandler();
+            Func<Task> testCode = () => handler.HandleAsync(message, tracker);
 
-            // act
-            var exception = await Record.ExceptionAsync(() => handler.HandleAsync(message, tracker));
-
-            // assert
-            exception.Should().NotBeNull();
-            exception.GetType().Should().Be<AbortParcelDeliveryException>();
+            // act & assert
+            testCode.ShouldThrow<AbortParcelDeliveryException>().WithMessage(message.Description);
         }
 
         [Fact]
-        public async Task SomeNewWithAnyCheck_DoesNotAbort()
+        public void SomeNewWithAnyCheck_DoesNotAbort()
         {
             // arrange
             var succeedingOne = "fresh";
+            var impactingTopic = "mine";
 
-            var topics = Some.Dummies<string>().Union(new[] { succeedingOne }).ToList();
+            var topics = Some.Dummies<string>().Union(new[] { succeedingOne, impactingTopic }).ToList();
 
             var certifiedData = topics.Where(_ => _ != succeedingOne).ToDictionary(
                 key => key,
@@ -106,20 +113,27 @@ namespace Naos.MessageBus.Test
                 succeedingOne,
                 new Notice { CertifiedDateUtc = DateTime.UtcNow, Topic = succeedingOne });
 
-            var message = new AbortIfNoNewCertifiedNoticesMessage
+            var message = new AbortIfNoNewCertifiedNoticesAndShareResultsMessage
                               {
                                   Description = A.Dummy<string>(),
-                                  CheckStrategy = TopicCheckStrategy.Any,
-                                  TopicChecks = topics.Select(_ => new TopicCheck { Topic = _ }).ToArray(),
-                                  ImpactingTopic = "mine"
+                                  ImpactingTopic = impactingTopic,
+                                  DependantTopicChecks =
+                                      topics.Select(
+                                          _ =>
+                                          new TopicCheck
+                                              {
+                                                  Topic = _,
+                                                  TopicCheckStrategy = TopicCheckStrategy.RequireNew
+                                              })
+                                      .ToArray()
                               };
 
             var tracker = GetTracker(certifiedData);
 
-            var handler = new AbortIfNoNewCertifiedNoticesMessageHandler();
+            var handler = new AbortIfNoNewCertifiedNoticesAndShareResultsMessageHandler();
 
             // act
-            await handler.HandleAsync(message, tracker);
+            handler.HandleAsync(message, tracker).Wait();
 
             // assert - by virtue of arriving here this will have succeeded
         }
@@ -128,22 +142,31 @@ namespace Naos.MessageBus.Test
         public async Task AllNewWithAllCheck_DoesNotAbort()
         {
             // arrange
-            var topics = Some.Dummies<string>().ToList();
+            var impactingTopic = "mine";
+            var topics = Some.Dummies<string>().Union(new[] { impactingTopic }).ToList();
 
             var certifiedData = topics.ToDictionary(
                 key => key,
                 val => new Notice { Topic = val, CertifiedDateUtc = DateTime.UtcNow });
 
-            var message = new AbortIfNoNewCertifiedNoticesMessage
+            var message = new AbortIfNoNewCertifiedNoticesAndShareResultsMessage
                               {
                                   Description = A.Dummy<string>(),
-                                  CheckStrategy = TopicCheckStrategy.Any,
-                                  TopicChecks = topics.Select(_ => new TopicCheck { Topic = _ }).ToArray()
+                                  ImpactingTopic = impactingTopic,
+                                  DependantTopicChecks =
+                                      topics.Select(
+                                          _ =>
+                                          new TopicCheck
+                                              {
+                                                  Topic = _,
+                                                  TopicCheckStrategy = TopicCheckStrategy.RequireNew
+                                              })
+                                      .ToArray()
                               };
 
             var tracker = GetTracker(certifiedData);
 
-            var handler = new AbortIfNoNewCertifiedNoticesMessageHandler();
+            var handler = new AbortIfNoNewCertifiedNoticesAndShareResultsMessageHandler();
 
             // act
             await handler.HandleAsync(message, tracker);
@@ -152,12 +175,13 @@ namespace Naos.MessageBus.Test
         }
 
         [Fact]
-        public async Task SomeNewWithAllCheck_Aborts()
+        public void SomeNewWithAllCheck_Aborts()
         {
             // arrange
             var succeedingOne = "freshTopic";
+            var impactingTopic = "mine";
 
-            var topics = Some.Dummies<string>().Union(new[] { succeedingOne }).ToList();
+            var topics = Some.Dummies<string>().Union(new[] { succeedingOne, impactingTopic }).ToList();
 
             var certifiedData = topics.Where(_ => _ != succeedingOne).ToDictionary(
                 key => key,
@@ -165,23 +189,28 @@ namespace Naos.MessageBus.Test
 
             certifiedData.Add(succeedingOne, new Notice { CertifiedDateUtc = DateTime.UtcNow, Topic = succeedingOne });
 
-            var message = new AbortIfNoNewCertifiedNoticesMessage
+            var message = new AbortIfNoNewCertifiedNoticesAndShareResultsMessage
                               {
                                   Description = A.Dummy<string>(),
-                                  CheckStrategy = TopicCheckStrategy.Any,
-                                  TopicChecks = topics.Select(_ => new TopicCheck { Topic = _ }).ToArray()
+                                  ImpactingTopic = impactingTopic,
+                                  DependantTopicChecks =
+                                      topics.Select(
+                                          _ =>
+                                          new TopicCheck
+                                              {
+                                                  Topic = _,
+                                                  TopicCheckStrategy = TopicCheckStrategy.RequireNew
+                                              })
+                                      .ToArray()
                               };
 
             var tracker = GetTracker(certifiedData);
 
-            var handler = new AbortIfNoNewCertifiedNoticesMessageHandler();
+            var handler = new AbortIfNoNewCertifiedNoticesAndShareResultsMessageHandler();
+            Func<Task> testCode = () => handler.HandleAsync(message, tracker);
 
-            // act
-            var exception = await Record.ExceptionAsync(() => handler.HandleAsync(message, tracker));
-
-            // assert
-            exception.Should().NotBeNull();
-            exception.GetType().Should().Be<AbortParcelDeliveryException>();
+            // act & assert
+            testCode.ShouldThrow<AbortParcelDeliveryException>().WithMessage(message.Description);
         }
 
         private static IGetTrackingReports GetTracker(Dictionary<string, Notice> data)
@@ -190,7 +219,8 @@ namespace Naos.MessageBus.Test
 
             foreach (var item in data)
             {
-                A.CallTo(() => tracker.GetLatestCertifiedNoticeAsync(item.Key)).Returns(item.Value);
+                A.CallTo(() => tracker.GetLatestCertifiedNoticeAsync(item.Key, NoticeStatus.None)).Returns(Task.FromResult(item.Value));
+                A.CallTo(() => tracker.GetLatestCertifiedNoticeAsync(item.Key, NoticeStatus.Certified)).Returns(Task.FromResult(item.Value));
             }
 
             return tracker;

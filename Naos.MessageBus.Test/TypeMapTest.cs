@@ -4,10 +4,12 @@
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
-namespace Naos.MessageBus.Domain.Test
+namespace Naos.MessageBus.Test
 {
     using System.Collections.Generic;
     using System.Linq;
+
+    using Naos.MessageBus.Domain;
 
     using Xunit;
 

@@ -8,8 +8,11 @@ namespace Naos.MessageBus.Test
 {
     using System;
 
+    using FluentAssertions;
+
     using Naos.Cron;
     using Naos.MessageBus.Domain;
+    using Naos.MessageBus.Domain.Exceptions;
     using Naos.MessageBus.Hangfire.Sender;
 
     using Xunit;
@@ -17,18 +20,13 @@ namespace Naos.MessageBus.Test
     public class MessageSenderTest
     {
         [Fact]
-        public static void SenderFactoryGetParcelSender_Uninitialized_Throws()
+        public static void SenderFactoryGetPostOffice_Uninitialized_Throws()
         {
             // arrange
+            Action testCode = () => HandlerToolShed.GetPostOffice();
 
-            // act
-            var ex = Assert.Throws<ArgumentException>(() => HandlerToolShed.GetPostOffice());
-
-            // assert
-            Assert.IsType<ArgumentException>(ex);
-            Assert.Equal(
-                "Factory not initialized for IPostOffice.",
-                ex.Message);
+            // act & assert
+            testCode.ShouldThrow<ArgumentException>().WithMessage("Factory not initialized for IPostOffice.");
         }
 
         [Fact]
@@ -41,15 +39,10 @@ namespace Naos.MessageBus.Test
             }
 
             // arrange
+            Action testCode = () => HandlerToolShed.GetParcelTracker();
 
-            // act
-            var ex = Assert.Throws<ArgumentException>(() => HandlerToolShed.GetParcelTracker());
-
-            // assert
-            Assert.IsType<ArgumentException>(ex);
-            Assert.Equal(
-                "Factory not initialized for ITrackParcels.",
-                ex.Message);
+            // act & assert
+            testCode.ShouldThrow<ArgumentException>().WithMessage("Factory not initialized for ITrackParcels.");
         }
 
         [Fact]
@@ -64,44 +57,50 @@ namespace Naos.MessageBus.Test
         [Fact]
         public static void Send_NullChannelName_Throws()
         {
+            // arrange
             var channel = new Channel { Name = null };
-            var ex = Assert.Throws<ArgumentException>(() => HangfireCourier.ThrowIfInvalidChannel(channel));
-            Assert.Equal(
-                "Cannot use null channel name.",
-                ex.Message);
+            Action testCode = () => HangfireCourier.ThrowIfInvalidChannel(channel);
+
+            // act & assert
+            testCode.ShouldThrow<ArgumentException>().WithMessage("Cannot use null channel name.");
         }
 
         [Fact]
         public static void Send_LongChannelName_Throws()
         {
+            // arrange
             var channel = new Channel { Name = new string('a', 21) };
-            var ex = Assert.Throws<ArgumentException>(() => HangfireCourier.ThrowIfInvalidChannel(channel));
-            Assert.Equal(
-                "Cannot use a channel name longer than 20 characters.  The supplied channel name: " + channel.Name
-                + " is " + channel.Name.Length + " characters long.",
-                ex.Message);
+            Action testCode = () => HangfireCourier.ThrowIfInvalidChannel(channel);
+
+            // act & assert
+            testCode.ShouldThrow<ArgumentException>()
+                .WithMessage(
+                    "Cannot use a channel name longer than 20 characters.  The supplied channel name: " + channel.Name + " is " + channel.Name.Length
+                    + " characters long.");
         }
 
         [Fact]
         public static void Send_UpperCaseChannelName_Throws()
         {
+            // arrange
             var channel = new Channel { Name = new string('A', 20) };
-            var ex = Assert.Throws<ArgumentException>(() => HangfireCourier.ThrowIfInvalidChannel(channel));
-            Assert.Equal(
-                "Channel name must be lowercase alphanumeric with underscores ONLY.  The supplied channel name: "
-                + channel.Name,
-                ex.Message);
+            Action testCode = () => HangfireCourier.ThrowIfInvalidChannel(channel);
+
+            // act & assert
+            testCode.ShouldThrow<ArgumentException>()
+                .WithMessage("Channel name must be lowercase alphanumeric with underscores ONLY.  The supplied channel name: " + channel.Name);
         }
 
         [Fact]
         public static void Send_DashesChannelName_Throws()
         {
+            // arrange
             var channel = new Channel { Name = "sup-withthis" };
-            var ex = Assert.Throws<ArgumentException>(() => HangfireCourier.ThrowIfInvalidChannel(channel));
-            Assert.Equal(
-                "Channel name must be lowercase alphanumeric with underscores ONLY.  The supplied channel name: "
-                + channel.Name,
-                ex.Message);
+            Action testCode = () => HangfireCourier.ThrowIfInvalidChannel(channel);
+
+            // act & assert
+            testCode.ShouldThrow<ArgumentException>()
+                .WithMessage("Channel name must be lowercase alphanumeric with underscores ONLY.  The supplied channel name: " + channel.Name);
         }
     }
 }

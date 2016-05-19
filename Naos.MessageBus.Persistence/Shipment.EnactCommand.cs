@@ -88,14 +88,14 @@ namespace Naos.MessageBus.Persistence
             if (isPendingNotice)
             {
                 var message = Serializer.Deserialize<PendingNoticeMessage>(deliveredEnvelope.MessageAsJson);
-                this.RecordEvent(new PendingNoticeDelivered { TrackingCode = command.TrackingCode, Topic = message.Topic, Envelope = deliveredEnvelope });
+                this.RecordEvent(new PendingNoticeDelivered { TrackingCode = command.TrackingCode, Topic = message.ImpactingTopic, Envelope = deliveredEnvelope });
             }
 
             var isCertified = deliveredEnvelope.MessageType == typeof(CertifiedNoticeMessage).ToTypeDescription();
             if (isCertified)
             {
                 var message = Serializer.Deserialize<CertifiedNoticeMessage>(deliveredEnvelope.MessageAsJson);
-                this.RecordEvent(new CertifiedNoticeDelivered { TrackingCode = command.TrackingCode, Topic = message.Topic, Envelope = deliveredEnvelope });
+                this.RecordEvent(new CertifiedNoticeDelivered { TrackingCode = command.TrackingCode, Topic = message.ImpactingTopic, Envelope = deliveredEnvelope });
             }
         }
     }

@@ -9,7 +9,6 @@ namespace Naos.MessageBus.Test
     using System;
     using System.Collections.Concurrent;
     using System.Collections.Generic;
-    using System.Dynamic;
     using System.Linq;
     using System.Threading;
     using System.Threading.Tasks;
@@ -18,10 +17,6 @@ namespace Naos.MessageBus.Test
 
     using FluentAssertions;
 
-    using ImpromptuInterface;
-    using ImpromptuInterface.Dynamic;
-
-    using Naos.Cron;
     using Naos.MessageBus.Core;
     using Naos.MessageBus.Domain;
     using Naos.MessageBus.Domain.Exceptions;
@@ -410,20 +405,20 @@ namespace Naos.MessageBus.Test
 
         private static Func<IPostOffice> GetInMemorySender(List<Parcel> trackingSends)
         {
-            Func<IPostOffice> senderConstructor = () =>
-            {
-                dynamic dynamicObject = new ExpandoObject();
-                dynamicObject.Send = Return<TrackingCode>.Arguments<Parcel>(
-                    (parcel) =>
-                    {
-                        trackingSends.Add(parcel);
-                        return null;
-                    });
+            Func<Parcel, TrackingCode> send = parcel =>
+                {
+                    trackingSends.Add(parcel);
+                    return null;
+                };
 
-                IPostOffice ret = Impromptu.ActLike(dynamicObject);
-                return ret;
-            };
-            return senderConstructor;
+            var ret = A.Fake<IPostOffice>();
+
+            A.CallTo(ret)
+                .Where(call => call.Method.Name == nameof(IPostOffice.Send))
+                .WithReturnType<TrackingCode>()
+                .Invokes(call => send(call.Arguments.FirstOrDefault() as Parcel));
+
+            return () => ret;
         }
 
         [Fact]
@@ -433,26 +428,6 @@ namespace Naos.MessageBus.Test
             container.Register<IHandleMessages<NullMessage>, NullMessageHandler>();
 
             var trackingSends = new List<Parcel>();
-            Func<IPostOffice> senderConstructor = () =>
-            {
-                dynamic dynamicObject = new ExpandoObject();
-                dynamicObject.SendRecurring = Return<TrackingCode>.Arguments<Parcel, ScheduleBase>(
-                    (parcel, schedule) =>
-                        {
-                            trackingSends.Add(parcel);
-                            return null;
-                        });
-
-                dynamicObject.Send = Return<TrackingCode>.Arguments<Parcel>(
-                    (parcel) =>
-                        {
-                            trackingSends.Add(parcel);
-                            return null;
-                        });
-
-                IPostOffice ret = Impromptu.ActLike(dynamicObject);
-                return ret;
-            };
 
             var monitoredChannel = new Channel { Name = "ChannelName" };
             var dispatcher = new MessageDispatcher(
@@ -464,7 +439,7 @@ namespace Naos.MessageBus.Test
                 new HarnessStaticDetails(),
                 new NullParcelTrackingSystem(),
                 new InMemoryActiveMessageTracker(),
-                senderConstructor());
+                GetInMemorySender(trackingSends)());
 
             var validParcel = new Parcel()
             {
@@ -505,16 +480,14 @@ namespace Naos.MessageBus.Test
         {
             Action testCode = () => 
             GetMessageDispatcher().Dispatch(new TrackingCode(), "Name", null);
-            var ex = Assert.Throws<DispatchException>(testCode);
-            Assert.Equal("Parcel cannot be null", ex.Message);
+            testCode.ShouldThrow<DispatchException>().WithMessage("Parcel cannot be null");
         }
 
         [Fact]
         public static void Dispatch_NullEnvelopesInParcel_Throws()
         {
             Action testCode = () => GetMessageDispatcher().Dispatch(new TrackingCode(), "Name", new Parcel());
-            var ex = Assert.Throws<DispatchException>(testCode);
-            Assert.Equal("Parcel must contain envelopes", ex.Message);
+            testCode.ShouldThrow<DispatchException>().WithMessage("Parcel must contain envelopes");
         }
 
         [Fact]
@@ -522,16 +495,15 @@ namespace Naos.MessageBus.Test
         {
             Action testCode =
                 () => GetMessageDispatcher().Dispatch(new TrackingCode(), "Name", new Parcel { Envelopes = new List<Envelope>() });
-            var ex = Assert.Throws<DispatchException>(testCode);
-            Assert.Equal("Parcel must contain envelopes", ex.Message);
+            testCode.ShouldThrow<DispatchException>().WithMessage("Parcel must contain envelopes");
         }
 
         [Fact]
         public static void Dispatch_EnvelopeMissingTypeCompletely_Throws()
         {
             Action testCode = () => GetMessageDispatcher(new[] { new Channel { Name = "Channel" } }).Dispatch(new TrackingCode(), "Name", new Parcel { Envelopes = new[] { new Envelope { Channel = new Channel { Name = "Channel" } } } });
-            var ex = Assert.Throws<DispatchException>(testCode);
-            Assert.Equal("Message type not specified in envelope", ex.Message);
+
+            testCode.ShouldThrow<DispatchException>().WithMessage("Message type not specified in envelope");
         }
 
         [Fact]
@@ -539,8 +511,7 @@ namespace Naos.MessageBus.Test
         {
             Action testCode =
                 () => GetMessageDispatcher(new[] { new Channel { Name = "Channel" } }).Dispatch(new TrackingCode(), "Name", new Parcel { Envelopes = new[] { new Envelope { MessageType = new TypeDescription { AssemblyQualifiedName = "Something", Name = "Something" }, Channel = new Channel { Name = "Channel" } } } });
-            var ex = Assert.Throws<DispatchException>(testCode);
-            Assert.Equal("Message type not specified in envelope", ex.Message);
+            testCode.ShouldThrow<DispatchException>().WithMessage("Message type not specified in envelope");
         }
 
         [Fact]
@@ -548,8 +519,7 @@ namespace Naos.MessageBus.Test
         {
             Action testCode =
                 () => GetMessageDispatcher(new[] { new Channel { Name = "Channel" } }).Dispatch(new TrackingCode(), "Name", new Parcel { Envelopes = new[] { new Envelope { MessageType = new TypeDescription { AssemblyQualifiedName = "Something", Namespace = "Something" }, Channel = new Channel { Name = "Channel" } } } });
-            var ex = Assert.Throws<DispatchException>(testCode);
-            Assert.Equal("Message type not specified in envelope", ex.Message);
+            testCode.ShouldThrow<DispatchException>().WithMessage("Message type not specified in envelope");
         }
 
         [Fact]
@@ -557,8 +527,7 @@ namespace Naos.MessageBus.Test
         {
             Action testCode =
                 () => GetMessageDispatcher(new[] { new Channel { Name = "Channel" } }).Dispatch(new TrackingCode(), "Name", new Parcel { Envelopes = new[] { new Envelope { MessageType = new TypeDescription { Name = "Something", Namespace = "Something" }, Channel = new Channel { Name = "Channel" } } } });
-            var ex = Assert.Throws<DispatchException>(testCode);
-            Assert.Equal("Message type not specified in envelope", ex.Message);
+            testCode.ShouldThrow<DispatchException>().WithMessage("Message type not specified in envelope");
         }
 
         [Fact]
@@ -586,8 +555,7 @@ namespace Naos.MessageBus.Test
                                 });
                 };
 
-            var ex = Assert.Throws<DispatchException>(testCode);
-            Assert.Equal("First message in parcel deserialized to null", ex.Message);
+            testCode.ShouldThrow<DispatchException>().WithMessage("First message in parcel deserialized to null");
         }
 
         [Fact]
@@ -605,8 +573,7 @@ namespace Naos.MessageBus.Test
                                 new Parcel { Envelopes = new[] { new Envelope { Channel = channel, MessageType = typeof(NullMessage).ToTypeDescription() } } });
                     };
 
-            var ex = Assert.Throws<DispatchException>(testCode);
-            Assert.True(ex.Message.StartsWith("Unable to find handler for message type"), ex.Message);
+            testCode.ShouldThrow<DispatchException>().Where(_ => _.Message.StartsWith("Unable to find handler for message type"));
         }
 
         [Fact]

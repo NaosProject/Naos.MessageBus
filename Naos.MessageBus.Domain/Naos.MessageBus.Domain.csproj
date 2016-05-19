@@ -61,8 +61,14 @@
     <Compile Include=".Spritely.Recipes\JsonConfiguration.cs" />
     <Compile Include=".Spritely.Recipes\SecureString.cs" />
     <Compile Include=".Spritely.Recipes\SecureStringJsonConverter.cs" />
+    <Compile Include="PostOfficeExtensions.cs" />
+    <Compile Include="Sharing\IShareNoticeItems.cs" />
+    <Compile Include="Tracking\CertifiedForm.cs" />
+    <Compile Include="Tracking\TopicCheck.cs" />
+    <Compile Include="Tracking\MultipleCertifiedRunsStrategy.cs" />
+    <Compile Include="Tracking\TopicCheckStrategy.cs" />
     <Compile Include="Sharing\IShareNotices.cs" />
-    <Compile Include="Tracking\PendingNoticeMessage.cs" />
+    <Compile Include="Messages\PendingNoticeMessage.cs" />
     <Compile Include="Tracking\Notice.cs" />
     <Compile Include="Tracking\NoticeStatus.cs" />
     <Compile Include="Messages\RecurringHeaderMessage.cs" />
@@ -113,7 +119,7 @@
     <Compile Include="TypeDescription.cs" />
     <Compile Include="TypeMap.cs" />
     <Compile Include="TypeMatchStrategy.cs" />
-    <Compile Include="Messages\AbortIfNoNewCertifiedNoticesMessage.cs" />
+    <Compile Include="Messages\AbortIfNoNewCertifiedNoticesAndShareResultsMessage.cs" />
     <Compile Include="Messages\WaitForTrackingCodesToBeInStatusMessage.cs" />
     <Compile Include="Messages\WaitMessage.cs" />
   </ItemGroup>

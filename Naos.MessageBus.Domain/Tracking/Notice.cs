@@ -7,7 +7,6 @@
 namespace Naos.MessageBus.Domain
 {
     using System;
-    using System.Collections.Generic;
 
     /// <summary>
     /// Model object to hold a certified notice.
@@ -20,9 +19,9 @@ namespace Naos.MessageBus.Domain
         public string Topic { get; set; }
 
         /// <summary>
-        /// Gets or sets the notices.
+        /// Gets or sets the notice items.
         /// </summary>
-        public IReadOnlyCollection<NoticeItem> Items { get; set; }
+        public NoticeItem[] NoticeItems { get; set; }
 
         /// <summary>
         /// Gets or sets additional details.

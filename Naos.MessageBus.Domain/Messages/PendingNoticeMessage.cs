@@ -1,5 +1,5 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="CertifiedNoticeMessage.cs" company="Naos">
+// <copyright file="PendingNoticeMessage.cs" company="Naos">
 //   Copyright 2015 Naos
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
@@ -9,7 +9,7 @@ namespace Naos.MessageBus.Domain
     /// <summary>
     /// Message that contains important info to persist.
     /// </summary>
-    public class CertifiedNoticeMessage : IMessage, IShareNotices, IShareNoticeItems
+    public class PendingNoticeMessage : IMessage, IShareNotices, IShareNoticeItems
     {
         /// <inheritdoc />
         public string Description { get; set; }

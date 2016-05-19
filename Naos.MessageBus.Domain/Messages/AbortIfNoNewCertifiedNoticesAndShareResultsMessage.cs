@@ -1,5 +1,5 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="PendingNoticeMessage.cs" company="Naos">
+// <copyright file="AbortIfNoNewCertifiedNoticesAndShareResultsMessage.cs" company="Naos">
 //   Copyright 2015 Naos
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
@@ -9,26 +9,26 @@ namespace Naos.MessageBus.Domain
     using System.Collections.Generic;
 
     /// <summary>
-    /// Message that contains important info to persist.
+    /// Message to wait for certified notices to come in.
     /// </summary>
-    public class PendingNoticeMessage : IMessage, IShareNotices
+    public class AbortIfNoNewCertifiedNoticesAndShareResultsMessage : IMessage
     {
         /// <inheritdoc />
         public string Description { get; set; }
 
         /// <summary>
-        /// Gets or sets the notices as they were evaluated with processing check.
+        /// Gets or sets the topic that this sequence impacts.
         /// </summary>
-        public Notice[] Notices { get; set; }
+        public string ImpactingTopic { get; set; }
 
         /// <summary>
-        /// Gets or sets the topic of the notice.
+        /// Gets or sets the topics to check.
         /// </summary>
-        public string Topic { get; set; }
+        public IReadOnlyCollection<TopicCheck> DependantTopicChecks { get; set; }
 
         /// <summary>
-        /// Gets or sets a collection of <see cref="NoticeItem"/> which can be used to determine if action is necessary.
+        /// Gets or sets the multiple run strategy.
         /// </summary>
-        public IReadOnlyCollection<NoticeItem> Items { get; set; }
+        public MultipleCertifiedRunsStrategy MultipleCertifiedRunsStrategy { get; set; }
     }
 }

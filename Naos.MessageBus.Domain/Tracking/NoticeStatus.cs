@@ -24,6 +24,11 @@ namespace Naos.MessageBus.Domain
         /// <summary>
         /// Notice is certified.
         /// </summary>
-        Certified
+        Certified,
+
+        /// <summary>
+        /// None state, null object of the enum.
+        /// </summary>
+        None
     }
 }

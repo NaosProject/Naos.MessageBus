@@ -118,7 +118,7 @@ namespace Naos.MessageBus.Domain
         }
 
         /// <inheritdoc />
-        public async Task<Notice> GetLatestCertifiedNoticeAsync(string topic)
+        public async Task<Notice> GetLatestCertifiedNoticeAsync(string topic, NoticeStatus statusFilter = NoticeStatus.None)
         {
             return await Task.FromResult(null as Notice);
         }

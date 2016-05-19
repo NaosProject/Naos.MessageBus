@@ -11,8 +11,7 @@ namespace Naos.MessageBus.Test
     using System.Dynamic;
     using System.Linq;
 
-    using ImpromptuInterface;
-    using ImpromptuInterface.Dynamic;
+    using FakeItEasy;
 
     using Naos.Cron;
     using Naos.MessageBus.Domain;
@@ -55,20 +54,13 @@ namespace Naos.MessageBus.Test
 
         private static Func<ICourier> GetInMemoryCourier(List<Crate> trackingSends)
         {
-            Func<ICourier> courierConstructor = () =>
-            {
-                dynamic dynamicObject = new ExpandoObject();
-                dynamicObject.Send = ReturnVoid.Arguments<Crate>(
-                    (crate) =>
-                    {
-                        trackingSends.Add(crate);
-                    });
+            Action<Crate> send = trackingSends.Add;
 
-                ICourier ret = Impromptu.ActLike(dynamicObject);
-                return ret;
-            };
-
-            return courierConstructor;
+            var ret = A.Fake<ICourier>();
+            A.CallTo(ret)
+                .Where(call => call.Method.Name == nameof(ICourier.Send))
+                .Invokes(call => send(call.Arguments.FirstOrDefault() as Crate));
+            return () => ret;
         }
     }
 }

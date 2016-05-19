@@ -18,30 +18,34 @@ namespace Naos.MessageBus.Domain
         /// </summary>
         /// <param name="message">Message to send.</param>
         /// <param name="channel">Channel to send message to.</param>
+        /// <param name="certifiedForm">Optional form that when completed will send as "certified mail" with additional tracking.</param>
         /// <returns>ID of the scheduled message.</returns>
-        TrackingCode Send(IMessage message, Channel channel);
+        TrackingCode Send(IMessage message, Channel channel, CertifiedForm certifiedForm = null);
 
         /// <summary>
         /// Send an ordered set of messages that should be handled as soon as possible.
         /// </summary>
         /// <param name="messageSequence">Message sequence to send.</param>
+        /// <param name="certifiedForm">Optional form that when completed will send as "certified mail" with additional tracking.</param>
         /// <returns>ID of the scheduled message.</returns>
-        TrackingCode Send(MessageSequence messageSequence);
+        TrackingCode Send(MessageSequence messageSequence, CertifiedForm certifiedForm = null);
 
         /// <summary>
         /// Send a parcel (the deconstructed form of a message sequence).
         /// </summary>
         /// <param name="parcel">Parcel to send.</param>
+        /// <param name="certifiedForm">Optional form that when completed will send as "certified mail" with additional tracking.</param>
         /// <returns>ID of the scheduled message.</returns>
-        TrackingCode Send(Parcel parcel);
+        TrackingCode Send(Parcel parcel, CertifiedForm certifiedForm = null);
 
         /// <summary>
         /// Send a parcel (the deconstructed form of a message sequence).
         /// </summary>
         /// <param name="parcel">Parcel to send.</param>
         /// <param name="recurringSchedule">Schedule the message should recur on.</param>
+        /// <param name="certifiedForm">Optional form that when completed will send as "certified mail" with additional tracking.</param>
         /// <returns>ID of the scheduled message.</returns>
-        TrackingCode SendRecurring(Parcel parcel, ScheduleBase recurringSchedule);
+        TrackingCode SendRecurring(Parcel parcel, ScheduleBase recurringSchedule, CertifiedForm certifiedForm = null);
 
         /// <summary>
         /// Sends a message to recur on a schedule.
@@ -49,15 +53,17 @@ namespace Naos.MessageBus.Domain
         /// <param name="message">Message to send.</param>
         /// <param name="channel">Channel to send message to.</param>
         /// <param name="recurringSchedule">Schedule the message should recur on.</param>
+        /// <param name="certifiedForm">Optional form that when completed will send as "certified mail" with additional tracking.</param>
         /// <returns>ID of the scheduled message.</returns>
-        TrackingCode SendRecurring(IMessage message, Channel channel, ScheduleBase recurringSchedule);
+        TrackingCode SendRecurring(IMessage message, Channel channel, ScheduleBase recurringSchedule, CertifiedForm certifiedForm = null);
 
         /// <summary>
         /// Send an ordered set of messages to recur on a schedule.
         /// </summary>
         /// <param name="messageSequence">Message sequence to send.</param>
         /// <param name="recurringSchedule">Schedule the message should recur on.</param>
+        /// <param name="certifiedForm">Optional form that when completed will send as "certified mail" with additional tracking.</param>
         /// <returns>ID of the scheduled message.</returns>
-        TrackingCode SendRecurring(MessageSequence messageSequence, ScheduleBase recurringSchedule);
+        TrackingCode SendRecurring(MessageSequence messageSequence, ScheduleBase recurringSchedule, CertifiedForm certifiedForm = null);
     }
 }

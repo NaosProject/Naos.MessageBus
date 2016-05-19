@@ -12,6 +12,8 @@ namespace Naos.MessageBus.Test
     using System.Linq;
     using System.Threading.Tasks;
 
+    using FluentAssertions;
+
     using Naos.MessageBus.Core;
     using Naos.MessageBus.Domain;
     using Naos.MessageBus.Domain.Exceptions;
@@ -74,17 +76,17 @@ namespace Naos.MessageBus.Test
         [Fact]
         public static void GetSharedPropertySetFromShareObject_SourceNull_Throws()
         {
-            Action testCode = () =>
-            {
-                SharedPropertyHelper.GetSharedInterfaceStates(null);
-            };
-            var ex = Assert.Throws<SharePropertyException>(testCode);
-            Assert.Equal("SourceObject can not be null", ex.Message);
+            // arrange
+            Action testCode = () => SharedPropertyHelper.GetSharedInterfaceStates(null);
+
+            // act & assert
+            testCode.ShouldThrow<SharePropertyException>().WithMessage("SourceObject can not be null");
         }
 
         [Fact]
         public static void ApplySharedPropertySetToShareObject_InvalidType_Throws()
         {
+            // arrange
             Action testCode = () =>
                 {
                     var sharedPropertyEntry = new SharedProperty
@@ -116,52 +118,61 @@ namespace Naos.MessageBus.Test
                         new CopyFileMessage());
                 };
 
-            var ex = Assert.Throws<ArgumentException>(testCode);
-            Assert.Equal("Can not find loaded type; Namespace: NotReal, Name: NotReal, AssemblyQualifiedName: NotReal", ex.Message);
+            // act & assert
+            testCode.ShouldThrow<ArgumentException>()
+                .WithMessage("Can not find loaded type; Namespace: NotReal, Name: NotReal, AssemblyQualifiedName: NotReal");
         }
 
         [Fact]
         public static void ApplySharedPropertySetToShareObject_TargetNull_Throws()
         {
+            // arrange
             Action testCode = () =>
             {
                 SharedPropertyHelper.ApplySharedInterfaceState(TypeMatchStrategy.NamespaceAndName, new SharedInterfaceState(), null);
             };
-            var ex = Assert.Throws<SharePropertyException>(testCode);
-            Assert.Equal("Neither targetObject nor propertySet can be null", ex.Message);
+
+            // act & assert
+            testCode.ShouldThrow<SharePropertyException>().WithMessage("Neither targetObject nor propertySet can be null");
         }
 
         [Fact]
         public static void ApplySharedPropertySetToShareObject_PropertySetNull_Throws()
         {
+            // arrange
             Action testCode = () =>
             {
                 SharedPropertyHelper.ApplySharedInterfaceState(TypeMatchStrategy.NamespaceAndName, null, new CopyFileMessage());
             };
-            var ex = Assert.Throws<SharePropertyException>(testCode);
-            Assert.Equal("Neither targetObject nor propertySet can be null", ex.Message);
+
+            // act & assert
+            testCode.ShouldThrow<SharePropertyException>().WithMessage("Neither targetObject nor propertySet can be null");
         }
 
         [Fact]
         public static void ApplySharedProperties_Source_Throws()
         {
+            // arrange
             Action testCode = () =>
             {
                 SharedPropertyHelper.ApplySharedProperties(TypeMatchStrategy.NamespaceAndName, null, new CopyFileMessage());
             };
-            var ex = Assert.Throws<SharePropertyException>(testCode);
-            Assert.Equal("Neither source nor target can be null", ex.Message);
+
+            // act & assert
+            testCode.ShouldThrow<SharePropertyException>().WithMessage("Neither source nor target can be null");
         }
 
         [Fact]
         public static void ApplySharedProperties_Target_Throws()
         {
+            // arrange
             Action testCode = () =>
             {
                 SharedPropertyHelper.ApplySharedProperties(TypeMatchStrategy.NamespaceAndName, null, new CopyFileMessage());
             };
-            var ex = Assert.Throws<SharePropertyException>(testCode);
-            Assert.Equal("Neither source nor target can be null", ex.Message);
+
+            // act & assert
+            testCode.ShouldThrow<SharePropertyException>().WithMessage("Neither source nor target can be null");
         }
 
         [Fact]

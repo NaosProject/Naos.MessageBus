@@ -1,5 +1,5 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="AbortIfNoNewCertifiedNoticesMessageHandler.cs" company="Naos">
+// <copyright file="AbortIfNoNewCertifiedNoticesAndShareResultsMessageHandler.cs" company="Naos">
 //   Copyright 2015 Naos
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
@@ -16,7 +16,7 @@ namespace Naos.MessageBus.Core
     /// <summary>
     /// No implementation handler to handle NullMessages.
     /// </summary>
-    public class AbortIfNoNewCertifiedNoticesMessageHandler : IHandleMessages<AbortIfNoNewCertifiedNoticesMessage>, IShareNotices
+    public class AbortIfNoNewCertifiedNoticesAndShareResultsMessageHandler : IHandleMessages<AbortIfNoNewCertifiedNoticesAndShareResultsMessage>, IShareNotices
     {
         /// <summary>
         /// Gets or sets the notices as they were evaluated with processing check.
@@ -24,7 +24,7 @@ namespace Naos.MessageBus.Core
         public Notice[] Notices { get; set; }
 
         /// <inheritdoc />
-        public async Task HandleAsync(AbortIfNoNewCertifiedNoticesMessage message)
+        public async Task HandleAsync(AbortIfNoNewCertifiedNoticesAndShareResultsMessage message)
         {
             var tracker = HandlerToolShed.GetParcelTracker();
 
@@ -32,16 +32,31 @@ namespace Naos.MessageBus.Core
         }
 
         /// <summary>
-        /// Handle <see cref="AbortIfNoNewCertifiedNoticesMessage"/> message.
+        /// Handle <see cref="AbortIfNoNewCertifiedNoticesAndShareResultsMessage"/> message.
         /// </summary>
         /// <param name="message">Message to handle.</param>
         /// <param name="tracker">Tracker to get certified notices.</param>
         /// <returns>Task for async.</returns>
-        public async Task HandleAsync(AbortIfNoNewCertifiedNoticesMessage message, IGetTrackingReports tracker)
+        public async Task HandleAsync(AbortIfNoNewCertifiedNoticesAndShareResultsMessage message, IGetTrackingReports tracker)
         {
-            var lastNoticeOfMyImpact = await tracker.GetLatestCertifiedNoticeAsync(message.ImpactingTopic);
+            if (tracker == null)
+            {
+                throw new ArgumentException("Tracker cannot be null.");
+            }
 
-            var notices = message.TopicChecks.Select(
+            if (message == null)
+            {
+                throw new ArgumentException("Message cannot be null.");
+            }
+
+            if (string.IsNullOrWhiteSpace(message.ImpactingTopic))
+            {
+                throw new ArgumentException("Message.ImpactingTopic cannot be null or empty.");
+            }
+
+            var lastNoticeOfMyImpact = await tracker.GetLatestCertifiedNoticeAsync(message.ImpactingTopic, NoticeStatus.Certified);
+
+            var notices = message.DependantTopicChecks.Select(
                 topicCheck =>
                     {
                         var latestCertifiedNoticeTask = tracker.GetLatestCertifiedNoticeAsync(topicCheck.Topic);
@@ -50,29 +65,17 @@ namespace Naos.MessageBus.Core
                         return latest;
                     }).ToArray();
 
-            var topicsToCheckRecentResults = message.TopicChecks.ToDictionary(
+            var topicsToCheckRecentResults = message.DependantTopicChecks.ToDictionary(
                 key => key.Topic,
                 val =>
                     {
                         var currentNotice = notices.SingleOrDefault(_ => _.Topic == val.Topic);
-                        var lastRunNotice = lastNoticeOfMyImpact.DependantNotices.SingleOrDefault(_ => _.Topic == val.Topic);
+                        var lastRunNotice = (lastNoticeOfMyImpact.DependantNotices ?? new Notice[0]).SingleOrDefault(_ => _.Topic == val.Topic);
 
-                        return EvaluateNoticeRecency(currentNotice, lastRunNotice);
+                        return EvaluateNoticeRecency(currentNotice, lastRunNotice, val.TopicCheckStrategy);
                     });
 
-            bool dataIsRecent;
-
-            switch (message.CheckStrategy)
-            {
-                case TopicCheckStrategy.All:
-                    dataIsRecent = topicsToCheckRecentResults.Values.All(_ => _);
-                    break;
-                case TopicCheckStrategy.Any:
-                    dataIsRecent = topicsToCheckRecentResults.Values.Any(_ => _);
-                    break;
-                default:
-                    throw new NotSupportedException("Not supported TopicCheckStrategy: " + message.CheckStrategy);
-            }
+            var dataIsRecent = topicsToCheckRecentResults.Values.Any(_ => _);
 
             if (!dataIsRecent)
             {
@@ -92,9 +95,20 @@ namespace Naos.MessageBus.Core
         /// </summary>
         /// <param name="currentNotice">Current notice.</param>
         /// <param name="previousNotice">Previous notice.</param>
+        /// <param name="topicCheckStrategy">Strategy for comparison.</param>
         /// <returns>True if current notice is more recent, otherwise false.</returns>
-        private static bool EvaluateNoticeRecency(Notice currentNotice, Notice previousNotice)
+        private static bool EvaluateNoticeRecency(Notice currentNotice, Notice previousNotice, TopicCheckStrategy topicCheckStrategy)
         {
+            if (topicCheckStrategy == TopicCheckStrategy.Unspecified)
+            {
+                throw new NotSupportedException("Unsupported topic check strategy: " + topicCheckStrategy);
+            }
+
+            if (topicCheckStrategy == TopicCheckStrategy.DoNotRequireNew)
+            {
+                return true;
+            }
+
             // if we don't have a current notice then return NOT recent
             if (currentNotice == null)
             {

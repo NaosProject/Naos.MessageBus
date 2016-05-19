@@ -176,21 +176,32 @@ namespace Naos.MessageBus.Persistence
         }
 
         /// <inheritdoc />
-        public async Task<Notice> GetLatestCertifiedNoticeAsync(string topic)
+        public async Task<Notice> GetLatestCertifiedNoticeAsync(string topic, NoticeStatus statusFilter = NoticeStatus.None)
         {
+            if (statusFilter == NoticeStatus.Unknown)
+            {
+                throw new ArgumentException("Unsupported Notice Status Filter: " + statusFilter);
+            }
+
             return await this.RunWithRetryAsync(
                 () =>
                     {
                         using (var db = new TrackedShipmentDbContext(this.readModelPersistenceConnectionConfiguration.ToSqlServerConnectionString()))
                         {
-                            var mostRecentNotice = db.Notices.Where(_ => _.Topic == topic).OrderBy(_ => _.LastUpdatedUtc).ToList().LastOrDefault();
+                            var mostRecentNotice =
+                                db.Notices.Where(_ => _.Topic == topic)
+                                    .Where(_ => statusFilter == NoticeStatus.None || _.Status == statusFilter)
+                                    .OrderBy(_ => _.LastUpdatedUtc)
+                                    .ToList()
+                                    .LastOrDefault();
+
                             if (mostRecentNotice == null)
                             {
-                                return Task.FromResult(new Notice { Items = new List<NoticeItem>() });
+                                return Task.FromResult(new Notice { NoticeItems = new NoticeItem[0] });
                             }
                             else
                             {
-                                IReadOnlyCollection<NoticeItem> items;
+                                NoticeItem[] items;
                                 Notice[] dependantNotices;
                                 NoticeStatus status;
 
@@ -199,13 +210,13 @@ namespace Naos.MessageBus.Persistence
                                     if (mostRecentNotice.PendingEnvelope != null)
                                     {
                                         var messagePending = Serializer.Deserialize<PendingNoticeMessage>(mostRecentNotice.PendingEnvelope.MessageAsJson);
-                                        items = messagePending.Items;
+                                        items = messagePending.NoticeItems;
                                         dependantNotices = messagePending.Notices ?? new Notice[0];
                                         status = NoticeStatus.Pending;
                                     }
                                     else
                                     {
-                                        items = new List<NoticeItem>();
+                                        items = new NoticeItem[0];
                                         dependantNotices = new Notice[0];
                                         status = NoticeStatus.Unknown;
                                     }
@@ -213,7 +224,7 @@ namespace Naos.MessageBus.Persistence
                                 else
                                 {
                                     var messageCertified = Serializer.Deserialize<CertifiedNoticeMessage>(mostRecentNotice.CertifiedEnvelope.MessageAsJson);
-                                    items = messageCertified.Items;
+                                    items = messageCertified.NoticeItems;
                                     dependantNotices = messageCertified.Notices ?? new Notice[0];
                                     status = NoticeStatus.Certified;
                                 }
@@ -224,7 +235,7 @@ namespace Naos.MessageBus.Persistence
                                             {
                                                 Topic = topic,
                                                 CertifiedDateUtc = mostRecentNotice.CertifiedDateUtc,
-                                                Items = items,
+                                                NoticeItems = items,
                                                 Status = status,
                                                 DependantNotices = dependantNotices
                                             });

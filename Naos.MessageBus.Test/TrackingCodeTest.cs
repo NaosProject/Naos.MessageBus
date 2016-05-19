@@ -4,9 +4,11 @@
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
-namespace Naos.MessageBus.Domain.Test
+namespace Naos.MessageBus.Test
 {
     using System;
+
+    using Naos.MessageBus.Domain;
 
     using Xunit;
 
