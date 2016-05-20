@@ -1,5 +1,5 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="PendingNoticeMessageHandler.cs" company="Naos">
+// <copyright file="TopicWasAffectedMessageHandler.cs" company="Naos">
 //   Copyright 2015 Naos
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
@@ -11,12 +11,12 @@ namespace Naos.MessageBus.Core
     using Naos.MessageBus.Domain;
 
     /// <summary>
-    /// Handler to handle <see cref="PendingNoticeMessage"/>.
+    /// No implementation handler to handle NullMessages.
     /// </summary>
-    public class PendingNoticeMessageHandler : IHandleMessages<PendingNoticeMessage>
+    public class TopicWasAffectedMessageHandler : IHandleMessages<TopicWasAffectedMessage>
     {
         /// <inheritdoc />
-        public async Task HandleAsync(PendingNoticeMessage message)
+        public async Task HandleAsync(TopicWasAffectedMessage message)
         {
             /* no-op */
             await Task.FromResult<object>(null);

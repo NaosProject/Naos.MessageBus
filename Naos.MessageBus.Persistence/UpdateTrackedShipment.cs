@@ -23,8 +23,8 @@ namespace Naos.MessageBus.Persistence
                                          IUpdateProjectionWhen<Shipment.EnvelopeDeliveryRejected>,
                                          IUpdateProjectionWhen<Shipment.ParcelDelivered>,
                                          IUpdateProjectionWhen<Shipment.EnvelopeDeliveryAborted>,
-                                         IUpdateProjectionWhen<Shipment.PendingNoticeDelivered>,
-                                         IUpdateProjectionWhen<Shipment.CertifiedNoticeDelivered>
+                                         IUpdateProjectionWhen<Shipment.TopicBeingAffected>,
+                                         IUpdateProjectionWhen<Shipment.TopicWasAffected>
     {
         private readonly ReadModelPersistenceConnectionConfiguration readModelPersistenceConnectionConfiguration;
 
@@ -106,7 +106,7 @@ namespace Naos.MessageBus.Persistence
         }
 
         /// <inheritdoc />
-        public void UpdateProjection(Shipment.PendingNoticeDelivered @event)
+        public void UpdateProjection(Shipment.TopicBeingAffected @event)
         {
             this.RunWithRetry(
                 () =>
@@ -118,16 +118,16 @@ namespace Naos.MessageBus.Persistence
                             {
                                 var ids = existingEntries.Select(_ => _.Id).ToList();
                                 throw new ArgumentException(
-                                    "Found existing entries for the specified parcel id while trying to write a pending record; IDs: " + string.Join(",", ids));
+                                    "Found existing entries for the specified parcel id while trying to write a record about a topic being affected; IDs: " + string.Join(",", ids));
                             }
 
                             var entry = new NoticeForDatabase
                                             {
                                                 Id = Guid.NewGuid(),
                                                 ImpactingTopicName = @event.Topic.Name,
-                                                Status = NoticeStatus.Pending,
+                                                Status = TopicStatus.BeingAffected,
                                                 ParcelId = @event.TrackingCode.ParcelId,
-                                                PendingEnvelopeJson = Serializer.Serialize(@event.Envelope),
+                                                TopicBeingAffectedEnvelopeJson = Serializer.Serialize(@event.Envelope),
                                                 LastUpdatedUtc = DateTime.UtcNow
                                             };
 
@@ -138,7 +138,7 @@ namespace Naos.MessageBus.Persistence
         }
 
         /// <inheritdoc />
-        public void UpdateProjection(Shipment.CertifiedNoticeDelivered @event)
+        public void UpdateProjection(Shipment.TopicWasAffected @event)
         {
             this.RunWithRetry(
                 () =>
@@ -150,7 +150,7 @@ namespace Naos.MessageBus.Persistence
                         {
                             var ids = existingEntries.Select(_ => _.Id).ToList();
                             throw new ArgumentException(
-                                "Found more than one existing entries for the specified parcel id while trying to write a certified record; IDs: "
+                                "Found more than one existing entries for the specified parcel id while trying to write a record of topic was affected; IDs: "
                                 + string.Join(",", ids));
                         }
 
@@ -161,7 +161,7 @@ namespace Naos.MessageBus.Persistence
                                         {
                                             Id = Guid.NewGuid(),
                                             ImpactingTopicName = @event.Topic.Name,
-                                            Status = NoticeStatus.Pending,
+                                            Status = TopicStatus.BeingAffected,
                                             ParcelId = @event.TrackingCode.ParcelId,
                                             LastUpdatedUtc = DateTime.UtcNow
                                         };
@@ -169,9 +169,9 @@ namespace Naos.MessageBus.Persistence
                             db.Notices.Add(entry);
                         }
 
-                        entry.Status = NoticeStatus.Certified;
-                        entry.CertifiedDateUtc = @event.Timestamp.UtcDateTime;
-                        entry.CertifiedEnvelopeJson = Serializer.Serialize(@event.Envelope);
+                        entry.Status = TopicStatus.WasAffected;
+                        entry.AffectsCompletedDateTimeUtc = @event.Timestamp.UtcDateTime;
+                        entry.TopicWasAffectedEnvelopeJson = Serializer.Serialize(@event.Envelope);
 
                         db.SaveChanges();
                     }

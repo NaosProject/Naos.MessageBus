@@ -82,17 +82,18 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="PendingNoticeMessageHandler.cs" />
+    <Compile Include="TopicBeingAffectedMessageHandler.cs" />
     <Compile Include="RecurringParcelEncounteredException.cs" />
     <Compile Include="ShareNowPlusTimeAsExpirationMessageHandler.cs" />
     <Compile Include="ShareTrackingCodesMessageHandler.cs" />
     <Compile Include="WaitForTrackingCodesMessageHandler.cs" />
-    <Compile Include="AbortIfNoNewCertifiedNoticesAndShareResultsMessageHandler.cs" />
+    <Compile Include="AbortIfNoTopicsAffectedAndShareResultsMessageHandler.cs" />
     <Compile Include="DispatcherFactory.cs" />
     <Compile Include="ITrackActiveMessages.cs" />
     <Compile Include="Logging.cs" />
     <Compile Include="MessageDispatcher.cs" />
-    <Compile Include="CertifiedNoticeMessageHandler.cs" />
+    <Compile Include="TopicWasAffectedMessageHandler.cs" />
+    <Compile Include="ThrowsExceptionMessageHandler.cs" />
     <Compile Include="WaitMessageHandler.cs" />
     <Compile Include="NullMessageHandler.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

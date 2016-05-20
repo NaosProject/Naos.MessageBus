@@ -17,12 +17,12 @@ namespace Naos.MessageBus.Domain
         Unspecified,
 
         /// <summary>
-        /// Allow the sequence to continue if any dependant topic is recent.
+        /// Allow the sequence to continue if any dependency topic is recent.
         /// </summary>
         AllowIfAnyTopicCheckYieldsRecent,
 
         /// <summary>
-        /// Allow the sequence to continue only if all dependant topic checks are are recent.
+        /// Allow the sequence to continue only if all dependency topic checks are are recent.
         /// </summary>
         RequireAllTopicChecksYieldRecent
     }

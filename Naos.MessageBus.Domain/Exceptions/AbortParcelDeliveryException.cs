@@ -7,6 +7,7 @@
 namespace Naos.MessageBus.Domain.Exceptions
 {
     using System;
+    using System.Runtime.Serialization;
 
     /// <summary>
     /// Custom exception to trigger a reschedule, this is pretty dirty but really the only easy way to accommodate this weird idea.
@@ -34,6 +35,17 @@ namespace Naos.MessageBus.Domain.Exceptions
         }
 
         /// <summary>
+        /// Initializes a new instance of the <see cref="AbortParcelDeliveryException"/> class.
+        /// </summary>
+        /// <param name="info">Serialization info.</param>
+        /// <param name="context">Streaming context.</param>
+        public AbortParcelDeliveryException(SerializationInfo info, StreamingContext context)
+            : base(info, context)
+        {
+            this.Reschedule = info.GetBoolean(nameof(Reschedule));
+        }
+
+        /// <summary>
         /// Gets the reason for aborting.
         /// </summary>
         public string Reason => this.Message;
@@ -42,5 +54,12 @@ namespace Naos.MessageBus.Domain.Exceptions
         /// Gets or sets a value indicating whether or not to reschedule.
         /// </summary>
         public bool Reschedule { get; set; }
+
+        /// <inheritdoc />
+        public override void GetObjectData(SerializationInfo info, StreamingContext context)
+        {
+            base.GetObjectData(info, context);
+            info.AddValue(nameof(Reschedule), this.Reschedule);
+        }
     }
 }

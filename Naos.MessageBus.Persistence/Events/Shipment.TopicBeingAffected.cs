@@ -1,14 +1,11 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="Shipment.CertifiedNoticeDelivered.cs" company="Naos">
+// <copyright file="Shipment.TopicBeingAffected.cs" company="Naos">
 //   Copyright 2015 Naos
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
 namespace Naos.MessageBus.Persistence
 {
-    using System;
-    using System.Linq;
-
     using Microsoft.Its.Domain;
 
     using Naos.MessageBus.Domain;
@@ -19,9 +16,9 @@ namespace Naos.MessageBus.Persistence
     public partial class Shipment
     {
         /// <summary>
-        /// Certified envelope was delivered.
+        /// Change has started that is causing a topic to be affected.
         /// </summary>
-        public class CertifiedNoticeDelivered : Event<Shipment>
+        public class TopicBeingAffected : Event<Shipment>
         {
             /// <summary>
             /// Gets or sets the tracking code of the envelope.
@@ -29,12 +26,12 @@ namespace Naos.MessageBus.Persistence
             public TrackingCode TrackingCode { get; set; }
 
             /// <summary>
-            /// Gets or sets the topic of the certified notice.
+            /// Gets or sets the topic being affected.
             /// </summary>
-            public ImpactingTopic Topic { get; set; }
+            public AffectedTopic Topic { get; set; }
 
             /// <summary>
-            /// Gets or sets the envelope that was certified.
+            /// Gets or sets the envelope that was starting the topic being affected.
             /// </summary>
             public Envelope Envelope { get; set; }
 

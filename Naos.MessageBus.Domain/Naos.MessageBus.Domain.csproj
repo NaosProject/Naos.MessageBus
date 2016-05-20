@@ -61,20 +61,20 @@
     <Compile Include=".Spritely.Recipes\JsonConfiguration.cs" />
     <Compile Include=".Spritely.Recipes\SecureString.cs" />
     <Compile Include=".Spritely.Recipes\SecureStringJsonConverter.cs" />
+    <Compile Include="Messages\ThrowsExceptionMessage.cs" />
     <Compile Include="PostOfficeExtensions.cs" />
-    <Compile Include="Sharing\IShareNoticeItems.cs" />
-    <Compile Include="Tracking\CertifiedForm.cs" />
+    <Compile Include="Sharing\IShareNoticeAffectedItems.cs" />
     <Compile Include="Tracking\SimultaneousRunsStrategy.cs" />
     <Compile Include="Tracking\TopicBase.cs" />
     <Compile Include="Tracking\TopicCheckStrategy.cs" />
-    <Compile Include="Sharing\IShareNotices.cs" />
-    <Compile Include="Messages\PendingNoticeMessage.cs" />
-    <Compile Include="Tracking\Notice.cs" />
-    <Compile Include="Tracking\NoticeStatus.cs" />
+    <Compile Include="Sharing\IShareDependenciesNoticeThatTopicWasAffected.cs" />
+    <Compile Include="Messages\TopicBeingAffectedMessage.cs" />
+    <Compile Include="Tracking\NoticeThatTopicWasAffected.cs" />
+    <Compile Include="Tracking\TopicStatus.cs" />
     <Compile Include="Messages\RecurringHeaderMessage.cs" />
     <Compile Include="IPersistenceConnectionConfiguration.cs" />
     <Compile Include="Sharing\ShareNowPlusTimeAsExpirationMessage.cs" />
-    <Compile Include="Messages\CertifiedNoticeMessage.cs" />
+    <Compile Include="Messages\TopicWasAffectedMessage.cs" />
     <Compile Include="Channel.cs" />
     <Compile Include="ChanneledMessage.cs" />
     <Compile Include="Tracking\Crate.cs" />
@@ -104,7 +104,7 @@
     <Compile Include="LogProcessorSettings.cs" />
     <Compile Include="MessageBusHarnessSettings.cs" />
     <Compile Include="MessageSequence.cs" />
-    <Compile Include="Tracking\NoticeItem.cs" />
+    <Compile Include="Tracking\AffectedItem.cs" />
     <Compile Include="Messages\NullMessage.cs" />
     <Compile Include="Parcel.cs" />
     <Compile Include="Tracking\ParcelStatus.cs" />
@@ -119,7 +119,7 @@
     <Compile Include="TypeDescription.cs" />
     <Compile Include="TypeMap.cs" />
     <Compile Include="TypeMatchStrategy.cs" />
-    <Compile Include="Messages\AbortIfNoNewCertifiedNoticesAndShareResultsMessage.cs" />
+    <Compile Include="Messages\AbortIfNoTopicsAffectedAndShareResultsMessage.cs" />
     <Compile Include="Messages\WaitForTrackingCodesToBeInStatusMessage.cs" />
     <Compile Include="Messages\WaitMessage.cs" />
   </ItemGroup>

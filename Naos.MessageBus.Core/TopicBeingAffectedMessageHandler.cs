@@ -1,5 +1,5 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="CertifiedNoticeMessageHandler.cs" company="Naos">
+// <copyright file="TopicBeingAffectedMessageHandler.cs" company="Naos">
 //   Copyright 2015 Naos
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
@@ -11,12 +11,12 @@ namespace Naos.MessageBus.Core
     using Naos.MessageBus.Domain;
 
     /// <summary>
-    /// No implementation handler to handle NullMessages.
+    /// Handler to handle <see cref="TopicBeingAffectedMessage"/>.
     /// </summary>
-    public class CertifiedNoticeMessageHandler : IHandleMessages<CertifiedNoticeMessage>
+    public class TopicBeingAffectedMessageHandler : IHandleMessages<TopicBeingAffectedMessage>
     {
         /// <inheritdoc />
-        public async Task HandleAsync(CertifiedNoticeMessage message)
+        public async Task HandleAsync(TopicBeingAffectedMessage message)
         {
             /* no-op */
             await Task.FromResult<object>(null);

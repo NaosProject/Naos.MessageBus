@@ -40,55 +40,55 @@ namespace Naos.MessageBus.Test
                     Database = "ParcelTrackingReadModel",
                 };
 
-            var topic = new ImpactingTopic(Guid.NewGuid().ToString().ToUpperInvariant());
+            var topic = new AffectedTopic(Guid.NewGuid().ToString().ToUpperInvariant());
             var parcel = this.GetParcel(topic);
 
             var parcelTrackingSystem = new ParcelTrackingSystem(eventConnectionConfiguration, readModelConnectionConfiguration);
-            var pendingWasDelivered = false; // after this the latest notice will be pending
+            var beingAffectedWasDelivered = false; // after this the latest notice shows the topic as being affected
             var seenRejection = false; // after this the parcel will always be in rejected state until aborted or delivered
             foreach (var envelope in parcel.Envelopes)
             {
                 var trackingCode = new TrackingCode { ParcelId = parcel.Id, EnvelopeId = envelope.Id };
                 await parcelTrackingSystem.Sent(trackingCode, parcel, new Dictionary<string, string>());
                 (await parcelTrackingSystem.GetTrackingReportAsync(new[] { trackingCode })).Single().Status.Should().Be(seenRejection ? ParcelStatus.Rejected : ParcelStatus.Unknown);
-                await ConfirmNoticeState(parcelTrackingSystem, topic, pendingWasDelivered);
+                await ConfirmNoticeState(parcelTrackingSystem, topic, beingAffectedWasDelivered);
 
                 await parcelTrackingSystem.Addressed(trackingCode, envelope.Channel);
                 (await parcelTrackingSystem.GetTrackingReportAsync(new[] { trackingCode })).Single().Status.Should().Be(seenRejection ? ParcelStatus.Rejected : ParcelStatus.Unknown);
-                await ConfirmNoticeState(parcelTrackingSystem, topic, pendingWasDelivered);
+                await ConfirmNoticeState(parcelTrackingSystem, topic, beingAffectedWasDelivered);
 
                 await parcelTrackingSystem.Attempting(trackingCode, new HarnessDetails());
                 (await parcelTrackingSystem.GetTrackingReportAsync(new[] { trackingCode })).Single().Status.Should().Be(seenRejection ? ParcelStatus.Rejected : ParcelStatus.Unknown);
-                await ConfirmNoticeState(parcelTrackingSystem, topic, pendingWasDelivered);
+                await ConfirmNoticeState(parcelTrackingSystem, topic, beingAffectedWasDelivered);
 
-                await parcelTrackingSystem.Abort(trackingCode, "Try another day");
+                await parcelTrackingSystem.Aborted(trackingCode, "Try another day");
                 (await parcelTrackingSystem.GetTrackingReportAsync(new[] { trackingCode })).Single().Status.Should().Be(ParcelStatus.Aborted);
-                await ConfirmNoticeState(parcelTrackingSystem, topic, pendingWasDelivered);
+                await ConfirmNoticeState(parcelTrackingSystem, topic, beingAffectedWasDelivered);
 
                 await parcelTrackingSystem.Attempting(trackingCode, new HarnessDetails());
                 (await parcelTrackingSystem.GetTrackingReportAsync(new[] { trackingCode })).Single().Status.Should().Be(ParcelStatus.Aborted);
-                await ConfirmNoticeState(parcelTrackingSystem, topic, pendingWasDelivered);
+                await ConfirmNoticeState(parcelTrackingSystem, topic, beingAffectedWasDelivered);
 
                 await parcelTrackingSystem.Rejected(trackingCode, new NotImplementedException("Not here yet"));
                 (await parcelTrackingSystem.GetTrackingReportAsync(new[] { trackingCode })).Single().Status.Should().Be(ParcelStatus.Rejected);
-                await ConfirmNoticeState(parcelTrackingSystem, topic, pendingWasDelivered);
+                await ConfirmNoticeState(parcelTrackingSystem, topic, beingAffectedWasDelivered);
                 seenRejection = true;
 
                 await parcelTrackingSystem.Attempting(trackingCode, new HarnessDetails());
                 (await parcelTrackingSystem.GetTrackingReportAsync(new[] { trackingCode })).Single().Status.Should().Be(ParcelStatus.Rejected);
-                await ConfirmNoticeState(parcelTrackingSystem, topic, pendingWasDelivered);
+                await ConfirmNoticeState(parcelTrackingSystem, topic, beingAffectedWasDelivered);
 
                 await parcelTrackingSystem.Delivered(trackingCode);
-                if (envelope.MessageType == typeof(PendingNoticeMessage).ToTypeDescription())
+                if (envelope.MessageType == typeof(TopicBeingAffectedMessage).ToTypeDescription())
                 {
-                    pendingWasDelivered = true;
+                    beingAffectedWasDelivered = true;
                 }
 
                 // should be last message and will assert differently
-                if (envelope.MessageType != typeof(CertifiedNoticeMessage).ToTypeDescription())
+                if (envelope.MessageType != typeof(TopicWasAffectedMessage).ToTypeDescription())
                 {
                     (await parcelTrackingSystem.GetTrackingReportAsync(new[] { trackingCode })).Single().Status.Should().Be(ParcelStatus.Rejected);
-                    await ConfirmNoticeState(parcelTrackingSystem, topic, pendingWasDelivered);
+                    await ConfirmNoticeState(parcelTrackingSystem, topic, beingAffectedWasDelivered);
                 }
             }
 
@@ -96,33 +96,33 @@ namespace Naos.MessageBus.Test
                 .Status.Should()
                 .Be(ParcelStatus.Delivered);
 
-            (await parcelTrackingSystem.GetLatestNoticeAsync(topic, NoticeStatus.Pending)).Should().BeNull();
-            (await parcelTrackingSystem.GetLatestNoticeAsync(topic, NoticeStatus.Certified)).Should().NotBeNull();
-            (await parcelTrackingSystem.GetLatestNoticeAsync(topic)).Status.Should().Be(NoticeStatus.Certified);
+            (await parcelTrackingSystem.GetLatestNoticeThatTopicWasAffectedAsync(topic, TopicStatus.BeingAffected)).Should().BeNull();
+            (await parcelTrackingSystem.GetLatestNoticeThatTopicWasAffectedAsync(topic, TopicStatus.WasAffected)).Should().NotBeNull();
+            (await parcelTrackingSystem.GetLatestNoticeThatTopicWasAffectedAsync(topic)).Status.Should().Be(TopicStatus.WasAffected);
 
             messages.Count.Should().Be(0);
         }
 
         private static async Task ConfirmNoticeState(
             ParcelTrackingSystem parcelTrackingSystem,
-            ImpactingTopic topic,
-            bool pendingWasDelivered)
+            AffectedTopic affectedTopic,
+            bool beingAffectedWasDelivered)
         {
-            if (pendingWasDelivered)
+            if (beingAffectedWasDelivered)
             {
-                (await parcelTrackingSystem.GetLatestNoticeAsync(topic, NoticeStatus.Pending)).Should().NotBeNull();
-                (await parcelTrackingSystem.GetLatestNoticeAsync(topic, NoticeStatus.Certified)).Should().BeNull();
-                (await parcelTrackingSystem.GetLatestNoticeAsync(topic)).Status.Should().Be(NoticeStatus.Pending);
+                (await parcelTrackingSystem.GetLatestNoticeThatTopicWasAffectedAsync(affectedTopic, TopicStatus.BeingAffected)).Should().NotBeNull();
+                (await parcelTrackingSystem.GetLatestNoticeThatTopicWasAffectedAsync(affectedTopic, TopicStatus.WasAffected)).Should().BeNull();
+                (await parcelTrackingSystem.GetLatestNoticeThatTopicWasAffectedAsync(affectedTopic)).Status.Should().Be(TopicStatus.BeingAffected);
             }
             else
             {
-                (await parcelTrackingSystem.GetLatestNoticeAsync(topic, NoticeStatus.Pending)).Should().BeNull();
-                (await parcelTrackingSystem.GetLatestNoticeAsync(topic, NoticeStatus.Certified)).Should().BeNull();
-                (await parcelTrackingSystem.GetLatestNoticeAsync(topic)).Status.Should().Be(NoticeStatus.Unknown);
+                (await parcelTrackingSystem.GetLatestNoticeThatTopicWasAffectedAsync(affectedTopic, TopicStatus.BeingAffected)).Should().BeNull();
+                (await parcelTrackingSystem.GetLatestNoticeThatTopicWasAffectedAsync(affectedTopic, TopicStatus.WasAffected)).Should().BeNull();
+                (await parcelTrackingSystem.GetLatestNoticeThatTopicWasAffectedAsync(affectedTopic)).Status.Should().Be(TopicStatus.Unknown);
             }
         }
 
-        private Parcel GetParcel(ImpactingTopic topic, IReadOnlyCollection<DependantTopic> dependantTopics = null)
+        private Parcel GetParcel(AffectedTopic affectedTopic, IReadOnlyCollection<DependencyTopic> dependantTopics = null)
         {
             var trackingSends = new List<Crate>();
             var postOffice = new PostOffice(Factory.GetInMemoryCourier(trackingSends)());
@@ -131,7 +131,7 @@ namespace Naos.MessageBus.Test
                 new NullMessage(),
                 new Channel("channel"),
                 "name",
-                topic,
+                affectedTopic,
                 dependantTopics,
                 TopicCheckStrategy.AllowIfAnyTopicCheckYieldsRecent,
                 SimultaneousRunsStrategy.AbortSubsequentRunsWhenOneIsRunning);

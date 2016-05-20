@@ -140,7 +140,7 @@ namespace Naos.MessageBus.Persistence
         }
 
         /// <inheritdoc />
-        public async Task Abort(TrackingCode trackingCode, string reason)
+        public async Task Aborted(TrackingCode trackingCode, string reason)
         {
             var shipment = await this.FetchShipmentAsync(trackingCode);
 
@@ -176,9 +176,9 @@ namespace Naos.MessageBus.Persistence
         }
 
         /// <inheritdoc />
-        public async Task<Notice> GetLatestNoticeAsync(TopicBase topic, NoticeStatus statusFilter = NoticeStatus.None)
+        public async Task<NoticeThatTopicWasAffected> GetLatestNoticeThatTopicWasAffectedAsync(TopicBase topic, TopicStatus statusFilter = TopicStatus.None)
         {
-            if (statusFilter == NoticeStatus.Unknown)
+            if (statusFilter == TopicStatus.Unknown)
             {
                 throw new ArgumentException("Unsupported Notice Status Filter: " + statusFilter);
             }
@@ -190,63 +190,63 @@ namespace Naos.MessageBus.Persistence
                         {
                             var mostRecentNotice =
                                 db.Notices.Where(_ => _.ImpactingTopicName == topic.Name)
-                                    .Where(_ => statusFilter == NoticeStatus.None || _.Status == statusFilter)
+                                    .Where(_ => statusFilter == TopicStatus.None || _.Status == statusFilter)
                                     .OrderBy(_ => _.LastUpdatedUtc)
                                     .ToList()
                                     .LastOrDefault();
 
                             if (mostRecentNotice == null)
                             {
-                                if (statusFilter != NoticeStatus.None)
+                                if (statusFilter != TopicStatus.None)
                                 {
-                                    return Task.FromResult<Notice>(null);
+                                    return Task.FromResult<NoticeThatTopicWasAffected>(null);
                                 }
                                 else
                                 {
-                                    return Task.FromResult(new Notice { NoticeItems = new NoticeItem[0], DependantNotices = new Notice[0] });
+                                    return Task.FromResult(new NoticeThatTopicWasAffected { AffectedItems = new AffectedItem[0], DependencyTopicNoticesAtStart = new NoticeThatTopicWasAffected[0] });
                                 }
                             }
                             else
                             {
-                                NoticeItem[] items;
-                                Notice[] dependantNotices;
-                                NoticeStatus status;
+                                AffectedItem[] items;
+                                NoticeThatTopicWasAffected[] dependencyNotices;
+                                TopicStatus status;
 
-                                if (mostRecentNotice.CertifiedEnvelopeJson == null)
+                                if (mostRecentNotice.TopicWasAffectedEnvelopeJson == null)
                                 {
-                                    if (mostRecentNotice.PendingEnvelopeJson != null)
+                                    if (mostRecentNotice.TopicBeingAffectedEnvelopeJson != null)
                                     {
-                                        var pendingEnvelope = Serializer.Deserialize<Envelope>(mostRecentNotice.PendingEnvelopeJson);
-                                        var messagePending = Serializer.Deserialize<PendingNoticeMessage>(pendingEnvelope.MessageAsJson);
-                                        items = messagePending.NoticeItems;
-                                        dependantNotices = messagePending.Notices;
-                                        status = NoticeStatus.Pending;
+                                        var beingAffectedEnvelope = Serializer.Deserialize<Envelope>(mostRecentNotice.TopicBeingAffectedEnvelopeJson);
+                                        var beingAffectedMessage = Serializer.Deserialize<TopicBeingAffectedMessage>(beingAffectedEnvelope.MessageAsJson);
+                                        items = beingAffectedMessage.AffectedItems;
+                                        dependencyNotices = beingAffectedMessage.DependenciesNoticeThatTopicWasAffected;
+                                        status = TopicStatus.BeingAffected;
                                     }
                                     else
                                     {
-                                        items = new NoticeItem[0];
-                                        dependantNotices = new Notice[0];
-                                        status = NoticeStatus.Unknown;
+                                        items = new AffectedItem[0];
+                                        dependencyNotices = new NoticeThatTopicWasAffected[0];
+                                        status = TopicStatus.Unknown;
                                     }
                                 }
                                 else
                                 {
-                                    var certifiedEnvelope = Serializer.Deserialize<Envelope>(mostRecentNotice.CertifiedEnvelopeJson);
-                                    var messageCertified = Serializer.Deserialize<CertifiedNoticeMessage>(certifiedEnvelope.MessageAsJson);
-                                    items = messageCertified.NoticeItems;
-                                    dependantNotices = messageCertified.Notices;
-                                    status = NoticeStatus.Certified;
+                                    var wasAffectedEnvelope = Serializer.Deserialize<Envelope>(mostRecentNotice.TopicWasAffectedEnvelopeJson);
+                                    var wasAffectedMessage = Serializer.Deserialize<TopicWasAffectedMessage>(wasAffectedEnvelope.MessageAsJson);
+                                    items = wasAffectedMessage.AffectedItems;
+                                    dependencyNotices = wasAffectedMessage.DependenciesNoticeThatTopicWasAffected;
+                                    status = TopicStatus.WasAffected;
                                 }
 
                                 return
                                     Task.FromResult(
-                                        new Notice
+                                        new NoticeThatTopicWasAffected
                                             {
-                                                Topic = topic,
-                                                CertifiedDateUtc = mostRecentNotice.CertifiedDateUtc,
-                                                NoticeItems = items ?? new NoticeItem[0],
+                                                Topic = new AffectedTopic(topic.Name),
+                                                AffectsCompletedDateTimeUtc = mostRecentNotice.AffectsCompletedDateTimeUtc,
+                                                AffectedItems = items ?? new AffectedItem[0],
                                                 Status = status,
-                                                DependantNotices = dependantNotices ?? new Notice[0]
+                                                DependencyTopicNoticesAtStart = dependencyNotices ?? new NoticeThatTopicWasAffected[0]
                                             });
                             }
                         }

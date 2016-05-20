@@ -1,5 +1,5 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="AbortIfNoNewCertifiedNoticesAndShareResultsMessageHandler.cs" company="Naos">
+// <copyright file="AbortIfNoTopicsAffectedAndShareResultsMessageHandler.cs" company="Naos">
 //   Copyright 2015 Naos
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
@@ -17,15 +17,15 @@ namespace Naos.MessageBus.Core
     /// <summary>
     /// No implementation handler to handle NullMessages.
     /// </summary>
-    public class AbortIfNoNewCertifiedNoticesAndShareResultsMessageHandler : IHandleMessages<AbortIfNoNewCertifiedNoticesAndShareResultsMessage>, IShareNotices
+    public class AbortIfNoTopicsAffectedAndShareResultsMessageHandler : IHandleMessages<AbortIfNoTopicsAffectedAndShareResultsMessage>, IShareDependenciesNoticeThatTopicWasAffected
     {
         /// <summary>
         /// Gets or sets the notices as they were evaluated with processing check.
         /// </summary>
-        public Notice[] Notices { get; set; }
+        public NoticeThatTopicWasAffected[] DependenciesNoticeThatTopicWasAffected { get; set; }
 
         /// <inheritdoc />
-        public async Task HandleAsync(AbortIfNoNewCertifiedNoticesAndShareResultsMessage message)
+        public async Task HandleAsync(AbortIfNoTopicsAffectedAndShareResultsMessage message)
         {
             var tracker = HandlerToolShed.GetParcelTracker();
 
@@ -33,12 +33,12 @@ namespace Naos.MessageBus.Core
         }
 
         /// <summary>
-        /// Handle <see cref="AbortIfNoNewCertifiedNoticesAndShareResultsMessage"/> message.
+        /// Handle <see cref="AbortIfNoTopicsAffectedAndShareResultsMessage"/> message.
         /// </summary>
         /// <param name="message">Message to handle.</param>
-        /// <param name="tracker">Tracker to get certified notices.</param>
+        /// <param name="tracker">Tracker to get information about parcels and notices.</param>
         /// <returns>Task for async.</returns>
-        public async Task HandleAsync(AbortIfNoNewCertifiedNoticesAndShareResultsMessage message, IGetTrackingReports tracker)
+        public async Task HandleAsync(AbortIfNoTopicsAffectedAndShareResultsMessage message, IGetTrackingReports tracker)
         {
             if (tracker == null)
             {
@@ -50,30 +50,30 @@ namespace Naos.MessageBus.Core
                 throw new ArgumentException("Message cannot be null.");
             }
 
-            if (message.ImpactingTopic == null)
+            if (message.Topic == null)
             {
                 throw new ArgumentException("Message.ImpactingTopic cannot be null.");
             }
 
-            var lastNoticeOfMyImpact = await tracker.GetLatestNoticeAsync(message.ImpactingTopic, NoticeStatus.Certified);
-            var dependantNotices = lastNoticeOfMyImpact?.DependantNotices ?? new Notice[0];
+            var lastNoticeOfMyImpact = await tracker.GetLatestNoticeThatTopicWasAffectedAsync(message.Topic, TopicStatus.WasAffected);
+            var lastRunDependencyNotices = lastNoticeOfMyImpact?.DependencyTopicNoticesAtStart ?? new NoticeThatTopicWasAffected[0];
 
-            var dependantTopics = message.DependantTopics ?? new List<DependantTopic>();
-            var notices = dependantTopics.Select(
-                dependantTopic =>
+            var dependencyTopics = message.DependencyTopics ?? new List<DependencyTopic>();
+            var currentDependencyNotices = dependencyTopics.Select(
+                dependencyTopic =>
                     {
-                        var latestCertifiedNoticeTask = tracker.GetLatestNoticeAsync(dependantTopic);
-                        latestCertifiedNoticeTask.Wait();
-                        var latest = latestCertifiedNoticeTask.Result;
+                        var latestNoticeTask = tracker.GetLatestNoticeThatTopicWasAffectedAsync(dependencyTopic);
+                        latestNoticeTask.Wait();
+                        var latest = latestNoticeTask.Result;
                         return latest;
                     }).ToArray();
 
-            var topicsToCheckRecentResults = dependantTopics.ToDictionary(
+            var topicsToCheckRecentResults = dependencyTopics.ToDictionary(
                 key => key,
                 val =>
                     {
-                        var currentNotice = notices.SingleOrDefault(_ => _ != null && _.Topic == val);
-                        var lastRunNotice = dependantNotices.SingleOrDefault(_ => _.Topic == val);
+                        var currentNotice = currentDependencyNotices.SingleOrDefault(_ => _ != null && _.Topic == val);
+                        var lastRunNotice = lastRunDependencyNotices.SingleOrDefault(_ => _.Topic == val);
 
                         return EvaluateNoticeRecency(currentNotice, lastRunNotice);
                     });
@@ -102,7 +102,7 @@ namespace Naos.MessageBus.Core
             }
             else
             {
-                this.Notices = notices; // share the dependant notices to store in future notices...
+                this.DependenciesNoticeThatTopicWasAffected = currentDependencyNotices; // share the dependency notices to store in future notices...
             }
 
             /* no-op */
@@ -115,7 +115,7 @@ namespace Naos.MessageBus.Core
         /// <param name="currentNotice">Current notice.</param>
         /// <param name="previousNotice">Previous notice.</param>
         /// <returns>True if current notice is more recent, otherwise false.</returns>
-        private static bool EvaluateNoticeRecency(Notice currentNotice, Notice previousNotice)
+        private static bool EvaluateNoticeRecency(NoticeThatTopicWasAffected currentNotice, NoticeThatTopicWasAffected previousNotice)
         {
             // if we don't have a current notice then return NOT recent
             if (currentNotice == null)
@@ -129,14 +129,14 @@ namespace Naos.MessageBus.Core
                 return true;
             }
 
-            // if the most recent is not certified then return NOT recent
-            if (currentNotice.Status != NoticeStatus.Certified)
+            // if the most recent is not complete then return NOT recent
+            if (currentNotice.Status != TopicStatus.WasAffected)
             {
                 return false;
             }
 
             // if the current date is newer then return IS recent
-            return currentNotice.CertifiedDateUtc > previousNotice.CertifiedDateUtc;
+            return currentNotice.AffectsCompletedDateTimeUtc > previousNotice.AffectsCompletedDateTimeUtc;
         }
     }
 }

@@ -61,7 +61,7 @@ namespace Naos.MessageBus.Domain
         /// <param name="trackingCode">Tracking code of the parcel.</param>
         /// <param name="reason">Reason for aborting.</param>
         /// <returns>Task for async.</returns>
-        Task Abort(TrackingCode trackingCode, string reason);
+        Task Aborted(TrackingCode trackingCode, string reason);
     }
 
     /// <summary>
@@ -84,7 +84,7 @@ namespace Naos.MessageBus.Domain
         }
 
         /// <inheritdoc />
-        public async Task Abort(TrackingCode trackingCode, string reason)
+        public async Task Aborted(TrackingCode trackingCode, string reason)
         {
             /* no-op */
             await Task.FromResult<object>(null);
@@ -118,9 +118,9 @@ namespace Naos.MessageBus.Domain
         }
 
         /// <inheritdoc />
-        public async Task<Notice> GetLatestNoticeAsync(TopicBase topic, NoticeStatus statusFilter = NoticeStatus.None)
+        public async Task<NoticeThatTopicWasAffected> GetLatestNoticeThatTopicWasAffectedAsync(TopicBase topic, TopicStatus statusFilter = TopicStatus.None)
         {
-            return await Task.FromResult(null as Notice);
+            return await Task.FromResult(null as NoticeThatTopicWasAffected);
         }
     }
 }

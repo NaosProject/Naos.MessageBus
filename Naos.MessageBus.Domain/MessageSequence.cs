@@ -32,20 +32,20 @@ namespace Naos.MessageBus.Domain
         /// <summary>
         /// Gets or sets the topic the parcel impacts.
         /// </summary>
-        public ImpactingTopic ImpactingTopic { get; set; }
+        public AffectedTopic Topic { get; set; }
 
         /// <summary>
         /// Gets or sets the topics the parcel depends on.
         /// </summary>
-        public IReadOnlyCollection<DependantTopic> DependantTopics { get; set; }
+        public IReadOnlyCollection<DependencyTopic> DependencyTopics { get; set; }
 
         /// <summary>
-        /// Gets or sets the strategy to check dependant topics if they are specified.
+        /// Gets or sets the strategy to check dependency topics if they are specified.
         /// </summary>
-        public TopicCheckStrategy DependantTopicCheckStrategy { get; set; }
+        public TopicCheckStrategy DependencyTopicCheckStrategy { get; set; }
 
         /// <summary>
-        /// Gets or sets the strategy on how to deal with multiple runs if ImpactingTopic is specified.
+        /// Gets or sets the strategy on how to deal with multiple runs if Topic is specified.
         /// </summary>
         public SimultaneousRunsStrategy SimultaneousRunsStrategy { get; set; }
     }

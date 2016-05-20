@@ -21,18 +21,18 @@ namespace Naos.MessageBus.Domain
         /// <param name="message">Message to send.</param>
         /// <param name="channel">Channel to send message to.</param>
         /// <param name="name">Optional name of the message sequence of the single message.</param>
-        /// <param name="impactingTopic">Optional topic impacted by this message.</param>
-        /// <param name="dependantTopics">Optional topics that the message depends on.</param>
-        /// <param name="dependantTopicCheckStrategy">Strategy to check dependant topics if they are specified.</param>
-        /// <param name="simultaneousRunsStrategy">Strategy on how to deal with multiple runs if ImpactingTopic is specified.</param>
+        /// <param name="topic">Optional topic impacted by this message.</param>
+        /// <param name="dependencyTopics">Optional topics that the message depends on.</param>
+        /// <param name="dependencyTopicCheckStrategy">Strategy to check dependency topics if they are specified.</param>
+        /// <param name="simultaneousRunsStrategy">Strategy on how to deal with multiple runs if <see cref="AffectedTopic"/> is specified.</param>
         /// <returns>ID of the scheduled message.</returns>
         TrackingCode Send(
             IMessage message,
             Channel channel,
             string name = null,
-            ImpactingTopic impactingTopic = null,
-            IReadOnlyCollection<DependantTopic> dependantTopics = null,
-            TopicCheckStrategy dependantTopicCheckStrategy = TopicCheckStrategy.Unspecified,
+            AffectedTopic topic = null,
+            IReadOnlyCollection<DependencyTopic> dependencyTopics = null,
+            TopicCheckStrategy dependencyTopicCheckStrategy = TopicCheckStrategy.Unspecified,
             SimultaneousRunsStrategy simultaneousRunsStrategy = SimultaneousRunsStrategy.Unspecified);
 
         /// <summary>
@@ -56,19 +56,19 @@ namespace Naos.MessageBus.Domain
         /// <param name="channel">Channel to send message to.</param>
         /// <param name="recurringSchedule">Schedule the message should recur on.</param>
         /// <param name="name">Optional name of the message sequence of the single message.</param>
-        /// <param name="impactingTopic">Optional topic impacted by this message.</param>
-        /// <param name="dependantTopics">Optional topics that the message depends on.</param>
-        /// <param name="dependantTopicCheckStrategy">Strategy to check dependant topics if they are specified.</param>
-        /// <param name="simultaneousRunsStrategy">Strategy on how to deal with multiple runs if ImpactingTopic is specified.</param>
+        /// <param name="topic">Optional topic impacted by this message.</param>
+        /// <param name="dependencyTopics">Optional topics that the message depends on.</param>
+        /// <param name="dependencyTopicCheckStrategy">Strategy to check dependency topics if they are specified.</param>
+        /// <param name="simultaneousRunsStrategy">Strategy on how to deal with multiple runs if Topic is specified.</param>
         /// <returns>ID of the scheduled message.</returns>
         TrackingCode SendRecurring(
             IMessage message,
             Channel channel,
             ScheduleBase recurringSchedule,
             string name = null,
-            ImpactingTopic impactingTopic = null,
-            IReadOnlyCollection<DependantTopic> dependantTopics = null,
-            TopicCheckStrategy dependantTopicCheckStrategy = TopicCheckStrategy.Unspecified,
+            AffectedTopic topic = null,
+            IReadOnlyCollection<DependencyTopic> dependencyTopics = null,
+            TopicCheckStrategy dependencyTopicCheckStrategy = TopicCheckStrategy.Unspecified,
             SimultaneousRunsStrategy simultaneousRunsStrategy = SimultaneousRunsStrategy.Unspecified);
 
         /// <summary>

@@ -33,22 +33,22 @@ namespace Naos.MessageBus.Persistence
         /// <summary>
         /// Gets or sets the status.
         /// </summary>
-        public NoticeStatus Status { get; set; }
+        public TopicStatus Status { get; set; }
 
         /// <summary>
-        /// Gets or sets the time in UTC that the notice was certified.
+        /// Gets or sets the time in UTC that the affects were complete.
         /// </summary>
-        public DateTime? CertifiedDateUtc { get; set; }
+        public DateTime? AffectsCompletedDateTimeUtc { get; set; }
 
         /// <summary>
-        /// Gets or sets the envelope of the pending notice.
+        /// Gets or sets the envelope of the message about the topic that was being affected.
         /// </summary>
-        public string PendingEnvelopeJson { get; set; }
+        public string TopicBeingAffectedEnvelopeJson { get; set; }
 
         /// <summary>
-        /// Gets or sets the envelope of the certified notice.
+        /// Gets or sets the envelope of the message about the topic that was affected.
         /// </summary>
-        public string CertifiedEnvelopeJson { get; set; }
+        public string TopicWasAffectedEnvelopeJson { get; set; }
 
         /// <summary>
         /// Gets or sets the date time (in UTC) it was last updated.

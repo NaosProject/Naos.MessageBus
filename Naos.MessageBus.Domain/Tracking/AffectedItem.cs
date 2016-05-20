@@ -1,5 +1,5 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="NoticeItem.cs" company="Naos">
+// <copyright file="AffectedItem.cs" company="Naos">
 //   Copyright 2015 Naos
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
@@ -9,23 +9,28 @@ namespace Naos.MessageBus.Domain
     using System;
 
     /// <summary>
-    /// Model object to hold information from the certified message.
+    /// Model object to hold information about the affects on a topic.
     /// </summary>
-    public class NoticeItem
+    public class AffectedItem
     {
         /// <summary>
-        /// Gets or sets the ID of a property that the notice is claiming was impacted.
+        /// Gets or sets the ID of a property that the notice is claiming was affected.
         /// </summary>
-        public string ImpactedId { get; set; }
+        public string Id { get; set; }
 
         /// <summary>
         /// Gets or sets the start of a time window that the notice is claiming was impacted (null means DateTime.Min).
         /// </summary>
-        public DateTime? ImpactedTimeStart { get; set; }
+        public DateTime? DateTimeStart { get; set; }
 
         /// <summary>
         /// Gets or sets the end of a time window that the notice is claiming was impacted (null means DateTime.Max).
         /// </summary>
-        public DateTime? ImpactedTimeEnd { get; set; }
+        public DateTime? DateTimeEnd { get; set; }
+
+        /// <summary>
+        /// Gets or sets the kind of date times.
+        /// </summary>
+        public DateTimeKind DateTimeKind { get; set; }
     }
 }

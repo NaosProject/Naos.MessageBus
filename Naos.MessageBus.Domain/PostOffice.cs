@@ -31,12 +31,12 @@ namespace Naos.MessageBus.Domain
             IMessage message, 
             Channel channel, 
             string name = null,
-            ImpactingTopic impactingTopic = null, 
-            IReadOnlyCollection<DependantTopic> dependantTopics = null, 
-            TopicCheckStrategy dependantTopicCheckStrategy = TopicCheckStrategy.Unspecified,
+            AffectedTopic topic = null, 
+            IReadOnlyCollection<DependencyTopic> dependencyTopics = null, 
+            TopicCheckStrategy dependencyTopicCheckStrategy = TopicCheckStrategy.Unspecified,
             SimultaneousRunsStrategy simultaneousRunsStrategy = SimultaneousRunsStrategy.Unspecified)
         {
-            return this.SendRecurring(message, channel, new NullSchedule(), name, impactingTopic, dependantTopics, dependantTopicCheckStrategy, simultaneousRunsStrategy);
+            return this.SendRecurring(message, channel, new NullSchedule(), name, topic, dependencyTopics, dependencyTopicCheckStrategy, simultaneousRunsStrategy);
         }
 
         /// <inheritdoc />
@@ -51,9 +51,9 @@ namespace Naos.MessageBus.Domain
             Channel channel, 
             ScheduleBase recurringSchedule,
             string name = null,
-            ImpactingTopic impactingTopic = null, 
-            IReadOnlyCollection<DependantTopic> dependantTopics = null, 
-            TopicCheckStrategy dependantTopicCheckStrategy = TopicCheckStrategy.Unspecified,
+            AffectedTopic topic = null, 
+            IReadOnlyCollection<DependencyTopic> dependencyTopics = null, 
+            TopicCheckStrategy dependencyTopicCheckStrategy = TopicCheckStrategy.Unspecified,
             SimultaneousRunsStrategy simultaneousRunsStrategy = SimultaneousRunsStrategy.Unspecified)
         {
             var messageSequenceId = Guid.NewGuid();
@@ -62,9 +62,9 @@ namespace Naos.MessageBus.Domain
                                           Id = messageSequenceId,
                                           Name = name,
                                           ChanneledMessages = new[] { message.ToChanneledMessage(channel) },
-                                          ImpactingTopic = impactingTopic,
-                                          DependantTopics = dependantTopics,
-                                          DependantTopicCheckStrategy = dependantTopicCheckStrategy,
+                                          Topic = topic,
+                                          DependencyTopics = dependencyTopics,
+                                          DependencyTopicCheckStrategy = dependencyTopicCheckStrategy,
                                           SimultaneousRunsStrategy = simultaneousRunsStrategy
                                       };
 
@@ -91,9 +91,9 @@ namespace Naos.MessageBus.Domain
                                  Id = messageSequence.Id,
                                  Name = messageSequence.Name,
                                  Envelopes = envelopes,
-                                 ImpactingTopic = messageSequence.ImpactingTopic,
-                                 DependantTopics = messageSequence.DependantTopics,
-                                 DependantTopicCheckStrategy = messageSequence.DependantTopicCheckStrategy,
+                                 Topic = messageSequence.Topic,
+                                 DependencyTopics = messageSequence.DependencyTopics,
+                                 DependencyTopicCheckStrategy = messageSequence.DependencyTopicCheckStrategy,
                                  SimultaneousRunsStrategy = messageSequence.SimultaneousRunsStrategy
                              };
 
@@ -111,19 +111,19 @@ namespace Naos.MessageBus.Domain
         {
             var label = !string.IsNullOrWhiteSpace(parcel.Name) ? parcel.Name : "Sequence " + parcel.Id + " - " + parcel.Envelopes.First().Description;
 
-            if (parcel.ImpactingTopic != null)
+            if (parcel.Topic != null)
             {
                 if (parcel.SimultaneousRunsStrategy == SimultaneousRunsStrategy.Unspecified)
                 {
-                    throw new ArgumentException("If you are using an ImpactingTopic you must specify a SimultaneousRunsStrategy.");
+                    throw new ArgumentException("If you are using an Topic you must specify a SimultaneousRunsStrategy.");
                 }
 
-                if (parcel.DependantTopics != null && parcel.DependantTopics.Any() && parcel.DependantTopicCheckStrategy == TopicCheckStrategy.Unspecified)
+                if (parcel.DependencyTopics != null && parcel.DependencyTopics.Any() && parcel.DependencyTopicCheckStrategy == TopicCheckStrategy.Unspecified)
                 {
-                    throw new ArgumentException("Must specify DependantTopicCheckStrategy if declaring DependantTopics.");
+                    throw new ArgumentException("Must specify DependencyTopicCheckStrategy if declaring DependencyTopics.");
                 }
 
-                parcel = InjectCertifiedMessagesIntoNewParcel(parcel);
+                parcel = InjectTopicNoticeMessagesIntoNewParcel(parcel);
             }
 
             if (parcel.Id == default(Guid))
@@ -159,50 +159,50 @@ namespace Naos.MessageBus.Domain
             return trackingCode;
         }
 
-        private static Parcel InjectCertifiedMessagesIntoNewParcel(Parcel parcel)
+        private static Parcel InjectTopicNoticeMessagesIntoNewParcel(Parcel parcel)
         {
             var parcelId = parcel.Id;
             var sharedInterfaceStates = (parcel.SharedInterfaceStates ?? new SharedInterfaceState[0]).Select(_ => _).ToList();
             var envelopes = parcel.Envelopes.Select(_ => _).ToList();
             var newEnvelopes = new List<Envelope>();
 
-            // add a dependency check if we have dependant topics
-            var dependantTopics = parcel.DependantTopics ?? new DependantTopic[0];
-            if (dependantTopics.Count > 0)
+            // add a dependency check if we have dependency topics
+            var dependencyTopics = parcel.DependencyTopics ?? new DependencyTopic[0];
+            if (dependencyTopics.Count > 0)
             {
-                var abortMessage = new AbortIfNoNewCertifiedNoticesAndShareResultsMessage
+                var abortMessage = new AbortIfNoTopicsAffectedAndShareResultsMessage
                                        {
                                            Description =
-                                               "Checking new notices for: "
-                                               + string.Join(",", dependantTopics),
-                                           ImpactingTopic = parcel.ImpactingTopic,
-                                           DependantTopics = dependantTopics,
+                                               "Checking Affected Topics: "
+                                               + string.Join(",", dependencyTopics),
+                                           Topic = parcel.Topic,
+                                           DependencyTopics = dependencyTopics,
                                            SimultaneousRunsStrategy = parcel.SimultaneousRunsStrategy
                                        };
 
                 newEnvelopes.Add(abortMessage.ToChanneledMessage(null).ToEnvelope());
             }
 
-            // add a pending message
-            var pendingMessage = new PendingNoticeMessage
+            // add a being affected message
+            var beingAffectedMessage = new TopicBeingAffectedMessage
                                      {
-                                         Description = $"Pending Notice for {parcel.ImpactingTopic}",
-                                         ImpactingTopic = parcel.ImpactingTopic
+                                         Description = $"Topic Being Affected Notice for {parcel.Topic}",
+                                         Topic = parcel.Topic
                                      };
 
-            newEnvelopes.Add(pendingMessage.ToChanneledMessage(null).ToEnvelope());
+            newEnvelopes.Add(beingAffectedMessage.ToChanneledMessage(null).ToEnvelope());
 
             // add the envelopes passed in
             newEnvelopes.AddRange(envelopes);
 
-            // add the final certified message
-            var certifiedMessage = new CertifiedNoticeMessage
+            // add the final was affected message
+            var wasAffectedMessage = new TopicWasAffectedMessage
                                        {
-                                           Description = $"Certified Notice for {parcel.ImpactingTopic}",
-                                           ImpactingTopic = parcel.ImpactingTopic
+                                           Description = $"Topic Was Affected Notice for {parcel.Topic}",
+                                           Topic = parcel.Topic
                                        };
 
-            newEnvelopes.Add(certifiedMessage.ToChanneledMessage(null).ToEnvelope());
+            newEnvelopes.Add(wasAffectedMessage.ToChanneledMessage(null).ToEnvelope());
 
             var newParcel = new Parcel { Id = parcelId, Name = parcel.Name, SharedInterfaceStates = sharedInterfaceStates, Envelopes = newEnvelopes };
 

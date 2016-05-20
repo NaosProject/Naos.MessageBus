@@ -145,7 +145,7 @@
     <Compile Include="TopicTests.cs" />
     <Compile Include="EnvelopeTests.cs" />
     <Compile Include="SharingHandlerTests.cs" />
-    <Compile Include="AbortIfNoNewCertifiedNoticesMessageHandlerTests.cs" />
+    <Compile Include="AbortIfNoTopicsAffectedAndShareResultsMessageHandlerTests.cs" />
     <Compile Include="PostOfficeTests.cs" />
     <Compile Include="TrackingSystemTests.cs" />
     <Compile Include="TrackingCodeTest.cs" />

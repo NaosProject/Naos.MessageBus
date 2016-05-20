@@ -84,18 +84,18 @@ namespace Naos.MessageBus.Persistence
 
             var deliveredEnvelope = this.Tracking[command.TrackingCode].Envelope;
 
-            var isPendingNotice = deliveredEnvelope.MessageType == typeof(PendingNoticeMessage).ToTypeDescription();
-            if (isPendingNotice)
+            var beingAffected = deliveredEnvelope.MessageType == typeof(TopicBeingAffectedMessage).ToTypeDescription();
+            if (beingAffected)
             {
-                var message = Serializer.Deserialize<PendingNoticeMessage>(deliveredEnvelope.MessageAsJson);
-                this.RecordEvent(new PendingNoticeDelivered { TrackingCode = command.TrackingCode, Topic = message.ImpactingTopic, Envelope = deliveredEnvelope });
+                var message = Serializer.Deserialize<TopicBeingAffectedMessage>(deliveredEnvelope.MessageAsJson);
+                this.RecordEvent(new TopicBeingAffected { TrackingCode = command.TrackingCode, Topic = message.Topic, Envelope = deliveredEnvelope });
             }
 
-            var isCertified = deliveredEnvelope.MessageType == typeof(CertifiedNoticeMessage).ToTypeDescription();
-            if (isCertified)
+            var wasAffected = deliveredEnvelope.MessageType == typeof(TopicWasAffectedMessage).ToTypeDescription();
+            if (wasAffected)
             {
-                var message = Serializer.Deserialize<CertifiedNoticeMessage>(deliveredEnvelope.MessageAsJson);
-                this.RecordEvent(new CertifiedNoticeDelivered { TrackingCode = command.TrackingCode, Topic = message.ImpactingTopic, Envelope = deliveredEnvelope });
+                var message = Serializer.Deserialize<TopicWasAffectedMessage>(deliveredEnvelope.MessageAsJson);
+                this.RecordEvent(new TopicWasAffected { TrackingCode = command.TrackingCode, Topic = message.Topic, Envelope = deliveredEnvelope });
             }
         }
     }

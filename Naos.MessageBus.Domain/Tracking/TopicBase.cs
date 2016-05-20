@@ -101,30 +101,30 @@ namespace Naos.MessageBus.Domain
     }
 
     /// <summary>
-    /// Topic that is impacting a workflow.
+    /// Topic that is impacted by a workflow.
     /// </summary>
-    public class ImpactingTopic : TopicBase
+    public class AffectedTopic : TopicBase
     {
         /// <summary>
-        /// Initializes a new instance of the <see cref="ImpactingTopic"/> class.
+        /// Initializes a new instance of the <see cref="AffectedTopic"/> class.
         /// </summary>
         /// <param name="name">Topic name.</param>
-        public ImpactingTopic(string name)
+        public AffectedTopic(string name)
             : base(name)
         {
         }
     }
 
     /// <summary>
-    /// Topic that is a dependency to a different workflow.
+    /// Topic that is a dependency of the workflow.
     /// </summary>
-    public class DependantTopic : TopicBase
+    public class DependencyTopic : TopicBase
     {
         /// <summary>
-        /// Initializes a new instance of the <see cref="DependantTopic"/> class.
+        /// Initializes a new instance of the <see cref="DependencyTopic"/> class.
         /// </summary>
         /// <param name="name">Topic name.</param>
-        public DependantTopic(string name)
+        public DependencyTopic(string name)
             : base(name)
         {
         }

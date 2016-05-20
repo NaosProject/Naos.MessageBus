@@ -33,7 +33,7 @@ namespace Naos.MessageBus.Test
             // arrange
             var container = new Container();
             var trackingSends = new List<Parcel>();
-            var senderConstructor = GetInMemorySender(trackingSends);
+            var senderConstructor = Factory.GetInMemorySender(trackingSends);
 
             var channel = new Channel("el-channel");
 
@@ -231,7 +231,7 @@ namespace Naos.MessageBus.Test
 
         private static MessageDispatcher GetMessageDispatcher(List<Parcel> trackingSends, Container container, Channel channel)
         {
-            var senderConstructor = GetInMemorySender(trackingSends);
+            var senderConstructor = Factory.GetInMemorySender(trackingSends);
 
             var activeMessageTracker = new InMemoryActiveMessageTracker();
 
@@ -285,7 +285,7 @@ namespace Naos.MessageBus.Test
             container.Register<IHandleMessages<NullMessage>, NullMessageHandler>();
 
             var trackingSends = new List<Parcel>();
-            var senderConstructor = GetInMemorySender(trackingSends);
+            var senderConstructor = Factory.GetInMemorySender(trackingSends);
 
             var monitoredChannel = new Channel("ChannelName");
             var dispatcher = new MessageDispatcher(
@@ -309,22 +309,212 @@ namespace Naos.MessageBus.Test
             Assert.Equal(1, trackingSends.Count);
         }
 
-        private static Func<IPostOffice> GetInMemorySender(List<Parcel> trackingSends)
+        [Fact]
+        public static void Dispatch_DispatchingMethodWithAbortAndResend_TracksAddressedThenAbortAndReSends()
         {
-            Func<Parcel, TrackingCode> send = parcel =>
-                {
-                    trackingSends.Add(parcel);
-                    return null;
-                };
+            var container = new Container();
+            container.Register<IHandleMessages<ThrowsExceptionMessage>, ThrowsExceptionMessageHandler>();
 
-            var ret = A.Fake<IPostOffice>();
+            var trackingCalls = new List<string>();
+            var trackingConstructor = Factory.GetInMemoryParcelTrackingSystem(trackingCalls);
 
-            A.CallTo(ret)
-                .Where(call => call.Method.Name == nameof(IPostOffice.Send))
-                .WithReturnType<TrackingCode>()
-                .Invokes(call => send(call.Arguments.FirstOrDefault() as Parcel));
+            var trackingSends = new List<Parcel>();
+            var senderConstructor = Factory.GetInMemorySender(trackingSends);
 
-            return () => ret;
+            var monitoredChannel = new Channel("ChannelName");
+            var dispatcher = new MessageDispatcher(
+                container,
+                new ConcurrentDictionary<Type, object>(),
+                new[] { monitoredChannel },
+                TypeMatchStrategy.NamespaceAndName,
+                TimeSpan.FromSeconds(.5),
+                new HarnessStaticDetails(),
+                trackingConstructor(),
+                new InMemoryActiveMessageTracker(),
+                senderConstructor());
+
+            var exception = new AbortParcelDeliveryException("Abort") { Reschedule = true };
+            var parcel = new Parcel
+                             {
+                                 Envelopes =
+                                     new[]
+                                         {
+                                             new ThrowsExceptionMessage()
+                                                 {
+                                                     ExceptionToThrowJson = Serializer.Serialize(exception),
+                                                     ExceptionToThrowType = exception.GetType().ToTypeDescription(),
+                                                     TypeMatchStrategy = TypeMatchStrategy.NamespaceAndName
+                                                 }.ToChanneledMessage(
+                                                     monitoredChannel).ToEnvelope()
+                                         }
+                             };
+
+            dispatcher.Dispatch(new TrackingCode(), "Parcel", parcel);
+            trackingSends.Should().HaveCount(1);
+            trackingCalls.Should().BeEquivalentTo("Attempting", "Aborted");
+        }
+
+        [Fact]
+        public static void Dispatch_DispatchingMethodWithAbortAndNoResend_TracksAddressedThenAbortAndDoesNotSend()
+        {
+            var container = new Container();
+            container.Register<IHandleMessages<ThrowsExceptionMessage>, ThrowsExceptionMessageHandler>();
+
+            var trackingCalls = new List<string>();
+            var trackingConstructor = Factory.GetInMemoryParcelTrackingSystem(trackingCalls);
+
+            var trackingSends = new List<Parcel>();
+            var senderConstructor = Factory.GetInMemorySender(trackingSends);
+
+            var monitoredChannel = new Channel("ChannelName");
+            var dispatcher = new MessageDispatcher(
+                container,
+                new ConcurrentDictionary<Type, object>(),
+                new[] { monitoredChannel },
+                TypeMatchStrategy.NamespaceAndName,
+                TimeSpan.FromSeconds(.5),
+                new HarnessStaticDetails(),
+                trackingConstructor(),
+                new InMemoryActiveMessageTracker(),
+                senderConstructor());
+
+            var exception = new AbortParcelDeliveryException("Abort") { Reschedule = false };
+            var parcel = new Parcel
+            {
+                Envelopes =
+                                     new[]
+                                         {
+                                             new ThrowsExceptionMessage()
+                                                 {
+                                                     ExceptionToThrowJson = Serializer.Serialize(exception),
+                                                     ExceptionToThrowType = exception.GetType().ToTypeDescription(),
+                                                     TypeMatchStrategy = TypeMatchStrategy.NamespaceAndName
+                                                 }.ToChanneledMessage(
+                                                     monitoredChannel).ToEnvelope()
+                                         }
+            };
+
+            dispatcher.Dispatch(new TrackingCode(), "Parcel", parcel);
+            trackingSends.Should().HaveCount(0);
+            trackingCalls.Should().BeEquivalentTo("Attempting", "Aborted");
+        }
+
+        [Fact]
+        public static void Dispatch_DispatchingMethodWithException_TracksAddressedThenRejectedAndThrows()
+        {
+            var container = new Container();
+            container.Register<IHandleMessages<ThrowsExceptionMessage>, ThrowsExceptionMessageHandler>();
+
+            var trackingCalls = new List<string>();
+            var trackingConstructor = Factory.GetInMemoryParcelTrackingSystem(trackingCalls);
+
+            var trackingSends = new List<Parcel>();
+            var senderConstructor = Factory.GetInMemorySender(trackingSends);
+
+            var monitoredChannel = new Channel("ChannelName");
+            var dispatcher = new MessageDispatcher(
+                container,
+                new ConcurrentDictionary<Type, object>(),
+                new[] { monitoredChannel },
+                TypeMatchStrategy.NamespaceAndName,
+                TimeSpan.FromSeconds(.5),
+                new HarnessStaticDetails(),
+                trackingConstructor(),
+                new InMemoryActiveMessageTracker(),
+                senderConstructor());
+
+            var exception = new NullReferenceException("Failed");
+            var parcel = new Parcel
+            {
+                Envelopes =
+                                     new[]
+                                         {
+                                             new ThrowsExceptionMessage()
+                                                 {
+                                                     ExceptionToThrowJson = Serializer.Serialize(exception),
+                                                     ExceptionToThrowType = exception.GetType().ToTypeDescription(),
+                                                     TypeMatchStrategy = TypeMatchStrategy.NamespaceAndName
+                                                 }.ToChanneledMessage(
+                                                     monitoredChannel).ToEnvelope()
+                                         }
+            };
+
+            Action testCode = () => dispatcher.Dispatch(new TrackingCode(), "Parcel", parcel);
+            testCode.ShouldThrow<NullReferenceException>().WithMessage(exception.Message);
+
+            trackingSends.Should().HaveCount(0);
+            trackingCalls.Should().BeEquivalentTo("Attempting", "Rejected");
+        }
+
+        [Fact]
+        public static void Dispatch_DispatchingMethodWithSuccess_TracksAddressedThenDelivered()
+        {
+            var container = new Container();
+            container.Register<IHandleMessages<NullMessage>, NullMessageHandler>();
+
+            var trackingCalls = new List<string>();
+            var trackingConstructor = Factory.GetInMemoryParcelTrackingSystem(trackingCalls);
+
+            var trackingSends = new List<Parcel>();
+            var senderConstructor = Factory.GetInMemorySender(trackingSends);
+
+            var monitoredChannel = new Channel("ChannelName");
+            var dispatcher = new MessageDispatcher(
+                container,
+                new ConcurrentDictionary<Type, object>(),
+                new[] { monitoredChannel },
+                TypeMatchStrategy.NamespaceAndName,
+                TimeSpan.FromSeconds(.5),
+                new HarnessStaticDetails(),
+                trackingConstructor(),
+                new InMemoryActiveMessageTracker(),
+                senderConstructor());
+
+            var parcel = new Parcel { Envelopes = new[] { new NullMessage().ToChanneledMessage(monitoredChannel).ToEnvelope() } };
+
+            dispatcher.Dispatch(new TrackingCode(), "Parcel", parcel);
+
+            trackingSends.Should().HaveCount(0);
+            trackingCalls.Should().BeEquivalentTo("Attempting", "Delivered");
+        }
+
+        [Fact]
+        public static void Dispatch_DispatchingMethodWithRecurringHeaderMessage_ReSendsWithoutTracking()
+        {
+            var container = new Container();
+            container.Register<IHandleMessages<NullMessage>, NullMessageHandler>();
+
+            var trackingCalls = new List<string>();
+            var trackingConstructor = Factory.GetInMemoryParcelTrackingSystem(trackingCalls);
+
+            var trackingSends = new List<Parcel>();
+            var senderConstructor = Factory.GetInMemorySender(trackingSends);
+
+            var monitoredChannel = new Channel("ChannelName");
+            var dispatcher = new MessageDispatcher(
+                container,
+                new ConcurrentDictionary<Type, object>(),
+                new[] { monitoredChannel },
+                TypeMatchStrategy.NamespaceAndName,
+                TimeSpan.FromSeconds(.5),
+                new HarnessStaticDetails(),
+                trackingConstructor(),
+                new InMemoryActiveMessageTracker(),
+                senderConstructor());
+
+            var parcel = new Parcel
+                             {
+                                 Envelopes =
+                                     new[]
+                                         {
+                                             new RecurringHeaderMessage().ToChanneledMessage(null).ToEnvelope(),
+                                             new NullMessage().ToChanneledMessage(monitoredChannel).ToEnvelope(),
+                                         }
+                             };
+
+            dispatcher.Dispatch(new TrackingCode(), "Parcel", parcel);
+            trackingSends.Should().HaveCount(1);
+            trackingCalls.Should().HaveCount(0);
         }
 
         [Fact]
@@ -345,7 +535,7 @@ namespace Naos.MessageBus.Test
                 new HarnessStaticDetails(),
                 new NullParcelTrackingSystem(),
                 new InMemoryActiveMessageTracker(),
-                GetInMemorySender(trackingSends)());
+                Factory.GetInMemorySender(trackingSends)());
 
             var validParcel = new Parcel { Envelopes = new[] { new NullMessage().ToChanneledMessage(monitoredChannel).ToEnvelope() } };
 

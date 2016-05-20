@@ -17,11 +17,11 @@ namespace Naos.MessageBus.Test
         {
             var firstName = "name1";
 
-            var first = new ImpactingTopic(firstName);
+            var first = new AffectedTopic(firstName);
 
             var secondName = firstName;
 
-            var second = new ImpactingTopic(secondName);
+            var second = new AffectedTopic(secondName);
 
             Assert.True(first == second);
             Assert.False(first != second);
@@ -36,11 +36,11 @@ namespace Naos.MessageBus.Test
         {
             var firstName = "name1";
 
-            var first = new ImpactingTopic(firstName);
+            var first = new AffectedTopic(firstName);
 
             var secondName = "name2";
 
-            var second = new ImpactingTopic(secondName);
+            var second = new AffectedTopic(secondName);
 
             Assert.False(first == second);
             Assert.True(first != second);
@@ -55,11 +55,11 @@ namespace Naos.MessageBus.Test
         {
             var firstName = "name1";
 
-            var first = new DependantTopic(firstName);
+            var first = new DependencyTopic(firstName);
 
             var secondName = firstName;
 
-            var second = new DependantTopic(secondName);
+            var second = new DependencyTopic(secondName);
 
             Assert.True(first == second);
             Assert.False(first != second);
@@ -74,11 +74,11 @@ namespace Naos.MessageBus.Test
         {
             var firstName = "name1";
 
-            var first = new DependantTopic(firstName);
+            var first = new DependencyTopic(firstName);
 
             var secondName = "name2";
 
-            var second = new DependantTopic(secondName);
+            var second = new DependencyTopic(secondName);
 
             Assert.False(first == second);
             Assert.True(first != second);
@@ -93,11 +93,11 @@ namespace Naos.MessageBus.Test
         {
             var firstName = "name1";
 
-            var first = new ImpactingTopic(firstName);
+            var first = new AffectedTopic(firstName);
 
             var secondName = firstName;
 
-            var second = new DependantTopic(secondName);
+            var second = new DependencyTopic(secondName);
 
             Assert.True(first == second);
             Assert.False(first != second);

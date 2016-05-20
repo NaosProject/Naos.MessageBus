@@ -82,7 +82,7 @@ namespace Naos.MessageBus.Core
             }
 
             // make sure the message was routed correctly (if not then reroute)
-            if (this.servicedChannels.SingleOrDefault(_ => _.Name == parcel.Envelopes.First().Channel.Name) == null)
+            if (this.servicedChannels.SingleOrDefault(_ => _.Name == parcel.Envelopes.First().Channel?.Name) == null)
             {
                 // any schedule should already be set and NOT reset...
                 this.postOffice.Send(parcel);
@@ -116,18 +116,17 @@ namespace Naos.MessageBus.Core
                 //        parcel id and then resend but we will not update any status because the new send with the new id will take care of that
                 Log.Write("Encountered recurring envelope: " + recurringParcelEncounteredException.Message);
                 var remainingEnvelopes = parcel.Envelopes.Skip(1).ToList();
-                this.SendEnvelopes(Guid.NewGuid(), remainingEnvelopes, parcel.SharedInterfaceStates);
+                this.SendRemainingEnvelopes(Guid.NewGuid(), remainingEnvelopes, parcel.SharedInterfaceStates);
             }
             catch (AbortParcelDeliveryException abortParcelDeliveryException)
             {
                 Log.Write("Aborted parcel delivery; TrackingCode: " + trackingCode + ", Exception:" + abortParcelDeliveryException);
-                this.parcelTrackingSystem.Abort(trackingCode, abortParcelDeliveryException.Reason);
+                this.parcelTrackingSystem.Aborted(trackingCode, abortParcelDeliveryException.Reason);
 
                 if (abortParcelDeliveryException.Reschedule)
                 {
                     Log.Write("Rescheduling parcel; TrackingCode: " + trackingCode);
                     this.postOffice.Send(parcel);
-                    this.parcelTrackingSystem.Addressed(trackingCode, parcel.Envelopes.First().Channel);
                 }
             }
             catch (Exception ex)
@@ -223,11 +222,11 @@ namespace Naos.MessageBus.Core
 
             if (remainingEnvelopes.Any())
             {
-                this.SendEnvelopes(parcel.Id, remainingEnvelopes, parcel.SharedInterfaceStates, handler);
+                this.SendRemainingEnvelopes(parcel.Id, remainingEnvelopes, parcel.SharedInterfaceStates, handler);
             }
         }
 
-        private void SendEnvelopes(Guid parcelId, List<Envelope> envelopes, IList<SharedInterfaceState> existingSharedInterfaceStates, object handler = null)
+        private void SendRemainingEnvelopes(Guid parcelId, List<Envelope> envelopes, IList<SharedInterfaceState> existingSharedInterfaceStates, object handler = null)
         {
             using (var activity = Log.Enter(() => new { RemainingEnvelopes = envelopes }))
             {

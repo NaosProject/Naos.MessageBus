@@ -62,10 +62,10 @@ namespace Naos.MessageBus.Test
             var courier = Factory.GetInMemoryCourier(trackingSends);
             var postOffice = new PostOffice(courier());
             Action testCode =
-                () => postOffice.SendRecurring(new NullMessage(), new Channel("something"), new DailyScheduleInUtc(), "Something", new ImpactingTopic("me"));
+                () => postOffice.SendRecurring(new NullMessage(), new Channel("something"), new DailyScheduleInUtc(), "Something", new AffectedTopic("me"));
 
             // act & assert
-            testCode.ShouldThrow<ArgumentException>().WithMessage("If you are using an ImpactingTopic you must specify a SimultaneousRunsStrategy.");
+            testCode.ShouldThrow<ArgumentException>().WithMessage("If you are using an Topic you must specify a SimultaneousRunsStrategy.");
         }
 
         [Fact]
@@ -86,7 +86,7 @@ namespace Naos.MessageBus.Test
                 channel,
                 schedule,
                 name,
-                new ImpactingTopic(myTopic),
+                new AffectedTopic(myTopic),
                 null,
                 TopicCheckStrategy.AllowIfAnyTopicCheckYieldsRecent,
                 SimultaneousRunsStrategy.AbortSubsequentRunsWhenOneIsRunning);
@@ -99,17 +99,17 @@ namespace Naos.MessageBus.Test
 
             crate.Parcel.Envelopes.Count.Should().Be(3);
 
-            // pending
-            crate.Parcel.Envelopes.Skip(0).First().MessageType.Should().Be(typeof(PendingNoticeMessage).ToTypeDescription());
-            Serializer.Deserialize<PendingNoticeMessage>(crate.Parcel.Envelopes.First().MessageAsJson).ImpactingTopic.Name.Should().Be(myTopic);
+            // being affected
+            crate.Parcel.Envelopes.Skip(0).First().MessageType.Should().Be(typeof(TopicBeingAffectedMessage).ToTypeDescription());
+            Serializer.Deserialize<TopicBeingAffectedMessage>(crate.Parcel.Envelopes.First().MessageAsJson).Topic.Name.Should().Be(myTopic);
 
             // mine
             crate.Parcel.Envelopes.Skip(1).First().MessageType.Should().Be(typeof(NullMessage).ToTypeDescription());
             crate.Parcel.Envelopes.Skip(1).First().Channel.Should().Be(channel);
 
-            // certified
-            crate.Parcel.Envelopes.Last().MessageType.Should().Be(typeof(CertifiedNoticeMessage).ToTypeDescription());
-            Serializer.Deserialize<CertifiedNoticeMessage>(crate.Parcel.Envelopes.Last().MessageAsJson).ImpactingTopic.Name.Should().Be(myTopic);
+            // was affected
+            crate.Parcel.Envelopes.Last().MessageType.Should().Be(typeof(TopicWasAffectedMessage).ToTypeDescription());
+            Serializer.Deserialize<TopicWasAffectedMessage>(crate.Parcel.Envelopes.Last().MessageAsJson).Topic.Name.Should().Be(myTopic);
         }
 
         [Fact]
@@ -123,7 +123,7 @@ namespace Naos.MessageBus.Test
             var name = "Something";
             var schedule = new DailyScheduleInUtc();
             var channel = new Channel("something");
-            var dependantTopics = new[] { new DependantTopic("depends") };
+            var dependantTopics = new[] { new DependencyTopic("depends") };
 
             // act
             var trackingCode = postOffice.SendRecurring(
@@ -131,7 +131,7 @@ namespace Naos.MessageBus.Test
                 channel,
                 schedule,
                 name,
-                new ImpactingTopic(myTopic),
+                new AffectedTopic(myTopic),
                 dependantTopics,
                 TopicCheckStrategy.AllowIfAnyTopicCheckYieldsRecent,
                 SimultaneousRunsStrategy.AbortSubsequentRunsWhenOneIsRunning);
@@ -145,21 +145,21 @@ namespace Naos.MessageBus.Test
             crate.Parcel.Envelopes.Count.Should().Be(4);
 
             // abort
-            crate.Parcel.Envelopes.First().MessageType.Should().Be(typeof(AbortIfNoNewCertifiedNoticesAndShareResultsMessage).ToTypeDescription());
-            Serializer.Deserialize<AbortIfNoNewCertifiedNoticesAndShareResultsMessage>(crate.Parcel.Envelopes.First().MessageAsJson).ImpactingTopic.Name.Should().Be(myTopic);
-            Serializer.Deserialize<AbortIfNoNewCertifiedNoticesAndShareResultsMessage>(crate.Parcel.Envelopes.First().MessageAsJson).DependantTopics.ShouldBeEquivalentTo(dependantTopics);
+            crate.Parcel.Envelopes.First().MessageType.Should().Be(typeof(AbortIfNoTopicsAffectedAndShareResultsMessage).ToTypeDescription());
+            Serializer.Deserialize<AbortIfNoTopicsAffectedAndShareResultsMessage>(crate.Parcel.Envelopes.First().MessageAsJson).Topic.Name.Should().Be(myTopic);
+            Serializer.Deserialize<AbortIfNoTopicsAffectedAndShareResultsMessage>(crate.Parcel.Envelopes.First().MessageAsJson).DependencyTopics.ShouldBeEquivalentTo(dependantTopics);
 
-            // pending
-            crate.Parcel.Envelopes.Skip(1).First().MessageType.Should().Be(typeof(PendingNoticeMessage).ToTypeDescription());
-            Serializer.Deserialize<PendingNoticeMessage>(crate.Parcel.Envelopes.First().MessageAsJson).ImpactingTopic.Name.Should().Be(myTopic);
+            // being affected
+            crate.Parcel.Envelopes.Skip(1).First().MessageType.Should().Be(typeof(TopicBeingAffectedMessage).ToTypeDescription());
+            Serializer.Deserialize<TopicBeingAffectedMessage>(crate.Parcel.Envelopes.First().MessageAsJson).Topic.Name.Should().Be(myTopic);
 
             // mine
             crate.Parcel.Envelopes.Skip(2).First().MessageType.Should().Be(typeof(NullMessage).ToTypeDescription());
             crate.Parcel.Envelopes.Skip(2).First().Channel.Should().Be(channel);
 
-            // certified
-            crate.Parcel.Envelopes.Last().MessageType.Should().Be(typeof(CertifiedNoticeMessage).ToTypeDescription());
-            Serializer.Deserialize<CertifiedNoticeMessage>(crate.Parcel.Envelopes.Last().MessageAsJson).ImpactingTopic.Name.Should().Be(myTopic);
+            // was affected
+            crate.Parcel.Envelopes.Last().MessageType.Should().Be(typeof(TopicWasAffectedMessage).ToTypeDescription());
+            Serializer.Deserialize<TopicWasAffectedMessage>(crate.Parcel.Envelopes.Last().MessageAsJson).Topic.Name.Should().Be(myTopic);
         }
     }
 }

@@ -1,5 +1,5 @@
 // --------------------------------------------------------------------------------------------------------------------
-// <copyright file="NoticeStatus.cs" company="Naos">
+// <copyright file="TopicStatus.cs" company="Naos">
 //   Copyright 2015 Naos
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
@@ -9,7 +9,7 @@ namespace Naos.MessageBus.Domain
     /// <summary>
     /// Enumeration of the status of a notice.
     /// </summary>
-    public enum NoticeStatus
+    public enum TopicStatus
     {
         /// <summary>
         /// No known status.
@@ -17,14 +17,14 @@ namespace Naos.MessageBus.Domain
         Unknown,
 
         /// <summary>
-        /// Notice is pending.
+        /// Topic is being affected currently by another process.
         /// </summary>
-        Pending,
+        BeingAffected,
 
         /// <summary>
-        /// Notice is certified.
+        /// Topic was affected by a completed process.
         /// </summary>
-        Certified,
+        WasAffected,
 
         /// <summary>
         /// None state, null object of the enum.
