@@ -23,7 +23,7 @@ namespace Naos.MessageBus.Persistence
         /// <summary>
         /// Gets or sets the topic.
         /// </summary>
-        public string Topic { get; set; }
+        public ImpactingTopic Topic { get; set; }
 
         /// <summary>
         /// Gets or sets the ID of the parcel the notice came from.

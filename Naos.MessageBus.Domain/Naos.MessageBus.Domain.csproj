@@ -64,8 +64,8 @@
     <Compile Include="PostOfficeExtensions.cs" />
     <Compile Include="Sharing\IShareNoticeItems.cs" />
     <Compile Include="Tracking\CertifiedForm.cs" />
-    <Compile Include="Tracking\TopicCheck.cs" />
-    <Compile Include="Tracking\MultipleCertifiedRunsStrategy.cs" />
+    <Compile Include="Tracking\SimultaneousRunsStrategy.cs" />
+    <Compile Include="Tracking\TopicBase.cs" />
     <Compile Include="Tracking\TopicCheckStrategy.cs" />
     <Compile Include="Sharing\IShareNotices.cs" />
     <Compile Include="Messages\PendingNoticeMessage.cs" />

@@ -22,11 +22,11 @@ namespace Naos.MessageBus.Domain
         Task<IReadOnlyCollection<ParcelTrackingReport>> GetTrackingReportAsync(IReadOnlyCollection<TrackingCode> trackingCodes);
 
         /// <summary>
-        /// Gets the latest certified notices on a topic.
+        /// Gets the latest notices on a topic.
         /// </summary>
         /// <param name="topic">Topic to get latest certified notice for.</param>
         /// <param name="statusFilter">Status to filter results to.</param>
         /// <returns>Latest notices for the provided topic.</returns>
-        Task<Notice> GetLatestCertifiedNoticeAsync(string topic, NoticeStatus statusFilter = NoticeStatus.None);
+        Task<Notice> GetLatestNoticeAsync(TopicBase topic, NoticeStatus statusFilter = NoticeStatus.None);
     }
 }

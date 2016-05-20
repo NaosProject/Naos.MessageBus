@@ -44,9 +44,17 @@ namespace Naos.MessageBus.Hangfire.Sender
         {
             GlobalConfiguration.Configuration.UseSqlServerStorage(this.courierPersistenceConnectionConfiguration.ToSqlServerConnectionString());
             var parcel = crate.Parcel;
+            if (crate.RecurringSchedule.GetType().ToTypeDescription() != typeof(NullSchedule).ToTypeDescription())
+            {
+                // need to inject a recurring message to make it work...
+                var newEnvelopes =
+                    new List<Envelope>(new[] { new RecurringHeaderMessage { Description = crate.Label }.ToChanneledMessage(crate.Address).ToEnvelope() });
+                var newParcel = new Parcel { Id = parcel.Id, SharedInterfaceStates = parcel.SharedInterfaceStates, Envelopes = newEnvelopes };
+                parcel = newParcel;
+            }
 
             var wasAddressed = crate.Address != null;
-            var channel = crate.Address ?? new Channel { Name = "default" };
+            var channel = crate.Address ?? new Channel("default");
 
             ThrowIfInvalidChannel(channel);
 

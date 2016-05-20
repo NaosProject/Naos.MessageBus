@@ -31,7 +31,7 @@ namespace Naos.MessageBus.Persistence
             /// <summary>
             /// Gets or sets the topic of the certified notice.
             /// </summary>
-            public string Topic { get; set; }
+            public ImpactingTopic Topic { get; set; }
 
             /// <summary>
             /// Gets or sets the envelope that was certified.

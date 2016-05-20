@@ -49,33 +49,44 @@ namespace Naos.MessageBus.Core
                 throw new ArgumentException("Message cannot be null.");
             }
 
-            if (string.IsNullOrWhiteSpace(message.ImpactingTopic))
+            if (message.ImpactingTopic == null)
             {
-                throw new ArgumentException("Message.ImpactingTopic cannot be null or empty.");
+                throw new ArgumentException("Message.ImpactingTopic cannot be null.");
             }
 
-            var lastNoticeOfMyImpact = await tracker.GetLatestCertifiedNoticeAsync(message.ImpactingTopic, NoticeStatus.Certified);
+            var lastNoticeOfMyImpact = await tracker.GetLatestNoticeAsync(message.ImpactingTopic, NoticeStatus.Certified);
 
-            var notices = message.DependantTopicChecks.Select(
-                topicCheck =>
+            var notices = message.DependantTopics.Select(
+                dependantTopic =>
                     {
-                        var latestCertifiedNoticeTask = tracker.GetLatestCertifiedNoticeAsync(topicCheck.Topic);
+                        var latestCertifiedNoticeTask = tracker.GetLatestNoticeAsync(dependantTopic);
                         latestCertifiedNoticeTask.Wait();
                         var latest = latestCertifiedNoticeTask.Result;
                         return latest;
                     }).ToArray();
 
-            var topicsToCheckRecentResults = message.DependantTopicChecks.ToDictionary(
-                key => key.Topic,
+            var topicsToCheckRecentResults = message.DependantTopics.ToDictionary(
+                key => key,
                 val =>
                     {
-                        var currentNotice = notices.SingleOrDefault(_ => _.Topic == val.Topic);
-                        var lastRunNotice = (lastNoticeOfMyImpact.DependantNotices ?? new Notice[0]).SingleOrDefault(_ => _.Topic == val.Topic);
+                        var currentNotice = notices.SingleOrDefault(_ => _.Topic == val);
+                        var lastRunNotice = (lastNoticeOfMyImpact.DependantNotices ?? new Notice[0]).SingleOrDefault(_ => _.Topic == val);
 
-                        return EvaluateNoticeRecency(currentNotice, lastRunNotice, val.TopicCheckStrategy);
+                        return EvaluateNoticeRecency(currentNotice, lastRunNotice);
                     });
 
-            var dataIsRecent = topicsToCheckRecentResults.Values.Any(_ => _);
+            bool dataIsRecent;
+            switch (message.TopicCheckStrategy)
+            {
+                case TopicCheckStrategy.RequireAllTopicChecksYieldRecent:
+                    dataIsRecent = topicsToCheckRecentResults.Values.All(_ => _);
+                    break;
+                case TopicCheckStrategy.AllowIfAnyTopicCheckYieldsRecent:
+                    dataIsRecent = topicsToCheckRecentResults.Values.Any(_ => _);
+                    break;
+                default:
+                    throw new NotSupportedException("Unsupported TopicChecStrategy: " + message.TopicCheckStrategy);
+            }
 
             if (!dataIsRecent)
             {
@@ -95,20 +106,9 @@ namespace Naos.MessageBus.Core
         /// </summary>
         /// <param name="currentNotice">Current notice.</param>
         /// <param name="previousNotice">Previous notice.</param>
-        /// <param name="topicCheckStrategy">Strategy for comparison.</param>
         /// <returns>True if current notice is more recent, otherwise false.</returns>
-        private static bool EvaluateNoticeRecency(Notice currentNotice, Notice previousNotice, TopicCheckStrategy topicCheckStrategy)
+        private static bool EvaluateNoticeRecency(Notice currentNotice, Notice previousNotice)
         {
-            if (topicCheckStrategy == TopicCheckStrategy.Unspecified)
-            {
-                throw new NotSupportedException("Unsupported topic check strategy: " + topicCheckStrategy);
-            }
-
-            if (topicCheckStrategy == TopicCheckStrategy.DoNotRequireNew)
-            {
-                return true;
-            }
-
             // if we don't have a current notice then return NOT recent
             if (currentNotice == null)
             {

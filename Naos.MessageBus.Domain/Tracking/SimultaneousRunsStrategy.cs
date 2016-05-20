@@ -1,5 +1,5 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="MultipleCertifiedRunsStrategy.cs" company="Naos">
+// <copyright file="SimultaneousRunsStrategy.cs" company="Naos">
 //   Copyright 2015 Naos
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
@@ -9,7 +9,7 @@ namespace Naos.MessageBus.Domain
     /// <summary>
     /// Enumeration of the different strategies.
     /// </summary>
-    public enum MultipleCertifiedRunsStrategy
+    public enum SimultaneousRunsStrategy
     {
         /// <summary>
         /// Unspecified strategy.
@@ -19,11 +19,11 @@ namespace Naos.MessageBus.Domain
         /// <summary>
         /// Allow multiple runs.
         /// </summary>
-        AllowMultiple,
+        AllowSimultaneousRuns,
 
         /// <summary>
         /// Abort any runs that attempt to start while another run is going for the same topic.
         /// </summary>
-        AbortMultiples
+        AbortSubsequentRunsWhenOneIsRunning
     }
 }

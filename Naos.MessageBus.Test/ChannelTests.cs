@@ -22,7 +22,7 @@ namespace Naos.MessageBus.Test
         {
             // arrange
             var duplicateName = "HelloDolly";
-            var input = new[] { new Channel { Name = duplicateName }, new Channel { Name = duplicateName } };
+            var input = new[] { new Channel(duplicateName), new Channel(duplicateName) };
 
             // act
             var actual = input.Distinct().ToList();
@@ -36,7 +36,7 @@ namespace Naos.MessageBus.Test
         public void CompareTo_NullInput_Throws()
         {
             // arrange
-            var first = new Channel { Name = "MonkeysRock" };
+            var first = new Channel("MonkeysRock");
             Action testCode = () => first.CompareTo(null);
 
             // act & assert
@@ -48,8 +48,8 @@ namespace Naos.MessageBus.Test
         {
             // arrange
             var name = "MonkeysRock";
-            var first = new Channel { Name = name };
-            var second = new Channel { Name = name };
+            var first = new Channel(name);
+            var second = new Channel(name);
 
             // act
             var actual = first.CompareTo(second);
@@ -62,8 +62,8 @@ namespace Naos.MessageBus.Test
         public void CompareTo_DifferentNameHigh_NegativeOne()
         {
             // arrange
-            var first = new Channel { Name = "b" };
-            var second = new Channel { Name = "a" };
+            var first = new Channel("b");
+            var second = new Channel("a");
 
             // act
             var actual = first.CompareTo(second);
@@ -76,8 +76,8 @@ namespace Naos.MessageBus.Test
         public void CompareTo_DifferentNameLow_One()
         {
             // arrange
-            var first = new Channel { Name = "1" };
-            var second = new Channel { Name = "2" };
+            var first = new Channel("1");
+            var second = new Channel("2");
 
             // act
             var actual = first.CompareTo(second);
@@ -90,8 +90,8 @@ namespace Naos.MessageBus.Test
         public void Equals_NullFirst_Throws()
         {
             // arrange
-            var notReallyNeeded = new Channel();
-            Action testCode = () => notReallyNeeded.Equals(new Channel(), null);
+            var notReallyNeeded = new Channel("someName");
+            Action testCode = () => notReallyNeeded.Equals(new Channel("someOtherName"), null);
 
             // act & assert
             testCode.ShouldThrow<ArgumentException>().WithMessage("Cannot compare null channels.");
@@ -101,8 +101,8 @@ namespace Naos.MessageBus.Test
         public void Equals_NullSecond_Throws()
         {
             // arrange
-            var notReallyNeeded = new Channel();
-            Action testCode = () => notReallyNeeded.Equals(null, new Channel());
+            var notReallyNeeded = new Channel("someName");
+            Action testCode = () => notReallyNeeded.Equals(null, new Channel("someOtherName"));
 
             // act & assert
             testCode.ShouldThrow<ArgumentException>().WithMessage("Cannot compare null channels.");
@@ -112,7 +112,7 @@ namespace Naos.MessageBus.Test
         public void Equals_NullBoth_Throws()
         {
             // arrange
-            var notReallyNeeded = new Channel();
+            var notReallyNeeded = new Channel("someName");
             Action testCode = () => notReallyNeeded.Equals(null, null);
 
             // act & assert
@@ -123,7 +123,7 @@ namespace Naos.MessageBus.Test
         public void InstanceEquals_Null_Throws()
         {
             // arrange
-            var first = new Channel();
+            var first = new Channel("someName");
             Action testCode = () => first.Equals(null);
 
             // act & assert
@@ -134,8 +134,8 @@ namespace Naos.MessageBus.Test
         public void InstanceEquals_AreNotEqual_False()
         {
             // arrange
-            var first = new Channel { Name = "asdf" };
-            var second = new Channel { Name = "something else" };
+            var first = new Channel("asdf");
+            var second = new Channel("something else");
 
             // act
             var actual = first.Equals(second);
@@ -149,8 +149,8 @@ namespace Naos.MessageBus.Test
         {
             // arrange
             var name = "asdf2";
-            var first = new Channel { Name = name };
-            var second = new Channel { Name = name };
+            var first = new Channel(name);
+            var second = new Channel(name);
 
             // act
             var actual = first.Equals(second);

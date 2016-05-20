@@ -28,7 +28,31 @@ namespace Naos.MessageBus.Test
         [Fact]
         public void MissingCurrentNotice_Aborts()
         {
-            throw new NotImplementedException();
+            // arrange
+            // arrange
+            var impactingTopic = new ImpactingTopic("mine");
+            var topics = Some.Dummies<DependantTopic>().ToList();
+
+            var certifiedData = topics.Cast<TopicBase>().ToDictionary(
+                key => key,
+                val => null as Notice);
+
+            certifiedData.Add(impactingTopic, new Notice { Topic = impactingTopic, CertifiedDateUtc = DateTime.UtcNow });
+
+            var message = new AbortIfNoNewCertifiedNoticesAndShareResultsMessage
+                              {
+                                  Description = A.Dummy<string>(),
+                                  ImpactingTopic = impactingTopic,
+                                  DependantTopics = topics.ToArray()
+                              };
+
+            var tracker = GetTracker(certifiedData);
+
+            var handler = new AbortIfNoNewCertifiedNoticesAndShareResultsMessageHandler();
+            Func<Task> testCode = () => handler.HandleAsync(message, tracker);
+
+            // act & assert
+            testCode.ShouldThrow<AbortParcelDeliveryException>().WithMessage(message.Description);
         }
 
         [Fact]
@@ -65,26 +89,18 @@ namespace Naos.MessageBus.Test
         public void NoNewWithAnyCheck_Aborts()
         {
             // arrange
-            var impactingTopic = "mine";
-            var topics = Some.Dummies<string>().Union(new[] { impactingTopic }).ToList();
+            var impactingTopic = new ImpactingTopic("mine");
+            var topics = Some.Dummies<DependantTopic>().ToList();
 
-            var certifiedData = topics.ToDictionary(
-                key => key,
-                val => new Notice { Topic = val, CertifiedDateUtc = DateTime.UtcNow });
+            var certifiedData = topics.Cast<TopicBase>().ToDictionary(key => key, val => new Notice { Topic = val, CertifiedDateUtc = DateTime.UtcNow });
+
+            certifiedData.Add(impactingTopic, new Notice { Topic = impactingTopic, CertifiedDateUtc = DateTime.UtcNow });
 
             var message = new AbortIfNoNewCertifiedNoticesAndShareResultsMessage
                               {
                                   Description = A.Dummy<string>(),
                                   ImpactingTopic = impactingTopic,
-                                  DependantTopicChecks =
-                                      topics.Select(
-                                          _ =>
-                                          new TopicCheck
-                                              {
-                                                  Topic = _,
-                                                  TopicCheckStrategy = TopicCheckStrategy.RequireNew
-                                              })
-                                      .ToArray()
+                                  DependantTopics = topics.ToArray()
                               };
 
             var tracker = GetTracker(certifiedData);
@@ -100,32 +116,20 @@ namespace Naos.MessageBus.Test
         public void SomeNewWithAnyCheck_DoesNotAbort()
         {
             // arrange
-            var succeedingOne = "fresh";
-            var impactingTopic = "mine";
+            var impactingTopic = new ImpactingTopic("mine");
+            var recentTopic = new DependantTopic("recent");
+            var topics = Some.Dummies<DependantTopic>().ToList();
 
-            var topics = Some.Dummies<string>().Union(new[] { succeedingOne, impactingTopic }).ToList();
+            var certifiedData = topics.Cast<TopicBase>().ToDictionary(key => key, val => null as Notice);
 
-            var certifiedData = topics.Where(_ => _ != succeedingOne).ToDictionary(
-                key => key,
-                val => new Notice { Topic = val, CertifiedDateUtc = DateTime.UtcNow });
-
-            certifiedData.Add(
-                succeedingOne,
-                new Notice { CertifiedDateUtc = DateTime.UtcNow, Topic = succeedingOne });
+            certifiedData.Add(impactingTopic, new Notice { Topic = impactingTopic, CertifiedDateUtc = DateTime.UtcNow });
+            certifiedData.Add(recentTopic, new Notice { Topic = recentTopic, CertifiedDateUtc = DateTime.UtcNow });
 
             var message = new AbortIfNoNewCertifiedNoticesAndShareResultsMessage
                               {
                                   Description = A.Dummy<string>(),
                                   ImpactingTopic = impactingTopic,
-                                  DependantTopicChecks =
-                                      topics.Select(
-                                          _ =>
-                                          new TopicCheck
-                                              {
-                                                  Topic = _,
-                                                  TopicCheckStrategy = TopicCheckStrategy.RequireNew
-                                              })
-                                      .ToArray()
+                                  DependantTopics = topics.ToArray()
                               };
 
             var tracker = GetTracker(certifiedData);
@@ -142,26 +146,20 @@ namespace Naos.MessageBus.Test
         public async Task AllNewWithAllCheck_DoesNotAbort()
         {
             // arrange
-            var impactingTopic = "mine";
-            var topics = Some.Dummies<string>().Union(new[] { impactingTopic }).ToList();
+            var impactingTopic = new ImpactingTopic("mine");
+            var topics = Some.Dummies<DependantTopic>().ToList();
 
-            var certifiedData = topics.ToDictionary(
+            var certifiedData = topics.Cast<TopicBase>().ToDictionary(
                 key => key,
                 val => new Notice { Topic = val, CertifiedDateUtc = DateTime.UtcNow });
+
+            certifiedData.Add(impactingTopic, new Notice { Topic = impactingTopic, CertifiedDateUtc = DateTime.UtcNow });
 
             var message = new AbortIfNoNewCertifiedNoticesAndShareResultsMessage
                               {
                                   Description = A.Dummy<string>(),
                                   ImpactingTopic = impactingTopic,
-                                  DependantTopicChecks =
-                                      topics.Select(
-                                          _ =>
-                                          new TopicCheck
-                                              {
-                                                  Topic = _,
-                                                  TopicCheckStrategy = TopicCheckStrategy.RequireNew
-                                              })
-                                      .ToArray()
+                                  DependantTopics = topics.ToArray()
                               };
 
             var tracker = GetTracker(certifiedData);
@@ -178,30 +176,20 @@ namespace Naos.MessageBus.Test
         public void SomeNewWithAllCheck_Aborts()
         {
             // arrange
-            var succeedingOne = "freshTopic";
-            var impactingTopic = "mine";
+            var impactingTopic = new ImpactingTopic("mine");
+            var recentTopic = new DependantTopic("recent");
+            var topics = Some.Dummies<DependantTopic>().ToList();
 
-            var topics = Some.Dummies<string>().Union(new[] { succeedingOne, impactingTopic }).ToList();
+            var certifiedData = topics.Cast<TopicBase>().ToDictionary(key => key, val => null as Notice);
 
-            var certifiedData = topics.Where(_ => _ != succeedingOne).ToDictionary(
-                key => key,
-                val => new Notice { Topic = val, CertifiedDateUtc = DateTime.UtcNow });
-
-            certifiedData.Add(succeedingOne, new Notice { CertifiedDateUtc = DateTime.UtcNow, Topic = succeedingOne });
+            certifiedData.Add(impactingTopic, new Notice { Topic = impactingTopic, CertifiedDateUtc = DateTime.UtcNow });
+            certifiedData.Add(recentTopic, new Notice { Topic = recentTopic, CertifiedDateUtc = DateTime.UtcNow });
 
             var message = new AbortIfNoNewCertifiedNoticesAndShareResultsMessage
                               {
                                   Description = A.Dummy<string>(),
                                   ImpactingTopic = impactingTopic,
-                                  DependantTopicChecks =
-                                      topics.Select(
-                                          _ =>
-                                          new TopicCheck
-                                              {
-                                                  Topic = _,
-                                                  TopicCheckStrategy = TopicCheckStrategy.RequireNew
-                                              })
-                                      .ToArray()
+                                  DependantTopics = topics.ToArray()
                               };
 
             var tracker = GetTracker(certifiedData);
@@ -213,14 +201,14 @@ namespace Naos.MessageBus.Test
             testCode.ShouldThrow<AbortParcelDeliveryException>().WithMessage(message.Description);
         }
 
-        private static IGetTrackingReports GetTracker(Dictionary<string, Notice> data)
+        private static IGetTrackingReports GetTracker(Dictionary<TopicBase, Notice> data)
         {
             var tracker = A.Fake<IGetTrackingReports>();
 
             foreach (var item in data)
             {
-                A.CallTo(() => tracker.GetLatestCertifiedNoticeAsync(item.Key, NoticeStatus.None)).Returns(Task.FromResult(item.Value));
-                A.CallTo(() => tracker.GetLatestCertifiedNoticeAsync(item.Key, NoticeStatus.Certified)).Returns(Task.FromResult(item.Value));
+                A.CallTo(() => tracker.GetLatestNoticeAsync(item.Key, NoticeStatus.None)).Returns(Task.FromResult(item.Value));
+                A.CallTo(() => tracker.GetLatestNoticeAsync(item.Key, NoticeStatus.Certified)).Returns(Task.FromResult(item.Value));
             }
 
             return tracker;

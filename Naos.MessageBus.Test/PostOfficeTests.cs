@@ -29,7 +29,7 @@ namespace Naos.MessageBus.Test
             var postOffice = new PostOffice(courier());
 
             // act
-            var trackingCode = postOffice.Send(new NullMessage(), new Channel { Name = "something" });
+            var trackingCode = postOffice.Send(new NullMessage(), new Channel("something"));
 
             // assert
             Assert.NotNull(trackingSends.Single().TrackingCode.EnvelopeId);
@@ -45,7 +45,7 @@ namespace Naos.MessageBus.Test
             var postOffice = new PostOffice(courier());
 
             // act
-            var trackingCode = postOffice.SendRecurring(new NullMessage(), new Channel { Name = "something" }, new DailyScheduleInUtc());
+            var trackingCode = postOffice.SendRecurring(new NullMessage(), new Channel("something"), new DailyScheduleInUtc());
 
             // assert
             Assert.NotNull(trackingSends.Single().TrackingCode.EnvelopeId);

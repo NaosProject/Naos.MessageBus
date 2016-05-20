@@ -15,9 +15,18 @@ namespace Naos.MessageBus.Domain
     public class Channel : IComparable<Channel>, IEquatable<Channel>, IEqualityComparer<Channel>
     {
         /// <summary>
-        /// Gets or sets the name of the channel.
+        /// Initializes a new instance of the <see cref="Channel"/> class.
         /// </summary>
-        public string Name { get; set; }
+        /// <param name="name">Name of the channel.</param>
+        public Channel(string name)
+        {
+            this.Name = name;
+        }
+
+        /// <summary>
+        /// Gets the name of the channel.
+        /// </summary>
+        public string Name { get; }
 
         /// <inheritdoc />
         public int CompareTo(Channel other)

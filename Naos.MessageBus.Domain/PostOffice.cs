@@ -27,51 +27,51 @@ namespace Naos.MessageBus.Domain
         }
 
         /// <inheritdoc />
-        public TrackingCode Send(IMessage message, Channel channel, CertifiedForm certifiedForm = null)
+        public TrackingCode Send(
+            IMessage message, 
+            Channel channel, 
+            string name = null,
+            ImpactingTopic impactingTopic = null, 
+            IReadOnlyCollection<DependantTopic> dependantTopics = null, 
+            TopicCheckStrategy dependantTopicCheckStrategy = TopicCheckStrategy.Unspecified,
+            SimultaneousRunsStrategy simultaneousRunsStrategy = SimultaneousRunsStrategy.Unspecified)
+        {
+            return this.SendRecurring(message, channel, new NullSchedule(), name, impactingTopic, dependantTopics, dependantTopicCheckStrategy, simultaneousRunsStrategy);
+        }
+
+        /// <inheritdoc />
+        public TrackingCode Send(MessageSequence messageSequence)
+        {
+            return this.SendRecurring(messageSequence, new NullSchedule());
+        }
+
+        /// <inheritdoc />
+        public TrackingCode SendRecurring(
+            IMessage message, 
+            Channel channel, 
+            ScheduleBase recurringSchedule,
+            string name = null,
+            ImpactingTopic impactingTopic = null, 
+            IReadOnlyCollection<DependantTopic> dependantTopics = null, 
+            TopicCheckStrategy dependantTopicCheckStrategy = TopicCheckStrategy.Unspecified,
+            SimultaneousRunsStrategy simultaneousRunsStrategy = SimultaneousRunsStrategy.Unspecified)
         {
             var messageSequenceId = Guid.NewGuid();
             var messageSequence = new MessageSequence
                                       {
                                           Id = messageSequenceId,
-                                          ChanneledMessages =
-                                              new[]
-                                                  {
-                                                      new ChanneledMessage
-                                                          {
-                                                              Channel = channel,
-                                                              Message = message
-                                                          }
-                                                  }
+                                          ChanneledMessages = new[] { message.ToChanneledMessage(channel) },
+                                          ImpactingTopic = impactingTopic,
+                                          DependantTopics = dependantTopics,
+                                          DependantTopicCheckStrategy = dependantTopicCheckStrategy,
+                                          SimultaneousRunsStrategy = simultaneousRunsStrategy
                                       };
 
-            return this.SendRecurring(messageSequence, new NullSchedule(), certifiedForm);
+            return this.SendRecurring(messageSequence, recurringSchedule);
         }
 
         /// <inheritdoc />
-        public TrackingCode Send(MessageSequence messageSequence, CertifiedForm certifiedForm = null)
-        {
-            return this.SendRecurring(messageSequence, new NullSchedule(), certifiedForm);
-        }
-
-        /// <inheritdoc />
-        public TrackingCode SendRecurring(IMessage message, Channel channel, ScheduleBase recurringSchedule, CertifiedForm certifiedForm = null)
-        {
-            var messageSequenceId = Guid.NewGuid();
-            var messageSequence = new MessageSequence
-                                      {
-                                          Id = messageSequenceId,
-                                          ChanneledMessages =
-                                              new[]
-                                                  {
-                                                      message.ToChanneledMessage(channel)
-                                                  }
-                                      };
-
-            return this.SendRecurring(messageSequence, recurringSchedule, certifiedForm);
-        }
-
-        /// <inheritdoc />
-        public TrackingCode SendRecurring(MessageSequence messageSequence, ScheduleBase recurringSchedule, CertifiedForm certifiedForm = null)
+        public TrackingCode SendRecurring(MessageSequence messageSequence, ScheduleBase recurringSchedule)
         {
             if (messageSequence.Id == default(Guid))
             {
@@ -85,39 +85,41 @@ namespace Naos.MessageBus.Domain
             var envelopes = new List<Envelope>();
             envelopes.AddRange(envelopesFromSequence);
 
-            var parcel = new Parcel { Id = messageSequence.Id, Envelopes = envelopes };
+            var parcel = new Parcel
+                             {
+                                 Id = messageSequence.Id,
+                                 Envelopes = envelopes,
+                                 ImpactingTopic = messageSequence.ImpactingTopic,
+                                 DependantTopics = messageSequence.DependantTopics,
+                                 DependantTopicCheckStrategy = messageSequence.DependantTopicCheckStrategy,
+                                 SimultaneousRunsStrategy = messageSequence.SimultaneousRunsStrategy
+                             };
 
-            return this.SendRecurring(parcel, recurringSchedule, certifiedForm);
+            return this.SendRecurring(parcel, recurringSchedule);
         }
 
         /// <inheritdoc />
-        public TrackingCode Send(Parcel parcel, CertifiedForm certifiedForm = null)
+        public TrackingCode Send(Parcel parcel)
         {
-            return this.SendRecurring(parcel, new NullSchedule(), certifiedForm);
+            return this.SendRecurring(parcel, new NullSchedule());
         }
 
         /// <inheritdoc />
-        public TrackingCode SendRecurring(Parcel parcel, ScheduleBase recurringSchedule, CertifiedForm certifiedForm = null)
+        public TrackingCode SendRecurring(Parcel parcel, ScheduleBase recurringSchedule)
         {
-            if (certifiedForm != null)
+            if (parcel.ImpactingTopic != null)
             {
-                if (string.IsNullOrWhiteSpace(certifiedForm.ImpactingTopic))
+                if (parcel.SimultaneousRunsStrategy == SimultaneousRunsStrategy.Unspecified)
                 {
-                    throw new ArgumentException("Must specify a topic when sending certified.");
+                    throw new ArgumentException("If you are using an ImpactingTopic you must specify a SimultaneousRunsStrategy.");
                 }
 
-                if (certifiedForm.DependantTopicChecks != null
-                    && certifiedForm.DependantTopicChecks.Any(_ => _.TopicCheckStrategy == TopicCheckStrategy.Unspecified))
+                if (parcel.DependantTopics != null && parcel.DependantTopics.Any() && parcel.DependantTopicCheckStrategy == TopicCheckStrategy.Unspecified)
                 {
-                    throw new ArgumentException("Must specify TopicCheckStrategy if using DependantTopicChecks.");
+                    throw new ArgumentException("Must specify DependantTopicCheckStrategy if declaring DependantTopics.");
                 }
 
-                if (certifiedForm.MultipleCertifiedRunsStrategy == MultipleCertifiedRunsStrategy.Unspecified)
-                {
-                    throw new ArgumentException("Must specify a MultipleCertifiedRunsStrategy when sending certified.");
-                }
-
-                parcel = InjectCertifiedMessagesIntoNewParcel(parcel, certifiedForm);
+                parcel = InjectCertifiedMessagesIntoNewParcel(parcel);
             }
 
             if (parcel.Id == default(Guid))
@@ -140,7 +142,7 @@ namespace Naos.MessageBus.Domain
 
             var firstEnvelopeDescription = firstEnvelope.Description;
 
-            var lable = "Sequence " + parcel.Id + " - " + firstEnvelopeDescription;
+            var label = !string.IsNullOrWhiteSpace(parcel.Name) ? parcel.Name : "Sequence " + parcel.Id + " - " + firstEnvelopeDescription;
 
             var trackingCode = new TrackingCode { ParcelId = parcel.Id, EnvelopeId = firstEnvelope.Id };
 
@@ -148,7 +150,7 @@ namespace Naos.MessageBus.Domain
                             {
                                 TrackingCode = trackingCode,
                                 Address = firstEnvelope.Channel,
-                                Label = lable,
+                                Label = label,
                                 Parcel = parcel,
                                 RecurringSchedule = recurringSchedule
                             };
@@ -158,7 +160,7 @@ namespace Naos.MessageBus.Domain
             return trackingCode;
         }
 
-        private static Parcel InjectCertifiedMessagesIntoNewParcel(Parcel parcel, CertifiedForm certifiedForm)
+        private static Parcel InjectCertifiedMessagesIntoNewParcel(Parcel parcel)
         {
             var parcelId = parcel.Id;
             var sharedInterfaceStates = parcel.SharedInterfaceStates.Select(_ => _).ToList();
@@ -167,21 +169,21 @@ namespace Naos.MessageBus.Domain
             var abortMessage = new AbortIfNoNewCertifiedNoticesAndShareResultsMessage
                                    {
                                        Description = "Auto",
-                                       ImpactingTopic = certifiedForm.ImpactingTopic,
-                                       DependantTopicChecks = certifiedForm.DependantTopicChecks,
-                                       MultipleCertifiedRunsStrategy = certifiedForm.MultipleCertifiedRunsStrategy
+                                       ImpactingTopic = parcel.ImpactingTopic,
+                                       DependantTopics = parcel.DependantTopics ?? new DependantTopic[0],
+                                       SimultaneousRunsStrategy = parcel.SimultaneousRunsStrategy
                                    };
 
             var pendingMessage = new PendingNoticeMessage
                                      {
-                                         Description = $"Pending Notice for {certifiedForm.ImpactingTopic}",
-                                         ImpactingTopic = certifiedForm.ImpactingTopic
+                                         Description = $"Pending Notice for {parcel.ImpactingTopic}",
+                                         ImpactingTopic = parcel.ImpactingTopic
                                      };
 
             var certifiedMessage = new CertifiedNoticeMessage
                                        {
-                                           Description = $"Certified Notice for {certifiedForm.ImpactingTopic}",
-                                           ImpactingTopic = certifiedForm.ImpactingTopic
+                                           Description = $"Certified Notice for {parcel.ImpactingTopic}",
+                                           ImpactingTopic = parcel.ImpactingTopic
                                        };
 
             var newEnvelopes = new List<Envelope>();

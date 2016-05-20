@@ -176,7 +176,7 @@ namespace Naos.MessageBus.Persistence
         }
 
         /// <inheritdoc />
-        public async Task<Notice> GetLatestCertifiedNoticeAsync(string topic, NoticeStatus statusFilter = NoticeStatus.None)
+        public async Task<Notice> GetLatestNoticeAsync(TopicBase topic, NoticeStatus statusFilter = NoticeStatus.None)
         {
             if (statusFilter == NoticeStatus.Unknown)
             {
@@ -189,7 +189,7 @@ namespace Naos.MessageBus.Persistence
                         using (var db = new TrackedShipmentDbContext(this.readModelPersistenceConnectionConfiguration.ToSqlServerConnectionString()))
                         {
                             var mostRecentNotice =
-                                db.Notices.Where(_ => _.Topic == topic)
+                                db.Notices.Where(_ => _.Topic.Name != topic.Name)
                                     .Where(_ => statusFilter == NoticeStatus.None || _.Status == statusFilter)
                                     .OrderBy(_ => _.LastUpdatedUtc)
                                     .ToList()

@@ -17,13 +17,13 @@ namespace Naos.MessageBus.Domain
         Unspecified,
 
         /// <summary>
-        /// Require new data to continue with delivery.
+        /// Allow the sequence to continue if any dependant topic is recent.
         /// </summary>
-        RequireNew,
+        AllowIfAnyTopicCheckYieldsRecent,
 
         /// <summary>
-        /// Do not require new data to continue with delivery.
+        /// Allow the sequence to continue only if all dependant topic checks are are recent.
         /// </summary>
-        DoNotRequireNew,
+        RequireAllTopicChecksYieldRecent
     }
 }

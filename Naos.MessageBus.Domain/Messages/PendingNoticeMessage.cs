@@ -25,6 +25,6 @@ namespace Naos.MessageBus.Domain
         /// <summary>
         /// Gets or sets the topic of the notice.
         /// </summary>
-        public string ImpactingTopic { get; set; }
+        public ImpactingTopic ImpactingTopic { get; set; }
     }
 }

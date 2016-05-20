@@ -17,18 +17,23 @@ namespace Naos.MessageBus.Domain
         public string Description { get; set; }
 
         /// <summary>
-        /// Gets or sets the topic that this sequence impacts.
+        /// Gets or sets the topic of the sequence.
         /// </summary>
-        public string ImpactingTopic { get; set; }
+        public ImpactingTopic ImpactingTopic { get; set; }
 
         /// <summary>
         /// Gets or sets the topics to check.
         /// </summary>
-        public IReadOnlyCollection<TopicCheck> DependantTopicChecks { get; set; }
+        public IReadOnlyCollection<DependantTopic> DependantTopics { get; set; }
 
         /// <summary>
         /// Gets or sets the multiple run strategy.
         /// </summary>
-        public MultipleCertifiedRunsStrategy MultipleCertifiedRunsStrategy { get; set; }
+        public SimultaneousRunsStrategy SimultaneousRunsStrategy { get; set; }
+
+        /// <summary>
+        /// Gets or sets the strategy to use when checking dependant topics.
+        /// </summary>
+        public TopicCheckStrategy TopicCheckStrategy { get; set; }
     }
 }

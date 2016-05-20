@@ -37,14 +37,12 @@ namespace Naos.MessageBus.Domain
         {
             var messageType = channeledMessage.Message.GetType();
 
-            return new Envelope()
-            {
-                Id = Guid.NewGuid().ToString().ToUpperInvariant(),
-                Description = channeledMessage.Message.Description,
-                MessageAsJson = Serializer.Serialize(channeledMessage.Message),
-                MessageType = messageType.ToTypeDescription(),
-                Channel = channeledMessage.Channel
-            };
+            return new Envelope(
+                Guid.NewGuid().ToString().ToUpperInvariant(),
+                channeledMessage.Message.Description,
+                channeledMessage.Channel,
+                Serializer.Serialize(channeledMessage.Message),
+                messageType.ToTypeDescription());
         }
     }
 }

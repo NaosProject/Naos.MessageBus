@@ -14,29 +14,46 @@ namespace Naos.MessageBus.Domain
     public sealed class Envelope : IEquatable<Envelope>
     {
         /// <summary>
-        /// Gets or sets the ID of the envelope (must be unique in the parcel).
+        /// Initializes a new instance of the <see cref="Envelope"/> class.
         /// </summary>
-        public string Id { get; set; }
+        /// <param name="id">Id of envelope.</param>
+        /// <param name="description">Description of envelope.</param>
+        /// <param name="channel">Channel envelope is addressed to.</param>
+        /// <param name="messageAsJson">Message in JSON.</param>
+        /// <param name="messageType">Message type description.</param>
+        public Envelope(string id, string description, Channel channel, string messageAsJson, TypeDescription messageType)
+        {
+            this.Id = id;
+            this.Description = description;
+            this.Channel = channel;
+            this.MessageAsJson = messageAsJson;
+            this.MessageType = messageType;
+        }
 
         /// <summary>
-        /// Gets or sets the description of the message in the envelope.
+        /// Gets the ID of the envelope (must be unique in the parcel).
         /// </summary>
-        public string Description { get; set; }
+        public string Id { get; }
 
         /// <summary>
-        /// Gets or sets a description of the message type.
+        /// Gets the description of the message in the envelope.
         /// </summary>
-        public TypeDescription MessageType { get; set; }
+        public string Description { get; }
 
         /// <summary>
-        /// Gets or sets the message in JSON format.
+        /// Gets a description of the message type.
         /// </summary>
-        public string MessageAsJson { get; set; }
+        public TypeDescription MessageType { get; }
 
         /// <summary>
-        /// Gets or sets the channel the message should be broadcasted on.
+        /// Gets the message in JSON format.
         /// </summary>
-        public Channel Channel { get; set; }
+        public string MessageAsJson { get; }
+
+        /// <summary>
+        /// Gets the channel the message should be broadcasted on.
+        /// </summary>
+        public Channel Channel { get; }
 
         #region Equality
 
