@@ -39,48 +39,82 @@ namespace Naos.MessageBus.Domain
             return string.Compare(this.Name, other.Name, StringComparison.CurrentCultureIgnoreCase);
         }
 
-        /// <inheritdoc />
-        public bool Equals(Channel other)
-        {
-            return this.CompareTo(other) == 0;
-        }
+        #region Equality
 
         /// <inheritdoc />
-        public bool Equals(Channel x, Channel y)
+        public static bool operator ==(Channel keyObject1, Channel keyObject2)
         {
-            if (x == null || y == null)
+            // If both are null, or both are same instance, return true.
+            if (ReferenceEquals(keyObject1, keyObject2))
             {
-                throw new ArgumentException("Cannot compare null channels.");
+                return true;
             }
 
-            if (x.Name == null || y.Name == null)
+            // If one is null, but not both, return false.
+            if (((object)keyObject1 == null) || ((object)keyObject2 == null))
             {
                 return false;
             }
 
-            return x.Equals(y);
+            return keyObject1.Equals(keyObject2);
         }
 
         /// <inheritdoc />
-        public int GetHashCode(Channel obj)
+        public static bool operator !=(Channel keyObject1, Channel keyObject2)
         {
-            if (obj == null)
+            return !(keyObject1 == keyObject2);
+        }
+
+        /// <inheritdoc />
+        public bool Equals(Channel other)
+        {
+            if (other == null)
             {
-                return base.GetHashCode();
+                return false;
             }
 
-            if (obj.Name == null)
+            var result = this.Name == other.Name;
+
+            return result;
+        }
+
+        /// <inheritdoc />
+        public override bool Equals(object obj)
+        {
+            var keyObject = obj as Channel;
+            if (keyObject == null)
             {
-                return base.GetHashCode();
+                return false;
             }
 
-            return obj.Name.GetHashCode();
+            return this.Equals(keyObject);
         }
 
         /// <inheritdoc />
         public override int GetHashCode()
         {
-            return this.GetHashCode(this);
+            unchecked
+            {
+                // ReSharper disable NonReadonlyMemberInGetHashCode
+                int hash = (int)2166136261;
+                hash = hash * 16777619 ^ this.Name.GetHashCode();
+                return hash;
+                // ReSharper restore NonReadonlyMemberInGetHashCode
+            }
         }
+
+        /// <inheritdoc />
+        public bool Equals(Channel x, Channel y)
+        {
+            return x == y;
+        }
+
+        /// <inheritdoc />
+        public int GetHashCode(Channel obj)
+        {
+            return obj.GetHashCode();
+        }
+
+        #endregion
     }
 }

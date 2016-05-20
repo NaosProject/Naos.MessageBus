@@ -7,6 +7,7 @@
 namespace Naos.MessageBus.Test
 {
     using System;
+    using System.Linq;
 
     using FluentAssertions;
 
@@ -43,15 +44,6 @@ namespace Naos.MessageBus.Test
 
             // act & assert
             testCode.ShouldThrow<ArgumentException>().WithMessage("Factory not initialized for ITrackParcels.");
-        }
-
-        [Fact]
-        public static void Send_ValidChannelName_DoesntThrow()
-        {
-            var channel = new Channel("monkeys_are_in_space");
-            HangfireCourier.ThrowIfInvalidChannel(channel);
-
-            // if we got here w/out exception then we passed...
         }
 
         [Fact]

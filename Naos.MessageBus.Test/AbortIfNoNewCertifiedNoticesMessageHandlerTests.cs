@@ -29,7 +29,6 @@ namespace Naos.MessageBus.Test
         public void MissingCurrentNotice_Aborts()
         {
             // arrange
-            // arrange
             var impactingTopic = new ImpactingTopic("mine");
             var topics = Some.Dummies<DependantTopic>().ToList();
 
@@ -37,13 +36,30 @@ namespace Naos.MessageBus.Test
                 key => key,
                 val => null as Notice);
 
-            certifiedData.Add(impactingTopic, new Notice { Topic = impactingTopic, CertifiedDateUtc = DateTime.UtcNow });
+            certifiedData.Add(
+                impactingTopic,
+                new Notice
+                    {
+                        Topic = impactingTopic,
+                        CertifiedDateUtc = DateTime.UtcNow,
+                        DependantNotices =
+                            topics.Select(
+                                _ =>
+                                new Notice
+                                    {
+                                        Topic = _,
+                                        Status = NoticeStatus.Certified,
+                                        CertifiedDateUtc = DateTime.UtcNow.Subtract(TimeSpan.FromHours(1))
+                                    }).ToArray()
+                    });
 
             var message = new AbortIfNoNewCertifiedNoticesAndShareResultsMessage
                               {
                                   Description = A.Dummy<string>(),
                                   ImpactingTopic = impactingTopic,
-                                  DependantTopics = topics.ToArray()
+                                  DependantTopics = topics.ToArray(),
+                                  TopicCheckStrategy = TopicCheckStrategy.AllowIfAnyTopicCheckYieldsRecent,
+                                  SimultaneousRunsStrategy = SimultaneousRunsStrategy.AbortSubsequentRunsWhenOneIsRunning
                               };
 
             var tracker = GetTracker(certifiedData);
@@ -52,37 +68,215 @@ namespace Naos.MessageBus.Test
             Func<Task> testCode = () => handler.HandleAsync(message, tracker);
 
             // act & assert
-            testCode.ShouldThrow<AbortParcelDeliveryException>().WithMessage(message.Description);
+            testCode.ShouldThrow<AbortParcelDeliveryException>().WithMessage("No new data for topics; " + string.Join(",", topics));
         }
 
         [Fact]
         public void CurrentNoticePending_Aborts()
         {
-            throw new NotImplementedException();
+            // arrange
+            var impactingTopic = new ImpactingTopic("mine");
+            var topics = Some.Dummies<DependantTopic>().ToList();
+
+            var certifiedData = topics.Cast<TopicBase>().ToDictionary(key => key, val => new Notice { Topic = val, Status = NoticeStatus.Pending });
+
+            certifiedData.Add(
+                impactingTopic,
+                new Notice
+                {
+                    Topic = impactingTopic,
+                    CertifiedDateUtc = DateTime.UtcNow,
+                    DependantNotices =
+                            topics.Select(
+                                _ =>
+                                new Notice
+                                {
+                                    Topic = _,
+                                    Status = NoticeStatus.Certified,
+                                    CertifiedDateUtc = DateTime.UtcNow.Add(TimeSpan.FromHours(1))
+                                }).ToArray()
+                });
+
+            var message = new AbortIfNoNewCertifiedNoticesAndShareResultsMessage
+            {
+                Description = A.Dummy<string>(),
+                ImpactingTopic = impactingTopic,
+                DependantTopics = topics.ToArray(),
+                TopicCheckStrategy = TopicCheckStrategy.AllowIfAnyTopicCheckYieldsRecent,
+                SimultaneousRunsStrategy = SimultaneousRunsStrategy.AbortSubsequentRunsWhenOneIsRunning
+            };
+
+            var tracker = GetTracker(certifiedData);
+
+            var handler = new AbortIfNoNewCertifiedNoticesAndShareResultsMessageHandler();
+            Func<Task> testCode = () => handler.HandleAsync(message, tracker);
+
+            // act & assert
+            testCode.ShouldThrow<AbortParcelDeliveryException>().WithMessage("No new data for topics; " + string.Join(",", topics));
         }
 
         [Fact]
         public void CurrentNoticeUnknown_Aborts()
         {
-            throw new NotImplementedException();
+            // arrange
+            var impactingTopic = new ImpactingTopic("mine");
+            var topics = Some.Dummies<DependantTopic>().ToList();
+
+            var certifiedData = topics.Cast<TopicBase>().ToDictionary(key => key, val => new Notice { Topic = val, Status = NoticeStatus.Unknown });
+
+            certifiedData.Add(
+                impactingTopic,
+                new Notice
+                {
+                    Topic = impactingTopic,
+                    CertifiedDateUtc = DateTime.UtcNow,
+                    DependantNotices =
+                            topics.Select(
+                                _ =>
+                                new Notice
+                                {
+                                    Topic = _,
+                                    Status = NoticeStatus.Certified,
+                                    CertifiedDateUtc = DateTime.UtcNow.Add(TimeSpan.FromHours(1))
+                                }).ToArray()
+                });
+
+            var message = new AbortIfNoNewCertifiedNoticesAndShareResultsMessage
+            {
+                Description = A.Dummy<string>(),
+                ImpactingTopic = impactingTopic,
+                DependantTopics = topics.ToArray(),
+                TopicCheckStrategy = TopicCheckStrategy.AllowIfAnyTopicCheckYieldsRecent,
+                SimultaneousRunsStrategy = SimultaneousRunsStrategy.AbortSubsequentRunsWhenOneIsRunning
+            };
+
+            var tracker = GetTracker(certifiedData);
+
+            var handler = new AbortIfNoNewCertifiedNoticesAndShareResultsMessageHandler();
+            Func<Task> testCode = () => handler.HandleAsync(message, tracker);
+
+            // act & assert
+            testCode.ShouldThrow<AbortParcelDeliveryException>().WithMessage("No new data for topics; " + string.Join(",", topics));
         }
 
         [Fact]
         public void CurrentNoticeDateLessThanPreviousNoticeDate_Aborts()
         {
-            throw new NotImplementedException();
+            // arrange
+            var impactingTopic = new ImpactingTopic("mine");
+            var topics = Some.Dummies<DependantTopic>().ToList();
+
+            var certifiedData = topics.Cast<TopicBase>()
+                .ToDictionary(
+                    key => key,
+                    val => new Notice { Topic = val, Status = NoticeStatus.Certified, CertifiedDateUtc = DateTime.UtcNow.Subtract(TimeSpan.FromHours(1)) });
+
+            certifiedData.Add(
+                impactingTopic,
+                new Notice
+                {
+                    Topic = impactingTopic,
+                    CertifiedDateUtc = DateTime.UtcNow,
+                    DependantNotices =
+                            topics.Select(
+                                _ =>
+                                new Notice
+                                {
+                                    Topic = _,
+                                    Status = NoticeStatus.Certified,
+                                    CertifiedDateUtc = DateTime.UtcNow.Add(TimeSpan.FromHours(1))
+                                }).ToArray()
+                });
+
+            var message = new AbortIfNoNewCertifiedNoticesAndShareResultsMessage
+            {
+                Description = A.Dummy<string>(),
+                ImpactingTopic = impactingTopic,
+                DependantTopics = topics.ToArray(),
+                TopicCheckStrategy = TopicCheckStrategy.AllowIfAnyTopicCheckYieldsRecent,
+                SimultaneousRunsStrategy = SimultaneousRunsStrategy.AbortSubsequentRunsWhenOneIsRunning
+            };
+
+            var tracker = GetTracker(certifiedData);
+
+            var handler = new AbortIfNoNewCertifiedNoticesAndShareResultsMessageHandler();
+            Func<Task> testCode = () => handler.HandleAsync(message, tracker);
+
+            // act & assert
+            testCode.ShouldThrow<AbortParcelDeliveryException>().WithMessage("No new data for topics; " + string.Join(",", topics));
         }
 
         [Fact]
         public void MissingPreviousNotice_DoesNotAbort()
         {
-            throw new NotImplementedException();
+            // arrange
+            var impactingTopic = new ImpactingTopic("mine");
+            var topics = Some.Dummies<DependantTopic>().ToList();
+
+            var certifiedData = topics.Cast<TopicBase>().ToDictionary(
+                key => key,
+                val => new Notice { Topic = val, Status = NoticeStatus.Certified, CertifiedDateUtc = DateTime.UtcNow });
+
+            certifiedData.Add(impactingTopic, null as Notice);
+
+            var message = new AbortIfNoNewCertifiedNoticesAndShareResultsMessage
+            {
+                Description = A.Dummy<string>(),
+                ImpactingTopic = impactingTopic,
+                DependantTopics = certifiedData.Keys.OfType<DependantTopic>().ToArray(),
+                TopicCheckStrategy = TopicCheckStrategy.AllowIfAnyTopicCheckYieldsRecent,
+                SimultaneousRunsStrategy = SimultaneousRunsStrategy.AbortSubsequentRunsWhenOneIsRunning
+            };
+            var tracker = GetTracker(certifiedData);
+
+            var handler = new AbortIfNoNewCertifiedNoticesAndShareResultsMessageHandler();
+
+            // act
+            handler.HandleAsync(message, tracker).Wait();
+
+            // assert - by virtue of arriving here this will have succeeded
         }
 
         [Fact]
         public void WhenNoAbort_DependantNoticesAreSharedToHandler()
         {
-            throw new NotImplementedException();
+            // arrange
+            var impactingTopic = new ImpactingTopic("mine");
+            var topics = Some.Dummies<DependantTopic>().ToList();
+
+            var certifiedData = topics.Cast<TopicBase>().ToDictionary(
+                key => key,
+                val => new Notice { Topic = val, Status = NoticeStatus.Certified, CertifiedDateUtc = DateTime.UtcNow });
+
+            certifiedData.Add(
+                impactingTopic,
+                new Notice
+                {
+                    Topic = impactingTopic,
+                    Status = NoticeStatus.Certified,
+                    CertifiedDateUtc = DateTime.UtcNow,
+                    DependantNotices =
+                            topics.Select(_ => new Notice { Topic = _, Status = NoticeStatus.Certified, CertifiedDateUtc = DateTime.UtcNow.Subtract(TimeSpan.FromHours(1)) }).ToArray()
+                });
+
+            var message = new AbortIfNoNewCertifiedNoticesAndShareResultsMessage
+            {
+                Description = A.Dummy<string>(),
+                ImpactingTopic = impactingTopic,
+                DependantTopics = certifiedData.Keys.OfType<DependantTopic>().ToArray(),
+                TopicCheckStrategy = TopicCheckStrategy.AllowIfAnyTopicCheckYieldsRecent,
+                SimultaneousRunsStrategy = SimultaneousRunsStrategy.AbortSubsequentRunsWhenOneIsRunning
+            };
+            var tracker = GetTracker(certifiedData);
+
+            var handler = new AbortIfNoNewCertifiedNoticesAndShareResultsMessageHandler();
+
+            // act
+            handler.HandleAsync(message, tracker).Wait();
+
+            // assert
+            handler.Notices.Should().HaveCount(topics.Count);
+            handler.Notices.Select(_ => _.Topic).ShouldAllBeEquivalentTo(topics);
         }
 
         [Fact]
@@ -92,7 +286,7 @@ namespace Naos.MessageBus.Test
             var impactingTopic = new ImpactingTopic("mine");
             var topics = Some.Dummies<DependantTopic>().ToList();
 
-            var certifiedData = topics.Cast<TopicBase>().ToDictionary(key => key, val => new Notice { Topic = val, CertifiedDateUtc = DateTime.UtcNow });
+            var certifiedData = topics.Cast<TopicBase>().ToDictionary(key => key, val => null as Notice);
 
             certifiedData.Add(impactingTopic, new Notice { Topic = impactingTopic, CertifiedDateUtc = DateTime.UtcNow });
 
@@ -100,7 +294,10 @@ namespace Naos.MessageBus.Test
                               {
                                   Description = A.Dummy<string>(),
                                   ImpactingTopic = impactingTopic,
-                                  DependantTopics = topics.ToArray()
+                                  DependantTopics = topics.ToArray(),
+                                  TopicCheckStrategy = TopicCheckStrategy.AllowIfAnyTopicCheckYieldsRecent,
+                                  SimultaneousRunsStrategy =
+                                      SimultaneousRunsStrategy.AbortSubsequentRunsWhenOneIsRunning
                               };
 
             var tracker = GetTracker(certifiedData);
@@ -109,7 +306,7 @@ namespace Naos.MessageBus.Test
             Func<Task> testCode = () => handler.HandleAsync(message, tracker);
 
             // act & assert
-            testCode.ShouldThrow<AbortParcelDeliveryException>().WithMessage(message.Description);
+            testCode.ShouldThrow<AbortParcelDeliveryException>().WithMessage("No new data for topics; " + string.Join(",", topics));
         }
 
         [Fact]
@@ -117,21 +314,34 @@ namespace Naos.MessageBus.Test
         {
             // arrange
             var impactingTopic = new ImpactingTopic("mine");
-            var recentTopic = new DependantTopic("recent");
+            var notCertified = new ImpactingTopic("other");
             var topics = Some.Dummies<DependantTopic>().ToList();
 
-            var certifiedData = topics.Cast<TopicBase>().ToDictionary(key => key, val => null as Notice);
+            var certifiedData = topics.Cast<TopicBase>().ToDictionary(
+                key => key,
+                val => new Notice { Topic = val, Status = NoticeStatus.Certified, CertifiedDateUtc = DateTime.UtcNow });
 
-            certifiedData.Add(impactingTopic, new Notice { Topic = impactingTopic, CertifiedDateUtc = DateTime.UtcNow });
-            certifiedData.Add(recentTopic, new Notice { Topic = recentTopic, CertifiedDateUtc = DateTime.UtcNow });
+            certifiedData.Add(
+                impactingTopic,
+                new Notice
+                {
+                    Topic = impactingTopic,
+                    Status = NoticeStatus.Certified,
+                    CertifiedDateUtc = DateTime.UtcNow,
+                    DependantNotices =
+                            topics.Select(_ => new Notice { Topic = _, Status = NoticeStatus.Certified, CertifiedDateUtc = DateTime.UtcNow.Subtract(TimeSpan.FromHours(1)) }).ToArray()
+                });
+
+            certifiedData.Add(notCertified, new Notice { Topic = notCertified, Status = NoticeStatus.Pending });
 
             var message = new AbortIfNoNewCertifiedNoticesAndShareResultsMessage
-                              {
-                                  Description = A.Dummy<string>(),
-                                  ImpactingTopic = impactingTopic,
-                                  DependantTopics = topics.ToArray()
-                              };
-
+            {
+                Description = A.Dummy<string>(),
+                ImpactingTopic = impactingTopic,
+                DependantTopics = certifiedData.Keys.OfType<DependantTopic>().ToArray(),
+                TopicCheckStrategy = TopicCheckStrategy.AllowIfAnyTopicCheckYieldsRecent,
+                SimultaneousRunsStrategy = SimultaneousRunsStrategy.AbortSubsequentRunsWhenOneIsRunning
+            };
             var tracker = GetTracker(certifiedData);
 
             var handler = new AbortIfNoNewCertifiedNoticesAndShareResultsMessageHandler();
@@ -151,15 +361,32 @@ namespace Naos.MessageBus.Test
 
             var certifiedData = topics.Cast<TopicBase>().ToDictionary(
                 key => key,
-                val => new Notice { Topic = val, CertifiedDateUtc = DateTime.UtcNow });
+                val => new Notice { Topic = val, Status = NoticeStatus.Certified, CertifiedDateUtc = DateTime.UtcNow });
 
-            certifiedData.Add(impactingTopic, new Notice { Topic = impactingTopic, CertifiedDateUtc = DateTime.UtcNow });
+            certifiedData.Add(
+                impactingTopic,
+                new Notice
+                    {
+                        Topic = impactingTopic,
+                        CertifiedDateUtc = DateTime.UtcNow,
+                        DependantNotices =
+                            topics.Select(
+                                _ =>
+                                new Notice
+                                    {
+                                        Topic = _,
+                                        Status = NoticeStatus.Certified,
+                                        CertifiedDateUtc = DateTime.UtcNow.Subtract(TimeSpan.FromHours(1))
+                                    }).ToArray()
+                    });
 
             var message = new AbortIfNoNewCertifiedNoticesAndShareResultsMessage
                               {
                                   Description = A.Dummy<string>(),
                                   ImpactingTopic = impactingTopic,
-                                  DependantTopics = topics.ToArray()
+                                  DependantTopics = topics.ToArray(),
+                                  TopicCheckStrategy = TopicCheckStrategy.RequireAllTopicChecksYieldRecent,
+                                  SimultaneousRunsStrategy = SimultaneousRunsStrategy.AbortSubsequentRunsWhenOneIsRunning
                               };
 
             var tracker = GetTracker(certifiedData);
@@ -177,20 +404,42 @@ namespace Naos.MessageBus.Test
         {
             // arrange
             var impactingTopic = new ImpactingTopic("mine");
-            var recentTopic = new DependantTopic("recent");
+            var notCertified = new ImpactingTopic("other");
             var topics = Some.Dummies<DependantTopic>().ToList();
 
-            var certifiedData = topics.Cast<TopicBase>().ToDictionary(key => key, val => null as Notice);
+            var number = 1;
+            var certifiedData = topics.Cast<TopicBase>()
+                .ToDictionary(
+                    key => key,
+                    val =>
+                    new Notice
+                        {
+                            Topic = val,
+                            Status = number++ % 2 == 0 ? NoticeStatus.Pending : NoticeStatus.Certified,
+                            CertifiedDateUtc = DateTime.UtcNow
+                        });
 
-            certifiedData.Add(impactingTopic, new Notice { Topic = impactingTopic, CertifiedDateUtc = DateTime.UtcNow });
-            certifiedData.Add(recentTopic, new Notice { Topic = recentTopic, CertifiedDateUtc = DateTime.UtcNow });
+            certifiedData.Add(
+                impactingTopic,
+                new Notice
+                    {
+                        Topic = impactingTopic,
+                        Status = NoticeStatus.Certified,
+                        CertifiedDateUtc = DateTime.UtcNow,
+                        DependantNotices =
+                            topics.Select(_ => new Notice { Topic = _, Status = NoticeStatus.Certified, CertifiedDateUtc = DateTime.UtcNow.Subtract(TimeSpan.FromHours(1)) }).ToArray()
+                    });
+
+            certifiedData.Add(notCertified, new Notice { Topic = notCertified, Status = NoticeStatus.Pending });
 
             var message = new AbortIfNoNewCertifiedNoticesAndShareResultsMessage
-                              {
-                                  Description = A.Dummy<string>(),
-                                  ImpactingTopic = impactingTopic,
-                                  DependantTopics = topics.ToArray()
-                              };
+            {
+                Description = A.Dummy<string>(),
+                ImpactingTopic = impactingTopic,
+                DependantTopics = certifiedData.Keys.OfType<DependantTopic>().ToArray(),
+                TopicCheckStrategy = TopicCheckStrategy.RequireAllTopicChecksYieldRecent,
+                SimultaneousRunsStrategy = SimultaneousRunsStrategy.AbortSubsequentRunsWhenOneIsRunning
+            };
 
             var tracker = GetTracker(certifiedData);
 
@@ -198,7 +447,7 @@ namespace Naos.MessageBus.Test
             Func<Task> testCode = () => handler.HandleAsync(message, tracker);
 
             // act & assert
-            testCode.ShouldThrow<AbortParcelDeliveryException>().WithMessage(message.Description);
+            testCode.ShouldThrow<AbortParcelDeliveryException>().WithMessage("No new data for topics; " + string.Join(",", topics));
         }
 
         private static IGetTrackingReports GetTracker(Dictionary<TopicBase, Notice> data)

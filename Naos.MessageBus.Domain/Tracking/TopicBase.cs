@@ -27,6 +27,12 @@ namespace Naos.MessageBus.Domain
         /// </summary>
         public string Name { get; }
 
+        /// <inheritdoc />
+        public override string ToString()
+        {
+            return this.Name;
+        }
+
         #region Equality
 
         /// <inheritdoc />

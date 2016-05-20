@@ -89,7 +89,7 @@ namespace Naos.MessageBus.Test
         }
 
         [Fact]
-        public void Dependant_And_Impacting_NotEqualAreNotEqual_Type()
+        public void Dependant_And_Impacting_EqualAreEqual_Type()
         {
             var firstName = "name1";
 
@@ -99,11 +99,11 @@ namespace Naos.MessageBus.Test
 
             var second = new DependantTopic(secondName);
 
-            Assert.False(first == second);
-            Assert.True(first != second);
-            Assert.False(first.Equals(second));
-            Assert.False(first.Equals((object)second));
-            Assert.NotEqual(first.GetHashCode(), second.GetHashCode());
+            Assert.True(first == second);
+            Assert.False(first != second);
+            Assert.True(first.Equals(second));
+            Assert.True(first.Equals((object)second));
+            Assert.Equal(first.GetHashCode(), second.GetHashCode());
         }
     }
 }

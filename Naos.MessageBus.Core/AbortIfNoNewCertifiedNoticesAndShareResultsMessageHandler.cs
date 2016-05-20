@@ -7,6 +7,7 @@
 namespace Naos.MessageBus.Core
 {
     using System;
+    using System.Collections.Generic;
     using System.Linq;
     using System.Threading.Tasks;
 
@@ -55,8 +56,10 @@ namespace Naos.MessageBus.Core
             }
 
             var lastNoticeOfMyImpact = await tracker.GetLatestNoticeAsync(message.ImpactingTopic, NoticeStatus.Certified);
+            var dependantNotices = lastNoticeOfMyImpact?.DependantNotices ?? new Notice[0];
 
-            var notices = message.DependantTopics.Select(
+            var dependantTopics = message.DependantTopics ?? new List<DependantTopic>();
+            var notices = dependantTopics.Select(
                 dependantTopic =>
                     {
                         var latestCertifiedNoticeTask = tracker.GetLatestNoticeAsync(dependantTopic);
@@ -65,12 +68,12 @@ namespace Naos.MessageBus.Core
                         return latest;
                     }).ToArray();
 
-            var topicsToCheckRecentResults = message.DependantTopics.ToDictionary(
+            var topicsToCheckRecentResults = dependantTopics.ToDictionary(
                 key => key,
                 val =>
                     {
-                        var currentNotice = notices.SingleOrDefault(_ => _.Topic == val);
-                        var lastRunNotice = (lastNoticeOfMyImpact.DependantNotices ?? new Notice[0]).SingleOrDefault(_ => _.Topic == val);
+                        var currentNotice = notices.SingleOrDefault(_ => _ != null && _.Topic == val);
+                        var lastRunNotice = dependantNotices.SingleOrDefault(_ => _.Topic == val);
 
                         return EvaluateNoticeRecency(currentNotice, lastRunNotice);
                     });
@@ -85,7 +88,12 @@ namespace Naos.MessageBus.Core
                     dataIsRecent = topicsToCheckRecentResults.Values.Any(_ => _);
                     break;
                 default:
-                    throw new NotSupportedException("Unsupported TopicChecStrategy: " + message.TopicCheckStrategy);
+                    throw new NotSupportedException("Unsupported TopicCheckStrategy: " + message.TopicCheckStrategy);
+            }
+
+            if (message.SimultaneousRunsStrategy == SimultaneousRunsStrategy.AllowSimultaneousRuns)
+            {
+                dataIsRecent = true;
             }
 
             if (!dataIsRecent)

@@ -87,50 +87,6 @@ namespace Naos.MessageBus.Test
         }
 
         [Fact]
-        public void Equals_NullFirst_Throws()
-        {
-            // arrange
-            var notReallyNeeded = new Channel("someName");
-            Action testCode = () => notReallyNeeded.Equals(new Channel("someOtherName"), null);
-
-            // act & assert
-            testCode.ShouldThrow<ArgumentException>().WithMessage("Cannot compare null channels.");
-        }
-
-        [Fact]
-        public void Equals_NullSecond_Throws()
-        {
-            // arrange
-            var notReallyNeeded = new Channel("someName");
-            Action testCode = () => notReallyNeeded.Equals(null, new Channel("someOtherName"));
-
-            // act & assert
-            testCode.ShouldThrow<ArgumentException>().WithMessage("Cannot compare null channels.");
-        }
-
-        [Fact]
-        public void Equals_NullBoth_Throws()
-        {
-            // arrange
-            var notReallyNeeded = new Channel("someName");
-            Action testCode = () => notReallyNeeded.Equals(null, null);
-
-            // act & assert
-            testCode.ShouldThrow<ArgumentException>().WithMessage("Cannot compare null channels.");
-        }
-
-        [Fact]
-        public void InstanceEquals_Null_Throws()
-        {
-            // arrange
-            var first = new Channel("someName");
-            Action testCode = () => first.Equals(null);
-
-            // act & assert
-            testCode.ShouldThrow<ArgumentException>().WithMessage("Cannot compare a null channel.");
-        }
-
-        [Fact]
         public void InstanceEquals_AreNotEqual_False()
         {
             // arrange
@@ -157,6 +113,34 @@ namespace Naos.MessageBus.Test
 
             // assert
             Assert.Equal(true, actual);
+        }
+
+        [Fact]
+        public void Equal_AreEqual()
+        {
+            var first = new Channel("channel1");
+            var second = first;
+
+            Assert.True(first == second);
+            Assert.False(first != second);
+            Assert.True(first.Equals(second));
+            Assert.True(first.Equals((object)second));
+            Assert.Equal(first, second);
+            Assert.Equal(first.GetHashCode(), second.GetHashCode());
+        }
+
+        [Fact]
+        public void NotEqualAreNotEqual_Id()
+        {
+            var first = new Channel("channel1");
+            var second = new Channel("channel2");
+
+            Assert.False(first == second);
+            Assert.True(first != second);
+            Assert.False(first.Equals(second));
+            Assert.False(first.Equals((object)second));
+            Assert.NotEqual(first, second);
+            Assert.NotEqual(first.GetHashCode(), second.GetHashCode());
         }
     }
 }

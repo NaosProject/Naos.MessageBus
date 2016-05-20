@@ -8,6 +8,7 @@ namespace Naos.MessageBus.Hangfire.Sender
 {
     using System;
     using System.Collections.Generic;
+    using System.Linq;
     using System.Linq.Expressions;
     using System.Text.RegularExpressions;
 
@@ -43,15 +44,7 @@ namespace Naos.MessageBus.Hangfire.Sender
         public void Send(Crate crate)
         {
             GlobalConfiguration.Configuration.UseSqlServerStorage(this.courierPersistenceConnectionConfiguration.ToSqlServerConnectionString());
-            var parcel = crate.Parcel;
-            if (crate.RecurringSchedule.GetType().ToTypeDescription() != typeof(NullSchedule).ToTypeDescription())
-            {
-                // need to inject a recurring message to make it work...
-                var newEnvelopes =
-                    new List<Envelope>(new[] { new RecurringHeaderMessage { Description = crate.Label }.ToChanneledMessage(crate.Address).ToEnvelope() });
-                var newParcel = new Parcel { Id = parcel.Id, SharedInterfaceStates = parcel.SharedInterfaceStates, Envelopes = newEnvelopes };
-                parcel = newParcel;
-            }
+            var parcel = UncrateParcel(crate);
 
             var wasAddressed = crate.Address != null;
             var channel = crate.Address ?? new Channel("default");
@@ -80,6 +73,32 @@ namespace Naos.MessageBus.Hangfire.Sender
             {
                 this.parcelTrackingSystem.Addressed(crate.TrackingCode, channel);
             }
+        }
+
+        /// <summary>
+        /// Uncrates a parcel for use in Hangfire sending/scheduling.
+        /// </summary>
+        /// <param name="crate">Crate that was provided from PostOffice.</param>
+        /// <returns>Parcel that was in the crate with any necessary adjustments.</returns>
+        public static Parcel UncrateParcel(Crate crate)
+        {
+            Parcel parcel;
+
+            if (crate.RecurringSchedule.GetType().ToTypeDescription() != typeof(NullSchedule).ToTypeDescription())
+            {
+                // need to inject a recurring message to make it work...
+                var newEnvelopes =
+                    new List<Envelope>(new[] { new RecurringHeaderMessage { Description = crate.Label }.ToChanneledMessage(crate.Address).ToEnvelope() });
+                newEnvelopes.AddRange(crate.Parcel.Envelopes.Select(_ => _));
+                var newParcel = new Parcel { Id = crate.Parcel.Id, SharedInterfaceStates = crate.Parcel.SharedInterfaceStates, Envelopes = newEnvelopes };
+                parcel = newParcel;
+            }
+            else
+            {
+                parcel = crate.Parcel;
+            }
+
+            return parcel;
         }
 
         /// <summary>
