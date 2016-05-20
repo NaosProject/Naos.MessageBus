@@ -22,6 +22,7 @@ namespace Naos.MessageBus.Persistence
     public class UpdateTrackedShipment : IUpdateProjectionWhen<Shipment.Created>,
                                          IUpdateProjectionWhen<Shipment.EnvelopeDeliveryRejected>,
                                          IUpdateProjectionWhen<Shipment.ParcelDelivered>,
+                                         IUpdateProjectionWhen<Shipment.EnvelopeDeliveryAborted>,
                                          IUpdateProjectionWhen<Shipment.PendingNoticeDelivered>,
                                          IUpdateProjectionWhen<Shipment.CertifiedNoticeDelivered>
     {
@@ -53,6 +54,22 @@ namespace Naos.MessageBus.Persistence
                             db.SaveChanges();
                         }
                     });
+        }
+
+        /// <inheritdoc />
+        public void UpdateProjection(Shipment.EnvelopeDeliveryAborted @event)
+        {
+            this.RunWithRetry(
+                () =>
+                {
+                    using (var db = new TrackedShipmentDbContext(this.readModelPersistenceConnectionConfiguration.ToSqlServerConnectionString()))
+                    {
+                        var entry = db.Shipments.Single(_ => _.ParcelId == @event.AggregateId);
+                        entry.Status = @event.NewStatus;
+                        entry.LastUpdatedUtc = DateTime.UtcNow;
+                        db.SaveChanges();
+                    }
+                });
         }
 
         /// <inheritdoc />
@@ -107,18 +124,12 @@ namespace Naos.MessageBus.Persistence
                             var entry = new NoticeForDatabase
                                             {
                                                 Id = Guid.NewGuid(),
-                                                Topic = @event.Topic,
+                                                ImpactingTopicName = @event.Topic.Name,
                                                 Status = NoticeStatus.Pending,
                                                 ParcelId = @event.TrackingCode.ParcelId,
-                                                PendingEnvelope = @event.Envelope,
-                                                CertifiedDateUtc = @event.Timestamp.UtcDateTime,
+                                                PendingEnvelopeJson = Serializer.Serialize(@event.Envelope),
                                                 LastUpdatedUtc = DateTime.UtcNow
                                             };
-
-                            if (entry.PendingEnvelope != null)
-                            {
-                                db.Envelopes.Add(entry.PendingEnvelope);
-                            }
 
                             db.Notices.Add(entry);
                             db.SaveChanges();
@@ -149,7 +160,7 @@ namespace Naos.MessageBus.Persistence
                             entry = new NoticeForDatabase
                                         {
                                             Id = Guid.NewGuid(),
-                                            Topic = @event.Topic,
+                                            ImpactingTopicName = @event.Topic.Name,
                                             Status = NoticeStatus.Pending,
                                             ParcelId = @event.TrackingCode.ParcelId,
                                             LastUpdatedUtc = DateTime.UtcNow
@@ -158,13 +169,9 @@ namespace Naos.MessageBus.Persistence
                             db.Notices.Add(entry);
                         }
 
+                        entry.Status = NoticeStatus.Certified;
                         entry.CertifiedDateUtc = @event.Timestamp.UtcDateTime;
-                        entry.CertifiedEnvelope = @event.Envelope;
-
-                        if (entry.CertifiedEnvelope != null)
-                        {
-                            db.Envelopes.Add(entry.CertifiedEnvelope);
-                        }
+                        entry.CertifiedEnvelopeJson = Serializer.Serialize(@event.Envelope);
 
                         db.SaveChanges();
                     }

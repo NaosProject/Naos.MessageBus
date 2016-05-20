@@ -60,6 +60,7 @@ namespace Naos.MessageBus.Domain
             var messageSequence = new MessageSequence
                                       {
                                           Id = messageSequenceId,
+                                          Name = name,
                                           ChanneledMessages = new[] { message.ToChanneledMessage(channel) },
                                           ImpactingTopic = impactingTopic,
                                           DependantTopics = dependantTopics,
@@ -88,6 +89,7 @@ namespace Naos.MessageBus.Domain
             var parcel = new Parcel
                              {
                                  Id = messageSequence.Id,
+                                 Name = messageSequence.Name,
                                  Envelopes = envelopes,
                                  ImpactingTopic = messageSequence.ImpactingTopic,
                                  DependantTopics = messageSequence.DependantTopics,
@@ -107,6 +109,8 @@ namespace Naos.MessageBus.Domain
         /// <inheritdoc />
         public TrackingCode SendRecurring(Parcel parcel, ScheduleBase recurringSchedule)
         {
+            var label = !string.IsNullOrWhiteSpace(parcel.Name) ? parcel.Name : "Sequence " + parcel.Id + " - " + parcel.Envelopes.First().Description;
+
             if (parcel.ImpactingTopic != null)
             {
                 if (parcel.SimultaneousRunsStrategy == SimultaneousRunsStrategy.Unspecified)
@@ -138,18 +142,13 @@ namespace Naos.MessageBus.Domain
                 throw new ArgumentException("Envelope Id's must be unique in the parcel.");
             }
 
-            var firstEnvelope = parcel.Envelopes.First();
-
-            var firstEnvelopeDescription = firstEnvelope.Description;
-
-            var label = !string.IsNullOrWhiteSpace(parcel.Name) ? parcel.Name : "Sequence " + parcel.Id + " - " + firstEnvelopeDescription;
-
-            var trackingCode = new TrackingCode { ParcelId = parcel.Id, EnvelopeId = firstEnvelope.Id };
+            var actualFirstEnvelope = parcel.Envelopes.First();
+            var trackingCode = new TrackingCode { ParcelId = parcel.Id, EnvelopeId = actualFirstEnvelope.Id };
 
             var crate = new Crate
                             {
                                 TrackingCode = trackingCode,
-                                Address = firstEnvelope.Channel,
+                                Address = actualFirstEnvelope.Channel,
                                 Label = label,
                                 Parcel = parcel,
                                 RecurringSchedule = recurringSchedule
@@ -163,42 +162,49 @@ namespace Naos.MessageBus.Domain
         private static Parcel InjectCertifiedMessagesIntoNewParcel(Parcel parcel)
         {
             var parcelId = parcel.Id;
-            var sharedInterfaceStates = parcel.SharedInterfaceStates.Select(_ => _).ToList();
+            var sharedInterfaceStates = (parcel.SharedInterfaceStates ?? new SharedInterfaceState[0]).Select(_ => _).ToList();
             var envelopes = parcel.Envelopes.Select(_ => _).ToList();
+            var newEnvelopes = new List<Envelope>();
 
-            var abortMessage = new AbortIfNoNewCertifiedNoticesAndShareResultsMessage
-                                   {
-                                       Description = "Auto",
-                                       ImpactingTopic = parcel.ImpactingTopic,
-                                       DependantTopics = parcel.DependantTopics ?? new DependantTopic[0],
-                                       SimultaneousRunsStrategy = parcel.SimultaneousRunsStrategy
-                                   };
+            // add a dependency check if we have dependant topics
+            var dependantTopics = parcel.DependantTopics ?? new DependantTopic[0];
+            if (dependantTopics.Count > 0)
+            {
+                var abortMessage = new AbortIfNoNewCertifiedNoticesAndShareResultsMessage
+                                       {
+                                           Description =
+                                               "Checking new notices for: "
+                                               + string.Join(",", dependantTopics),
+                                           ImpactingTopic = parcel.ImpactingTopic,
+                                           DependantTopics = dependantTopics,
+                                           SimultaneousRunsStrategy = parcel.SimultaneousRunsStrategy
+                                       };
 
+                newEnvelopes.Add(abortMessage.ToChanneledMessage(null).ToEnvelope());
+            }
+
+            // add a pending message
             var pendingMessage = new PendingNoticeMessage
                                      {
                                          Description = $"Pending Notice for {parcel.ImpactingTopic}",
                                          ImpactingTopic = parcel.ImpactingTopic
                                      };
 
+            newEnvelopes.Add(pendingMessage.ToChanneledMessage(null).ToEnvelope());
+
+            // add the envelopes passed in
+            newEnvelopes.AddRange(envelopes);
+
+            // add the final certified message
             var certifiedMessage = new CertifiedNoticeMessage
                                        {
                                            Description = $"Certified Notice for {parcel.ImpactingTopic}",
                                            ImpactingTopic = parcel.ImpactingTopic
                                        };
 
-            var newEnvelopes = new List<Envelope>();
-            if (envelopes.First().MessageType == typeof(RecurringHeaderMessage).ToTypeDescription())
-            {
-                newEnvelopes.Add(envelopes.First());
-                envelopes = envelopes.Skip(1).ToList();
-            }
-
-            newEnvelopes.Add(abortMessage.ToChanneledMessage(null).ToEnvelope());
-            newEnvelopes.Add(pendingMessage.ToChanneledMessage(null).ToEnvelope());
-            newEnvelopes.AddRange(envelopes);
             newEnvelopes.Add(certifiedMessage.ToChanneledMessage(null).ToEnvelope());
 
-            var newParcel = new Parcel { Id = parcelId, SharedInterfaceStates = sharedInterfaceStates, Envelopes = newEnvelopes };
+            var newParcel = new Parcel { Id = parcelId, Name = parcel.Name, SharedInterfaceStates = sharedInterfaceStates, Envelopes = newEnvelopes };
 
             return newParcel;
         }

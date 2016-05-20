@@ -21,9 +21,9 @@ namespace Naos.MessageBus.Persistence
         public Guid Id { get; set; }
 
         /// <summary>
-        /// Gets or sets the topic.
+        /// Gets or sets the topic name that the notice is for.
         /// </summary>
-        public ImpactingTopic Topic { get; set; }
+        public string ImpactingTopicName { get; set; }
 
         /// <summary>
         /// Gets or sets the ID of the parcel the notice came from.
@@ -43,12 +43,12 @@ namespace Naos.MessageBus.Persistence
         /// <summary>
         /// Gets or sets the envelope of the pending notice.
         /// </summary>
-        public virtual Envelope PendingEnvelope { get; set; }
+        public string PendingEnvelopeJson { get; set; }
 
         /// <summary>
         /// Gets or sets the envelope of the certified notice.
         /// </summary>
-        public virtual Envelope CertifiedEnvelope { get; set; }
+        public string CertifiedEnvelopeJson { get; set; }
 
         /// <summary>
         /// Gets or sets the date time (in UTC) it was last updated.

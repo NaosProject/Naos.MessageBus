@@ -33,17 +33,11 @@ namespace Naos.MessageBus.Persistence
         /// </summary>
         public virtual DbSet<NoticeForDatabase> Notices { get; set; }
 
-        /// <summary>
-        /// Gets or sets the envelopes.
-        /// </summary>
-        public virtual DbSet<Envelope> Envelopes { get; set; }
-
         /// <inheritdoc />
         protected override void OnModelCreating(DbModelBuilder modelBuilder)
         {
             modelBuilder.Entity<ParcelTrackingReport>().HasKey(s => s.ParcelId);
             modelBuilder.Entity<NoticeForDatabase>().HasKey(s => s.Id);
-            modelBuilder.Entity<Envelope>().HasKey(s => s.Id);
         }
     }
 }

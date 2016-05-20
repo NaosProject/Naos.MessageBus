@@ -189,7 +189,7 @@ namespace Naos.MessageBus.Persistence
                         using (var db = new TrackedShipmentDbContext(this.readModelPersistenceConnectionConfiguration.ToSqlServerConnectionString()))
                         {
                             var mostRecentNotice =
-                                db.Notices.Where(_ => _.Topic.Name != topic.Name)
+                                db.Notices.Where(_ => _.ImpactingTopicName == topic.Name)
                                     .Where(_ => statusFilter == NoticeStatus.None || _.Status == statusFilter)
                                     .OrderBy(_ => _.LastUpdatedUtc)
                                     .ToList()
@@ -197,7 +197,14 @@ namespace Naos.MessageBus.Persistence
 
                             if (mostRecentNotice == null)
                             {
-                                return Task.FromResult(new Notice { NoticeItems = new NoticeItem[0] });
+                                if (statusFilter != NoticeStatus.None)
+                                {
+                                    return Task.FromResult<Notice>(null);
+                                }
+                                else
+                                {
+                                    return Task.FromResult(new Notice { NoticeItems = new NoticeItem[0], DependantNotices = new Notice[0] });
+                                }
                             }
                             else
                             {
@@ -205,13 +212,14 @@ namespace Naos.MessageBus.Persistence
                                 Notice[] dependantNotices;
                                 NoticeStatus status;
 
-                                if (mostRecentNotice.CertifiedEnvelope == null)
+                                if (mostRecentNotice.CertifiedEnvelopeJson == null)
                                 {
-                                    if (mostRecentNotice.PendingEnvelope != null)
+                                    if (mostRecentNotice.PendingEnvelopeJson != null)
                                     {
-                                        var messagePending = Serializer.Deserialize<PendingNoticeMessage>(mostRecentNotice.PendingEnvelope.MessageAsJson);
+                                        var pendingEnvelope = Serializer.Deserialize<Envelope>(mostRecentNotice.PendingEnvelopeJson);
+                                        var messagePending = Serializer.Deserialize<PendingNoticeMessage>(pendingEnvelope.MessageAsJson);
                                         items = messagePending.NoticeItems;
-                                        dependantNotices = messagePending.Notices ?? new Notice[0];
+                                        dependantNotices = messagePending.Notices;
                                         status = NoticeStatus.Pending;
                                     }
                                     else
@@ -223,9 +231,10 @@ namespace Naos.MessageBus.Persistence
                                 }
                                 else
                                 {
-                                    var messageCertified = Serializer.Deserialize<CertifiedNoticeMessage>(mostRecentNotice.CertifiedEnvelope.MessageAsJson);
+                                    var certifiedEnvelope = Serializer.Deserialize<Envelope>(mostRecentNotice.CertifiedEnvelopeJson);
+                                    var messageCertified = Serializer.Deserialize<CertifiedNoticeMessage>(certifiedEnvelope.MessageAsJson);
                                     items = messageCertified.NoticeItems;
-                                    dependantNotices = messageCertified.Notices ?? new Notice[0];
+                                    dependantNotices = messageCertified.Notices;
                                     status = NoticeStatus.Certified;
                                 }
 
@@ -235,9 +244,9 @@ namespace Naos.MessageBus.Persistence
                                             {
                                                 Topic = topic,
                                                 CertifiedDateUtc = mostRecentNotice.CertifiedDateUtc,
-                                                NoticeItems = items,
+                                                NoticeItems = items ?? new NoticeItem[0],
                                                 Status = status,
-                                                DependantNotices = dependantNotices
+                                                DependantNotices = dependantNotices ?? new Notice[0]
                                             });
                             }
                         }

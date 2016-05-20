@@ -40,114 +40,103 @@ namespace Naos.MessageBus.Test
                     Database = "ParcelTrackingReadModel",
                 };
 
-            var topic = new ImpactingTopic(Guid.NewGuid().ToString().ToUpperInvariant().Substring(0, 5));
+            var topic = new ImpactingTopic(Guid.NewGuid().ToString().ToUpperInvariant());
             var parcel = this.GetParcel(topic);
 
-            var trackingCode = new TrackingCode { ParcelId = parcel.Id, EnvelopeId = parcel.Envelopes.First().Id };
             var parcelTrackingSystem = new ParcelTrackingSystem(eventConnectionConfiguration, readModelConnectionConfiguration);
+            var pendingWasDelivered = false; // after this the latest notice will be pending
+            var seenRejection = false; // after this the parcel will always be in rejected state until aborted or delivered
+            foreach (var envelope in parcel.Envelopes)
+            {
+                var trackingCode = new TrackingCode { ParcelId = parcel.Id, EnvelopeId = envelope.Id };
+                await parcelTrackingSystem.Sent(trackingCode, parcel, new Dictionary<string, string>());
+                (await parcelTrackingSystem.GetTrackingReportAsync(new[] { trackingCode })).Single().Status.Should().Be(seenRejection ? ParcelStatus.Rejected : ParcelStatus.Unknown);
+                await ConfirmNoticeState(parcelTrackingSystem, topic, pendingWasDelivered);
 
-            await parcelTrackingSystem.Sent(trackingCode, parcel, new Dictionary<string, string>());
-            (await parcelTrackingSystem.GetTrackingReportAsync(new[] { trackingCode })).Single().Status.Should().Be(ParcelStatus.Unknown);
-            (await parcelTrackingSystem.GetLatestNoticeAsync(topic)).NoticeItems.Length.Should().Be(0);
+                await parcelTrackingSystem.Addressed(trackingCode, envelope.Channel);
+                (await parcelTrackingSystem.GetTrackingReportAsync(new[] { trackingCode })).Single().Status.Should().Be(seenRejection ? ParcelStatus.Rejected : ParcelStatus.Unknown);
+                await ConfirmNoticeState(parcelTrackingSystem, topic, pendingWasDelivered);
 
-            await parcelTrackingSystem.Addressed(trackingCode, parcel.Envelopes.First().Channel);
-            (await parcelTrackingSystem.GetTrackingReportAsync(new[] { trackingCode })).Single().Status.Should().Be(ParcelStatus.Unknown);
-            (await parcelTrackingSystem.GetLatestNoticeAsync(topic)).NoticeItems.Length.Should().Be(0);
+                await parcelTrackingSystem.Attempting(trackingCode, new HarnessDetails());
+                (await parcelTrackingSystem.GetTrackingReportAsync(new[] { trackingCode })).Single().Status.Should().Be(seenRejection ? ParcelStatus.Rejected : ParcelStatus.Unknown);
+                await ConfirmNoticeState(parcelTrackingSystem, topic, pendingWasDelivered);
 
-            await parcelTrackingSystem.Attempting(trackingCode, new HarnessDetails());
-            (await parcelTrackingSystem.GetTrackingReportAsync(new[] { trackingCode })).Single().Status.Should().Be(ParcelStatus.Unknown);
-            (await parcelTrackingSystem.GetLatestNoticeAsync(topic)).NoticeItems.Length.Should().Be(0);
+                await parcelTrackingSystem.Abort(trackingCode, "Try another day");
+                (await parcelTrackingSystem.GetTrackingReportAsync(new[] { trackingCode })).Single().Status.Should().Be(ParcelStatus.Aborted);
+                await ConfirmNoticeState(parcelTrackingSystem, topic, pendingWasDelivered);
 
-            await parcelTrackingSystem.Abort(trackingCode, "Try another day");
-            (await parcelTrackingSystem.GetTrackingReportAsync(new[] { trackingCode })).Single().Status.Should().Be(ParcelStatus.Unknown);
-            (await parcelTrackingSystem.GetLatestNoticeAsync(topic)).NoticeItems.Length.Should().Be(0);
+                await parcelTrackingSystem.Attempting(trackingCode, new HarnessDetails());
+                (await parcelTrackingSystem.GetTrackingReportAsync(new[] { trackingCode })).Single().Status.Should().Be(ParcelStatus.Aborted);
+                await ConfirmNoticeState(parcelTrackingSystem, topic, pendingWasDelivered);
 
-            await parcelTrackingSystem.Attempting(trackingCode, new HarnessDetails());
-            (await parcelTrackingSystem.GetTrackingReportAsync(new[] { trackingCode })).Single().Status.Should().Be(ParcelStatus.Unknown);
-            (await parcelTrackingSystem.GetLatestNoticeAsync(topic)).NoticeItems.Length.Should().Be(0);
+                await parcelTrackingSystem.Rejected(trackingCode, new NotImplementedException("Not here yet"));
+                (await parcelTrackingSystem.GetTrackingReportAsync(new[] { trackingCode })).Single().Status.Should().Be(ParcelStatus.Rejected);
+                await ConfirmNoticeState(parcelTrackingSystem, topic, pendingWasDelivered);
+                seenRejection = true;
 
-            await parcelTrackingSystem.Delivered(trackingCode);
-            (await parcelTrackingSystem.GetTrackingReportAsync(new[] { trackingCode })).Single().Status.Should().Be(ParcelStatus.Unknown);
-            (await parcelTrackingSystem.GetLatestNoticeAsync(topic)).NoticeItems.Length.Should().Be(0);
+                await parcelTrackingSystem.Attempting(trackingCode, new HarnessDetails());
+                (await parcelTrackingSystem.GetTrackingReportAsync(new[] { trackingCode })).Single().Status.Should().Be(ParcelStatus.Rejected);
+                await ConfirmNoticeState(parcelTrackingSystem, topic, pendingWasDelivered);
 
-            var trackingCode2 = new TrackingCode { ParcelId = parcel.Id, EnvelopeId = parcel.Envelopes.Last().Id };
-            await parcelTrackingSystem.Sent(trackingCode2, parcel, new Dictionary<string, string>());
-            (await parcelTrackingSystem.GetTrackingReportAsync(new[] { trackingCode2 })).Single().Status.Should().Be(ParcelStatus.Unknown);
-            (await parcelTrackingSystem.GetLatestNoticeAsync(topic)).NoticeItems.Length.Should().Be(0);
+                await parcelTrackingSystem.Delivered(trackingCode);
+                if (envelope.MessageType == typeof(PendingNoticeMessage).ToTypeDescription())
+                {
+                    pendingWasDelivered = true;
+                }
 
-            await parcelTrackingSystem.Addressed(trackingCode2, parcel.Envelopes.First().Channel);
-            (await parcelTrackingSystem.GetTrackingReportAsync(new[] { trackingCode2 })).Single().Status.Should().Be(ParcelStatus.Unknown);
-            (await parcelTrackingSystem.GetLatestNoticeAsync(topic)).NoticeItems.Length.Should().Be(0);
+                // should be last message and will assert differently
+                if (envelope.MessageType != typeof(CertifiedNoticeMessage).ToTypeDescription())
+                {
+                    (await parcelTrackingSystem.GetTrackingReportAsync(new[] { trackingCode })).Single().Status.Should().Be(ParcelStatus.Rejected);
+                    await ConfirmNoticeState(parcelTrackingSystem, topic, pendingWasDelivered);
+                }
+            }
 
-            await parcelTrackingSystem.Attempting(trackingCode2, new HarnessDetails());
-            (await parcelTrackingSystem.GetTrackingReportAsync(new[] { trackingCode2 })).Single().Status.Should().Be(ParcelStatus.Unknown);
-            (await parcelTrackingSystem.GetLatestNoticeAsync(topic)).NoticeItems.Length.Should().Be(0);
+            (await parcelTrackingSystem.GetTrackingReportAsync(new[] { new TrackingCode { ParcelId = parcel.Id } })).Single()
+                .Status.Should()
+                .Be(ParcelStatus.Delivered);
 
-            await parcelTrackingSystem.Rejected(trackingCode2, new NotImplementedException("Not here yet"));
-            (await parcelTrackingSystem.GetTrackingReportAsync(new[] { trackingCode2 })).Single().Status.Should().Be(ParcelStatus.Rejected);
-            (await parcelTrackingSystem.GetLatestNoticeAsync(topic)).NoticeItems.Length.Should().Be(0);
-
-            await parcelTrackingSystem.Delivered(trackingCode2);
-            (await parcelTrackingSystem.GetTrackingReportAsync(new[] { trackingCode2 })).Single().Status.Should().Be(ParcelStatus.Delivered);
-            (await parcelTrackingSystem.GetLatestNoticeAsync(topic)).NoticeItems.Length.Should().Be(1);
+            (await parcelTrackingSystem.GetLatestNoticeAsync(topic, NoticeStatus.Pending)).Should().BeNull();
+            (await parcelTrackingSystem.GetLatestNoticeAsync(topic, NoticeStatus.Certified)).Should().NotBeNull();
+            (await parcelTrackingSystem.GetLatestNoticeAsync(topic)).Status.Should().Be(NoticeStatus.Certified);
 
             messages.Count.Should().Be(0);
         }
 
-        private Parcel GetParcel(ImpactingTopic topic)
+        private static async Task ConfirmNoticeState(
+            ParcelTrackingSystem parcelTrackingSystem,
+            ImpactingTopic topic,
+            bool pendingWasDelivered)
         {
-            var ret = new Parcel
-                          {
-                              Id = Guid.NewGuid(),
-                              Envelopes =
-                                  new[]
-                                      {
-                                          new Envelope(
-                                              Guid.NewGuid().ToString().ToUpper(),
-                                              "Fake envelope",
-                                              new Channel("channel"),
-                                              Serializer.Serialize("message"),
-                                              typeof(string).ToTypeDescription()),
-                                          new Envelope(
-                                              Guid.NewGuid().ToString().ToUpper(),
-                                              "Fake certified envelope",
-                                              new Channel("channel"),
-                                              Serializer.Serialize(
-                                                  new CertifiedNoticeMessage
-                                                      {
-                                                          Description = "Hello",
-                                                          ImpactingTopic = topic,
-                                                          NoticeItems =
-                                                              new[]
-                                                                  {
-                                                                      new NoticeItem
-                                                                          {
-                                                                              ImpactedId = "123",
-                                                                              ImpactedTimeStart =
-                                                                                  new DateTime(
-                                                                                  2015,
-                                                                                  01,
-                                                                                  01,
-                                                                                  0,
-                                                                                  0,
-                                                                                  0,
-                                                                                  DateTimeKind.Unspecified),
-                                                                              ImpactedTimeEnd =
-                                                                                  new DateTime(
-                                                                                  2015,
-                                                                                  03,
-                                                                                  31,
-                                                                                  0,
-                                                                                  0,
-                                                                                  0,
-                                                                                  DateTimeKind.Unspecified)
-                                                                          }
-                                                                  }
-                                                      }),
-                                              typeof(CertifiedNoticeMessage).ToTypeDescription())
-                                      }
-                          };
-            return ret;
+            if (pendingWasDelivered)
+            {
+                (await parcelTrackingSystem.GetLatestNoticeAsync(topic, NoticeStatus.Pending)).Should().NotBeNull();
+                (await parcelTrackingSystem.GetLatestNoticeAsync(topic, NoticeStatus.Certified)).Should().BeNull();
+                (await parcelTrackingSystem.GetLatestNoticeAsync(topic)).Status.Should().Be(NoticeStatus.Pending);
+            }
+            else
+            {
+                (await parcelTrackingSystem.GetLatestNoticeAsync(topic, NoticeStatus.Pending)).Should().BeNull();
+                (await parcelTrackingSystem.GetLatestNoticeAsync(topic, NoticeStatus.Certified)).Should().BeNull();
+                (await parcelTrackingSystem.GetLatestNoticeAsync(topic)).Status.Should().Be(NoticeStatus.Unknown);
+            }
+        }
+
+        private Parcel GetParcel(ImpactingTopic topic, IReadOnlyCollection<DependantTopic> dependantTopics = null)
+        {
+            var trackingSends = new List<Crate>();
+            var postOffice = new PostOffice(Factory.GetInMemoryCourier(trackingSends)());
+
+            var tracking = postOffice.Send(
+                new NullMessage(),
+                new Channel("channel"),
+                "name",
+                topic,
+                dependantTopics,
+                TopicCheckStrategy.AllowIfAnyTopicCheckYieldsRecent,
+                SimultaneousRunsStrategy.AbortSubsequentRunsWhenOneIsRunning);
+
+            return trackingSends.Single().Parcel;
         }
     }
 }
