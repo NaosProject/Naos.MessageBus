@@ -58,6 +58,10 @@
       <HintPath>..\packages\Its.Domain.Sql.0.14.21-beta\lib\net452\Microsoft.Its.Domain.Sql.dll</HintPath>
       <Private>True</Private>
     </Reference>
+    <Reference Include="Naos.Cron, Version=1.0.10.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Naos.Cron.1.0.10\lib\net45\Naos.Cron.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="Newtonsoft.Json, Version=8.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
       <HintPath>..\packages\Newtonsoft.Json.8.0.3\lib\net45\Newtonsoft.Json.dll</HintPath>
       <Private>True</Private>
@@ -101,7 +105,6 @@
     <Compile Include="Events\Shipment.ParcelDelivered.cs" />
     <Compile Include="Shipment.EnactCommand.cs" />
     <Compile Include="Commands\Send.cs" />
-    <Compile Include="Commands\UpdateAddress.cs" />
     <Compile Include="Commands\Attempt.cs" />
     <Compile Include="Commands\Create.cs" />
     <Compile Include="Commands\Deliver.cs" />
@@ -109,7 +112,6 @@
     <Compile Include="Commands\ValidationRules.cs" />
     <Compile Include="Events\Shipment.TopicWasAffected.cs" />
     <Compile Include="Events\Shipment.EnvelopeSent.cs" />
-    <Compile Include="Events\Shipment.EnvelopeAddressed.cs" />
     <Compile Include="Events\Shipment.EnvelopeDeliveryAttempted.cs" />
     <Compile Include="Events\Shipment.Created.cs" />
     <Compile Include="Events\Shipment.EnvelopeDelivered.cs" />
@@ -119,7 +121,7 @@
     <Compile Include="TrackedShipmentDbContext.cs" />
     <Compile Include="Shipment.cs" />
     <Compile Include="TrackingDetails.cs" />
-    <Compile Include="UpdateTrackedShipment.cs" />
+    <Compile Include="ParcelTrackingEventHandler.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />

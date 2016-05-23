@@ -15,15 +15,15 @@ namespace Naos.MessageBus.Domain
     /// <inheritdoc />
     public class PostOffice : IPostOffice
     {
-        private readonly ICourier courier;
+        private readonly IParcelTrackingSystem parcelTrackingSystem;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="PostOffice"/> class.
         /// </summary>
-        /// <param name="courier">Interface for transporting parcels.</param>
-        public PostOffice(ICourier courier)
+        /// <param name="parcelTrackingSystem">System to track parcels.</param>
+        public PostOffice(IParcelTrackingSystem parcelTrackingSystem)
         {
-            this.courier = courier;
+            this.parcelTrackingSystem = parcelTrackingSystem;
         }
 
         /// <inheritdoc />
@@ -109,8 +109,6 @@ namespace Naos.MessageBus.Domain
         /// <inheritdoc />
         public TrackingCode SendRecurring(Parcel parcel, ScheduleBase recurringSchedule)
         {
-            var label = !string.IsNullOrWhiteSpace(parcel.Name) ? parcel.Name : "Sequence " + parcel.Id + " - " + parcel.Envelopes.First().Description;
-
             if (parcel.Topic != null)
             {
                 if (parcel.SimultaneousRunsStrategy == SimultaneousRunsStrategy.Unspecified)
@@ -142,19 +140,10 @@ namespace Naos.MessageBus.Domain
                 throw new ArgumentException("Envelope Id's must be unique in the parcel.");
             }
 
-            var actualFirstEnvelope = parcel.Envelopes.First();
-            var trackingCode = new TrackingCode { ParcelId = parcel.Id, EnvelopeId = actualFirstEnvelope.Id };
+            var firstEnvelope = parcel.Envelopes.First();
+            var trackingCode = new TrackingCode { ParcelId = parcel.Id, EnvelopeId = firstEnvelope.Id };
 
-            var crate = new Crate
-                            {
-                                TrackingCode = trackingCode,
-                                Address = actualFirstEnvelope.Channel,
-                                Label = label,
-                                Parcel = parcel,
-                                RecurringSchedule = recurringSchedule
-                            };
-
-            this.courier.Send(crate);
+            this.parcelTrackingSystem.Sent(trackingCode, parcel, firstEnvelope.Address);
 
             return trackingCode;
         }

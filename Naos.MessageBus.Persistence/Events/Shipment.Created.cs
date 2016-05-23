@@ -28,16 +28,10 @@ namespace Naos.MessageBus.Persistence
             /// </summary>
             public Parcel Parcel { get; set; }
 
-            /// <summary>
-            /// Gets or sets the metadata from the creation of the shipment.
-            /// </summary>
-            public IReadOnlyDictionary<string, string> CreationMetadata { get; set; }
-
             /// <inheritdoc />
             public override void Update(Shipment aggregate)
             {
                 aggregate.Parcel = this.Parcel;
-                aggregate.CreationMetadata = this.CreationMetadata ?? new Dictionary<string, string>();
                 aggregate.Tracking = this.Parcel.Envelopes.ToDictionary(
                     key => new TrackingCode { ParcelId = this.Parcel.Id, EnvelopeId = key.Id },
                     val => new TrackingDetails { Envelope = val });

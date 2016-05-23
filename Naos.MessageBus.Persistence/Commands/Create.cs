@@ -38,10 +38,5 @@ namespace Naos.MessageBus.Persistence
         /// Gets or sets the parcel of the shipment.
         /// </summary>
         public Parcel Parcel { get; set; }
-
-        /// <summary>
-        /// Gets or sets any creation metadata.
-        /// </summary>
-        public IReadOnlyDictionary<string, string> CreationMetadata { get; set; }
     }
 }

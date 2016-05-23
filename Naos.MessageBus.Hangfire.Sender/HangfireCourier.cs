@@ -25,28 +25,23 @@ namespace Naos.MessageBus.Hangfire.Sender
 
         private const string HangfireQueueNameAllowedRegex = "^[a-z0-9_]*$";
 
-        private readonly IParcelTrackingSystem parcelTrackingSystem;
-
         private readonly CourierPersistenceConnectionConfiguration courierPersistenceConnectionConfiguration;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="HangfireCourier"/> class.
         /// </summary>
-        /// <param name="parcelTrackingSystem">System to track parcels.</param>
         /// <param name="courierPersistenceConnectionConfiguration">Hangfire persistence connection string.</param>
-        public HangfireCourier(IParcelTrackingSystem parcelTrackingSystem, CourierPersistenceConnectionConfiguration courierPersistenceConnectionConfiguration)
+        public HangfireCourier(CourierPersistenceConnectionConfiguration courierPersistenceConnectionConfiguration)
         {
-            this.parcelTrackingSystem = parcelTrackingSystem;
             this.courierPersistenceConnectionConfiguration = courierPersistenceConnectionConfiguration;
         }
 
         /// <inheritdoc />
-        public void Send(Crate crate)
+        public string Send(Crate crate)
         {
             GlobalConfiguration.Configuration.UseSqlServerStorage(this.courierPersistenceConnectionConfiguration.ToSqlServerConnectionString());
             var parcel = UncrateParcel(crate);
 
-            var wasAddressed = crate.Address != null;
             var channel = crate.Address ?? new Channel("default");
 
             ThrowIfInvalidChannel(channel);
@@ -57,22 +52,13 @@ namespace Naos.MessageBus.Hangfire.Sender
             Expression<Action<IDispatchMessages>> methodCall = _ => _.Dispatch(crate.TrackingCode, crate.Label, parcel);
             var hangfireId = client.Create<IDispatchMessages>(methodCall, state);
 
-            var metadata = new Dictionary<string, string> { { "HangfireJobId", hangfireId }, { "DisplayName", crate.Label } };
-
             if (crate.RecurringSchedule.GetType() != typeof(NullSchedule))
             {
                 Func<string> cronExpression = crate.RecurringSchedule.ToCronExpression;
                 RecurringJob.AddOrUpdate(hangfireId, methodCall, cronExpression);
-                metadata.Add("CronSchedule", cronExpression());
             }
 
-            this.parcelTrackingSystem.Sent(crate.TrackingCode, parcel, metadata);
-
-            // if not addressed it will be sent to default for addressing
-            if (wasAddressed)
-            {
-                this.parcelTrackingSystem.Addressed(crate.TrackingCode, channel);
-            }
+            return hangfireId;
         }
 
         /// <summary>

@@ -405,7 +405,7 @@ namespace Naos.MessageBus.Test
             // arrange
             var impactingTopic = new AffectedTopic("mine");
             var notCertified = new AffectedTopic("other");
-            var topics = Some.Dummies<DependencyTopic>().ToList();
+            var topics = Some.Dummies<DependencyTopic>(50).ToList();
 
             var number = 1;
             var seededNotices = topics.Cast<TopicBase>()

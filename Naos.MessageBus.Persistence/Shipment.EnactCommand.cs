@@ -21,7 +21,7 @@ namespace Naos.MessageBus.Persistence
         /// <param name="command">Command to enact on aggregate.</param>
         public void EnactCommand(Create command)
         {
-            this.RecordEvent(new Created { Parcel = command.Parcel, CreationMetadata = command.CreationMetadata });
+            this.RecordEvent(new Created { Parcel = command.Parcel });
         }
 
         /// <summary>
@@ -30,16 +30,7 @@ namespace Naos.MessageBus.Persistence
         /// <param name="command">Command to enact on aggregate.</param>
         public void EnactCommand(Send command)
         {
-            this.RecordEvent(new EnvelopeSent { TrackingCode = command.TrackingCode, NewStatus = ParcelStatus.Sent });
-        }
-
-        /// <summary>
-        /// Enact the <see cref="UpdateAddress"/> command.
-        /// </summary>
-        /// <param name="command">Command to enact on aggregate.</param>
-        public void EnactCommand(UpdateAddress command)
-        {
-            this.RecordEvent(new EnvelopeAddressed { TrackingCode = command.TrackingCode, NewStatus = ParcelStatus.InTransit, Address = command.Address });
+            this.RecordEvent(new EnvelopeSent { TrackingCode = command.TrackingCode, NewStatus = ParcelStatus.InTransit, Parcel = this.Parcel, Address = command.Address, });
         }
 
         /// <summary>

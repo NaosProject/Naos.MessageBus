@@ -15,7 +15,8 @@ namespace Naos.MessageBus.Domain
         /// Send a crate through the shipping system.
         /// </summary>
         /// <param name="crate">Crate that parcels are packed up in to be transported.</param>
-        void Send(Crate crate);
+        /// <returns>Courier specific tracking id.</returns>
+        string Send(Crate crate);
     }
 
     /// <summary>
@@ -24,9 +25,10 @@ namespace Naos.MessageBus.Domain
     public class NullCourier : ICourier
     {
         /// <inheritdoc />
-        public void Send(Crate crate)
+        public string Send(Crate crate)
         {
             /* no-op */
+            return null;
         }
     }
 }

@@ -51,11 +51,6 @@ namespace Naos.MessageBus.Persistence
         public Parcel Parcel { get; private set; }
 
         /// <summary>
-        /// Gets the metadata about the creation of the shipment for the courier.
-        /// </summary>
-        public IReadOnlyDictionary<string, string> CreationMetadata { get; private set; }
-
-        /// <summary>
         /// Gets a dictionary of the envelopes to keep details of each envelope in the parcel.
         /// </summary>
         public IDictionary<TrackingCode, TrackingDetails> Tracking { get; private set; }

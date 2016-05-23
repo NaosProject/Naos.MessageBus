@@ -8,10 +8,7 @@ namespace Naos.MessageBus.Test
 {
     using System;
     using System.Collections.Generic;
-    using System.Dynamic;
     using System.Linq;
-
-    using FakeItEasy;
 
     using FluentAssertions;
 
@@ -26,41 +23,44 @@ namespace Naos.MessageBus.Test
         public static void Send_Message_AddsSequenceId()
         {
             // arrange
-            var trackingSends = new List<Crate>();
-            var courier = Factory.GetInMemoryCourier(trackingSends);
-            var postOffice = new PostOffice(courier());
+            var trackingCalls = new List<string>();
+            var trackingSends = new List<Parcel>();
+            var parcelTrackingSystemBuilder = Factory.GetInMemoryParcelTrackingSystem(trackingCalls, trackingSends);
+            var postOffice = new PostOffice(parcelTrackingSystemBuilder());
 
             // act
             var trackingCode = postOffice.Send(new NullMessage(), new Channel("something"));
 
             // assert
-            Assert.NotNull(trackingSends.Single().TrackingCode.EnvelopeId);
-            Assert.Equal(trackingCode, trackingSends.Single().TrackingCode);
+            Assert.NotNull(trackingSends.Single().Envelopes.Single().Id);
+            Assert.Equal(trackingCode, new TrackingCode { ParcelId = trackingSends.Single().Id, EnvelopeId = trackingSends.Single().Envelopes.First().Id });
         }
 
         [Fact]
         public static void SendRecurring_Message_AddsSequenceId()
         {
             // arrange
-            var trackingSends = new List<Crate>();
-            var courier = Factory.GetInMemoryCourier(trackingSends);
-            var postOffice = new PostOffice(courier());
+            var trackingCalls = new List<string>();
+            var trackingSends = new List<Parcel>();
+            var parcelTrackingSystemBuilder = Factory.GetInMemoryParcelTrackingSystem(trackingCalls, trackingSends);
+            var postOffice = new PostOffice(parcelTrackingSystemBuilder());
 
             // act
             var trackingCode = postOffice.SendRecurring(new NullMessage(), new Channel("something"), new DailyScheduleInUtc());
 
             // assert
-            Assert.NotNull(trackingSends.Single().TrackingCode.EnvelopeId);
-            Assert.Equal(trackingCode, trackingSends.Single().TrackingCode);
+            Assert.NotNull(trackingSends.Single().Envelopes.Single().Id);
+            Assert.Equal(trackingCode, new TrackingCode { ParcelId = trackingSends.Single().Id, EnvelopeId = trackingSends.Single().Envelopes.First().Id });
         }
 
         [Fact]
         public static void SendRecurringParcelWithImpactedTopicAndNoSimultaneousStrategy_Throws()
         {
             // arrange
-            var trackingSends = new List<Crate>();
-            var courier = Factory.GetInMemoryCourier(trackingSends);
-            var postOffice = new PostOffice(courier());
+            var trackingCalls = new List<string>();
+            var trackingSends = new List<Parcel>();
+            var parcelTrackingSystemBuilder = Factory.GetInMemoryParcelTrackingSystem(trackingCalls, trackingSends);
+            var postOffice = new PostOffice(parcelTrackingSystemBuilder());
             Action testCode =
                 () => postOffice.SendRecurring(new NullMessage(), new Channel("something"), new DailyScheduleInUtc(), "Something", new AffectedTopic("me"));
 
@@ -72,9 +72,10 @@ namespace Naos.MessageBus.Test
         public static void SendRecurringParcelWithImpactedTopicAndNoDependantTopics_InjectsMessages()
         {
             // arrange
-            var trackingSends = new List<Crate>();
-            var courier = Factory.GetInMemoryCourier(trackingSends);
-            var postOffice = new PostOffice(courier());
+            var trackingCalls = new List<string>();
+            var trackingSends = new List<Parcel>();
+            var parcelTrackingSystemBuilder = Factory.GetInMemoryParcelTrackingSystem(trackingCalls, trackingSends);
+            var postOffice = new PostOffice(parcelTrackingSystemBuilder());
             var myTopic = "me";
             var name = "Something";
             var schedule = new DailyScheduleInUtc();
@@ -92,33 +93,33 @@ namespace Naos.MessageBus.Test
                 SimultaneousRunsStrategy.AbortSubsequentRunsWhenOneIsRunning);
 
             // assert
-            var crate = trackingSends.Single();
-            crate.Parcel.Id.Should().Be(trackingCode.ParcelId);
-            crate.Label.Should().Be(name);
-            crate.RecurringSchedule.Should().Be(schedule);
+            var parcel = trackingSends.Single();
+            parcel.Id.Should().Be(trackingCode.ParcelId);
+            parcel.Name.Should().Be(name);
 
-            crate.Parcel.Envelopes.Count.Should().Be(3);
+            parcel.Envelopes.Count.Should().Be(3);
 
             // being affected
-            crate.Parcel.Envelopes.Skip(0).First().MessageType.Should().Be(typeof(TopicBeingAffectedMessage).ToTypeDescription());
-            Serializer.Deserialize<TopicBeingAffectedMessage>(crate.Parcel.Envelopes.First().MessageAsJson).Topic.Name.Should().Be(myTopic);
+            parcel.Envelopes.Skip(0).First().MessageType.Should().Be(typeof(TopicBeingAffectedMessage).ToTypeDescription());
+            Serializer.Deserialize<TopicBeingAffectedMessage>(parcel.Envelopes.First().MessageAsJson).Topic.Name.Should().Be(myTopic);
 
             // mine
-            crate.Parcel.Envelopes.Skip(1).First().MessageType.Should().Be(typeof(NullMessage).ToTypeDescription());
-            crate.Parcel.Envelopes.Skip(1).First().Channel.Should().Be(channel);
+            parcel.Envelopes.Skip(1).First().MessageType.Should().Be(typeof(NullMessage).ToTypeDescription());
+            parcel.Envelopes.Skip(1).First().Address.Should().Be(channel);
 
             // was affected
-            crate.Parcel.Envelopes.Last().MessageType.Should().Be(typeof(TopicWasAffectedMessage).ToTypeDescription());
-            Serializer.Deserialize<TopicWasAffectedMessage>(crate.Parcel.Envelopes.Last().MessageAsJson).Topic.Name.Should().Be(myTopic);
+            parcel.Envelopes.Last().MessageType.Should().Be(typeof(TopicWasAffectedMessage).ToTypeDescription());
+            Serializer.Deserialize<TopicWasAffectedMessage>(parcel.Envelopes.Last().MessageAsJson).Topic.Name.Should().Be(myTopic);
         }
 
         [Fact]
         public static void SendRecurringParcelWithImpactedTopicAndDependantTopics_InjectsMessages()
         {
             // arrange
-            var trackingSends = new List<Crate>();
-            var courier = Factory.GetInMemoryCourier(trackingSends);
-            var postOffice = new PostOffice(courier());
+            var trackingCalls = new List<string>();
+            var trackingSends = new List<Parcel>();
+            var parcelTrackingSystemBuilder = Factory.GetInMemoryParcelTrackingSystem(trackingCalls, trackingSends);
+            var postOffice = new PostOffice(parcelTrackingSystemBuilder());
             var myTopic = "me";
             var name = "Something";
             var schedule = new DailyScheduleInUtc();
@@ -137,29 +138,28 @@ namespace Naos.MessageBus.Test
                 SimultaneousRunsStrategy.AbortSubsequentRunsWhenOneIsRunning);
 
             // assert
-            var crate = trackingSends.Single();
-            crate.Parcel.Id.Should().Be(trackingCode.ParcelId);
-            crate.Label.Should().Be(name);
-            crate.RecurringSchedule.Should().Be(schedule);
+            var parcel = trackingSends.Single();
+            parcel.Id.Should().Be(trackingCode.ParcelId);
+            parcel.Name.Should().Be(name);
 
-            crate.Parcel.Envelopes.Count.Should().Be(4);
+            parcel.Envelopes.Count.Should().Be(4);
 
             // abort
-            crate.Parcel.Envelopes.First().MessageType.Should().Be(typeof(AbortIfNoTopicsAffectedAndShareResultsMessage).ToTypeDescription());
-            Serializer.Deserialize<AbortIfNoTopicsAffectedAndShareResultsMessage>(crate.Parcel.Envelopes.First().MessageAsJson).Topic.Name.Should().Be(myTopic);
-            Serializer.Deserialize<AbortIfNoTopicsAffectedAndShareResultsMessage>(crate.Parcel.Envelopes.First().MessageAsJson).DependencyTopics.ShouldBeEquivalentTo(dependantTopics);
+            parcel.Envelopes.First().MessageType.Should().Be(typeof(AbortIfNoTopicsAffectedAndShareResultsMessage).ToTypeDescription());
+            Serializer.Deserialize<AbortIfNoTopicsAffectedAndShareResultsMessage>(parcel.Envelopes.First().MessageAsJson).Topic.Name.Should().Be(myTopic);
+            Serializer.Deserialize<AbortIfNoTopicsAffectedAndShareResultsMessage>(parcel.Envelopes.First().MessageAsJson).DependencyTopics.ShouldBeEquivalentTo(dependantTopics);
 
             // being affected
-            crate.Parcel.Envelopes.Skip(1).First().MessageType.Should().Be(typeof(TopicBeingAffectedMessage).ToTypeDescription());
-            Serializer.Deserialize<TopicBeingAffectedMessage>(crate.Parcel.Envelopes.First().MessageAsJson).Topic.Name.Should().Be(myTopic);
+            parcel.Envelopes.Skip(1).First().MessageType.Should().Be(typeof(TopicBeingAffectedMessage).ToTypeDescription());
+            Serializer.Deserialize<TopicBeingAffectedMessage>(parcel.Envelopes.First().MessageAsJson).Topic.Name.Should().Be(myTopic);
 
             // mine
-            crate.Parcel.Envelopes.Skip(2).First().MessageType.Should().Be(typeof(NullMessage).ToTypeDescription());
-            crate.Parcel.Envelopes.Skip(2).First().Channel.Should().Be(channel);
+            parcel.Envelopes.Skip(2).First().MessageType.Should().Be(typeof(NullMessage).ToTypeDescription());
+            parcel.Envelopes.Skip(2).First().Address.Should().Be(channel);
 
             // was affected
-            crate.Parcel.Envelopes.Last().MessageType.Should().Be(typeof(TopicWasAffectedMessage).ToTypeDescription());
-            Serializer.Deserialize<TopicWasAffectedMessage>(crate.Parcel.Envelopes.Last().MessageAsJson).Topic.Name.Should().Be(myTopic);
+            parcel.Envelopes.Last().MessageType.Should().Be(typeof(TopicWasAffectedMessage).ToTypeDescription());
+            Serializer.Deserialize<TopicWasAffectedMessage>(parcel.Envelopes.Last().MessageAsJson).Topic.Name.Should().Be(myTopic);
         }
     }
 }

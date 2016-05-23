@@ -20,17 +20,9 @@ namespace Naos.MessageBus.Domain
         /// </summary>
         /// <param name="trackingCode">Tracking code of the parcel.</param>
         /// <param name="parcel">Parcel that was sent.</param>
-        /// <param name="metadata">Metadata about the sending or the parcel.</param>
+        /// <param name="address">Channel that the parcel was sent to (if any).</param>
         /// <returns>Task for async.</returns>
-        Task Sent(TrackingCode trackingCode, Parcel parcel, IReadOnlyDictionary<string, string> metadata);
-
-        /// <summary>
-        /// Parcel was addressed.
-        /// </summary>
-        /// <param name="trackingCode">Tracking code of the parcel.</param>
-        /// <param name="assignedChannel">Channel the parcel is being sent to.</param>
-        /// <returns>Task for async.</returns>
-        Task Addressed(TrackingCode trackingCode, Channel assignedChannel);
+        Task Sent(TrackingCode trackingCode, Parcel parcel, Channel address);
 
         /// <summary>
         /// Delivery is attempted on a handler, handler details provided.
@@ -91,7 +83,7 @@ namespace Naos.MessageBus.Domain
         }
 
         /// <inheritdoc />
-        public async Task Sent(TrackingCode trackingCode, Parcel parcel, IReadOnlyDictionary<string, string> metadata)
+        public async Task Sent(TrackingCode trackingCode, Parcel parcel, Channel address)
         {
             /* no-op */
             await Task.FromResult<object>(null);

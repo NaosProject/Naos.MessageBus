@@ -40,20 +40,47 @@ namespace Naos.MessageBus.Test
                     Database = "ParcelTrackingReadModel",
                 };
 
-            var topic = new AffectedTopic(Guid.NewGuid().ToString().ToUpperInvariant());
-            var parcel = this.GetParcel(topic);
+            var trackingSends = new List<Crate>();
+            var courier = Factory.GetInMemoryCourier(trackingSends);
+            var parcelTrackingSystem = new ParcelTrackingSystem(courier(), eventConnectionConfiguration, readModelConnectionConfiguration);
+            var postOffice = new PostOffice(parcelTrackingSystem);
 
-            var parcelTrackingSystem = new ParcelTrackingSystem(eventConnectionConfiguration, readModelConnectionConfiguration);
+            var topic = new AffectedTopic(Guid.NewGuid().ToString().ToUpperInvariant());
+
+            var tracking = postOffice.Send(
+                new NullMessage(),
+                new Channel("channel"),
+                "name",
+                topic,
+                null,
+                TopicCheckStrategy.AllowIfAnyTopicCheckYieldsRecent,
+                SimultaneousRunsStrategy.AbortSubsequentRunsWhenOneIsRunning);
+
+            Parcel parcel = null;
+
+            var timeout = DateTime.UtcNow.Add(TimeSpan.FromSeconds(30));
+            while (parcel == null)
+            {
+                if (DateTime.UtcNow > timeout)
+                {
+                    throw new ApplicationException("Events never propaggated.");
+                }
+
+                parcel = trackingSends.SingleOrDefault()?.Parcel;
+            }
+
             var beingAffectedWasDelivered = false; // after this the latest notice shows the topic as being affected
             var seenRejection = false; // after this the parcel will always be in rejected state until aborted or delivered
+
             foreach (var envelope in parcel.Envelopes)
             {
                 var trackingCode = new TrackingCode { ParcelId = parcel.Id, EnvelopeId = envelope.Id };
-                await parcelTrackingSystem.Sent(trackingCode, parcel, new Dictionary<string, string>());
-                (await parcelTrackingSystem.GetTrackingReportAsync(new[] { trackingCode })).Single().Status.Should().Be(seenRejection ? ParcelStatus.Rejected : ParcelStatus.Unknown);
-                await ConfirmNoticeState(parcelTrackingSystem, topic, beingAffectedWasDelivered);
+                if (envelope.Id != parcel.Envelopes.First().Id)
+                {
+                    // should already be sent by original send...
+                    await parcelTrackingSystem.Sent(trackingCode, parcel, envelope.Address);
+                }
 
-                await parcelTrackingSystem.Addressed(trackingCode, envelope.Channel);
                 (await parcelTrackingSystem.GetTrackingReportAsync(new[] { trackingCode })).Single().Status.Should().Be(seenRejection ? ParcelStatus.Rejected : ParcelStatus.Unknown);
                 await ConfirmNoticeState(parcelTrackingSystem, topic, beingAffectedWasDelivered);
 
@@ -120,23 +147,6 @@ namespace Naos.MessageBus.Test
                 (await parcelTrackingSystem.GetLatestNoticeThatTopicWasAffectedAsync(affectedTopic, TopicStatus.WasAffected)).Should().BeNull();
                 (await parcelTrackingSystem.GetLatestNoticeThatTopicWasAffectedAsync(affectedTopic)).Status.Should().Be(TopicStatus.Unknown);
             }
-        }
-
-        private Parcel GetParcel(AffectedTopic affectedTopic, IReadOnlyCollection<DependencyTopic> dependantTopics = null)
-        {
-            var trackingSends = new List<Crate>();
-            var postOffice = new PostOffice(Factory.GetInMemoryCourier(trackingSends)());
-
-            var tracking = postOffice.Send(
-                new NullMessage(),
-                new Channel("channel"),
-                "name",
-                affectedTopic,
-                dependantTopics,
-                TopicCheckStrategy.AllowIfAnyTopicCheckYieldsRecent,
-                SimultaneousRunsStrategy.AbortSubsequentRunsWhenOneIsRunning);
-
-            return trackingSends.Single().Parcel;
         }
     }
 }

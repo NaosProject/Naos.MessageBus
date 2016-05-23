@@ -82,7 +82,7 @@ namespace Naos.MessageBus.Core
             }
 
             // make sure the message was routed correctly (if not then reroute)
-            if (this.servicedChannels.SingleOrDefault(_ => _.Name == parcel.Envelopes.First().Channel?.Name) == null)
+            if (this.servicedChannels.SingleOrDefault(_ => _.Name == parcel.Envelopes.First().Address?.Name) == null)
             {
                 // any schedule should already be set and NOT reset...
                 this.postOffice.Send(parcel);
@@ -401,7 +401,7 @@ namespace Naos.MessageBus.Core
                     Serializer.Deserialize(
                         messageType,
                         envelope.MessageAsJson),
-                Channel = envelope.Channel
+                Channel = envelope.Address
             };
 
             if (ret.Message == null)

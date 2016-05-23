@@ -264,7 +264,7 @@ namespace Naos.MessageBus.Test
                 new HarnessStaticDetails(),
                 new NullParcelTrackingSystem(),
                 activeMessageTracker,
-                new PostOffice(new NullCourier()));
+                new PostOffice(new NullParcelTrackingSystem()));
 
             var message = new WaitMessage { Description = "RunMe", TimeToWait = TimeSpan.FromSeconds(3) };
             var envelope = message.ToChanneledMessage(channel).ToEnvelope();
@@ -322,9 +322,9 @@ namespace Naos.MessageBus.Test
             container.Register<IHandleMessages<ThrowsExceptionMessage>, ThrowsExceptionMessageHandler>();
 
             var trackingCalls = new List<string>();
-            var trackingConstructor = Factory.GetInMemoryParcelTrackingSystem(trackingCalls);
-
             var trackingSends = new List<Parcel>();
+            var trackingSendsFromTracker = new List<Parcel>();
+            var trackingConstructor = Factory.GetInMemoryParcelTrackingSystem(trackingCalls, trackingSendsFromTracker);
             var senderConstructor = Factory.GetInMemorySender(trackingSends);
 
             var monitoredChannel = new Channel("ChannelName");
@@ -373,7 +373,8 @@ namespace Naos.MessageBus.Test
             container.Register<IHandleMessages<ThrowsExceptionMessage>, ThrowsExceptionMessageHandler>();
 
             var trackingCalls = new List<string>();
-            var trackingConstructor = Factory.GetInMemoryParcelTrackingSystem(trackingCalls);
+            var trackingSendsFromTracker = new List<Parcel>();
+            var trackingConstructor = Factory.GetInMemoryParcelTrackingSystem(trackingCalls, trackingSendsFromTracker);
 
             var trackingSends = new List<Parcel>();
             var senderConstructor = Factory.GetInMemorySender(trackingSends);
@@ -424,7 +425,8 @@ namespace Naos.MessageBus.Test
             container.Register<IHandleMessages<ThrowsExceptionMessage>, ThrowsExceptionMessageHandler>();
 
             var trackingCalls = new List<string>();
-            var trackingConstructor = Factory.GetInMemoryParcelTrackingSystem(trackingCalls);
+            var trackingSendsFromTracker = new List<Parcel>();
+            var trackingConstructor = Factory.GetInMemoryParcelTrackingSystem(trackingCalls, trackingSendsFromTracker);
 
             var trackingSends = new List<Parcel>();
             var senderConstructor = Factory.GetInMemorySender(trackingSends);
@@ -471,7 +473,8 @@ namespace Naos.MessageBus.Test
             container.Register<IHandleMessages<NullMessage>, NullMessageHandler>();
 
             var trackingCalls = new List<string>();
-            var trackingConstructor = Factory.GetInMemoryParcelTrackingSystem(trackingCalls);
+            var trackingSendsFromTracker = new List<Parcel>();
+            var trackingConstructor = Factory.GetInMemoryParcelTrackingSystem(trackingCalls, trackingSendsFromTracker);
 
             var trackingSends = new List<Parcel>();
             var senderConstructor = Factory.GetInMemorySender(trackingSends);
@@ -503,7 +506,8 @@ namespace Naos.MessageBus.Test
             container.Register<IHandleMessages<NullMessage>, NullMessageHandler>();
 
             var trackingCalls = new List<string>();
-            var trackingConstructor = Factory.GetInMemoryParcelTrackingSystem(trackingCalls);
+            var trackingSendsFromTracker = new List<Parcel>();
+            var trackingConstructor = Factory.GetInMemoryParcelTrackingSystem(trackingCalls, trackingSendsFromTracker);
 
             var trackingSends = new List<Parcel>();
             var senderConstructor = Factory.GetInMemorySender(trackingSends);
@@ -737,7 +741,7 @@ namespace Naos.MessageBus.Test
             var messageJson = Serializer.Serialize(message);
 
             var channel = new Channel("fakeChannel");
-            var messageDispatcher = new MessageDispatcher(simpleInjectorContainer, new ConcurrentDictionary<Type, object>(), new[] { channel }, TypeMatchStrategy.NamespaceAndName, TimeSpan.FromSeconds(.5), new HarnessStaticDetails(), new NullParcelTrackingSystem(), new InMemoryActiveMessageTracker(), new PostOffice(new NullCourier()));
+            var messageDispatcher = new MessageDispatcher(simpleInjectorContainer, new ConcurrentDictionary<Type, object>(), new[] { channel }, TypeMatchStrategy.NamespaceAndName, TimeSpan.FromSeconds(.5), new HarnessStaticDetails(), new NullParcelTrackingSystem(), new InMemoryActiveMessageTracker(), new PostOffice(new NullParcelTrackingSystem()));
             var parcel = new Parcel
                              {
                                  Id = Guid.NewGuid(),
@@ -764,7 +768,7 @@ namespace Naos.MessageBus.Test
             var messageJson = Serializer.Serialize(message);
 
             var channel = new Channel("fakeChannel");
-            var messageDispatcher = new MessageDispatcher(simpleInjectorContainer, new ConcurrentDictionary<Type, object>(), new[] { channel }, TypeMatchStrategy.NamespaceAndName, TimeSpan.FromSeconds(.5), new HarnessStaticDetails(), new NullParcelTrackingSystem(), new InMemoryActiveMessageTracker(), new PostOffice(new NullCourier()));
+            var messageDispatcher = new MessageDispatcher(simpleInjectorContainer, new ConcurrentDictionary<Type, object>(), new[] { channel }, TypeMatchStrategy.NamespaceAndName, TimeSpan.FromSeconds(.5), new HarnessStaticDetails(), new NullParcelTrackingSystem(), new InMemoryActiveMessageTracker(), new PostOffice(new NullParcelTrackingSystem()));
             var parcel = new Parcel
                              {
                                  Id = Guid.NewGuid(),
@@ -844,7 +848,7 @@ namespace Naos.MessageBus.Test
                 container = new Container();
             }
 
-            return new MessageDispatcher(container, new ConcurrentDictionary<Type, object>(), channels, TypeMatchStrategy.NamespaceAndName, TimeSpan.FromSeconds(.5), new HarnessStaticDetails(), new NullParcelTrackingSystem(), new InMemoryActiveMessageTracker(), new PostOffice(new NullCourier()));
+            return new MessageDispatcher(container, new ConcurrentDictionary<Type, object>(), channels, TypeMatchStrategy.NamespaceAndName, TimeSpan.FromSeconds(.5), new HarnessStaticDetails(), new NullParcelTrackingSystem(), new InMemoryActiveMessageTracker(), new PostOffice(new NullParcelTrackingSystem()));
         }
 
         public class StateHandler : IHandleMessages<InitialStateMessage>, INeedSharedState<string>

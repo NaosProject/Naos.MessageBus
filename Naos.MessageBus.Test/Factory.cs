@@ -46,12 +46,21 @@ namespace Naos.MessageBus.Test
             return () => ret;
         }
 
-        public static Func<IParcelTrackingSystem> GetInMemoryParcelTrackingSystem(List<string> trackingCalls)
+        public static Func<IParcelTrackingSystem> GetInMemoryParcelTrackingSystem(List<string> trackingCalls, List<Parcel> trackingParcelsFromSent)
         {
             Action<string> track = trackingCalls.Add;
 
             var ret = A.Fake<IParcelTrackingSystem>();
-            A.CallTo(ret).Invokes(call => track(call.Method.Name));
+            A.CallTo(ret).Invokes(
+                call =>
+                    {
+                        if (call.Method.Name == nameof(IParcelTrackingSystem.Sent))
+                        {
+                            trackingParcelsFromSent.Add(call.Arguments.Skip(1).First() as Parcel);
+                        }
+
+                        track(call.Method.Name);
+                    });
             return () => ret;
         }
 

@@ -7,6 +7,7 @@
 namespace Naos.MessageBus.Persistence
 {
     using System;
+    using System.Collections.Concurrent;
     using System.Collections.Generic;
     using System.Diagnostics;
     using System.Linq;
@@ -21,11 +22,15 @@ namespace Naos.MessageBus.Persistence
 
     using Polly;
 
+    using EventHandlingError = Microsoft.Its.Domain.EventHandlingError;
+
     /// <summary>
     /// Implementation of the <see cref="IParcelTrackingSystem"/> using Its.CQRS.
     /// </summary>
     public class ParcelTrackingSystem : IParcelTrackingSystem
     {
+        private readonly ConcurrentBag<EventHandlingError> eventBusErrors = new ConcurrentBag<EventHandlingError>();
+
         private readonly ReadModelPersistenceConnectionConfiguration readModelPersistenceConnectionConfiguration;
 
         private readonly int retryCount;
@@ -35,10 +40,11 @@ namespace Naos.MessageBus.Persistence
         /// <summary>
         /// Initializes a new instance of the <see cref="ParcelTrackingSystem"/> class.
         /// </summary>
+        /// <param name="courier">Interface for transporting parcels.</param>
         /// <param name="eventPersistenceConnectionConfiguration">Connection string to the event persistence.</param>
         /// <param name="readModelPersistenceConnectionConfiguration">Connection string to the read model persistence.</param>
         /// <param name="retryCount">Number of retries to perform if error encountered (default is 5).</param>
-        public ParcelTrackingSystem(EventPersistenceConnectionConfiguration eventPersistenceConnectionConfiguration, ReadModelPersistenceConnectionConfiguration readModelPersistenceConnectionConfiguration, int retryCount = 5)
+        public ParcelTrackingSystem(ICourier courier, EventPersistenceConnectionConfiguration eventPersistenceConnectionConfiguration, ReadModelPersistenceConnectionConfiguration readModelPersistenceConnectionConfiguration, int retryCount = 5)
         {
             this.readModelPersistenceConnectionConfiguration = readModelPersistenceConnectionConfiguration;
             this.retryCount = retryCount;
@@ -57,12 +63,13 @@ namespace Naos.MessageBus.Persistence
             var eventBus = new InProcessEventBus();
 
             // update handler to synchronously process updates to read models (using the IUpdateProjectionWhen<TEvent> interface)
-            var updateTrackedShipment = new UpdateTrackedShipment(this.readModelPersistenceConnectionConfiguration);
+            var updateTrackedShipment = new ParcelTrackingEventHandler(courier, this.readModelPersistenceConnectionConfiguration);
 
             // subscribe handler to bus to get updates
             eventBus.Subscribe(updateTrackedShipment);
             eventBus.Errors.Subscribe(
                 e => Log.Write(new LogEntry(e.ToString(), e) { EventType = e.Exception != null ? TraceEventType.Error : TraceEventType.Information }));
+            eventBus.Errors.Subscribe(e => this.eventBusErrors.Add(e));
 
             // create a new event sourced repository to seed the config DI with for commands to interact with
             IEventSourcedRepository<Shipment> eventSourcedRepository = new SqlEventSourcedRepository<Shipment>(eventBus, createEventStoreDbContext);
@@ -80,29 +87,18 @@ namespace Naos.MessageBus.Persistence
         }
 
         /// <inheritdoc />
-        public async Task Sent(TrackingCode trackingCode, Parcel parcel, IReadOnlyDictionary<string, string> metadata)
+        public async Task Sent(TrackingCode trackingCode, Parcel parcel, Channel address)
         {
             // shipment may already exist and this is just another envelope to deal with...
             var shipment = await this.FetchShipmentAsync(trackingCode);
             if (shipment == null)
             {
-                var commandCreate = new Create { AggregateId = parcel.Id, Parcel = parcel, CreationMetadata = metadata };
+                var commandCreate = new Create { AggregateId = parcel.Id, Parcel = parcel };
                 shipment = new Shipment(commandCreate);
             }
 
             var command = new Send { TrackingCode = trackingCode };
             shipment.EnactCommand(command);
-            await this.SaveShipmentAsync(shipment);
-        }
-
-        /// <inheritdoc />
-        public async Task Addressed(TrackingCode trackingCode, Channel assignedChannel)
-        {
-            var shipment = await this.FetchShipmentAsync(trackingCode);
-
-            var command = new UpdateAddress { TrackingCode = trackingCode, Address = assignedChannel };
-            shipment.EnactCommand(command);
-
             await this.SaveShipmentAsync(shipment);
         }
 
@@ -255,11 +251,21 @@ namespace Naos.MessageBus.Persistence
 
         private async Task<T> RunWithRetryAsync<T>(Func<Task<T>> func)
         {
+            if (this.eventBusErrors.Any())
+            {
+                throw new AggregateException("Errors on the EventBus prevent further use of tracking system.", this.eventBusErrors.Select(_ => _.Exception ?? new ApplicationException(_.ToString())));
+            }
+
             return await Policy.Handle<Exception>().WaitAndRetryAsync(this.retryCount, attempt => TimeSpan.FromSeconds(attempt * 5)).ExecuteAsync(func);
         }
 
         private async Task RunWithRetryAsync(Func<Task> func)
         {
+            if (this.eventBusErrors.Any())
+            {
+                throw new AggregateException("Errors on the EventBus prevent further use of tracking system.", this.eventBusErrors.Select(_ => _.Exception ?? new ApplicationException(_.ToString())));
+            }
+
             await Policy.Handle<Exception>().WaitAndRetryAsync(this.retryCount, attempt => TimeSpan.FromSeconds(attempt * 5)).ExecuteAsync(func);
         }
     }

@@ -18,14 +18,14 @@ namespace Naos.MessageBus.Domain
         /// </summary>
         /// <param name="id">Id of envelope.</param>
         /// <param name="description">Description of envelope.</param>
-        /// <param name="channel">Channel envelope is addressed to.</param>
+        /// <param name="address">Channel envelope is addressed to.</param>
         /// <param name="messageAsJson">Message in JSON.</param>
         /// <param name="messageType">Message type description.</param>
-        public Envelope(string id, string description, Channel channel, string messageAsJson, TypeDescription messageType)
+        public Envelope(string id, string description, Channel address, string messageAsJson, TypeDescription messageType)
         {
             this.Id = id;
             this.Description = description;
-            this.Channel = channel;
+            this.Address = address;
             this.MessageAsJson = messageAsJson;
             this.MessageType = messageType;
         }
@@ -53,7 +53,7 @@ namespace Naos.MessageBus.Domain
         /// <summary>
         /// Gets the channel the message should be broadcasted on.
         /// </summary>
-        public Channel Channel { get; }
+        public Channel Address { get; }
 
         #region Equality
 
@@ -91,7 +91,7 @@ namespace Naos.MessageBus.Domain
 
             var result = 
                    (this.Id == other.Id) 
-                && (this.Channel == other.Channel) 
+                && (this.Address == other.Address) 
                 && (this.Description == other.Description)
                 && (this.MessageType == other.MessageType) 
                 && (this.MessageAsJson == other.MessageAsJson);
@@ -119,7 +119,7 @@ namespace Naos.MessageBus.Domain
                 // ReSharper disable NonReadonlyMemberInGetHashCode
                 int hash = (int)2166136261;
                 hash = hash * 16777619 ^ this.Id.GetHashCode();
-                hash = hash * 16777619 ^ this.Channel.GetHashCode();
+                hash = hash * 16777619 ^ this.Address.GetHashCode();
                 hash = hash * 16777619 ^ this.Description.GetHashCode();
                 hash = hash * 16777619 ^ this.MessageType.GetHashCode();
                 hash = hash * 16777619 ^ this.MessageAsJson.GetHashCode();

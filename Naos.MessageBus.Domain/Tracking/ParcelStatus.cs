@@ -17,11 +17,6 @@ namespace Naos.MessageBus.Domain
         Unknown,
 
         /// <summary>
-        /// Parcel was sent.
-        /// </summary>
-        Sent,
-
-        /// <summary>
         /// Parcel has not been delivered yet.
         /// </summary>
         InTransit,

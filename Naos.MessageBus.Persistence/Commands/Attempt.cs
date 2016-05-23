@@ -30,9 +30,8 @@ namespace Naos.MessageBus.Persistence
             get
             {
                 var trackingCodeSet = Validate.That<Attempt>(cmd => cmd.TrackingCode != null).WithErrorMessage("TrackingCode must be specified.");
-                var recipientSet = Validate.That<Attempt>(cmd => cmd.Recipient != null).WithErrorMessage("Recipient must be specified.");
 
-                return new ValidationPlan<Attempt> { trackingCodeSet, recipientSet };
+                return new ValidationPlan<Attempt> { trackingCodeSet };
             }
         }
 

@@ -1,5 +1,5 @@
 // --------------------------------------------------------------------------------------------------------------------
-// <copyright file="UpdateTrackedShipment.cs" company="Naos">
+// <copyright file="ParcelTrackingEventHandler.cs" company="Naos">
 //   Copyright 2015 Naos
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
@@ -19,24 +19,29 @@ namespace Naos.MessageBus.Persistence
     /// <summary>
     /// Handler to keep TrackedShipment read model updated as events come in.
     /// </summary>
-    public class UpdateTrackedShipment : IUpdateProjectionWhen<Shipment.Created>,
+    public class ParcelTrackingEventHandler : IUpdateProjectionWhen<Shipment.Created>,
+                                         IUpdateProjectionWhen<Shipment.EnvelopeSent>,
                                          IUpdateProjectionWhen<Shipment.EnvelopeDeliveryRejected>,
                                          IUpdateProjectionWhen<Shipment.ParcelDelivered>,
                                          IUpdateProjectionWhen<Shipment.EnvelopeDeliveryAborted>,
                                          IUpdateProjectionWhen<Shipment.TopicBeingAffected>,
                                          IUpdateProjectionWhen<Shipment.TopicWasAffected>
     {
+        private readonly ICourier courier;
+
         private readonly ReadModelPersistenceConnectionConfiguration readModelPersistenceConnectionConfiguration;
 
         private readonly int retryCount;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="UpdateTrackedShipment"/> class.
+        /// Initializes a new instance of the <see cref="ParcelTrackingEventHandler"/> class.
         /// </summary>
+        /// <param name="courier">Interface for transporting parcels.</param>
         /// <param name="readModelPersistenceConnectionConfiguration">Connection string to the read model database.</param>
         /// <param name="retryCount">Number of retries to attempt if error encountered (default if 5).</param>
-        public UpdateTrackedShipment(ReadModelPersistenceConnectionConfiguration readModelPersistenceConnectionConfiguration, int retryCount = 5)
+        public ParcelTrackingEventHandler(ICourier courier, ReadModelPersistenceConnectionConfiguration readModelPersistenceConnectionConfiguration, int retryCount = 5)
         {
+            this.courier = courier;
             this.readModelPersistenceConnectionConfiguration = readModelPersistenceConnectionConfiguration;
             this.retryCount = retryCount;
         }
@@ -54,6 +59,24 @@ namespace Naos.MessageBus.Persistence
                             db.SaveChanges();
                         }
                     });
+        }
+
+        /// <inheritdoc />
+        public void UpdateProjection(Shipment.EnvelopeSent @event)
+        {
+            var parcel = @event.Parcel;
+            var label = !string.IsNullOrWhiteSpace(parcel.Name) ? parcel.Name : "Sequence " + parcel.Id + " - " + parcel.Envelopes.First().Description;
+            var crate = new Crate
+            {
+                TrackingCode = @event.TrackingCode,
+                Address = @event.Address,
+                Label = label,
+                Parcel = parcel,
+                RecurringSchedule = @event.RecurringSchedule
+            };
+
+            // TODO: save this?
+            var courierTrackingCode = this.courier.Send(crate);
         }
 
         /// <inheritdoc />
