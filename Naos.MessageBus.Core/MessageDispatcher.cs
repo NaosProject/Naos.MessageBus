@@ -177,7 +177,7 @@ namespace Naos.MessageBus.Core
                 try
                 {
                     activity.Trace(() => "Handling message (calling Handle on selected Handler).");
-                    var methodInfo = handlerType.GetMethod("HandleAsync");
+                    var methodInfo = handlerType.GetMethod(nameof(IHandleMessages<IMessage>.HandleAsync));
                     var result = methodInfo.Invoke(handler, new object[] { messageToHandle });
                     var task = result as Task;
                     if (task == null)
