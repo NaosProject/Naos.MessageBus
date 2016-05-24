@@ -74,7 +74,7 @@ namespace Naos.MessageBus.Hangfire.Sender
             {
                 // need to inject a recurring message to make it work...
                 var newEnvelopes =
-                    new List<Envelope>(new[] { new RecurringHeaderMessage { Description = crate.Label }.ToChanneledMessage(crate.Address).ToEnvelope() });
+                    new List<Envelope>(new[] { new RecurringHeaderMessage { Description = crate.Label }.ToAddressedMessage(crate.Address).ToEnvelope() });
                 newEnvelopes.AddRange(crate.Parcel.Envelopes.Select(_ => _));
                 var newParcel = new Parcel { Id = crate.Parcel.Id, SharedInterfaceStates = crate.Parcel.SharedInterfaceStates, Envelopes = newEnvelopes };
                 parcel = newParcel;

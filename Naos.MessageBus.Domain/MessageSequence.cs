@@ -27,7 +27,7 @@ namespace Naos.MessageBus.Domain
         /// <summary>
         /// Gets or sets the messages to run in order.
         /// </summary>
-        public ICollection<ChanneledMessage> ChanneledMessages { get; set; }
+        public ICollection<AddressedMessage> AddressedMessages { get; set; }
 
         /// <summary>
         /// Gets or sets the topic the parcel impacts.

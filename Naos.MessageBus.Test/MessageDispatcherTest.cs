@@ -57,20 +57,20 @@ namespace Naos.MessageBus.Test
  
             var messageSequence = new MessageSequence
                                       {
-                                          ChanneledMessages =
+                                          AddressedMessages =
                                               new[]
                                                   {
-                                                      new ChanneledMessage
+                                                      new AddressedMessage
                                                           {
                                                               Channel = channel,
                                                               Message = firstMessage
                                                           },
-                                                      new ChanneledMessage
+                                                      new AddressedMessage
                                                           {
                                                               Channel = channel,
                                                               Message = secondMessage
                                                           },
-                                                      new ChanneledMessage
+                                                      new AddressedMessage
                                                           {
                                                               Channel = channel,
                                                               Message = thirdMessage
@@ -78,7 +78,7 @@ namespace Naos.MessageBus.Test
                                                   }
                                       };
 
-            var envelopesFromSequence = messageSequence.ChanneledMessages.Select(channeledMessage => channeledMessage.ToEnvelope()).ToList();
+            var envelopesFromSequence = messageSequence.AddressedMessages.Select(addressedMessage => addressedMessage.ToEnvelope()).ToList();
 
             var parcel = new Parcel { Envelopes = envelopesFromSequence };
 
@@ -127,7 +127,7 @@ namespace Naos.MessageBus.Test
 
             var envelopesFromSequence = new[]
                                             {
-                                                firstMessage.ToChanneledMessage(channel).ToEnvelope(),
+                                                firstMessage.ToAddressedMessage(channel).ToEnvelope(),
                                                 new Envelope(
                                                     "2",
                                                     "No work",
@@ -173,7 +173,7 @@ namespace Naos.MessageBus.Test
             var firstMessage = new MessageOne() { Description = "RunMe 1" };
             var secondMessage = new MessageTwo() { Description = "RunMe 2" };
 
-            var envelopesFromSequence = new[] { firstMessage.ToChanneledMessage(channel).ToEnvelope(), secondMessage.ToChanneledMessage(channel).ToEnvelope() };
+            var envelopesFromSequence = new[] { firstMessage.ToAddressedMessage(channel).ToEnvelope(), secondMessage.ToAddressedMessage(channel).ToEnvelope() };
 
             var parcel = new Parcel { Envelopes = envelopesFromSequence };
 
@@ -212,7 +212,7 @@ namespace Naos.MessageBus.Test
             var firstMessage = new MessageOneShare() { Description = "RunMe 1" };
             var secondMessage = new MessageTwoShare() { Description = "RunMe 2" };
 
-            var envelopesFromSequence = new[] { firstMessage.ToChanneledMessage(channel).ToEnvelope(), secondMessage.ToChanneledMessage(channel).ToEnvelope() };
+            var envelopesFromSequence = new[] { firstMessage.ToAddressedMessage(channel).ToEnvelope(), secondMessage.ToAddressedMessage(channel).ToEnvelope() };
 
             var parcel = new Parcel { Envelopes = envelopesFromSequence };
 
@@ -267,7 +267,7 @@ namespace Naos.MessageBus.Test
                 new PostOffice(new NullParcelTrackingSystem()));
 
             var message = new WaitMessage { Description = "RunMe", TimeToWait = TimeSpan.FromSeconds(3) };
-            var envelope = message.ToChanneledMessage(channel).ToEnvelope();
+            var envelope = message.ToAddressedMessage(channel).ToEnvelope();
 
             Assert.Equal(0, activeMessageTracker.ActiveMessagesCount);
             ThreadPool.QueueUserWorkItem(
@@ -299,9 +299,9 @@ namespace Naos.MessageBus.Test
                 new InMemoryActiveMessageTracker(),
                 senderConstructor());
 
-            var validParcel = new Parcel { Envelopes = new[] { new NullMessage().ToChanneledMessage(monitoredChannel).ToEnvelope(), } };
+            var validParcel = new Parcel { Envelopes = new[] { new NullMessage().ToAddressedMessage(monitoredChannel).ToEnvelope(), } };
 
-            var invalidParcel = new Parcel { Envelopes = new[] { new NullMessage().ToChanneledMessage(new Channel("OtherChannel")).ToEnvelope() } };
+            var invalidParcel = new Parcel { Envelopes = new[] { new NullMessage().ToAddressedMessage(new Channel("OtherChannel")).ToEnvelope() } };
 
             dispatcher.Dispatch(new TrackingCode(), "ValidParcel", validParcel);
             Assert.Equal(0, trackingSends.Count);
@@ -350,7 +350,7 @@ namespace Naos.MessageBus.Test
                                                      ExceptionToThrowJson = Serializer.Serialize(exception),
                                                      ExceptionToThrowType = exception.GetType().ToTypeDescription(),
                                                      TypeMatchStrategy = TypeMatchStrategy.NamespaceAndName
-                                                 }.ToChanneledMessage(
+                                                 }.ToAddressedMessage(
                                                      monitoredChannel).ToEnvelope()
                                          }
                              };
@@ -402,7 +402,7 @@ namespace Naos.MessageBus.Test
                                                      ExceptionToThrowJson = Serializer.Serialize(exception),
                                                      ExceptionToThrowType = exception.GetType().ToTypeDescription(),
                                                      TypeMatchStrategy = TypeMatchStrategy.NamespaceAndName
-                                                 }.ToChanneledMessage(
+                                                 }.ToAddressedMessage(
                                                      monitoredChannel).ToEnvelope()
                                          }
             };
@@ -454,7 +454,7 @@ namespace Naos.MessageBus.Test
                                                      ExceptionToThrowJson = Serializer.Serialize(exception),
                                                      ExceptionToThrowType = exception.GetType().ToTypeDescription(),
                                                      TypeMatchStrategy = TypeMatchStrategy.NamespaceAndName
-                                                 }.ToChanneledMessage(
+                                                 }.ToAddressedMessage(
                                                      monitoredChannel).ToEnvelope()
                                          }
             };
@@ -491,7 +491,7 @@ namespace Naos.MessageBus.Test
                 new InMemoryActiveMessageTracker(),
                 senderConstructor());
 
-            var parcel = new Parcel { Envelopes = new[] { new NullMessage().ToChanneledMessage(monitoredChannel).ToEnvelope() } };
+            var parcel = new Parcel { Envelopes = new[] { new NullMessage().ToAddressedMessage(monitoredChannel).ToEnvelope() } };
 
             dispatcher.Dispatch(new TrackingCode(), "Parcel", parcel);
 
@@ -529,8 +529,8 @@ namespace Naos.MessageBus.Test
                                  Envelopes =
                                      new[]
                                          {
-                                             new RecurringHeaderMessage().ToChanneledMessage(null).ToEnvelope(),
-                                             new NullMessage().ToChanneledMessage(monitoredChannel).ToEnvelope(),
+                                             new RecurringHeaderMessage().ToAddressedMessage(null).ToEnvelope(),
+                                             new NullMessage().ToAddressedMessage(monitoredChannel).ToEnvelope(),
                                          }
                              };
 
@@ -559,9 +559,9 @@ namespace Naos.MessageBus.Test
                 new InMemoryActiveMessageTracker(),
                 Factory.GetInMemorySender(trackingSends)());
 
-            var validParcel = new Parcel { Envelopes = new[] { new NullMessage().ToChanneledMessage(monitoredChannel).ToEnvelope() } };
+            var validParcel = new Parcel { Envelopes = new[] { new NullMessage().ToAddressedMessage(monitoredChannel).ToEnvelope() } };
 
-            var invalidParcel = new Parcel { Envelopes = new[] { new NullMessage().ToChanneledMessage(new Channel("OtherChannel")).ToEnvelope() } };
+            var invalidParcel = new Parcel { Envelopes = new[] { new NullMessage().ToAddressedMessage(new Channel("OtherChannel")).ToEnvelope() } };
 
             dispatcher.Dispatch(new TrackingCode(), "ValidParcel", validParcel);
             Assert.Equal(0, trackingSends.Count);

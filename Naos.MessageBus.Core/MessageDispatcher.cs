@@ -144,9 +144,9 @@ namespace Naos.MessageBus.Core
         {
             var firstEnvelope = parcel.Envelopes.First();
             var remainingEnvelopes = parcel.Envelopes.Skip(1).ToList();
-            var firstChanneledMessage = this.DeserializeEnvelopeIntoChanneledMessage(firstEnvelope);
+            var firstAddressedMessage = this.DeserializeEnvelopeIntoAddressedMessage(firstEnvelope);
 
-            var messageToHandle = firstChanneledMessage.Message;
+            var messageToHandle = firstAddressedMessage.Message;
 
             var messageType = messageToHandle.GetType();
             var handlerType = typeof(IHandleMessages<>).MakeGenericType(messageType);
@@ -385,7 +385,7 @@ namespace Naos.MessageBus.Core
             }
         }
 
-        private ChanneledMessage DeserializeEnvelopeIntoChanneledMessage(Envelope envelope)
+        private AddressedMessage DeserializeEnvelopeIntoAddressedMessage(Envelope envelope)
         {
             if (string.IsNullOrEmpty(envelope.MessageType?.AssemblyQualifiedName) || string.IsNullOrEmpty(envelope.MessageType.Namespace) || string.IsNullOrEmpty(envelope.MessageType.Name))
             {
@@ -394,7 +394,7 @@ namespace Naos.MessageBus.Core
 
             var messageType = this.ResolveMessageTypeUsingRegisteredHandlers(envelope.MessageType);
 
-            var ret = new ChanneledMessage
+            var ret = new AddressedMessage
             {
                 Message =
                     (IMessage)

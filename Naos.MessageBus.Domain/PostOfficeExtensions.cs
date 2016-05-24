@@ -14,14 +14,14 @@ namespace Naos.MessageBus.Domain
     public static class PostOfficeExtensions
     {
         /// <summary>
-        /// Extension on <see cref="IMessage"/> to convert into a channeled message.
+        /// Extension on <see cref="IMessage"/> to convert into an addressed message.
         /// </summary>
         /// <param name="message">Message to wrap.</param>
         /// <param name="channel">Channel to send to.</param>
-        /// <returns><see cref="ChanneledMessage"/> with message and channel.</returns>
-        public static ChanneledMessage ToChanneledMessage(this IMessage message, Channel channel)
+        /// <returns><see cref="AddressedMessage"/> with message and channel.</returns>
+        public static AddressedMessage ToAddressedMessage(this IMessage message, Channel channel)
         {
-            return new ChanneledMessage
+            return new AddressedMessage
             {
                 Channel = channel,
                 Message = message
@@ -29,19 +29,19 @@ namespace Naos.MessageBus.Domain
         }
 
         /// <summary>
-        /// Extension on <see cref="ChanneledMessage"/> to wrap in an envelope.
+        /// Extension on <see cref="AddressedMessage"/> to wrap in an envelope.
         /// </summary>
-        /// <param name="channeledMessage">Channeled message to wrap.</param>
-        /// <returns><see cref="Envelope"/> with channeled message.</returns>
-        public static Envelope ToEnvelope(this ChanneledMessage channeledMessage)
+        /// <param name="addressedMessage">Addressed message to wrap.</param>
+        /// <returns><see cref="Envelope"/> with addressed message.</returns>
+        public static Envelope ToEnvelope(this AddressedMessage addressedMessage)
         {
-            var messageType = channeledMessage.Message.GetType();
+            var messageType = addressedMessage.Message.GetType();
 
             return new Envelope(
                 Guid.NewGuid().ToString().ToUpperInvariant(),
-                channeledMessage.Message.Description,
-                channeledMessage.Channel,
-                Serializer.Serialize(channeledMessage.Message),
+                addressedMessage.Message.Description,
+                addressedMessage.Channel,
+                Serializer.Serialize(addressedMessage.Message),
                 messageType.ToTypeDescription());
         }
     }

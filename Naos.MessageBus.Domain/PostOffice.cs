@@ -61,7 +61,7 @@ namespace Naos.MessageBus.Domain
                                       {
                                           Id = messageSequenceId,
                                           Name = name,
-                                          ChanneledMessages = new[] { message.ToChanneledMessage(channel) },
+                                          AddressedMessages = new[] { message.ToAddressedMessage(channel) },
                                           Topic = topic,
                                           DependencyTopics = dependencyTopics,
                                           DependencyTopicCheckStrategy = dependencyTopicCheckStrategy,
@@ -79,7 +79,7 @@ namespace Naos.MessageBus.Domain
                 throw new ArgumentException("Must set the Id of the MessageSequence");
             }
 
-            var envelopesFromSequence = messageSequence.ChanneledMessages.Select(channeledMessage => channeledMessage.ToEnvelope()).ToList();
+            var envelopesFromSequence = messageSequence.AddressedMessages.Select(addressedMessage => addressedMessage.ToEnvelope()).ToList();
 
             // if this is recurring we must inject a null message that will be handled on the default queue and immediately moved to the next one 
             //             that will be put in the correct queue...
@@ -169,7 +169,7 @@ namespace Naos.MessageBus.Domain
                                            SimultaneousRunsStrategy = parcel.SimultaneousRunsStrategy
                                        };
 
-                newEnvelopes.Add(abortMessage.ToChanneledMessage(null).ToEnvelope());
+                newEnvelopes.Add(abortMessage.ToAddressedMessage(null).ToEnvelope());
             }
 
             // add a being affected message
@@ -179,7 +179,7 @@ namespace Naos.MessageBus.Domain
                                          Topic = parcel.Topic
                                      };
 
-            newEnvelopes.Add(beingAffectedMessage.ToChanneledMessage(null).ToEnvelope());
+            newEnvelopes.Add(beingAffectedMessage.ToAddressedMessage(null).ToEnvelope());
 
             // add the envelopes passed in
             newEnvelopes.AddRange(envelopes);
@@ -191,7 +191,7 @@ namespace Naos.MessageBus.Domain
                                            Topic = parcel.Topic
                                        };
 
-            newEnvelopes.Add(wasAffectedMessage.ToChanneledMessage(null).ToEnvelope());
+            newEnvelopes.Add(wasAffectedMessage.ToAddressedMessage(null).ToEnvelope());
 
             var newParcel = new Parcel { Id = parcelId, Name = parcel.Name, SharedInterfaceStates = sharedInterfaceStates, Envelopes = newEnvelopes };
 
