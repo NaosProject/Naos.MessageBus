@@ -69,7 +69,7 @@ namespace Naos.MessageBus.Core
         }
 
         /// <inheritdoc />
-        public void Dispatch(TrackingCode trackingCode, string displayName, Parcel parcel)
+        public void Dispatch(string displayName, TrackingCode trackingCode, Parcel parcel)
         {
             if (parcel == null)
             {

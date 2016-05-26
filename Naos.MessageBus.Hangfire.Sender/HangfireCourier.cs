@@ -57,7 +57,7 @@ namespace Naos.MessageBus.Hangfire.Sender
             var client = new BackgroundJobClient();
             var state = new EnqueuedState { Queue = simpleChannel.Name, };
 
-            Expression<Action<IDispatchMessages>> methodCall = _ => _.Dispatch(crate.TrackingCode, crate.Label, parcel);
+            Expression<Action<IDispatchMessages>> methodCall = _ => _.Dispatch(crate.Label, crate.TrackingCode, parcel);
             var hangfireId = client.Create<IDispatchMessages>(methodCall, state);
 
             if (crate.RecurringSchedule.GetType() != typeof(NullSchedule))
