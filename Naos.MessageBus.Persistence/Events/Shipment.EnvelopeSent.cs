@@ -41,11 +41,6 @@ namespace Naos.MessageBus.Persistence
             /// </summary>
             public IChannel Address { get; set; }
 
-            /// <summary>
-            /// Gets or sets the recurring schedule if any.
-            /// </summary>
-            public ScheduleBase RecurringSchedule { get; set; }
-
             /// <inheritdoc />
             public override void Update(Shipment aggregate)
             {

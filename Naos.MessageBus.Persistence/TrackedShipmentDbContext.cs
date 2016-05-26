@@ -26,7 +26,7 @@ namespace Naos.MessageBus.Persistence
         /// <summary>
         /// Gets or sets the shipments.
         /// </summary>
-        public virtual DbSet<ParcelTrackingReport> Shipments { get; set; }
+        public virtual DbSet<ShipmentForDatabase> Shipments { get; set; }
 
         /// <summary>
         /// Gets or sets the notices.
@@ -36,7 +36,7 @@ namespace Naos.MessageBus.Persistence
         /// <inheritdoc />
         protected override void OnModelCreating(DbModelBuilder modelBuilder)
         {
-            modelBuilder.Entity<ParcelTrackingReport>().HasKey(s => s.ParcelId);
+            modelBuilder.Entity<ShipmentForDatabase>().HasKey(s => s.ParcelId);
             modelBuilder.Entity<NoticeForDatabase>().HasKey(s => s.Id);
         }
     }

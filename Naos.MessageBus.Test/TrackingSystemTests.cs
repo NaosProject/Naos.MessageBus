@@ -15,6 +15,7 @@ namespace Naos.MessageBus.Test
 
     using Its.Log.Instrumentation;
 
+    using Naos.Cron;
     using Naos.MessageBus.Domain;
     using Naos.MessageBus.Persistence;
 
@@ -78,7 +79,7 @@ namespace Naos.MessageBus.Test
                 if (envelope.Id != parcel.Envelopes.First().Id)
                 {
                     // should already be sent by original send...
-                    await parcelTrackingSystem.UpdateSentAsync(trackingCode, parcel, envelope.Address);
+                    await parcelTrackingSystem.UpdateSentAsync(trackingCode, parcel, envelope.Address, null);
                 }
 
                 (await parcelTrackingSystem.GetTrackingReportAsync(new[] { trackingCode })).Single().Status.Should().Be(seenRejection ? ParcelStatus.Rejected : ParcelStatus.Unknown);

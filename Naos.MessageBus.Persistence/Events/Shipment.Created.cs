@@ -11,6 +11,7 @@ namespace Naos.MessageBus.Persistence
 
     using Microsoft.Its.Domain;
 
+    using Naos.Cron;
     using Naos.MessageBus.Domain;
 
     /// <summary>
@@ -27,6 +28,11 @@ namespace Naos.MessageBus.Persistence
             /// Gets or sets the parcel being shipped.
             /// </summary>
             public Parcel Parcel { get; set; }
+
+            /// <summary>
+            /// Gets or sets an optional recurring schedule of the shipment.
+            /// </summary>
+            public ScheduleBase RecurringSchedule { get; set; }
 
             /// <inheritdoc />
             public override void Update(Shipment aggregate)

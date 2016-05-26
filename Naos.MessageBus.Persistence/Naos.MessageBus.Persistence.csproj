@@ -118,6 +118,7 @@
     <Compile Include="Events\Shipment.EnvelopeDeliveryRejected.cs" />
     <Compile Include="ParcelTrackingSystem.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="ShipmentForDatabase.cs" />
     <Compile Include="TrackedShipmentDbContext.cs" />
     <Compile Include="Shipment.cs" />
     <Compile Include="TrackingDetails.cs" />

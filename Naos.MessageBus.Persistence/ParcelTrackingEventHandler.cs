@@ -12,6 +12,7 @@ namespace Naos.MessageBus.Persistence
 
     using Microsoft.Its.Domain;
 
+    using Naos.Cron;
     using Naos.MessageBus.Domain;
 
     using Polly;
@@ -49,12 +50,19 @@ namespace Naos.MessageBus.Persistence
         /// <inheritdoc />
         public void UpdateProjection(Shipment.Created @event)
         {
+            var scheduleJson = Serializer.Serialize(@event.RecurringSchedule);
             this.RunWithRetry(
                 () =>
                     {
                         using (var db = new TrackedShipmentDbContext(this.readModelPersistenceConnectionConfiguration.ToSqlServerConnectionString()))
                         {
-                            var entry = new ParcelTrackingReport { ParcelId = @event.Parcel.Id, LastUpdatedUtc = DateTime.UtcNow };
+                            var entry = new ShipmentForDatabase
+                                            {
+                                                ParcelId = @event.Parcel.Id,
+                                                RecurringScheduleJson = scheduleJson,
+                                                LastUpdatedUtc = DateTime.UtcNow
+                                            };
+
                             db.Shipments.AddOrUpdate(entry);
                             db.SaveChanges();
                         }
@@ -65,15 +73,25 @@ namespace Naos.MessageBus.Persistence
         public void UpdateProjection(Shipment.EnvelopeSent @event)
         {
             var parcel = @event.Parcel;
-            var label = !string.IsNullOrWhiteSpace(parcel.Name) ? parcel.Name : "Sequence " + parcel.Id + " - " + parcel.Envelopes.First().Description;
-            var crate = new Crate
+            var schedule = (ScheduleBase)new NullSchedule();
+
+            if (parcel.Envelopes.First().Id == @event.TrackingCode.EnvelopeId)
             {
-                TrackingCode = @event.TrackingCode,
-                Address = @event.Address,
-                Label = label,
-                Parcel = parcel,
-                RecurringSchedule = @event.RecurringSchedule
-            };
+                this.RunWithRetry(
+                    () =>
+                        {
+                            using (var db = new TrackedShipmentDbContext(this.readModelPersistenceConnectionConfiguration.ToSqlServerConnectionString()))
+                            {
+                                var entry = db.Shipments.Single(_ => _.ParcelId == @event.AggregateId);
+                                schedule = string.IsNullOrEmpty(entry.RecurringScheduleJson)
+                                               ? new NullSchedule()
+                                               : Serializer.Deserialize<ScheduleBase>(entry.RecurringScheduleJson);
+                            }
+                        });
+            }
+
+            var label = !string.IsNullOrWhiteSpace(parcel.Name) ? parcel.Name : "Sequence " + parcel.Id + " - " + parcel.Envelopes.First().Description;
+            var crate = new Crate { TrackingCode = @event.TrackingCode, Address = @event.Address, Label = label, Parcel = parcel, RecurringSchedule = schedule };
 
             // TODO: save this?
             var courierTrackingCode = this.courier.Send(crate);

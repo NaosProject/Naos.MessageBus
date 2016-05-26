@@ -18,6 +18,7 @@ namespace Naos.MessageBus.Persistence
     using Microsoft.Its.Domain;
     using Microsoft.Its.Domain.Sql;
 
+    using Naos.Cron;
     using Naos.MessageBus.Domain;
 
     using Polly;
@@ -87,13 +88,13 @@ namespace Naos.MessageBus.Persistence
         }
 
         /// <inheritdoc />
-        public async Task UpdateSentAsync(TrackingCode trackingCode, Parcel parcel, IChannel address)
+        public async Task UpdateSentAsync(TrackingCode trackingCode, Parcel parcel, IChannel address, ScheduleBase recurringSchedule)
         {
             // shipment may already exist and this is just another envelope to deal with...
             var shipment = await this.FetchShipmentAsync(trackingCode);
             if (shipment == null)
             {
-                var commandCreate = new Create { AggregateId = parcel.Id, Parcel = parcel };
+                var commandCreate = new Create { AggregateId = parcel.Id, Parcel = parcel, RecurringSchedule = recurringSchedule };
                 shipment = new Shipment(commandCreate);
             }
 
@@ -166,7 +167,12 @@ namespace Naos.MessageBus.Persistence
                         using (var db = new TrackedShipmentDbContext(this.readModelPersistenceConnectionConfiguration.ToSqlServerConnectionString()))
                         {
                             var parcelIds = trackingCodes.Select(_ => _.ParcelId).Distinct().ToList();
-                            return Task.FromResult(db.Shipments.Where(_ => parcelIds.Contains(_.ParcelId)).ToList());
+                            var results =
+                                db.Shipments.Where(_ => parcelIds.Contains(_.ParcelId))
+                                    .Select(_ => new ParcelTrackingReport { ParcelId = _.ParcelId, Status = _.Status, LastUpdatedUtc = _.LastUpdatedUtc })
+                                    .ToList();
+
+                            return Task.FromResult(results);
                         }
                     });
         }

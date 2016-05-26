@@ -10,6 +10,8 @@ namespace Naos.MessageBus.Domain
     using System.Collections.Generic;
     using System.Threading.Tasks;
 
+    using Naos.Cron;
+
     /// <summary>
     /// Interface for tracking parcels in the bus.
     /// </summary>
@@ -21,8 +23,9 @@ namespace Naos.MessageBus.Domain
         /// <param name="trackingCode">Tracking code of the parcel.</param>
         /// <param name="parcel">Parcel that was sent.</param>
         /// <param name="address">Channel that the parcel was sent to (if any).</param>
+        /// <param name="recurringSchedule">Optional schedule to keep delivering on.</param>
         /// <returns>Task for async.</returns>
-        Task UpdateSentAsync(TrackingCode trackingCode, Parcel parcel, IChannel address);
+        Task UpdateSentAsync(TrackingCode trackingCode, Parcel parcel, IChannel address, ScheduleBase recurringSchedule);
 
         /// <summary>
         /// Delivery is attempted on a handler, handler details provided.
@@ -83,7 +86,7 @@ namespace Naos.MessageBus.Domain
         }
 
         /// <inheritdoc />
-        public async Task UpdateSentAsync(TrackingCode trackingCode, Parcel parcel, IChannel address)
+        public async Task UpdateSentAsync(TrackingCode trackingCode, Parcel parcel, IChannel address, ScheduleBase recurringSchedule)
         {
             /* no-op */
             await Task.FromResult<object>(null);

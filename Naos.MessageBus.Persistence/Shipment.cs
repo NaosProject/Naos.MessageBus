@@ -11,6 +11,7 @@ namespace Naos.MessageBus.Persistence
 
     using Microsoft.Its.Domain;
 
+    using Naos.Cron;
     using Naos.MessageBus.Domain;
 
     /// <summary>
