@@ -87,7 +87,7 @@ namespace Naos.MessageBus.Persistence
         }
 
         /// <inheritdoc />
-        public async Task Sent(TrackingCode trackingCode, Parcel parcel, Channel address)
+        public async Task Sent(TrackingCode trackingCode, Parcel parcel, IChannel address)
         {
             // shipment may already exist and this is just another envelope to deal with...
             var shipment = await this.FetchShipmentAsync(trackingCode);
@@ -172,7 +172,7 @@ namespace Naos.MessageBus.Persistence
         }
 
         /// <inheritdoc />
-        public async Task<NoticeThatTopicWasAffected> GetLatestNoticeThatTopicWasAffectedAsync(TopicBase topic, TopicStatus statusFilter = TopicStatus.None)
+        public async Task<NoticeThatTopicWasAffected> GetLatestNoticeThatTopicWasAffectedAsync(ITopic topic, TopicStatus statusFilter = TopicStatus.None)
         {
             if (statusFilter == TopicStatus.Unknown)
             {

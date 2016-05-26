@@ -43,6 +43,6 @@ namespace Naos.MessageBus.Persistence
         /// <summary>
         /// Gets or sets the address for the tracked item.
         /// </summary>
-        public Channel Address { get; set; }
+        public IChannel Address { get; set; }
     }
 }

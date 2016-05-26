@@ -19,6 +19,8 @@ namespace Spritely.Recipes
     using System.Linq;
     using System.Reflection;
 
+    using Naos.MessageBus.Domain;
+
     using Newtonsoft.Json;
     using Newtonsoft.Json.Linq;
 
@@ -29,7 +31,6 @@ namespace Spritely.Recipes
     /// Selected class will be the first class to match all properties in the json object.
     /// </summary>
 #if !RecipesProject
-    [System.Diagnostics.DebuggerStepThrough]
     [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
     [System.CodeDom.Compiler.GeneratedCode("Spritely.Recipes", "See package version number")]
 #endif
@@ -56,6 +57,11 @@ namespace Spritely.Recipes
         /// <inheritdoc />
         public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
         {
+            if (reader.TokenType == JsonToken.Null)
+            {
+                return null;
+            }
+
             var jsonObject = JObject.Load(reader);
             var sourceKeys = GetKeys(jsonObject).Select(k => k.Key).ToList();
 

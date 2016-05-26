@@ -1,5 +1,5 @@
 // --------------------------------------------------------------------------------------------------------------------
-// <copyright file="TopicBase.cs" company="Naos">
+// <copyright file="ITopic.cs" company="Naos">
 //   Copyright 2015 Naos
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
@@ -9,9 +9,20 @@ namespace Naos.MessageBus.Domain
     using System;
 
     /// <summary>
+    /// Abstract representation of a data "Topic".
+    /// </summary>
+    public interface ITopic
+    {
+        /// <summary>
+        /// Gets the name.
+        /// </summary>
+        string Name { get; }
+    }
+
+    /// <summary>
     /// Model class to describe a topic that is being tracked.
     /// </summary>
-    public abstract class TopicBase : IEquatable<TopicBase>
+    public abstract class TopicBase : ITopic, IEquatable<TopicBase>
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="TopicBase"/> class.
@@ -22,9 +33,7 @@ namespace Naos.MessageBus.Domain
             this.Name = name;
         }
 
-        /// <summary>
-        /// Gets the name.
-        /// </summary>
+        /// <inheritdoc />
         public string Name { get; }
 
         /// <inheritdoc />

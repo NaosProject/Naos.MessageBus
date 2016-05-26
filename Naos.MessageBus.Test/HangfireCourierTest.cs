@@ -22,7 +22,7 @@ namespace Naos.MessageBus.Test
         [Fact]
         public static void Send_ValidChannelName_DoesntThrow()
         {
-            var channel = new Channel("monkeys_are_in_space");
+            var channel = new SimpleChannel("monkeys_are_in_space");
             HangfireCourier.ThrowIfInvalidChannel(channel);
 
             // if we got here w/out exception then we passed...
@@ -41,7 +41,7 @@ namespace Naos.MessageBus.Test
                                                new Envelope(
                                                    "id",
                                                    "description",
-                                                   new Channel("channel"),
+                                                   new SimpleChannel("channel"),
                                                    "message",
                                                    typeof(NullMessage).ToTypeDescription())
                                            }
@@ -55,13 +55,13 @@ namespace Naos.MessageBus.Test
                                                         new Envelope(
                                                             "id",
                                                             "description",
-                                                            new Channel("channel"),
+                                                            new SimpleChannel("channel"),
                                                             "message",
                                                             typeof(RecurringHeaderMessage).ToTypeDescription()),
                                                         new Envelope(
                                                             "id",
                                                             "description",
-                                                            new Channel("channel"),
+                                                            new SimpleChannel("channel"),
                                                             "message",
                                                             typeof(NullMessage).ToTypeDescription())
                                                     }
@@ -95,7 +95,7 @@ namespace Naos.MessageBus.Test
                                                new Envelope(
                                                    "id",
                                                    "description",
-                                                   new Channel("channel"),
+                                                   new SimpleChannel("channel"),
                                                    "message",
                                                    typeof(NullMessage).ToTypeDescription())
                                            }
@@ -110,7 +110,7 @@ namespace Naos.MessageBus.Test
                                                         new Envelope(
                                                             "id",
                                                             "description",
-                                                            new Channel("channel"),
+                                                            new SimpleChannel("channel"),
                                                             "message",
                                                             typeof(NullMessage).ToTypeDescription())
                                                     }

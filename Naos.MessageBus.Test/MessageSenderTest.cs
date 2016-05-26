@@ -50,7 +50,7 @@ namespace Naos.MessageBus.Test
         public static void Send_NullChannelName_Throws()
         {
             // arrange
-            var channel = new Channel(null);
+            var channel = new SimpleChannel(null);
             Action testCode = () => HangfireCourier.ThrowIfInvalidChannel(channel);
 
             // act & assert
@@ -61,7 +61,7 @@ namespace Naos.MessageBus.Test
         public static void Send_LongChannelName_Throws()
         {
             // arrange
-            var channel = new Channel(new string('a', 21));
+            var channel = new SimpleChannel(new string('a', 21));
             Action testCode = () => HangfireCourier.ThrowIfInvalidChannel(channel);
 
             // act & assert
@@ -75,7 +75,7 @@ namespace Naos.MessageBus.Test
         public static void Send_UpperCaseChannelName_Throws()
         {
             // arrange
-            var channel = new Channel(new string('A', 20));
+            var channel = new SimpleChannel(new string('A', 20));
             Action testCode = () => HangfireCourier.ThrowIfInvalidChannel(channel);
 
             // act & assert
@@ -87,7 +87,7 @@ namespace Naos.MessageBus.Test
         public static void Send_DashesChannelName_Throws()
         {
             // arrange
-            var channel = new Channel("sup-withthis");
+            var channel = new SimpleChannel("sup-withthis");
             Action testCode = () => HangfireCourier.ThrowIfInvalidChannel(channel);
 
             // act & assert

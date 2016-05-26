@@ -39,7 +39,7 @@ namespace Naos.MessageBus.Persistence
             /// <summary>
             /// Gets or sets the address if present.
             /// </summary>
-            public Channel Address { get; set; }
+            public IChannel Address { get; set; }
 
             /// <summary>
             /// Gets or sets the recurring schedule if any.

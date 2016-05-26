@@ -29,7 +29,7 @@ namespace Naos.MessageBus.Test
             var postOffice = new PostOffice(parcelTrackingSystemBuilder());
 
             // act
-            var trackingCode = postOffice.Send(new NullMessage(), new Channel("something"));
+            var trackingCode = postOffice.Send(new NullMessage(), new SimpleChannel("something"));
 
             // assert
             Assert.NotNull(trackingSends.Single().Envelopes.Single().Id);
@@ -46,7 +46,7 @@ namespace Naos.MessageBus.Test
             var postOffice = new PostOffice(parcelTrackingSystemBuilder());
 
             // act
-            var trackingCode = postOffice.SendRecurring(new NullMessage(), new Channel("something"), new DailyScheduleInUtc());
+            var trackingCode = postOffice.SendRecurring(new NullMessage(), new SimpleChannel("something"), new DailyScheduleInUtc());
 
             // assert
             Assert.NotNull(trackingSends.Single().Envelopes.Single().Id);
@@ -62,7 +62,7 @@ namespace Naos.MessageBus.Test
             var parcelTrackingSystemBuilder = Factory.GetInMemoryParcelTrackingSystem(trackingCalls, trackingSends);
             var postOffice = new PostOffice(parcelTrackingSystemBuilder());
             Action testCode =
-                () => postOffice.SendRecurring(new NullMessage(), new Channel("something"), new DailyScheduleInUtc(), "Something", new AffectedTopic("me"));
+                () => postOffice.SendRecurring(new NullMessage(), new SimpleChannel("something"), new DailyScheduleInUtc(), "Something", new AffectedTopic("me"));
 
             // act & assert
             testCode.ShouldThrow<ArgumentException>().WithMessage("If you are using an Topic you must specify a SimultaneousRunsStrategy.");
@@ -79,7 +79,7 @@ namespace Naos.MessageBus.Test
             var myTopic = "me";
             var name = "Something";
             var schedule = new DailyScheduleInUtc();
-            var channel = new Channel("something");
+            var channel = new SimpleChannel("something");
 
             // act
             var trackingCode = postOffice.SendRecurring(
@@ -123,7 +123,7 @@ namespace Naos.MessageBus.Test
             var myTopic = "me";
             var name = "Something";
             var schedule = new DailyScheduleInUtc();
-            var channel = new Channel("something");
+            var channel = new SimpleChannel("something");
             var dependantTopics = new[] { new DependencyTopic("depends") };
 
             // act

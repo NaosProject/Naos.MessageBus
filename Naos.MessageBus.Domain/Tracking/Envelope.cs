@@ -16,12 +16,20 @@ namespace Naos.MessageBus.Domain
         /// <summary>
         /// Initializes a new instance of the <see cref="Envelope"/> class.
         /// </summary>
+        public Envelope()
+        {
+            // TODO: Remove this AND the public setterS once the InheritedTypeConverter is updated...
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Envelope"/> class.
+        /// </summary>
         /// <param name="id">Id of envelope.</param>
         /// <param name="description">Description of envelope.</param>
         /// <param name="address">Channel envelope is addressed to.</param>
         /// <param name="messageAsJson">Message in JSON.</param>
         /// <param name="messageType">Message type description.</param>
-        public Envelope(string id, string description, Channel address, string messageAsJson, TypeDescription messageType)
+        public Envelope(string id, string description, IChannel address, string messageAsJson, TypeDescription messageType)
         {
             this.Id = id;
             this.Description = description;
@@ -31,29 +39,29 @@ namespace Naos.MessageBus.Domain
         }
 
         /// <summary>
-        /// Gets the ID of the envelope (must be unique in the parcel).
+        /// Gets or sets the ID of the envelope (must be unique in the parcel).
         /// </summary>
-        public string Id { get; }
+        public string Id { get; set; }
 
         /// <summary>
-        /// Gets the description of the message in the envelope.
+        /// Gets or sets the description of the message in the envelope.
         /// </summary>
-        public string Description { get; }
+        public string Description { get; set; }
 
         /// <summary>
-        /// Gets a description of the message type.
+        /// Gets or sets a description of the message type.
         /// </summary>
-        public TypeDescription MessageType { get; }
+        public TypeDescription MessageType { get; set; }
 
         /// <summary>
-        /// Gets the message in JSON format.
+        /// Gets or sets the message in JSON format.
         /// </summary>
-        public string MessageAsJson { get; }
+        public string MessageAsJson { get; set; }
 
         /// <summary>
-        /// Gets the channel the message should be broadcasted on.
+        /// Gets or sets the channel the message should be broadcasted on.
         /// </summary>
-        public Channel Address { get; }
+        public IChannel Address { get; set; }
 
         #region Equality
 
@@ -91,7 +99,7 @@ namespace Naos.MessageBus.Domain
 
             var result = 
                    (this.Id == other.Id) 
-                && (this.Address == other.Address) 
+                && (this.Address != null && this.Address.Equals(other.Address)) 
                 && (this.Description == other.Description)
                 && (this.MessageType == other.MessageType) 
                 && (this.MessageAsJson == other.MessageAsJson);

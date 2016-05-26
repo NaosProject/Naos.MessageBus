@@ -26,8 +26,8 @@
     "roleSettings": [
         {
             "channelsToMonitor": [
-                { "Name": "monkeys" },
-                { "Name": "pandas" }
+                { "name": "monkeys" },
+                { "name": "pandas" }
             ],
             "workerCount": 4,
             "handlerAssemblyPath": "I:\\Gets\\My\\Dlls\\Here",

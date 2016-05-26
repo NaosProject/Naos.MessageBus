@@ -26,7 +26,7 @@ namespace Naos.MessageBus.Domain
         /// <summary>
         /// Gets or sets the address.
         /// </summary>
-        public Channel Address { get; set; }
+        public IChannel Address { get; set; }
 
         /// <summary>
         /// Gets or sets the parcel.

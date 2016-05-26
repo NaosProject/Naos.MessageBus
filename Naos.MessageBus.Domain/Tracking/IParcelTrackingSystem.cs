@@ -22,7 +22,7 @@ namespace Naos.MessageBus.Domain
         /// <param name="parcel">Parcel that was sent.</param>
         /// <param name="address">Channel that the parcel was sent to (if any).</param>
         /// <returns>Task for async.</returns>
-        Task Sent(TrackingCode trackingCode, Parcel parcel, Channel address);
+        Task Sent(TrackingCode trackingCode, Parcel parcel, IChannel address);
 
         /// <summary>
         /// Delivery is attempted on a handler, handler details provided.
@@ -83,14 +83,14 @@ namespace Naos.MessageBus.Domain
         }
 
         /// <inheritdoc />
-        public async Task Sent(TrackingCode trackingCode, Parcel parcel, Channel address)
+        public async Task Sent(TrackingCode trackingCode, Parcel parcel, IChannel address)
         {
             /* no-op */
             await Task.FromResult<object>(null);
         }
 
         /// <inheritdoc />
-        public async Task Addressed(TrackingCode trackingCode, Channel assignedChannel)
+        public async Task Addressed(TrackingCode trackingCode, IChannel assignedChannel)
         {
             /* no-op */
             await Task.FromResult<object>(null);
@@ -110,7 +110,7 @@ namespace Naos.MessageBus.Domain
         }
 
         /// <inheritdoc />
-        public async Task<NoticeThatTopicWasAffected> GetLatestNoticeThatTopicWasAffectedAsync(TopicBase topic, TopicStatus statusFilter = TopicStatus.None)
+        public async Task<NoticeThatTopicWasAffected> GetLatestNoticeThatTopicWasAffectedAsync(ITopic topic, TopicStatus statusFilter = TopicStatus.None)
         {
             return await Task.FromResult(null as NoticeThatTopicWasAffected);
         }

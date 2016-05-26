@@ -29,7 +29,7 @@ namespace Naos.MessageBus.Domain
         /// <inheritdoc />
         public TrackingCode Send(
             IMessage message, 
-            Channel channel, 
+            IChannel channel, 
             string name = null,
             AffectedTopic topic = null, 
             IReadOnlyCollection<DependencyTopic> dependencyTopics = null, 
@@ -48,7 +48,7 @@ namespace Naos.MessageBus.Domain
         /// <inheritdoc />
         public TrackingCode SendRecurring(
             IMessage message, 
-            Channel channel, 
+            IChannel channel, 
             ScheduleBase recurringSchedule,
             string name = null,
             AffectedTopic topic = null, 

@@ -28,7 +28,7 @@ namespace Naos.MessageBus.Core
 
         private readonly ConcurrentDictionary<Type, object> handlerSharedStateMap;
 
-        private readonly ICollection<Channel> servicedChannels;
+        private readonly ICollection<IChannel> servicedChannels;
 
         private readonly TypeMatchStrategy typeMatchStrategy;
 
@@ -54,7 +54,7 @@ namespace Naos.MessageBus.Core
         /// <param name="parcelTrackingSystem">Courier to track parcel events.</param>
         /// <param name="activeMessageTracker">Interface to track active messages to know if handler harness can shutdown.</param>
         /// <param name="postOffice">Interface to send parcels.</param>
-        public MessageDispatcher(Container simpleInjectorContainer, ConcurrentDictionary<Type, object> handlerSharedStateMap, ICollection<Channel> servicedChannels, TypeMatchStrategy typeMatchStrategy, TimeSpan messageDispatcherWaitThreadSleepTime, HarnessStaticDetails harnessStaticDetails, IParcelTrackingSystem parcelTrackingSystem, ITrackActiveMessages activeMessageTracker, IPostOffice postOffice)
+        public MessageDispatcher(Container simpleInjectorContainer, ConcurrentDictionary<Type, object> handlerSharedStateMap, ICollection<IChannel> servicedChannels, TypeMatchStrategy typeMatchStrategy, TimeSpan messageDispatcherWaitThreadSleepTime, HarnessStaticDetails harnessStaticDetails, IParcelTrackingSystem parcelTrackingSystem, ITrackActiveMessages activeMessageTracker, IPostOffice postOffice)
         {
             this.simpleInjectorContainer = simpleInjectorContainer;
             this.handlerSharedStateMap = handlerSharedStateMap;
@@ -82,7 +82,7 @@ namespace Naos.MessageBus.Core
             }
 
             // make sure the message was routed correctly (if not then reroute)
-            if (this.servicedChannels.SingleOrDefault(_ => _.Name == parcel.Envelopes.First().Address?.Name) == null)
+            if (this.servicedChannels.SingleOrDefault(_ => _.Equals(parcel.Envelopes.First().Address)) == null)
             {
                 // any schedule should already be set and NOT reset...
                 this.postOffice.Send(parcel);
@@ -401,7 +401,7 @@ namespace Naos.MessageBus.Core
                     Serializer.Deserialize(
                         messageType,
                         envelope.MessageAsJson),
-                Channel = envelope.Address
+                Address = envelope.Address
             };
 
             if (ret.Message == null)

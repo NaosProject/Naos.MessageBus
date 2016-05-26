@@ -6,6 +6,8 @@
 
 namespace Naos.MessageBus.Test
 {
+    using FluentAssertions;
+
     using Naos.MessageBus.Domain;
 
     using Xunit;
@@ -17,7 +19,7 @@ namespace Naos.MessageBus.Test
         {
             var firstId = "id1";
             var firstDescription = "description1";
-            var firstChannel = new Channel("channel1");
+            var firstChannel = new SimpleChannel("channel1");
             var message = new NullMessage();
             var firstMessageAsJson = Serializer.Serialize(message);
             var firstMessageType = message.GetType().ToTypeDescription();
@@ -41,11 +43,35 @@ namespace Naos.MessageBus.Test
         }
 
         [Fact]
+        public void EnvelopeAddressCanBeNull()
+        {
+            // arrange
+            var json = @"
+            {
+                ""id"": ""B0067F16-B549-467F-AC9F-683145D209A4"",
+  ""description"": ""Topic Being Affected Notice for 1A9D14E8-8219-40B9-BF50-6EF93801C184"",
+  ""messageType"": {
+                    ""namespace"": ""Naos.MessageBus.Domain"",
+    ""name"": ""TopicBeingAffectedMessage"",
+    ""assemblyQualifiedName"": ""Naos.MessageBus.Domain.TopicBeingAffectedMessage, Naos.MessageBus.Domain, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null""
+  },
+  ""messageAsJson"": ""{\r\n  \""description\"": \""Topic Being Affected Notice for 1A9D14E8-8219-40B9-BF50-6EF93801C184\"",\r\n  \""dependenciesNoticeThatTopicWasAffected\"": null,\r\n  \""affectedItems\"": null,\r\n  \""topic\"": {\r\n    \""name\"": \""1A9D14E8-8219-40B9-BF50-6EF93801C184\""\r\n  }\r\n}"",
+  ""address"": null
+}";
+
+            // act
+            var obj = Serializer.Deserialize<Envelope>(json);
+
+            // assert
+            obj.Should().NotBeNull();
+        }
+
+        [Fact]
         public void NotEqualAreNotEqual_Id()
         {
             var firstId = "id1";
             var firstDescription = "description1";
-            var firstChannel = new Channel("channel1");
+            var firstChannel = new SimpleChannel("channel1");
             var message = new NullMessage();
             var firstMessageAsJson = Serializer.Serialize(message);
             var firstMessageType = message.GetType().ToTypeDescription();
@@ -73,7 +99,7 @@ namespace Naos.MessageBus.Test
         {
             var firstId = "id1";
             var firstDescription = "description1";
-            var firstChannel = new Channel("channel1");
+            var firstChannel = new SimpleChannel("channel1");
             var message = new NullMessage();
             var firstMessageAsJson = Serializer.Serialize(message);
             var firstMessageType = message.GetType().ToTypeDescription();
@@ -101,7 +127,7 @@ namespace Naos.MessageBus.Test
         {
             var firstId = "id1";
             var firstDescription = "description1";
-            var firstChannel = new Channel("channel1");
+            var firstChannel = new SimpleChannel("channel1");
             var message = new NullMessage();
             var firstMessageAsJson = Serializer.Serialize(message);
             var firstMessageType = message.GetType().ToTypeDescription();
@@ -110,7 +136,7 @@ namespace Naos.MessageBus.Test
 
             var secondId = firstId;
             var secondDescription = firstDescription;
-            var secondChannel = new Channel("channel2");
+            var secondChannel = new SimpleChannel("channel2");
             var secondMessageAsJson = firstMessageAsJson;
             var secondMessageType = firstMessageType;
 
@@ -129,7 +155,7 @@ namespace Naos.MessageBus.Test
         {
             var firstId = "id1";
             var firstDescription = "description1";
-            var firstChannel = new Channel("channel1");
+            var firstChannel = new SimpleChannel("channel1");
             var firstMessage = new NullMessage();
             var firstMessageAsJson = Serializer.Serialize(firstMessage);
             var firstMessageType = firstMessage.GetType().ToTypeDescription();
@@ -158,7 +184,7 @@ namespace Naos.MessageBus.Test
         {
             var firstId = "id1";
             var firstDescription = "description1";
-            var firstChannel = new Channel("channel1");
+            var firstChannel = new SimpleChannel("channel1");
             var firstMessage = new NullMessage();
             var firstMessageAsJson = Serializer.Serialize(firstMessage);
             var firstMessageType = firstMessage.GetType().ToTypeDescription();

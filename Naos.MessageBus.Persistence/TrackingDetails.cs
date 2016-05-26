@@ -23,7 +23,7 @@ namespace Naos.MessageBus.Persistence
         /// <summary>
         /// Gets the address.
         /// </summary>
-        public Channel Address { get; internal set; }
+        public IChannel Address { get; internal set; }
 
         /// <summary>
         /// Gets the exception.

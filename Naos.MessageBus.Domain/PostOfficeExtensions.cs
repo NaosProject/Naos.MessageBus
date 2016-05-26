@@ -19,11 +19,11 @@ namespace Naos.MessageBus.Domain
         /// <param name="message">Message to wrap.</param>
         /// <param name="channel">Channel to send to.</param>
         /// <returns><see cref="AddressedMessage"/> with message and channel.</returns>
-        public static AddressedMessage ToAddressedMessage(this IMessage message, Channel channel)
+        public static AddressedMessage ToAddressedMessage(this IMessage message, IChannel channel)
         {
             return new AddressedMessage
             {
-                Channel = channel,
+                Address = channel,
                 Message = message
             };
         }
@@ -40,7 +40,7 @@ namespace Naos.MessageBus.Domain
             return new Envelope(
                 Guid.NewGuid().ToString().ToUpperInvariant(),
                 addressedMessage.Message.Description,
-                addressedMessage.Channel,
+                addressedMessage.Address,
                 Serializer.Serialize(addressedMessage.Message),
                 messageType.ToTypeDescription());
         }

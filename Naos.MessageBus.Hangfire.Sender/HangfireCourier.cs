@@ -42,12 +42,20 @@ namespace Naos.MessageBus.Hangfire.Sender
             GlobalConfiguration.Configuration.UseSqlServerStorage(this.courierPersistenceConnectionConfiguration.ToSqlServerConnectionString());
             var parcel = UncrateParcel(crate);
 
-            var channel = crate.Address ?? new Channel("default");
+            var address = crate.Address;
+            if (address != null && crate.Address.GetType() == typeof(NullMessage))
+            {
+                address = null;
+            }
+
+            var channel = address ?? new SimpleChannel("default");
 
             ThrowIfInvalidChannel(channel);
 
+            var simpleChannel = (SimpleChannel)channel;
+
             var client = new BackgroundJobClient();
-            var state = new EnqueuedState { Queue = channel.Name, };
+            var state = new EnqueuedState { Queue = simpleChannel.Name, };
 
             Expression<Action<IDispatchMessages>> methodCall = _ => _.Dispatch(crate.TrackingCode, crate.Label, parcel);
             var hangfireId = client.Create<IDispatchMessages>(methodCall, state);
@@ -91,26 +99,38 @@ namespace Naos.MessageBus.Hangfire.Sender
         /// Throws an exception if the channel is invalid in its structure.
         /// </summary>
         /// <param name="channelToTest">The channel to examine.</param>
-        internal static void ThrowIfInvalidChannel(Channel channelToTest)
+        internal static void ThrowIfInvalidChannel(IChannel channelToTest)
         {
-            if (string.IsNullOrEmpty(channelToTest.Name))
+            if (channelToTest == null)
+            {
+                throw new ArgumentException("Cannot use a null channel.");
+            }
+
+            var simpleChannel = channelToTest as SimpleChannel;
+
+            if (simpleChannel == null)
+            {
+                throw new NotSupportedException("Channel type is not currently supported in Hangfire: " + channelToTest.GetType());
+            }
+
+            if (string.IsNullOrEmpty(simpleChannel.Name))
             {
                 throw new ArgumentException("Cannot use null channel name.");
             }
 
-            if (channelToTest.Name.Length > HangfireQueueNameMaxLength)
+            if (simpleChannel.Name.Length > HangfireQueueNameMaxLength)
             {
                 throw new ArgumentException(
                     "Cannot use a channel name longer than " + HangfireQueueNameMaxLength
-                    + " characters.  The supplied channel name: " + channelToTest.Name + " is "
-                    + channelToTest.Name.Length + " characters long.");
+                    + " characters.  The supplied channel name: " + simpleChannel.Name + " is "
+                    + simpleChannel.Name.Length + " characters long.");
             }
 
-            if (!Regex.IsMatch(channelToTest.Name, HangfireQueueNameAllowedRegex, RegexOptions.None))
+            if (!Regex.IsMatch(simpleChannel.Name, HangfireQueueNameAllowedRegex, RegexOptions.None))
             {
                 throw new ArgumentException(
                     "Channel name must be lowercase alphanumeric with underscores ONLY.  The supplied channel name: "
-                    + channelToTest.Name);
+                    + simpleChannel.Name);
             }
         }
     }

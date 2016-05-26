@@ -28,7 +28,7 @@ namespace Naos.MessageBus.Domain
         /// <returns>ID of the scheduled message.</returns>
         TrackingCode Send(
             IMessage message,
-            Channel channel,
+            IChannel channel,
             string name = null,
             AffectedTopic topic = null,
             IReadOnlyCollection<DependencyTopic> dependencyTopics = null,
@@ -63,7 +63,7 @@ namespace Naos.MessageBus.Domain
         /// <returns>ID of the scheduled message.</returns>
         TrackingCode SendRecurring(
             IMessage message,
-            Channel channel,
+            IChannel channel,
             ScheduleBase recurringSchedule,
             string name = null,
             AffectedTopic topic = null,

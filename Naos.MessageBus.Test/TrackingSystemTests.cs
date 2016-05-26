@@ -22,7 +22,7 @@ namespace Naos.MessageBus.Test
 
     public class TrackingSystemTests
     {
-        [Fact(Skip = "Designed to test against persistence.")]
+        [Fact(Skip = "Debug test that writes to a real database.")]
         public async Task Do()
         {
             var messages = new List<LogEntry>();
@@ -49,7 +49,7 @@ namespace Naos.MessageBus.Test
 
             var tracking = postOffice.Send(
                 new NullMessage(),
-                new Channel("channel"),
+                new SimpleChannel("channel"),
                 "name",
                 topic,
                 null,

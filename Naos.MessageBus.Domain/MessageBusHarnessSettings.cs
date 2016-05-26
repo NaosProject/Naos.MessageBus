@@ -37,7 +37,7 @@ namespace Naos.MessageBus.Domain
         /// <summary>
         /// Gets or sets the channels to monitor.
         /// </summary>
-        public ICollection<Channel> ChannelsToMonitor { get; set; }
+        public ICollection<IChannel> ChannelsToMonitor { get; set; }
 
         /// <summary>
         /// Gets or sets the number of workers to use.

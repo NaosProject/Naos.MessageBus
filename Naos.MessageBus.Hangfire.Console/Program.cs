@@ -76,7 +76,7 @@ namespace Naos.MessageBus.Hangfire.Console
 
                 var executorOptions = new BackgroundJobServerOptions
                 {
-                    Queues = executorRoleSettings.ChannelsToMonitor.Select(_ => _.Name).ToArray(),
+                    Queues = executorRoleSettings.ChannelsToMonitor.OfType<SimpleChannel>().Select(_ => _.Name).ToArray(),
                     SchedulePollingInterval = executorRoleSettings.PollingTimeSpan,
                     WorkerCount = executorRoleSettings.WorkerCount,
                 };

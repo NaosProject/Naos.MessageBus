@@ -31,7 +31,7 @@ namespace Naos.MessageBus.Test
             var impactingTopic = new AffectedTopic("mine");
             var topics = Some.Dummies<DependencyTopic>().ToList();
 
-            var seededNotices = topics.Cast<TopicBase>().ToDictionary(
+            var seededNotices = topics.Cast<ITopic>().ToDictionary(
                 key => key,
                 val => null as NoticeThatTopicWasAffected);
 
@@ -78,7 +78,7 @@ namespace Naos.MessageBus.Test
             var impactingTopic = new AffectedTopic("mine");
             var topics = Some.Dummies<DependencyTopic>().ToList();
 
-            var seededNotices = topics.Cast<TopicBase>().ToDictionary(key => key, val => new NoticeThatTopicWasAffected { Topic = new AffectedTopic(val.Name), Status = TopicStatus.BeingAffected });
+            var seededNotices = topics.Cast<ITopic>().ToDictionary(key => key, val => new NoticeThatTopicWasAffected { Topic = new AffectedTopic(val.Name), Status = TopicStatus.BeingAffected });
 
             seededNotices.Add(
                 impactingTopic,
@@ -122,7 +122,7 @@ namespace Naos.MessageBus.Test
             var impactingTopic = new AffectedTopic("mine");
             var topics = Some.Dummies<DependencyTopic>().ToList();
 
-            var seededNotices = topics.Cast<TopicBase>().ToDictionary(key => key, val => new NoticeThatTopicWasAffected { Topic = new AffectedTopic(val.Name), Status = TopicStatus.Unknown });
+            var seededNotices = topics.Cast<ITopic>().ToDictionary(key => key, val => new NoticeThatTopicWasAffected { Topic = new AffectedTopic(val.Name), Status = TopicStatus.Unknown });
 
             seededNotices.Add(
                 impactingTopic,
@@ -166,7 +166,7 @@ namespace Naos.MessageBus.Test
             var impactingTopic = new AffectedTopic("mine");
             var topics = Some.Dummies<DependencyTopic>().ToList();
 
-            var seededNotices = topics.Cast<TopicBase>()
+            var seededNotices = topics.Cast<ITopic>()
                 .ToDictionary(
                     key => key,
                     val => new NoticeThatTopicWasAffected { Topic = new AffectedTopic(val.Name), Status = TopicStatus.WasAffected, AffectsCompletedDateTimeUtc = DateTime.UtcNow.Subtract(TimeSpan.FromHours(1)) });
@@ -213,7 +213,7 @@ namespace Naos.MessageBus.Test
             var impactingTopic = new AffectedTopic("mine");
             var topics = Some.Dummies<DependencyTopic>().ToList();
 
-            var seededNotices = topics.Cast<TopicBase>().ToDictionary(
+            var seededNotices = topics.Cast<ITopic>().ToDictionary(
                 key => key,
                 val => new NoticeThatTopicWasAffected { Topic = new AffectedTopic(val.Name), Status = TopicStatus.WasAffected, AffectsCompletedDateTimeUtc = DateTime.UtcNow });
 
@@ -244,7 +244,7 @@ namespace Naos.MessageBus.Test
             var impactingTopic = new AffectedTopic("mine");
             var topics = Some.Dummies<DependencyTopic>().ToList();
 
-            var seededNotices = topics.Cast<TopicBase>().ToDictionary(
+            var seededNotices = topics.Cast<ITopic>().ToDictionary(
                 key => key,
                 val => new NoticeThatTopicWasAffected { Topic = new AffectedTopic(val.Name), Status = TopicStatus.WasAffected, AffectsCompletedDateTimeUtc = DateTime.UtcNow });
 
@@ -286,7 +286,7 @@ namespace Naos.MessageBus.Test
             var impactingTopic = new AffectedTopic("mine");
             var topics = Some.Dummies<DependencyTopic>().ToList();
 
-            var seededNotices = topics.Cast<TopicBase>().ToDictionary(key => key, val => null as NoticeThatTopicWasAffected);
+            var seededNotices = topics.Cast<ITopic>().ToDictionary(key => key, val => null as NoticeThatTopicWasAffected);
 
             seededNotices.Add(impactingTopic, new NoticeThatTopicWasAffected { Topic = impactingTopic, AffectsCompletedDateTimeUtc = DateTime.UtcNow });
 
@@ -317,7 +317,7 @@ namespace Naos.MessageBus.Test
             var notCertified = new AffectedTopic("other");
             var topics = Some.Dummies<DependencyTopic>().ToList();
 
-            var seededNotices = topics.Cast<TopicBase>().ToDictionary(
+            var seededNotices = topics.Cast<ITopic>().ToDictionary(
                 key => key,
                 val => new NoticeThatTopicWasAffected { Topic = new AffectedTopic(val.Name), Status = TopicStatus.WasAffected, AffectsCompletedDateTimeUtc = DateTime.UtcNow });
 
@@ -359,7 +359,7 @@ namespace Naos.MessageBus.Test
             var impactingTopic = new AffectedTopic("mine");
             var topics = Some.Dummies<DependencyTopic>().ToList();
 
-            var seededNotices = topics.Cast<TopicBase>().ToDictionary(
+            var seededNotices = topics.Cast<ITopic>().ToDictionary(
                 key => key,
                 val => new NoticeThatTopicWasAffected { Topic = new AffectedTopic(val.Name), Status = TopicStatus.WasAffected, AffectsCompletedDateTimeUtc = DateTime.UtcNow });
 
@@ -408,7 +408,7 @@ namespace Naos.MessageBus.Test
             var topics = Some.Dummies<DependencyTopic>(50).ToList();
 
             var number = 1;
-            var seededNotices = topics.Cast<TopicBase>()
+            var seededNotices = topics.Cast<ITopic>()
                 .ToDictionary(
                     key => key,
                     val =>

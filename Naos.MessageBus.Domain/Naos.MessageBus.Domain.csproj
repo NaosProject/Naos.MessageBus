@@ -65,7 +65,7 @@
     <Compile Include="PostOfficeExtensions.cs" />
     <Compile Include="Sharing\IShareNoticeAffectedItems.cs" />
     <Compile Include="Tracking\SimultaneousRunsStrategy.cs" />
-    <Compile Include="Tracking\TopicBase.cs" />
+    <Compile Include="Tracking\ITopic.cs" />
     <Compile Include="Tracking\TopicCheckStrategy.cs" />
     <Compile Include="Sharing\IShareDependenciesNoticeThatTopicWasAffected.cs" />
     <Compile Include="Messages\TopicBeingAffectedMessage.cs" />
@@ -75,7 +75,7 @@
     <Compile Include="IPersistenceConnectionConfiguration.cs" />
     <Compile Include="Sharing\ShareNowPlusTimeAsExpirationMessage.cs" />
     <Compile Include="Messages\TopicWasAffectedMessage.cs" />
-    <Compile Include="Channel.cs" />
+    <Compile Include="IChannel.cs" />
     <Compile Include="AddressedMessage.cs" />
     <Compile Include="Tracking\Crate.cs" />
     <Compile Include="Tracking\Envelope.cs" />

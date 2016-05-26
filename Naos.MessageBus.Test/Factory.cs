@@ -64,7 +64,7 @@ namespace Naos.MessageBus.Test
             return () => ret;
         }
 
-        public static IGetTrackingReports GetSeededTrackerForGetLatestNoticeAsync(Dictionary<TopicBase, NoticeThatTopicWasAffected> data)
+        public static IGetTrackingReports GetSeededTrackerForGetLatestNoticeAsync(Dictionary<ITopic, NoticeThatTopicWasAffected> data)
         {
             var tracker = A.Fake<IGetTrackingReports>();
 

@@ -28,7 +28,7 @@ namespace Naos.MessageBus.Core
         // this is declared here to persist, it's filled exclusively in the MessageDispatcher...
         private readonly ConcurrentDictionary<Type, object> sharedStateMap = new ConcurrentDictionary<Type, object>();
 
-        private readonly ICollection<Channel> servicedChannels;
+        private readonly ICollection<IChannel> servicedChannels;
 
         private readonly Container simpleInjectorContainer = new Container();
 
@@ -54,7 +54,7 @@ namespace Naos.MessageBus.Core
         /// <param name="parcelTrackingSystem">Interface for managing life of the parcels.</param>
         /// <param name="activeMessageTracker">Interface to track active messages to know if handler harness can shutdown.</param>
         /// <param name="postOffice">Interface to send parcels.</param>
-        public DispatcherFactory(string handlerAssemblyPath, ICollection<Channel> servicedChannels, TypeMatchStrategy typeMatchStrategy, TimeSpan messageDispatcherWaitThreadSleepTime, IParcelTrackingSystem parcelTrackingSystem, ITrackActiveMessages activeMessageTracker, IPostOffice postOffice)
+        public DispatcherFactory(string handlerAssemblyPath, ICollection<IChannel> servicedChannels, TypeMatchStrategy typeMatchStrategy, TimeSpan messageDispatcherWaitThreadSleepTime, IParcelTrackingSystem parcelTrackingSystem, ITrackActiveMessages activeMessageTracker, IPostOffice postOffice)
         {
             if (parcelTrackingSystem == null)
             {
