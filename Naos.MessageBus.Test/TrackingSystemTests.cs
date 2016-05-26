@@ -78,34 +78,34 @@ namespace Naos.MessageBus.Test
                 if (envelope.Id != parcel.Envelopes.First().Id)
                 {
                     // should already be sent by original send...
-                    await parcelTrackingSystem.Sent(trackingCode, parcel, envelope.Address);
+                    await parcelTrackingSystem.UpdateSentAsync(trackingCode, parcel, envelope.Address);
                 }
 
                 (await parcelTrackingSystem.GetTrackingReportAsync(new[] { trackingCode })).Single().Status.Should().Be(seenRejection ? ParcelStatus.Rejected : ParcelStatus.Unknown);
                 await ConfirmNoticeState(parcelTrackingSystem, topic, beingAffectedWasDelivered);
 
-                await parcelTrackingSystem.Attempting(trackingCode, new HarnessDetails());
+                await parcelTrackingSystem.UpdateAttemptingAsync(trackingCode, new HarnessDetails());
                 (await parcelTrackingSystem.GetTrackingReportAsync(new[] { trackingCode })).Single().Status.Should().Be(seenRejection ? ParcelStatus.Rejected : ParcelStatus.Unknown);
                 await ConfirmNoticeState(parcelTrackingSystem, topic, beingAffectedWasDelivered);
 
-                await parcelTrackingSystem.Aborted(trackingCode, "Try another day");
+                await parcelTrackingSystem.UpdateAbortedAsync(trackingCode, "Try another day");
                 (await parcelTrackingSystem.GetTrackingReportAsync(new[] { trackingCode })).Single().Status.Should().Be(ParcelStatus.Aborted);
                 await ConfirmNoticeState(parcelTrackingSystem, topic, beingAffectedWasDelivered);
 
-                await parcelTrackingSystem.Attempting(trackingCode, new HarnessDetails());
+                await parcelTrackingSystem.UpdateAttemptingAsync(trackingCode, new HarnessDetails());
                 (await parcelTrackingSystem.GetTrackingReportAsync(new[] { trackingCode })).Single().Status.Should().Be(ParcelStatus.Aborted);
                 await ConfirmNoticeState(parcelTrackingSystem, topic, beingAffectedWasDelivered);
 
-                await parcelTrackingSystem.Rejected(trackingCode, new NotImplementedException("Not here yet"));
+                await parcelTrackingSystem.UpdateRejectedAsync(trackingCode, new NotImplementedException("Not here yet"));
                 (await parcelTrackingSystem.GetTrackingReportAsync(new[] { trackingCode })).Single().Status.Should().Be(ParcelStatus.Rejected);
                 await ConfirmNoticeState(parcelTrackingSystem, topic, beingAffectedWasDelivered);
                 seenRejection = true;
 
-                await parcelTrackingSystem.Attempting(trackingCode, new HarnessDetails());
+                await parcelTrackingSystem.UpdateAttemptingAsync(trackingCode, new HarnessDetails());
                 (await parcelTrackingSystem.GetTrackingReportAsync(new[] { trackingCode })).Single().Status.Should().Be(ParcelStatus.Rejected);
                 await ConfirmNoticeState(parcelTrackingSystem, topic, beingAffectedWasDelivered);
 
-                await parcelTrackingSystem.Delivered(trackingCode);
+                await parcelTrackingSystem.UpdateDeliveredAsync(trackingCode);
                 if (envelope.MessageType == typeof(TopicBeingAffectedMessage).ToTypeDescription())
                 {
                     beingAffectedWasDelivered = true;

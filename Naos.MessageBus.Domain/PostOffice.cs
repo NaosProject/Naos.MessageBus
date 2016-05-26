@@ -143,7 +143,7 @@ namespace Naos.MessageBus.Domain
             var firstEnvelope = parcel.Envelopes.First();
             var trackingCode = new TrackingCode { ParcelId = parcel.Id, EnvelopeId = firstEnvelope.Id };
 
-            this.parcelTrackingSystem.Sent(trackingCode, parcel, firstEnvelope.Address);
+            this.parcelTrackingSystem.UpdateSentAsync(trackingCode, parcel, firstEnvelope.Address).Wait();
 
             return trackingCode;
         }

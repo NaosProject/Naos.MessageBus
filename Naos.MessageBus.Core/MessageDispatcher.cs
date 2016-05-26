@@ -104,11 +104,11 @@ namespace Naos.MessageBus.Core
                 var dynamicDetails = new HarnessDynamicDetails { AvailablePhysicalMemoryInGb = MachineDetails.GetAvailablePhysicalMemoryInGb() };
                 var harnessDetails = new HarnessDetails { StaticDetails = this.harnessStaticDetails, DynamicDetails = dynamicDetails };
 
-                this.parcelTrackingSystem.Attempting(trackingCode, harnessDetails);
+                this.parcelTrackingSystem.UpdateAttemptingAsync(trackingCode, harnessDetails).Wait();
 
                 this.InternalDispatch(parcel);
 
-                this.parcelTrackingSystem.Delivered(trackingCode);
+                this.parcelTrackingSystem.UpdateDeliveredAsync(trackingCode).Wait();
             }
             catch (RecurringParcelEncounteredException recurringParcelEncounteredException)
             {
@@ -121,7 +121,7 @@ namespace Naos.MessageBus.Core
             catch (AbortParcelDeliveryException abortParcelDeliveryException)
             {
                 Log.Write("Aborted parcel delivery; TrackingCode: " + trackingCode + ", Exception:" + abortParcelDeliveryException);
-                this.parcelTrackingSystem.Aborted(trackingCode, abortParcelDeliveryException.Reason);
+                this.parcelTrackingSystem.UpdateAbortedAsync(trackingCode, abortParcelDeliveryException.Reason).Wait();
 
                 if (abortParcelDeliveryException.Reschedule)
                 {
@@ -131,7 +131,7 @@ namespace Naos.MessageBus.Core
             }
             catch (Exception ex)
             {
-                this.parcelTrackingSystem.Rejected(trackingCode, ex);
+                this.parcelTrackingSystem.UpdateRejectedAsync(trackingCode, ex).Wait();
                 throw;
             }
             finally

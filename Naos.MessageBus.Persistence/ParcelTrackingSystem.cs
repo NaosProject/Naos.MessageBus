@@ -87,7 +87,7 @@ namespace Naos.MessageBus.Persistence
         }
 
         /// <inheritdoc />
-        public async Task Sent(TrackingCode trackingCode, Parcel parcel, IChannel address)
+        public async Task UpdateSentAsync(TrackingCode trackingCode, Parcel parcel, IChannel address)
         {
             // shipment may already exist and this is just another envelope to deal with...
             var shipment = await this.FetchShipmentAsync(trackingCode);
@@ -103,7 +103,7 @@ namespace Naos.MessageBus.Persistence
         }
 
         /// <inheritdoc />
-        public async Task Attempting(TrackingCode trackingCode, HarnessDetails harnessDetails)
+        public async Task UpdateAttemptingAsync(TrackingCode trackingCode, HarnessDetails harnessDetails)
         {
             var shipment = await this.FetchShipmentAsync(trackingCode);
 
@@ -114,7 +114,7 @@ namespace Naos.MessageBus.Persistence
         }
 
         /// <inheritdoc />
-        public async Task Rejected(TrackingCode trackingCode, Exception exception)
+        public async Task UpdateRejectedAsync(TrackingCode trackingCode, Exception exception)
         {
             var shipment = await this.FetchShipmentAsync(trackingCode);
 
@@ -125,7 +125,7 @@ namespace Naos.MessageBus.Persistence
         }
 
         /// <inheritdoc />
-        public async Task Delivered(TrackingCode trackingCode)
+        public async Task UpdateDeliveredAsync(TrackingCode trackingCode)
         {
             var shipment = await this.FetchShipmentAsync(trackingCode);
 
@@ -136,7 +136,7 @@ namespace Naos.MessageBus.Persistence
         }
 
         /// <inheritdoc />
-        public async Task Aborted(TrackingCode trackingCode, string reason)
+        public async Task UpdateAbortedAsync(TrackingCode trackingCode, string reason)
         {
             var shipment = await this.FetchShipmentAsync(trackingCode);
 

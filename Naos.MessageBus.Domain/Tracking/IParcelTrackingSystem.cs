@@ -22,7 +22,7 @@ namespace Naos.MessageBus.Domain
         /// <param name="parcel">Parcel that was sent.</param>
         /// <param name="address">Channel that the parcel was sent to (if any).</param>
         /// <returns>Task for async.</returns>
-        Task Sent(TrackingCode trackingCode, Parcel parcel, IChannel address);
+        Task UpdateSentAsync(TrackingCode trackingCode, Parcel parcel, IChannel address);
 
         /// <summary>
         /// Delivery is attempted on a handler, handler details provided.
@@ -30,7 +30,7 @@ namespace Naos.MessageBus.Domain
         /// <param name="trackingCode">Tracking code of the parcel.</param>
         /// <param name="harnessDetails">Details about the harness it is being delivered to.</param>
         /// <returns>Task for async.</returns>
-        Task Attempting(TrackingCode trackingCode, HarnessDetails harnessDetails);
+        Task UpdateAttemptingAsync(TrackingCode trackingCode, HarnessDetails harnessDetails);
 
         /// <summary>
         /// Delivery was rejected by the harness.
@@ -38,14 +38,14 @@ namespace Naos.MessageBus.Domain
         /// <param name="trackingCode">Tracking code of the parcel.</param>
         /// <param name="exception">Exception that occurred.</param>
         /// <returns>Task for async.</returns>
-        Task Rejected(TrackingCode trackingCode, Exception exception);
+        Task UpdateRejectedAsync(TrackingCode trackingCode, Exception exception);
 
         /// <summary>
         /// Delivery was accepted by the harness.
         /// </summary>
         /// <param name="trackingCode">Tracking code of the parcel.</param>
         /// <returns>Task for async.</returns>
-        Task Delivered(TrackingCode trackingCode);
+        Task UpdateDeliveredAsync(TrackingCode trackingCode);
 
         /// <summary>
         /// Delivery was aborted by the handler.
@@ -53,7 +53,7 @@ namespace Naos.MessageBus.Domain
         /// <param name="trackingCode">Tracking code of the parcel.</param>
         /// <param name="reason">Reason for aborting.</param>
         /// <returns>Task for async.</returns>
-        Task Aborted(TrackingCode trackingCode, string reason);
+        Task UpdateAbortedAsync(TrackingCode trackingCode, string reason);
     }
 
     /// <summary>
@@ -62,28 +62,28 @@ namespace Naos.MessageBus.Domain
     public class NullParcelTrackingSystem : IParcelTrackingSystem
     {
         /// <inheritdoc />
-        public async Task Attempting(TrackingCode trackingCode, HarnessDetails harnessDetails)
+        public async Task UpdateAttemptingAsync(TrackingCode trackingCode, HarnessDetails harnessDetails)
         {
             /* no-op */
             await Task.FromResult<object>(null);
         }
 
         /// <inheritdoc />
-        public async Task Delivered(TrackingCode trackingCode)
+        public async Task UpdateDeliveredAsync(TrackingCode trackingCode)
         {
             /* no-op */
             await Task.FromResult<object>(null);
         }
 
         /// <inheritdoc />
-        public async Task Aborted(TrackingCode trackingCode, string reason)
+        public async Task UpdateAbortedAsync(TrackingCode trackingCode, string reason)
         {
             /* no-op */
             await Task.FromResult<object>(null);
         }
 
         /// <inheritdoc />
-        public async Task Sent(TrackingCode trackingCode, Parcel parcel, IChannel address)
+        public async Task UpdateSentAsync(TrackingCode trackingCode, Parcel parcel, IChannel address)
         {
             /* no-op */
             await Task.FromResult<object>(null);
@@ -97,7 +97,7 @@ namespace Naos.MessageBus.Domain
         }
 
         /// <inheritdoc />
-        public async Task Rejected(TrackingCode trackingCode, Exception exception)
+        public async Task UpdateRejectedAsync(TrackingCode trackingCode, Exception exception)
         {
             /* no-op */
             await Task.FromResult<object>(null);

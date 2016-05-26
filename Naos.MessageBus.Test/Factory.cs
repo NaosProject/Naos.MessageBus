@@ -51,16 +51,17 @@ namespace Naos.MessageBus.Test
             Action<string> track = trackingCalls.Add;
 
             var ret = A.Fake<IParcelTrackingSystem>();
-            A.CallTo(ret).Invokes(
+            A.CallTo(ret).WithReturnType<Task>().Invokes(
                 call =>
                     {
-                        if (call.Method.Name == nameof(IParcelTrackingSystem.Sent))
+                        if (call.Method.Name == nameof(IParcelTrackingSystem.UpdateSentAsync))
                         {
                             trackingParcelsFromSent.Add(call.Arguments.Skip(1).First() as Parcel);
                         }
 
                         track(call.Method.Name);
-                    });
+                    }).Returns(Task.Run(() => { }));
+
             return () => ret;
         }
 

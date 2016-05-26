@@ -357,7 +357,7 @@ namespace Naos.MessageBus.Test
 
             dispatcher.Dispatch(new TrackingCode(), "Parcel", parcel);
             trackingSends.Should().HaveCount(1);
-            trackingCalls.Should().BeEquivalentTo("Attempting", "Aborted");
+            trackingCalls.Should().BeEquivalentTo(nameof(IParcelTrackingSystem.UpdateAttemptingAsync), nameof(IParcelTrackingSystem.UpdateAbortedAsync));
         }
 
         [Fact]
@@ -409,7 +409,7 @@ namespace Naos.MessageBus.Test
 
             dispatcher.Dispatch(new TrackingCode(), "Parcel", parcel);
             trackingSends.Should().HaveCount(0);
-            trackingCalls.Should().BeEquivalentTo("Attempting", "Aborted");
+            trackingCalls.Should().BeEquivalentTo(nameof(IParcelTrackingSystem.UpdateAttemptingAsync), nameof(IParcelTrackingSystem.UpdateAbortedAsync));
         }
 
         [Fact]
@@ -463,7 +463,7 @@ namespace Naos.MessageBus.Test
             testCode.ShouldThrow<NullReferenceException>().WithMessage(exception.Message);
 
             trackingSends.Should().HaveCount(0);
-            trackingCalls.Should().BeEquivalentTo("Attempting", "Rejected");
+            trackingCalls.Should().BeEquivalentTo(nameof(IParcelTrackingSystem.UpdateAttemptingAsync), nameof(IParcelTrackingSystem.UpdateRejectedAsync));
         }
 
         [Fact]
@@ -496,7 +496,7 @@ namespace Naos.MessageBus.Test
             dispatcher.Dispatch(new TrackingCode(), "Parcel", parcel);
 
             trackingSends.Should().HaveCount(0);
-            trackingCalls.Should().BeEquivalentTo("Attempting", "Delivered");
+            trackingCalls.Should().BeEquivalentTo(nameof(IParcelTrackingSystem.UpdateAttemptingAsync), nameof(IParcelTrackingSystem.UpdateDeliveredAsync));
         }
 
         [Fact]
