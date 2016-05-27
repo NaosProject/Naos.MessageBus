@@ -19,7 +19,8 @@ namespace Naos.MessageBus.Domain
         /// <param name="displayName">Display name for the parcel.</param>
         /// <param name="trackingCode">Tracking code of the parcel being dispatched.</param>
         /// <param name="parcel">Parcel to dispatch.</param>
+        /// <param name="address">Address parcel was believed to be delivered to.</param>
         [DisplayName("{0}")]
-        void Dispatch(string displayName, TrackingCode trackingCode, Parcel parcel);
+        void Dispatch(string displayName, TrackingCode trackingCode, Parcel parcel, IChannel address);
     }
 }

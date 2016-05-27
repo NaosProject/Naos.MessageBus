@@ -69,7 +69,7 @@ namespace Naos.MessageBus.Core
         }
 
         /// <inheritdoc />
-        public void Dispatch(string displayName, TrackingCode trackingCode, Parcel parcel)
+        public void Dispatch(string displayName, TrackingCode trackingCode, Parcel parcel, IChannel address)
         {
             if (parcel == null)
             {
@@ -82,7 +82,7 @@ namespace Naos.MessageBus.Core
             }
 
             // make sure the message was routed correctly (if not then reroute)
-            if (this.servicedChannels.SingleOrDefault(_ => _.Equals(parcel.Envelopes.First().Address)) == null)
+            if (this.servicedChannels.SingleOrDefault(_ => _.Equals(address)) == null)
             {
                 // any schedule should already be set and NOT reset...
                 this.postOffice.Send(parcel);

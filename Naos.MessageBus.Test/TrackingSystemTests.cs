@@ -44,7 +44,7 @@ namespace Naos.MessageBus.Test
             var trackingSends = new List<Crate>();
             var courier = Factory.GetInMemoryCourier(trackingSends);
             var parcelTrackingSystem = new ParcelTrackingSystem(courier(), eventConnectionConfiguration, readModelConnectionConfiguration);
-            var postOffice = new PostOffice(parcelTrackingSystem, new NullChannel());
+            var postOffice = new PostOffice(parcelTrackingSystem, new ChannelRouter(new NullChannel()));
 
             var topic = new AffectedTopic(Guid.NewGuid().ToString().ToUpperInvariant());
 

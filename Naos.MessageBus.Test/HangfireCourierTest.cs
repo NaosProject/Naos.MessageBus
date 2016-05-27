@@ -20,7 +20,7 @@ namespace Naos.MessageBus.Test
     public class HangfireCourierTest
     {
         [Fact]
-        public static void Send_ValidChannelName_DoesntThrow()
+        public static void ThrowIfInvalidChannel_ValidChannelName_DoesntThrow()
         {
             var channel = new SimpleChannel("monkeys_are_in_space");
             HangfireCourier.ThrowIfInvalidChannel(channel);
@@ -29,7 +29,67 @@ namespace Naos.MessageBus.Test
         }
 
         [Fact]
-        public static void Send_NonNullSchedule_RecurringMessageInjected()
+        public static void ThrowIfInvalidChannel_NonSimpleChannelTypeType_Throws()
+        {
+            // arrange
+            var channel = new NullChannel();
+            Action testCode = () => HangfireCourier.ThrowIfInvalidChannel(channel);
+
+            // act & assert
+            testCode.ShouldThrow<NotSupportedException>().WithMessage("Channel type is not currently supported in Hangfire: Naos.MessageBus.Domain.NullChannel");
+        }
+
+        [Fact]
+        public static void ThrowIfInvalidChannel_NullChannelName_Throws()
+        {
+            // arrange
+            var channel = new SimpleChannel(null);
+            Action testCode = () => HangfireCourier.ThrowIfInvalidChannel(channel);
+
+            // act & assert
+            testCode.ShouldThrow<ArgumentException>().WithMessage("Cannot use null channel name.");
+        }
+
+        [Fact]
+        public static void ThrowIfInvalidChannel_LongChannelName_Throws()
+        {
+            // arrange
+            var channel = new SimpleChannel(new string('a', 21));
+            Action testCode = () => HangfireCourier.ThrowIfInvalidChannel(channel);
+
+            // act & assert
+            testCode.ShouldThrow<ArgumentException>()
+                .WithMessage(
+                    "Cannot use a channel name longer than 20 characters.  The supplied channel name: " + channel.Name + " is " + channel.Name.Length
+                    + " characters long.");
+        }
+
+        [Fact]
+        public static void ThrowIfInvalidChannel_UpperCaseChannelName_Throws()
+        {
+            // arrange
+            var channel = new SimpleChannel(new string('A', 20));
+            Action testCode = () => HangfireCourier.ThrowIfInvalidChannel(channel);
+
+            // act & assert
+            testCode.ShouldThrow<ArgumentException>()
+                .WithMessage("Channel name must be lowercase alphanumeric with underscores ONLY.  The supplied channel name: " + channel.Name);
+        }
+
+        [Fact]
+        public static void ThrowIfInvalidChannel_DashesChannelName_Throws()
+        {
+            // arrange
+            var channel = new SimpleChannel("sup-withthis");
+            Action testCode = () => HangfireCourier.ThrowIfInvalidChannel(channel);
+
+            // act & assert
+            testCode.ShouldThrow<ArgumentException>()
+                .WithMessage("Channel name must be lowercase alphanumeric with underscores ONLY.  The supplied channel name: " + channel.Name);
+        }
+
+        [Fact]
+        public static void ThrowIfInvalidChannel_NonNullSchedule_RecurringMessageInjected()
         {
             // arrange
             var schedule = new DailyScheduleInUtc();
@@ -82,7 +142,7 @@ namespace Naos.MessageBus.Test
         }
 
         [Fact]
-        public static void Send_NullSchedule_NoMessageInjected()
+        public static void ThrowIfInvalidChannel_NullSchedule_NoMessageInjected()
         {
             // arrange
             var schedule = new NullSchedule();

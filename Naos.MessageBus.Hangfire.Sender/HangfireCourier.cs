@@ -39,7 +39,7 @@ namespace Naos.MessageBus.Hangfire.Sender
         /// <summary>
         /// Gets the default channel for Hangfire.
         /// </summary>
-        public IChannel DefaultChannel => new SimpleChannel("default");
+        public IRouteUnaddressedMail DefaultChannelRouter => new ChannelRouter(new SimpleChannel("default"));
 
         /// <inheritdoc />
         public string Send(Crate crate)
@@ -47,22 +47,19 @@ namespace Naos.MessageBus.Hangfire.Sender
             GlobalConfiguration.Configuration.UseSqlServerStorage(this.courierPersistenceConnectionConfiguration.ToSqlServerConnectionString());
             var parcel = UncrateParcel(crate);
 
-            var address = crate.Address;
-            if (address != null && crate.Address.GetType() == typeof(NullMessage))
-            {
-                address = null;
-            }
-
-            var channel = address;
-
+            var channel = crate.Address;
             ThrowIfInvalidChannel(channel);
 
-            var simpleChannel = (SimpleChannel)channel;
+            var simpleChannel = channel as SimpleChannel;
+            if (simpleChannel == null)
+            {
+                throw new ArgumentException("Only addresses of type 'SimpleChannel' are currently supported.");
+            }
 
             var client = new BackgroundJobClient();
             var state = new EnqueuedState { Queue = simpleChannel.Name, };
 
-            Expression<Action<IDispatchMessages>> methodCall = _ => _.Dispatch(crate.Label, crate.TrackingCode, parcel);
+            Expression<Action<IDispatchMessages>> methodCall = _ => _.Dispatch(crate.Label, crate.TrackingCode, parcel, channel);
             var hangfireId = client.Create<IDispatchMessages>(methodCall, state);
 
             if (crate.RecurringSchedule.GetType() != typeof(NullSchedule))

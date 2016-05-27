@@ -21,8 +21,6 @@ namespace Naos.MessageBus.Persistence
     using Naos.Cron;
     using Naos.MessageBus.Domain;
 
-    using Newtonsoft.Json;
-
     using Polly;
 
     using EventHandlingError = Microsoft.Its.Domain.EventHandlingError;
@@ -106,7 +104,7 @@ namespace Naos.MessageBus.Persistence
                 shipment = new Shipment(commandCreate);
             }
 
-            var command = new Send { TrackingCode = trackingCode };
+            var command = new Send { TrackingCode = trackingCode, Address = address };
             shipment.EnactCommand(command);
             await this.SaveShipmentAsync(shipment);
         }

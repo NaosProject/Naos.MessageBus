@@ -82,7 +82,7 @@ namespace Naos.MessageBus.Core
             var filesRaw = Directory.GetFiles(handlerAssemblyPath, "*.dll", SearchOption.AllDirectories);
 
             // initialize the details about this handler.
-            var assemblies = filesRaw.Select(AssemblyDetails.CreateFromFile).ToList();
+            var assemblies = filesRaw.Select(_ => AssemblyDetails.CreateFromFile(_)).ToList();
             var machineDetails = MachineDetails.Create();
             this.harnessStaticDetails = new HarnessStaticDetails
                                       {
@@ -92,7 +92,11 @@ namespace Naos.MessageBus.Core
                                       };
 
             // prune out the Microsoft.Bcl nonsense (if present)
-            var files = filesRaw.Where(_ => !_.Contains("Microsoft.Bcl")).ToList();
+            var filesUnfiltered = filesRaw.Where(_ => !_.Contains("Microsoft.Bcl")).ToList();
+
+            // filter out assemblies that are currently loaded and might create overlap problems...
+            var alreadyLoadedFileNames = AppDomain.CurrentDomain.GetAssemblies().Where(a => !a.IsDynamic).Select(_ => _.CodeBase.ToLowerInvariant()).ToList();
+            var files = filesUnfiltered.Where(_ => !alreadyLoadedFileNames.Contains(new Uri(_).ToString().ToLowerInvariant())).ToList();
 
             var pdbFiles = Directory.GetFiles(handlerAssemblyPath, "*.pdb", SearchOption.AllDirectories);
 
