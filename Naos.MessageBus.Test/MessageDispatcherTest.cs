@@ -264,7 +264,7 @@ namespace Naos.MessageBus.Test
                 new HarnessStaticDetails(),
                 new NullParcelTrackingSystem(),
                 activeMessageTracker,
-                new PostOffice(new NullParcelTrackingSystem()));
+                new PostOffice(new NullParcelTrackingSystem(), new NullChannel()));
 
             var message = new WaitMessage { Description = "RunMe", TimeToWait = TimeSpan.FromSeconds(3) };
             var envelope = message.ToAddressedMessage(channel).ToEnvelope();
@@ -748,7 +748,7 @@ namespace Naos.MessageBus.Test
             var messageJson = Serializer.Serialize(message);
 
             var channel = new SimpleChannel("fakeChannel");
-            var messageDispatcher = new MessageDispatcher(simpleInjectorContainer, new ConcurrentDictionary<Type, object>(), new[] { channel }, TypeMatchStrategy.NamespaceAndName, TimeSpan.FromSeconds(.5), new HarnessStaticDetails(), new NullParcelTrackingSystem(), new InMemoryActiveMessageTracker(), new PostOffice(new NullParcelTrackingSystem()));
+            var messageDispatcher = new MessageDispatcher(simpleInjectorContainer, new ConcurrentDictionary<Type, object>(), new[] { channel }, TypeMatchStrategy.NamespaceAndName, TimeSpan.FromSeconds(.5), new HarnessStaticDetails(), new NullParcelTrackingSystem(), new InMemoryActiveMessageTracker(), new PostOffice(new NullParcelTrackingSystem(), new NullChannel()));
             var parcel = new Parcel
                              {
                                  Id = Guid.NewGuid(),
@@ -775,7 +775,7 @@ namespace Naos.MessageBus.Test
             var messageJson = Serializer.Serialize(message);
 
             var channel = new SimpleChannel("fakeChannel");
-            var messageDispatcher = new MessageDispatcher(simpleInjectorContainer, new ConcurrentDictionary<Type, object>(), new[] { channel }, TypeMatchStrategy.NamespaceAndName, TimeSpan.FromSeconds(.5), new HarnessStaticDetails(), new NullParcelTrackingSystem(), new InMemoryActiveMessageTracker(), new PostOffice(new NullParcelTrackingSystem()));
+            var messageDispatcher = new MessageDispatcher(simpleInjectorContainer, new ConcurrentDictionary<Type, object>(), new[] { channel }, TypeMatchStrategy.NamespaceAndName, TimeSpan.FromSeconds(.5), new HarnessStaticDetails(), new NullParcelTrackingSystem(), new InMemoryActiveMessageTracker(), new PostOffice(new NullParcelTrackingSystem(), new NullChannel()));
             var parcel = new Parcel
                              {
                                  Id = Guid.NewGuid(),
@@ -855,7 +855,7 @@ namespace Naos.MessageBus.Test
                 container = new Container();
             }
 
-            return new MessageDispatcher(container, new ConcurrentDictionary<Type, object>(), channels, TypeMatchStrategy.NamespaceAndName, TimeSpan.FromSeconds(.5), new HarnessStaticDetails(), new NullParcelTrackingSystem(), new InMemoryActiveMessageTracker(), new PostOffice(new NullParcelTrackingSystem()));
+            return new MessageDispatcher(container, new ConcurrentDictionary<Type, object>(), channels, TypeMatchStrategy.NamespaceAndName, TimeSpan.FromSeconds(.5), new HarnessStaticDetails(), new NullParcelTrackingSystem(), new InMemoryActiveMessageTracker(), new PostOffice(new NullParcelTrackingSystem(), new NullChannel()));
         }
 
         public class StateHandler : IHandleMessages<InitialStateMessage>, INeedSharedState<string>

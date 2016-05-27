@@ -25,8 +25,7 @@ namespace Naos.MessageBus.Test
             // arrange
             var trackingCalls = new List<string>();
             var trackingSends = new List<Parcel>();
-            var parcelTrackingSystemBuilder = Factory.GetInMemoryParcelTrackingSystem(trackingCalls, trackingSends);
-            var postOffice = new PostOffice(parcelTrackingSystemBuilder());
+            var postOffice = Factory.GetInMemoryParcelTrackingSystemBackedPostOffice(trackingCalls, trackingSends);
 
             // act
             var trackingCode = postOffice.Send(new NullMessage(), new SimpleChannel("something"));
@@ -42,8 +41,7 @@ namespace Naos.MessageBus.Test
             // arrange
             var trackingCalls = new List<string>();
             var trackingSends = new List<Parcel>();
-            var parcelTrackingSystemBuilder = Factory.GetInMemoryParcelTrackingSystem(trackingCalls, trackingSends);
-            var postOffice = new PostOffice(parcelTrackingSystemBuilder());
+            var postOffice = Factory.GetInMemoryParcelTrackingSystemBackedPostOffice(trackingCalls, trackingSends);
 
             // act
             var trackingCode = postOffice.SendRecurring(new NullMessage(), new SimpleChannel("something"), new DailyScheduleInUtc());
@@ -59,8 +57,8 @@ namespace Naos.MessageBus.Test
             // arrange
             var trackingCalls = new List<string>();
             var trackingSends = new List<Parcel>();
-            var parcelTrackingSystemBuilder = Factory.GetInMemoryParcelTrackingSystem(trackingCalls, trackingSends);
-            var postOffice = new PostOffice(parcelTrackingSystemBuilder());
+            var postOffice = Factory.GetInMemoryParcelTrackingSystemBackedPostOffice(trackingCalls, trackingSends);
+
             Action testCode =
                 () => postOffice.SendRecurring(new NullMessage(), new SimpleChannel("something"), new DailyScheduleInUtc(), "Something", new AffectedTopic("me"));
 
@@ -74,8 +72,8 @@ namespace Naos.MessageBus.Test
             // arrange
             var trackingCalls = new List<string>();
             var trackingSends = new List<Parcel>();
-            var parcelTrackingSystemBuilder = Factory.GetInMemoryParcelTrackingSystem(trackingCalls, trackingSends);
-            var postOffice = new PostOffice(parcelTrackingSystemBuilder());
+            var postOffice = Factory.GetInMemoryParcelTrackingSystemBackedPostOffice(trackingCalls, trackingSends);
+
             var myTopic = "me";
             var name = "Something";
             var schedule = new DailyScheduleInUtc();
@@ -112,14 +110,38 @@ namespace Naos.MessageBus.Test
             Serializer.Deserialize<TopicWasAffectedMessage>(parcel.Envelopes.Last().MessageAsJson).Topic.Name.Should().Be(myTopic);
         }
 
+        public static void SendRerringWithChannelEqualNullGetsSetToNullChannel()
+        {
+            // arrange
+            var trackingCalls = new List<string>();
+            var trackingSends = new List<Parcel>();
+            var postOffice = Factory.GetInMemoryParcelTrackingSystemBackedPostOffice(trackingCalls, trackingSends);
+            var name = "Something";
+            var schedule = new DailyScheduleInUtc();
+
+            // act
+            var trackingCode = postOffice.SendRecurring(
+                new NullMessage(),
+                null,
+                schedule,
+                name);
+
+            // assert
+            var parcel = trackingSends.Single();
+            parcel.Id.Should().Be(trackingCode.ParcelId);
+            parcel.Name.Should().Be(name);
+            parcel.Envelopes.Count.Should().Be(1);
+            parcel.Envelopes.Single().Address.Should().NotBeNull();
+            parcel.Envelopes.Single().Address.GetType().Should().Be(typeof(NullChannel));
+        }
+
         [Fact]
         public static void SendRecurringParcelWithImpactedTopicAndDependantTopics_InjectsMessages()
         {
             // arrange
             var trackingCalls = new List<string>();
             var trackingSends = new List<Parcel>();
-            var parcelTrackingSystemBuilder = Factory.GetInMemoryParcelTrackingSystem(trackingCalls, trackingSends);
-            var postOffice = new PostOffice(parcelTrackingSystemBuilder());
+            var postOffice = Factory.GetInMemoryParcelTrackingSystemBackedPostOffice(trackingCalls, trackingSends);
             var myTopic = "me";
             var name = "Something";
             var schedule = new DailyScheduleInUtc();

@@ -36,6 +36,11 @@ namespace Naos.MessageBus.Hangfire.Sender
             this.courierPersistenceConnectionConfiguration = courierPersistenceConnectionConfiguration;
         }
 
+        /// <summary>
+        /// Gets the default channel for Hangfire.
+        /// </summary>
+        public IChannel DefaultChannel => new SimpleChannel("default");
+
         /// <inheritdoc />
         public string Send(Crate crate)
         {
@@ -48,7 +53,7 @@ namespace Naos.MessageBus.Hangfire.Sender
                 address = null;
             }
 
-            var channel = address ?? new SimpleChannel("default");
+            var channel = address;
 
             ThrowIfInvalidChannel(channel);
 

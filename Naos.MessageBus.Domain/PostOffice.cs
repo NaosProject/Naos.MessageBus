@@ -17,13 +17,17 @@ namespace Naos.MessageBus.Domain
     {
         private readonly IParcelTrackingSystem parcelTrackingSystem;
 
+        private readonly IChannel addressOfSortingFacility;
+
         /// <summary>
         /// Initializes a new instance of the <see cref="PostOffice"/> class.
         /// </summary>
         /// <param name="parcelTrackingSystem">System to track parcels.</param>
-        public PostOffice(IParcelTrackingSystem parcelTrackingSystem)
+        /// <param name="addressOfSortingFacility">Channel that items without an address should be sent to.</param>
+        public PostOffice(IParcelTrackingSystem parcelTrackingSystem, IChannel addressOfSortingFacility)
         {
             this.parcelTrackingSystem = parcelTrackingSystem;
+            this.addressOfSortingFacility = addressOfSortingFacility;
         }
 
         /// <inheritdoc />
@@ -143,7 +147,12 @@ namespace Naos.MessageBus.Domain
             var firstEnvelope = parcel.Envelopes.First();
             var trackingCode = new TrackingCode { ParcelId = parcel.Id, EnvelopeId = firstEnvelope.Id };
 
-            this.parcelTrackingSystem.UpdateSentAsync(trackingCode, parcel, firstEnvelope.Address, recurringSchedule).Wait();
+            // update to send unaddressed mail to the sorting channel
+            var address = firstEnvelope.Address == null || firstEnvelope.Address.GetType() == typeof(NullChannel)
+                              ? this.addressOfSortingFacility
+                              : firstEnvelope.Address;
+
+            this.parcelTrackingSystem.UpdateSentAsync(trackingCode, parcel, address, recurringSchedule).Wait();
 
             return trackingCode;
         }

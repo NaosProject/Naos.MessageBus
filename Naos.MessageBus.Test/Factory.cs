@@ -77,5 +77,12 @@ namespace Naos.MessageBus.Test
 
             return tracker;
         }
+
+        public static IPostOffice GetInMemoryParcelTrackingSystemBackedPostOffice(List<string> trackingCalls, List<Parcel> trackingSends)
+        {
+            var parcelTrackingSystemBuilder = Factory.GetInMemoryParcelTrackingSystem(trackingCalls, trackingSends);
+            var ret = new PostOffice(parcelTrackingSystemBuilder(), new NullChannel());
+            return ret;
+        }
     }
 }

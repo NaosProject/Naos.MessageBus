@@ -21,6 +21,8 @@ namespace Naos.MessageBus.Persistence
     using Naos.Cron;
     using Naos.MessageBus.Domain;
 
+    using Newtonsoft.Json;
+
     using Polly;
 
     using EventHandlingError = Microsoft.Its.Domain.EventHandlingError;
@@ -49,6 +51,12 @@ namespace Naos.MessageBus.Persistence
         {
             this.readModelPersistenceConnectionConfiguration = readModelPersistenceConnectionConfiguration;
             this.retryCount = retryCount;
+
+            // set the settings so there is a consisent behavior and availability in what can/cannot be serialized...
+            Microsoft.Its.Domain.Serialization.Serializer.Settings = Serializer.Settings;
+
+            // have to do this b/c Its... override doesn't fully work
+            Serializer.InitializeDefaultJsonDotNetSettings();
 
             // create methods to get a new event and command database (used for initialization/migration and dependencies of the persistence layer)
             Func<EventStoreDbContext> createEventStoreDbContext =

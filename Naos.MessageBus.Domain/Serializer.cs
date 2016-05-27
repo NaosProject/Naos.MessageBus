@@ -22,11 +22,36 @@ namespace Naos.MessageBus.Domain
         private static bool defaultSettingsApplied = false;
 
         /// <summary>
-        /// Gets the object from the JSON with specific settings needed for project objects.
+        /// Gets the unified serialization settings running the system.
+        ///   Often useful when external systems don't support overriding serialization but do allow overriding settings.
         /// </summary>
-        /// <typeparam name="T">Type of object to return.</typeparam>
-        /// <param name="json">JSON to deserialize.</param>
-        /// <returns>Object of type T to be returned.</returns>
+        public static JsonSerializerSettings Settings => JsonConfiguration.DefaultSerializerSettings;
+
+        /// <summary>
+        /// Initializes the JsonConvert.DefaultSettings to the unified serialization settings running the system.
+        ///    This is good for when external systems cannot be override the serialization logic but depend on JsonConvert's default settings.
+        /// </summary>
+        public static void InitializeDefaultJsonDotNetSettings()
+        {
+            if (!defaultSettingsApplied)
+            {
+                lock (SyncDefaultSettings)
+                {
+                    if (!defaultSettingsApplied)
+                    {
+                        JsonConvert.DefaultSettings = () => Settings;
+                        defaultSettingsApplied = true;
+                    }
+                }
+            }
+        }
+        
+        /// <summary>
+                 /// Gets the object from the JSON with specific settings needed for project objects.
+                 /// </summary>
+                 /// <typeparam name="T">Type of object to return.</typeparam>
+                 /// <param name="json">JSON to deserialize.</param>
+                 /// <returns>Object of type T to be returned.</returns>
         public static T Deserialize<T>(string json) where T : class
         {
             if (string.IsNullOrEmpty(json))
@@ -34,7 +59,7 @@ namespace Naos.MessageBus.Domain
                 return null;
             }
 
-            SetupDefaultSettings();
+            InitializeDefaultJsonDotNetSettings();
 
             var ret = JsonConvert.DeserializeObject<T>(json);
 
@@ -54,7 +79,7 @@ namespace Naos.MessageBus.Domain
                 return null;
             }
 
-            SetupDefaultSettings();
+            InitializeDefaultJsonDotNetSettings();
 
             var ret = JsonConvert.DeserializeObject(json, type);
 
@@ -70,26 +95,11 @@ namespace Naos.MessageBus.Domain
         /// <returns>String of JSON.</returns>
         public static string Serialize<T>(T objectToSerialize, bool indented = true)
         {
-            SetupDefaultSettings();
+            InitializeDefaultJsonDotNetSettings();
 
             var ret = JsonConvert.SerializeObject(objectToSerialize);
 
             return ret;
-        }
-
-        private static void SetupDefaultSettings()
-        {
-            if (!defaultSettingsApplied)
-            {
-                lock (SyncDefaultSettings)
-                {
-                    if (!defaultSettingsApplied)
-                    {
-                        JsonConvert.DefaultSettings = () => JsonConfiguration.DefaultSerializerSettings;
-                        defaultSettingsApplied = true;
-                    }
-                }
-            }
         }
     }
 }
