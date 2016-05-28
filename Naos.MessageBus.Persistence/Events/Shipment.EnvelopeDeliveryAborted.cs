@@ -18,28 +18,58 @@ namespace Naos.MessageBus.Persistence
         /// <summary>
         /// Envelope was delivered.
         /// </summary>
-        public class EnvelopeDeliveryAborted : Event<Shipment>
+        public class EnvelopeDeliveryAborted : Event<Shipment>, IUsePayload<PayloadEnvelopeDeliveryAborted>
         {
-            /// <summary>
-            /// Gets or sets the tracking code of the envelope being delivered.
-            /// </summary>
-            public TrackingCode TrackingCode { get; set; }
-
-            /// <summary>
-            /// Gets or sets the new status of the envelope.
-            /// </summary>
-            public ParcelStatus NewStatus { get; set; }
-
-            /// <summary>
-            /// Gets or sets the reason for aborting.
-            /// </summary>
-            public string Reason { get; set; }
+            /// <inheritdoc />
+            public string PayloadJson { get; set; }
 
             /// <inheritdoc />
             public override void Update(Shipment aggregate)
             {
-                aggregate.Tracking[this.TrackingCode].Status = this.NewStatus;
+                aggregate.Tracking[this.ExtractPayload().TrackingCode].Status = this.ExtractPayload().NewStatus;
             }
         }
+    }
+
+    /// <summary>
+    /// Payload of <see cref="Shipment.EnvelopeDeliveryAborted"/>.
+    /// </summary>
+    public class PayloadEnvelopeDeliveryAborted : IPayload
+    {
+        /// <summary>
+        /// Initializes a new instance of the <see cref="PayloadEnvelopeDeliveryAborted"/> class.
+        /// </summary>
+        public PayloadEnvelopeDeliveryAborted()
+        {
+            // TODO: Remove this and setters after serialization is fixed...
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="PayloadEnvelopeDeliveryAborted"/> class.
+        /// </summary>
+        /// <param name="trackingCode">Tracking code of the envelope being delivered.</param>
+        /// <param name="newStatus">New status of the envelope.</param>
+        /// <param name="reason">Reason for aborting.</param>
+        public PayloadEnvelopeDeliveryAborted(TrackingCode trackingCode, ParcelStatus newStatus, string reason)
+        {
+            this.TrackingCode = trackingCode;
+            this.NewStatus = newStatus;
+            this.Reason = reason;
+        }
+
+        /// <summary>
+        /// Gets or sets the tracking code of the envelope being delivered.
+        /// </summary>
+        public TrackingCode TrackingCode { get; set; }
+
+        /// <summary>
+        /// Gets or sets the new status of the envelope.
+        /// </summary>
+        public ParcelStatus NewStatus { get; set; }
+
+        /// <summary>
+        /// Gets or sets the reason for aborting.
+        /// </summary>
+        public string Reason { get; set; }
     }
 }

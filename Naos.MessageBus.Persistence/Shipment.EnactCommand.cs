@@ -21,7 +21,7 @@ namespace Naos.MessageBus.Persistence
         /// <param name="command">Command to enact on aggregate.</param>
         public void EnactCommand(Create command)
         {
-            this.RecordEvent(new Created { Parcel = command.Parcel, RecurringSchedule = command.RecurringSchedule });
+            this.RecordEvent(new Created { PayloadJson = new PayloadCreated(command.Parcel, command.RecurringSchedule).ToJson() });
         }
 
         /// <summary>
@@ -31,7 +31,7 @@ namespace Naos.MessageBus.Persistence
         public void EnactCommand(Send command)
         {
             this.RecordEvent(
-                new EnvelopeSent { TrackingCode = command.TrackingCode, NewStatus = ParcelStatus.InTransit, Parcel = this.Parcel, Address = command.Address });
+                new EnvelopeSent { PayloadJson = new PayloadEnvelopeSent(command.TrackingCode, ParcelStatus.InTransit, this.Parcel, command.Address).ToJson() });
         }
 
         /// <summary>
@@ -40,7 +40,13 @@ namespace Naos.MessageBus.Persistence
         /// <param name="command">Command to enact on aggregate.</param>
         public void EnactCommand(Attempt command)
         {
-            this.RecordEvent(new EnvelopeDeliveryAttempted { TrackingCode = command.TrackingCode, NewStatus = ParcelStatus.OutForDelivery, Recipient = command.Recipient });
+            this.RecordEvent(
+                new EnvelopeDeliveryAttempted
+                    {
+                        PayloadJson =
+                            new PayloadEnvelopeDeliveryAttempted(command.TrackingCode, ParcelStatus.OutForDelivery, command.Recipient)
+                            .ToJson()
+                    });
         }
 
         /// <summary>
@@ -49,7 +55,12 @@ namespace Naos.MessageBus.Persistence
         /// <param name="command">Command to enact on aggregate.</param>
         public void EnactCommand(Abort command)
         {
-            this.RecordEvent(new EnvelopeDeliveryAborted { TrackingCode = command.TrackingCode, NewStatus = ParcelStatus.Aborted, Reason = command.Reason });
+            this.RecordEvent(
+                new EnvelopeDeliveryAborted
+                    {
+                        PayloadJson =
+                            new PayloadEnvelopeDeliveryAborted(command.TrackingCode, ParcelStatus.Aborted, command.Reason).ToJson()
+                    });
         }
 
         /// <summary>
@@ -58,7 +69,12 @@ namespace Naos.MessageBus.Persistence
         /// <param name="command">Command to enact on aggregate.</param>
         public void EnactCommand(Reject command)
         {
-            this.RecordEvent(new EnvelopeDeliveryRejected { TrackingCode = command.TrackingCode, NewStatus = ParcelStatus.Rejected, Exception = command.Exception });
+            this.RecordEvent(
+                new EnvelopeDeliveryRejected
+                    {
+                        PayloadJson =
+                            new PayloadEnvelopeDeliveryRejected(command.TrackingCode, ParcelStatus.Rejected, command.Exception).ToJson()
+                    });
         }
 
         /// <summary>
@@ -67,11 +83,12 @@ namespace Naos.MessageBus.Persistence
         /// <param name="command">Command to enact on aggregate.</param>
         public void EnactCommand(Deliver command)
         {
-            this.RecordEvent(new EnvelopeDelivered { TrackingCode = command.TrackingCode, NewStatus = ParcelStatus.Delivered });
+            this.RecordEvent(new EnvelopeDelivered { PayloadJson = new PayloadEnvelopeDelivered(command.TrackingCode, ParcelStatus.Delivered).ToJson() });
 
             if (this.Parcel.Envelopes.Last().Id == command.TrackingCode.EnvelopeId)
             {
-                this.RecordEvent(new ParcelDelivered { ParcelId = command.TrackingCode.ParcelId, NewStatus = ParcelStatus.Delivered });
+                this.RecordEvent(
+                    new ParcelDelivered { PayloadJson = new PayloadParcelDelivered(command.TrackingCode.ParcelId, ParcelStatus.Delivered).ToJson() });
             }
 
             var deliveredEnvelope = this.Tracking[command.TrackingCode].Envelope;
@@ -80,14 +97,16 @@ namespace Naos.MessageBus.Persistence
             if (beingAffected)
             {
                 var message = Serializer.Deserialize<TopicBeingAffectedMessage>(deliveredEnvelope.MessageAsJson);
-                this.RecordEvent(new TopicBeingAffected { TrackingCode = command.TrackingCode, Topic = message.Topic, Envelope = deliveredEnvelope });
+                this.RecordEvent(
+                    new TopicBeingAffected { ParcelId = command.TrackingCode.ParcelId, PayloadJson = new PayloadTopicBeingAffected(command.TrackingCode, message.Topic, deliveredEnvelope).ToJson() });
             }
 
             var wasAffected = deliveredEnvelope.MessageType == typeof(TopicWasAffectedMessage).ToTypeDescription();
             if (wasAffected)
             {
                 var message = Serializer.Deserialize<TopicWasAffectedMessage>(deliveredEnvelope.MessageAsJson);
-                this.RecordEvent(new TopicWasAffected { TrackingCode = command.TrackingCode, Topic = message.Topic, Envelope = deliveredEnvelope });
+                this.RecordEvent(
+                    new TopicWasAffected { ParcelId = command.TrackingCode.ParcelId, PayloadJson = new PayloadTopicWasAffected(command.TrackingCode, message.Topic, deliveredEnvelope).ToJson() });
             }
         }
     }

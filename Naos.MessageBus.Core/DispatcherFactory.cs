@@ -78,6 +78,11 @@ namespace Naos.MessageBus.Core
             this.activeMessageTracker = activeMessageTracker;
             this.postOffice = postOffice;
 
+            var currentlyLoadedAssemblies = AppDomain.CurrentDomain.GetAssemblies().Where(a => !a.IsDynamic).ToList();
+
+            var handlerTypeMap = new List<TypeMap>();
+            LoadHandlerTypeMapFromAssemblies(handlerTypeMap, currentlyLoadedAssemblies);
+
             // find all assemblies files to search for handlers.
             var filesRaw = Directory.GetFiles(handlerAssemblyPath, "*.dll", SearchOption.AllDirectories);
 
@@ -95,9 +100,8 @@ namespace Naos.MessageBus.Core
             var filesUnfiltered = filesRaw.Where(_ => !_.Contains("Microsoft.Bcl")).ToList();
 
             // filter out assemblies that are currently loaded and might create overlap problems...
-            var alreadyLoadedFileNames = AppDomain.CurrentDomain.GetAssemblies().Where(a => !a.IsDynamic).Select(_ => _.CodeBase.ToLowerInvariant()).ToList();
+            var alreadyLoadedFileNames = currentlyLoadedAssemblies.Select(_ => _.CodeBase.ToLowerInvariant()).ToList();
             var files = filesUnfiltered.Where(_ => !alreadyLoadedFileNames.Contains(new Uri(_).ToString().ToLowerInvariant())).ToList();
-
             var pdbFiles = Directory.GetFiles(handlerAssemblyPath, "*.pdb", SearchOption.AllDirectories);
 
             // add an unknown assembly resolver to go try to find the dll in one of the files we have discovered...
@@ -116,34 +120,42 @@ namespace Naos.MessageBus.Core
                     return Assembly.LoadFrom(fullDllPath);
                 };
 
-            var handlerTypeMap = new List<TypeMap>();
-            foreach (var filePathToPotentialHandlerAssembly in files)
-            {
-                try
-                {
-                    var fullDllPath = filePathToPotentialHandlerAssembly;
-                    var dllNameWithoutExtension = (Path.GetFileName(filePathToPotentialHandlerAssembly) ?? string.Empty).Replace(".dll", string.Empty);
+            var assembliesFromFiles = files.Select(
+                filePathToPotentialHandlerAssembly =>
+                    {
+                        try
+                        {
+                            var fullDllPath = filePathToPotentialHandlerAssembly;
+                            var dllNameWithoutExtension = (Path.GetFileName(filePathToPotentialHandlerAssembly) ?? string.Empty).Replace(".dll", string.Empty);
 
-                    // Can't use Assembly.LoadFrom() here because it fails for some reason.
-                    var assembly = GetAssembly(dllNameWithoutExtension, pdbFiles, fullDllPath);
+                            // Can't use Assembly.LoadFrom() here because it fails for some reason.
+                            var assembly = LoadAssemblyFromDisk(dllNameWithoutExtension, pdbFiles, fullDllPath);
+                            return assembly;
+                        }
+                        catch (ReflectionTypeLoadException reflectionTypeLoadException)
+                        {
+                            throw new ApplicationException(
+                                "Failed to load assembly: " + filePathToPotentialHandlerAssembly + ". "
+                                + string.Join(",", reflectionTypeLoadException.LoaderExceptions.Select(_ => _.ToString())),
+                                reflectionTypeLoadException);
+                        }
+                    });
 
-                    var typesInFile = assembly.GetTypes();
-                    var mapsInFile = typesInFile.GetTypeMapsOfImplementersOfGenericType(typeof(IHandleMessages<>));
-                    handlerTypeMap.AddRange(mapsInFile);
-                }
-                catch (ReflectionTypeLoadException reflectionTypeLoadException)
-                {
-                    throw new ApplicationException(
-                        "Failed to load assembly: " + filePathToPotentialHandlerAssembly + ". "
-                        + string.Join(",", reflectionTypeLoadException.LoaderExceptions.Select(_ => _.ToString())),
-                        reflectionTypeLoadException);
-                }
-            }
-
-            this.LoadContainer(handlerTypeMap);
+            LoadHandlerTypeMapFromAssemblies(handlerTypeMap, assembliesFromFiles);
+            this.LoadContainerFromHandlerTypeMap(handlerTypeMap);
         }
 
-        private void LoadContainer(ICollection<TypeMap> handlerTypeMap)
+        private static void LoadHandlerTypeMapFromAssemblies(List<TypeMap> handlerTypeMap, IEnumerable<Assembly> assemblies)
+        {
+            foreach (var assembly in assemblies)
+            {
+                var typesInFile = assembly.GetTypes();
+                var mapsInFile = typesInFile.GetTypeMapsOfImplementersOfGenericType(typeof(IHandleMessages<>));
+                handlerTypeMap.AddRange(mapsInFile);
+            }
+        }
+
+        private void LoadContainerFromHandlerTypeMap(ICollection<TypeMap> handlerTypeMap)
         {
             foreach (var handlerTypeMapEntry in handlerTypeMap)
             {
@@ -174,7 +186,7 @@ namespace Naos.MessageBus.Core
             }
         }
 
-        private static Assembly GetAssembly(string dllNameWithoutExtension, string[] pdbFiles, string fullDllPath)
+        private static Assembly LoadAssemblyFromDisk(string dllNameWithoutExtension, string[] pdbFiles, string fullDllPath)
         {
             var pdbName = dllNameWithoutExtension + ".pdb";
             var fullPdbPath = pdbFiles.FirstOrDefault(_ => _.EndsWith(pdbName));
