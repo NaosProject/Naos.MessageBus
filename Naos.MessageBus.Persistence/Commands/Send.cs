@@ -44,5 +44,10 @@ namespace Naos.MessageBus.Persistence
         /// Gets or sets the address for the tracked item.
         /// </summary>
         public IChannel Address { get; set; }
+
+        /// <summary>
+        /// Gets or sets the parcel of the shipment.
+        /// </summary>
+        public Parcel Parcel { get; set; }
     }
 }

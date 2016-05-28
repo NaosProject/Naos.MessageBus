@@ -31,7 +31,7 @@ namespace Naos.MessageBus.Persistence
         public void EnactCommand(Send command)
         {
             this.RecordEvent(
-                new EnvelopeSent { PayloadJson = new PayloadEnvelopeSent(command.TrackingCode, ParcelStatus.InTransit, this.Parcel, command.Address).ToJson() });
+                new EnvelopeSent { PayloadJson = new PayloadEnvelopeSent(command.TrackingCode, ParcelStatus.InTransit, command.Parcel, command.Address).ToJson() });
         }
 
         /// <summary>

@@ -251,11 +251,12 @@ namespace Naos.MessageBus.Core
                     activity.Trace(() => "Sending remaining messages in sequence.");
 
                     var envelopesParcel = new Parcel
-                                                       {
-                                                           Id = parcelId, // persist the batch ID for collation
-                                                           Envelopes = envelopes,
-                                                           SharedInterfaceStates = shareSets
-                                                       };
+                                              {
+                                                  Id = parcelId, // persist the batch ID for collation
+                                                  Name = envelopes.FirstOrDefault()?.Description,
+                                                  Envelopes = envelopes,
+                                                  SharedInterfaceStates = shareSets
+                                              };
 
                     this.postOffice.Send(envelopesParcel);
 

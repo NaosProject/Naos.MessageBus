@@ -98,7 +98,7 @@ namespace Naos.MessageBus.Persistence
                 shipment = new Shipment(commandCreate);
             }
 
-            var command = new Send { TrackingCode = trackingCode, Address = address };
+            var command = new Send { TrackingCode = trackingCode, Address = address, Parcel = parcel };
             shipment.EnactCommand(command);
             await this.SaveShipmentAsync(shipment);
         }
