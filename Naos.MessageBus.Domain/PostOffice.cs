@@ -170,12 +170,11 @@ namespace Naos.MessageBus.Domain
             {
                 var abortMessage = new AbortIfNoTopicsAffectedAndShareResultsMessage
                                        {
-                                           Description =
-                                               "Checking Affected Topics: "
-                                               + string.Join(",", dependencyTopics),
+                                           Description = parcel.Name + " checking Depdendency Topics: " + string.Join(",", dependencyTopics),
                                            Topic = parcel.Topic,
                                            DependencyTopics = dependencyTopics,
-                                           SimultaneousRunsStrategy = parcel.SimultaneousRunsStrategy
+                                           SimultaneousRunsStrategy = parcel.SimultaneousRunsStrategy,
+                                           TopicCheckStrategy = parcel.DependencyTopicCheckStrategy
                                        };
 
                 newEnvelopes.Add(abortMessage.ToAddressedMessage(null).ToEnvelope());
