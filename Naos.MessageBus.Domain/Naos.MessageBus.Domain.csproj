@@ -119,6 +119,7 @@
     <Compile Include="Sharing\SharedProperty.cs" />
     <Compile Include="Sharing\ShareTrackingCodesMessage.cs" />
     <Compile Include="Tracking\TrackingCode.cs" />
+    <Compile Include="TypeComparer.cs" />
     <Compile Include="TypeDescription.cs" />
     <Compile Include="TypeMap.cs" />
     <Compile Include="TypeMatchStrategy.cs" />

@@ -19,6 +19,9 @@ namespace Naos.MessageBus.Hangfire.Console
     /// </summary>
     public class DispatcherFactoryJobActivator : JobActivator
     {
+        // Make this permissive since it's the underlying logic and shouldn't be coupled to whether handlers are matched in strict mode...
+        private readonly TypeComparer typeComparer = new TypeComparer(TypeMatchStrategy.NamespaceAndName);
+
         private readonly DispatcherFactory dispatcherFactory;
 
         /// <summary>
@@ -38,7 +41,7 @@ namespace Naos.MessageBus.Hangfire.Console
         /// <inheritdoc />
         public override object ActivateJob(Type jobType)
         {
-            if (jobType == typeof(IDispatchMessages))
+            if (this.typeComparer.Equals(jobType, typeof(IDispatchMessages)))
             {
                 return this.dispatcherFactory.Create();
             }

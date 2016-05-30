@@ -82,23 +82,22 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="TopicBeingAffectedMessageHandler.cs" />
+    <Compile Include="Handlers\TopicBeingAffectedMessageHandler.cs" />
     <Compile Include="RecurringParcelEncounteredException.cs" />
-    <Compile Include="ShareNowPlusTimeAsExpirationMessageHandler.cs" />
-    <Compile Include="ShareTrackingCodesMessageHandler.cs" />
-    <Compile Include="WaitForTrackingCodesMessageHandler.cs" />
-    <Compile Include="AbortIfNoTopicsAffectedAndShareResultsMessageHandler.cs" />
+    <Compile Include="Handlers\ShareNowPlusTimeAsExpirationMessageHandler.cs" />
+    <Compile Include="Handlers\ShareTrackingCodesMessageHandler.cs" />
+    <Compile Include="Handlers\WaitForTrackingCodesMessageHandler.cs" />
+    <Compile Include="Handlers\AbortIfNoTopicsAffectedAndShareResultsMessageHandler.cs" />
     <Compile Include="DispatcherFactory.cs" />
     <Compile Include="ITrackActiveMessages.cs" />
     <Compile Include="Logging.cs" />
     <Compile Include="MessageDispatcher.cs" />
-    <Compile Include="TopicWasAffectedMessageHandler.cs" />
-    <Compile Include="ThrowsExceptionMessageHandler.cs" />
-    <Compile Include="WaitMessageHandler.cs" />
-    <Compile Include="NullMessageHandler.cs" />
+    <Compile Include="Handlers\TopicWasAffectedMessageHandler.cs" />
+    <Compile Include="Handlers\ThrowsExceptionMessageHandler.cs" />
+    <Compile Include="Handlers\WaitMessageHandler.cs" />
+    <Compile Include="Handlers\NullMessageHandler.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SharedPropertyHelper.cs" />
-    <Compile Include="TypeComparer.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />

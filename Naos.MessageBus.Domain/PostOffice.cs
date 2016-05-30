@@ -15,6 +15,9 @@ namespace Naos.MessageBus.Domain
     /// <inheritdoc />
     public class PostOffice : IPostOffice
     {
+        // Make this permissive since it's the underlying logic and shouldn't be coupled to whether handlers are matched in strict mode...
+        private readonly TypeComparer typeComparer = new TypeComparer(TypeMatchStrategy.NamespaceAndName);
+
         private readonly IParcelTrackingSystem parcelTrackingSystem;
 
         private readonly IRouteUnaddressedMail unaddressedMailRouter;
@@ -148,7 +151,7 @@ namespace Naos.MessageBus.Domain
             var trackingCode = new TrackingCode { ParcelId = parcel.Id, EnvelopeId = firstEnvelope.Id };
 
             // update to send unaddressed mail to the sorting channel
-            var address = firstEnvelope.Address == null || firstEnvelope.Address.GetType() == typeof(NullChannel)
+            var address = firstEnvelope.Address == null || this.typeComparer.Equals(firstEnvelope.Address.GetType(), typeof(NullChannel))
                               ? this.unaddressedMailRouter.FindAddress(parcel)
                               : firstEnvelope.Address;
 

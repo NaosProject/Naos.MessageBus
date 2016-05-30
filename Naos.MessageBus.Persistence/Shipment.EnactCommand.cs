@@ -15,6 +15,9 @@ namespace Naos.MessageBus.Persistence
     /// </summary>
     public partial class Shipment
     {
+        // Make this permissive since it's the underlying logic and shouldn't be coupled to whether handlers are matched in strict mode...
+        private readonly TypeComparer typeComparer = new TypeComparer(TypeMatchStrategy.NamespaceAndName);
+
         /// <summary>
         /// Enact the <see cref="Create"/> command.
         /// </summary>
@@ -93,7 +96,7 @@ namespace Naos.MessageBus.Persistence
 
             var deliveredEnvelope = this.Tracking[command.TrackingCode].Envelope;
 
-            var beingAffected = deliveredEnvelope.MessageType == typeof(TopicBeingAffectedMessage).ToTypeDescription();
+            var beingAffected = this.typeComparer.Equals(deliveredEnvelope.MessageType, typeof(TopicBeingAffectedMessage).ToTypeDescription());
             if (beingAffected)
             {
                 var message = Serializer.Deserialize<TopicBeingAffectedMessage>(deliveredEnvelope.MessageAsJson);
@@ -101,7 +104,7 @@ namespace Naos.MessageBus.Persistence
                     new TopicBeingAffected { ParcelId = command.TrackingCode.ParcelId, PayloadJson = new PayloadTopicBeingAffected(command.TrackingCode, message.Topic, deliveredEnvelope).ToJson() });
             }
 
-            var wasAffected = deliveredEnvelope.MessageType == typeof(TopicWasAffectedMessage).ToTypeDescription();
+            var wasAffected = this.typeComparer.Equals(deliveredEnvelope.MessageType, typeof(TopicWasAffectedMessage).ToTypeDescription());
             if (wasAffected)
             {
                 var message = Serializer.Deserialize<TopicWasAffectedMessage>(deliveredEnvelope.MessageAsJson);

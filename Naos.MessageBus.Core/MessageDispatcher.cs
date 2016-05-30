@@ -24,6 +24,9 @@ namespace Naos.MessageBus.Core
     /// <inheritdoc />
     public class MessageDispatcher : IDispatchMessages
     {
+        // Make this permissive since it's the underlying logic and shouldn't be coupled to whether handlers are matched in strict mode...
+        private readonly TypeComparer typeComparer = new TypeComparer(TypeMatchStrategy.NamespaceAndName);
+
         private readonly Container simpleInjectorContainer;
 
         private readonly ConcurrentDictionary<Type, object> handlerSharedStateMap;
@@ -200,7 +203,7 @@ namespace Naos.MessageBus.Core
                     if (task.Status == TaskStatus.Faulted)
                     {
                         var exception = task.Exception ?? new AggregateException("No exception came back from task but status was Faulted.");
-                        if (exception.GetType() == typeof(AggregateException) && exception.InnerExceptions.Count == 1 && exception.InnerException != null)
+                        if (this.typeComparer.Equals(exception.GetType(), typeof(AggregateException)) && exception.InnerExceptions.Count == 1 && exception.InnerException != null)
                         {
                             // if this is just wrapping a single exception then no need to keep the wrapper...
                             throw exception.InnerException;
@@ -274,7 +277,7 @@ namespace Naos.MessageBus.Core
         {
             var handlerActualType = handler.GetType();
             var handlerInterfaces = handlerActualType.GetInterfaces();
-            if (handlerInterfaces.Any(_ => _.IsGenericType && _.GetGenericTypeDefinition() == typeof(INeedSharedState<>)))
+            if (handlerInterfaces.Any(_ => _.IsGenericType && this.typeComparer.Equals(_.GetGenericTypeDefinition(), typeof(INeedSharedState<>))))
             {
                 using (var activity = Log.Enter(() => new { HandlerType = handlerActualType, Handler = handler }))
                 {

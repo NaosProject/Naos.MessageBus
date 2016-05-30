@@ -4,12 +4,10 @@
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
-namespace Naos.MessageBus.Core
+namespace Naos.MessageBus.Domain
 {
     using System;
     using System.Collections.Generic;
-
-    using Naos.MessageBus.Domain;
 
     /// <summary>
     /// Type comparer using the provided strategy.
