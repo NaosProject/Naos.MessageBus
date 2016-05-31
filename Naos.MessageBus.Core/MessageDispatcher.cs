@@ -99,7 +99,7 @@ namespace Naos.MessageBus.Core
 
                 // this is a very special case and must be checked before marking any status changes to the parcel (otherwise it should be in InternalDispatch...)
                 var firstEnvelope = parcel.Envelopes.First();
-                if ((firstEnvelope.MessageType ?? new TypeDescription()).Equals(typeof(RecurringHeaderMessage).ToTypeDescription()))
+                if (this.typeComparer.Equals(firstEnvelope.MessageType, typeof(RecurringHeaderMessage).ToTypeDescription()))
                 {
                     throw new RecurringParcelEncounteredException(firstEnvelope.Description);
                 }

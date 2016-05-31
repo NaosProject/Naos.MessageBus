@@ -173,24 +173,24 @@ namespace Naos.MessageBus.Domain
             {
                 var abortMessage = new AbortIfNoTopicsAffectedAndShareResultsMessage
                                        {
-                                           Description = parcel.Name + " checking Depdendency Topics: " + string.Join(",", dependencyTopics),
+                                           Description = $"{parcel.Name} - Checking Depdendency Topics: " + string.Join(",", dependencyTopics),
                                            Topic = parcel.Topic,
                                            DependencyTopics = dependencyTopics,
                                            SimultaneousRunsStrategy = parcel.SimultaneousRunsStrategy,
                                            TopicCheckStrategy = parcel.DependencyTopicCheckStrategy
                                        };
 
-                newEnvelopes.Add(abortMessage.ToAddressedMessage(null).ToEnvelope());
+                newEnvelopes.Add(abortMessage.ToAddressedMessage().ToEnvelope());
             }
 
             // add a being affected message
             var beingAffectedMessage = new TopicBeingAffectedMessage
                                      {
-                                         Description = $"Topic Being Affected Notice for {parcel.Topic}",
+                                         Description = $"{parcel.Name} - Affecting Topic: {parcel.Topic}",
                                          Topic = parcel.Topic
                                      };
 
-            newEnvelopes.Add(beingAffectedMessage.ToAddressedMessage(null).ToEnvelope());
+            newEnvelopes.Add(beingAffectedMessage.ToAddressedMessage().ToEnvelope());
 
             // add the envelopes passed in
             newEnvelopes.AddRange(envelopes);
@@ -198,11 +198,11 @@ namespace Naos.MessageBus.Domain
             // add the final was affected message
             var wasAffectedMessage = new TopicWasAffectedMessage
                                        {
-                                           Description = $"Topic Was Affected Notice for {parcel.Topic}",
+                                           Description = $"{parcel.Name} - Affected Topic: {parcel.Topic}",
                                            Topic = parcel.Topic
                                        };
 
-            newEnvelopes.Add(wasAffectedMessage.ToAddressedMessage(null).ToEnvelope());
+            newEnvelopes.Add(wasAffectedMessage.ToAddressedMessage().ToEnvelope());
 
             var newParcel = new Parcel { Id = parcelId, Name = parcel.Name, SharedInterfaceStates = sharedInterfaceStates, Envelopes = newEnvelopes };
 

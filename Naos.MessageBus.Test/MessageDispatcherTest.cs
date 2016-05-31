@@ -529,7 +529,7 @@ namespace Naos.MessageBus.Test
                                  Envelopes =
                                      new[]
                                          {
-                                             new RecurringHeaderMessage().ToAddressedMessage(null).ToEnvelope(),
+                                             new RecurringHeaderMessage().ToAddressedMessage().ToEnvelope(),
                                              new NullMessage().ToAddressedMessage(monitoredChannel).ToEnvelope(),
                                          }
                              };

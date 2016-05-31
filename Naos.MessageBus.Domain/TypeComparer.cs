@@ -28,6 +28,11 @@ namespace Naos.MessageBus.Domain
         /// <inheritdoc />
         public bool Equals(Type x, Type y)
         {
+            if (x == null || y == null)
+            {
+                return false;
+            }
+
             var ret = this.Equals(
                 x.Namespace,
                 x.Name,
@@ -42,6 +47,11 @@ namespace Naos.MessageBus.Domain
         /// <inheritdoc />
         public bool Equals(TypeDescription x, TypeDescription y)
         {
+            if (x == null || y == null)
+            {
+                return false;
+            }
+
             var ret = this.Equals(
                 x.Namespace,
                 x.Name,

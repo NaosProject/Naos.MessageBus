@@ -19,11 +19,11 @@ namespace Naos.MessageBus.Domain
         /// <param name="message">Message to wrap.</param>
         /// <param name="channel">Channel to send to.</param>
         /// <returns><see cref="AddressedMessage"/> with message and channel.</returns>
-        public static AddressedMessage ToAddressedMessage(this IMessage message, IChannel channel)
+        public static AddressedMessage ToAddressedMessage(this IMessage message, IChannel channel = null)
         {
             return new AddressedMessage
             {
-                Address = channel,
+                Address = channel ?? new NullChannel(),
                 Message = message
             };
         }
