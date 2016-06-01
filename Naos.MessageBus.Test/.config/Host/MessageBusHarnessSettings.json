@@ -1,5 +1,27 @@
 ﻿{
-    "persistenceConnectionString": "server=localhost",
+    "connectionConfiguration": {
+        "courierPersistenceConnectionConfiguration": {
+            "server": "server1",
+            "credentials": {
+                "user": "user",
+                "password": "password"
+            }
+        },
+        "eventPersistenceConnectionConfiguration": {
+            "server": "server2",
+            "credentials": {
+                "user": "user",
+                "password": "password"
+            }
+        },
+        "readModelPersistenceConnectionConfiguration": {
+            "server": "server3",
+            "credentials": {
+                "user": "user",
+                "password": "password"
+            }
+        }
+    },
     "roleSettings": [
         {
             "runDashboard": true

@@ -10,15 +10,17 @@ namespace Naos.MessageBus.Core
     using System.Collections.Generic;
     using System.Linq;
 
-    using Naos.MessageBus.DataContract;
-    using Naos.MessageBus.DataContract.Exceptions;
-    using Naos.MessageBus.HandlingContract;
+    using Naos.MessageBus.Domain;
+    using Naos.MessageBus.Domain.Exceptions;
 
     /// <summary>
     /// Code to handle merging IShare properties.
     /// </summary>
     public static class SharedPropertyHelper
     {
+        // Make this permissive since it's the underlying logic and shouldn't be coupled to whether handlers are matched in strict mode...
+        private static readonly TypeComparer TypeComparer = new TypeComparer(TypeMatchStrategy.NamespaceAndName);
+
         /// <summary>
         /// Takes any matching have properties from the handler to the message.
         /// </summary>
@@ -41,7 +43,7 @@ namespace Naos.MessageBus.Core
                     .Where(
                         sourceTypeInterface =>
                         sourceTypeInterface.GetInterfaces()
-                            .Select(inferfaceType => inferfaceType == typeof(IShare))
+                            .Select(inferfaceType => TypeComparer.Equals(inferfaceType, typeof(IShare)))
                             .Any());
 
             var typeComparer = new TypeComparer(typeMatchStrategy);
@@ -71,7 +73,7 @@ namespace Naos.MessageBus.Core
                 sourceType.GetInterfaces()
                     .Where(
                         sourceTypeInterface =>
-                        sourceTypeInterface.GetInterfaces().Select(inferfaceType => inferfaceType == typeof(IShare)).Any());
+                        sourceTypeInterface.GetInterfaces().Select(inferfaceType => TypeComparer.Equals(inferfaceType, typeof(IShare))).Any());
             return sourceTypeInterfaces.ToList();
         }
 

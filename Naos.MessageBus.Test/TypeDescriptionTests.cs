@@ -9,7 +9,9 @@ namespace Naos.MessageBus.Test
     using System;
     using System.Linq;
 
-    using Naos.MessageBus.DataContract;
+    using FluentAssertions;
+
+    using Naos.MessageBus.Domain;
 
     using Xunit;
 
@@ -33,12 +35,14 @@ namespace Naos.MessageBus.Test
         [Fact]
         public void FromType_NullType_Throws()
         {
+            // arrange
             Action testCode = () =>
                 {
                     TypeDescription.FromType(null);
                 };
-            var ex = Assert.Throws<ArgumentException>(testCode);
-            Assert.Equal("Type cannot be null", ex.Message);
+
+            // act & assert
+            testCode.ShouldThrow<ArgumentException>().WithMessage("Type cannot be null");
         }
 
         [Fact]
@@ -59,13 +63,15 @@ namespace Naos.MessageBus.Test
         [Fact]
         public void ToTypeDescription_NullType_Throws()
         {
+            // arrange
             Action testCode = () =>
                 {
                     Type type = null;
                     type.ToTypeDescription();
                 };
-            var ex = Assert.Throws<ArgumentException>(testCode);
-            Assert.Equal("Type cannot be null", ex.Message);
+
+            // act & assert
+            testCode.ShouldThrow<ArgumentException>().WithMessage("Type cannot be null");
         }
     }
 }

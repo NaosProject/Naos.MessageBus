@@ -11,15 +11,27 @@ namespace Naos.MessageBus.Test
     using System.Linq;
 
     using Naos.MessageBus.Core;
-    using Naos.MessageBus.DataContract;
-    using Naos.MessageBus.HandlingContract;
-
-    using Newtonsoft.Json;
+    using Naos.MessageBus.Domain;
 
     using Xunit;
 
     public class TypeComparerTests
     {
+        [Fact]
+        public void Equals_Nulls_False()
+        {
+            var comparer = new TypeComparer(TypeMatchStrategy.NamespaceAndName);
+
+            Assert.False(comparer.Equals((Type)null, (Type)null));
+            Assert.False(comparer.Equals((TypeDescription)null, (TypeDescription)null));
+
+            Assert.False(comparer.Equals(typeof(string), (Type)null));
+            Assert.False(comparer.Equals((Type)null, typeof(string)));
+
+            Assert.False(comparer.Equals(typeof(string).ToTypeDescription(), (TypeDescription)null));
+            Assert.False(comparer.Equals((TypeDescription)null, typeof(string).ToTypeDescription()));
+        }
+
         [Fact]
         public void EqualsNamespaceAndName_Match_True()
         {

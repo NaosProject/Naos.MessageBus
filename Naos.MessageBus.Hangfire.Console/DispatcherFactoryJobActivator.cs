@@ -11,14 +11,17 @@ namespace Naos.MessageBus.Hangfire.Console
     using global::Hangfire;
 
     using Naos.MessageBus.Core;
-    using Naos.MessageBus.DataContract.Exceptions;
-    using Naos.MessageBus.HandlingContract;
+    using Naos.MessageBus.Domain;
+    using Naos.MessageBus.Domain.Exceptions;
 
     /// <summary>
     /// Hangfire job activator that will lookup the correct implementation of the Hangfire job via SimpleInjector DI container.
     /// </summary>
     public class DispatcherFactoryJobActivator : JobActivator
     {
+        // Make this permissive since it's the underlying logic and shouldn't be coupled to whether handlers are matched in strict mode...
+        private readonly TypeComparer typeComparer = new TypeComparer(TypeMatchStrategy.NamespaceAndName);
+
         private readonly DispatcherFactory dispatcherFactory;
 
         /// <summary>
@@ -38,7 +41,7 @@ namespace Naos.MessageBus.Hangfire.Console
         /// <inheritdoc />
         public override object ActivateJob(Type jobType)
         {
-            if (jobType == typeof(IDispatchMessages))
+            if (this.typeComparer.Equals(jobType, typeof(IDispatchMessages)))
             {
                 return this.dispatcherFactory.Create();
             }

@@ -15,9 +15,8 @@ namespace Naos.MessageBus.Core
 
     using Its.Log.Instrumentation;
 
-    using Naos.MessageBus.DataContract;
-    using Naos.MessageBus.HandlingContract;
-    using Naos.MessageBus.SendingContract;
+    using Naos.Diagnostics.Domain;
+    using Naos.MessageBus.Domain;
 
     using SimpleInjector;
 
@@ -29,7 +28,7 @@ namespace Naos.MessageBus.Core
         // this is declared here to persist, it's filled exclusively in the MessageDispatcher...
         private readonly ConcurrentDictionary<Type, object> sharedStateMap = new ConcurrentDictionary<Type, object>();
 
-        private readonly ICollection<Channel> servicedChannels;
+        private readonly ICollection<IChannel> servicedChannels;
 
         private readonly Container simpleInjectorContainer = new Container();
 
@@ -37,101 +36,126 @@ namespace Naos.MessageBus.Core
 
         private readonly TimeSpan messageDispatcherWaitThreadSleepTime;
 
-        private readonly ITrackActiveJobs tracker;
+        private readonly HarnessStaticDetails harnessStaticDetails;
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="DispatcherFactory"/> class.
-        /// </summary>
-        /// <param name="servicedChannels">Channels being monitored.</param>
-        /// <param name="messageSenderBuilder">Function to build a message sender to supply to the dispatcher.</param>
-        /// <param name="typeMatchStrategy">Strategy on how to match types.</param>
-        /// <param name="messageDispatcherWaitThreadSleepTime">Amount of time to sleep while waiting on messages to be handled.</param>
-        public DispatcherFactory(ICollection<Channel> servicedChannels, Func<ISendMessages> messageSenderBuilder, TypeMatchStrategy typeMatchStrategy, TimeSpan messageDispatcherWaitThreadSleepTime)
-        {
-            this.servicedChannels = servicedChannels;
-            this.typeMatchStrategy = typeMatchStrategy;
-            this.messageDispatcherWaitThreadSleepTime = messageDispatcherWaitThreadSleepTime;
+        private readonly IParcelTrackingSystem parcelTrackingSystem;
 
-            // register sender as it might need to send other messages in a sequence.
-            this.simpleInjectorContainer.Register(messageSenderBuilder);
+        private readonly ITrackActiveMessages activeMessageTracker;
 
-            var typesInFile = typeof(DispatcherFactory).Assembly.GetTypes();
-            var handlerTypeMap = typesInFile.GetTypeMapsOfImplementersOfGenericType(typeof(IHandleMessages<>));
-            this.LoadContainer(handlerTypeMap);
-        }
+        private readonly IPostOffice postOffice;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="DispatcherFactory"/> class.
         /// </summary>
         /// <param name="handlerAssemblyPath">Path to the assemblies being searched through to be loaded as message handlers.</param>
         /// <param name="servicedChannels">Channels being monitored.</param>
-        /// <param name="messageSenderBuilder">Function to build a message sender to supply to the dispatcher.</param>
         /// <param name="typeMatchStrategy">Strategy on how to match types.</param>
         /// <param name="messageDispatcherWaitThreadSleepTime">Amount of time to sleep while waiting on messages to be handled.</param>
-        /// <param name="tracker">Tracker to keep track of active jobs.</param>
-        public DispatcherFactory(string handlerAssemblyPath, ICollection<Channel> servicedChannels, Func<ISendMessages> messageSenderBuilder, TypeMatchStrategy typeMatchStrategy, TimeSpan messageDispatcherWaitThreadSleepTime, ITrackActiveJobs tracker = null)
+        /// <param name="parcelTrackingSystem">Interface for managing life of the parcels.</param>
+        /// <param name="activeMessageTracker">Interface to track active messages to know if handler harness can shutdown.</param>
+        /// <param name="postOffice">Interface to send parcels.</param>
+        public DispatcherFactory(string handlerAssemblyPath, ICollection<IChannel> servicedChannels, TypeMatchStrategy typeMatchStrategy, TimeSpan messageDispatcherWaitThreadSleepTime, IParcelTrackingSystem parcelTrackingSystem, ITrackActiveMessages activeMessageTracker, IPostOffice postOffice)
         {
+            if (parcelTrackingSystem == null)
+            {
+                throw new ArgumentException("Parcel tracking system can't be null");
+            }
+
+            if (activeMessageTracker == null)
+            {
+                throw new ArgumentException("Active message tracker can't be null");
+            }
+
+            if (postOffice == null)
+            {
+                throw new ArgumentException("Post Office can't be null");
+            }
+
             this.servicedChannels = servicedChannels;
             this.typeMatchStrategy = typeMatchStrategy;
             this.messageDispatcherWaitThreadSleepTime = messageDispatcherWaitThreadSleepTime;
-            this.tracker = tracker;
+            this.parcelTrackingSystem = parcelTrackingSystem;
+            this.activeMessageTracker = activeMessageTracker;
+            this.postOffice = postOffice;
 
-            // register sender as it might need to send other messages in a sequence.
-            this.simpleInjectorContainer.Register(messageSenderBuilder);
+            var currentlyLoadedAssemblies = AppDomain.CurrentDomain.GetAssemblies().Where(a => !a.IsDynamic).ToList();
+
+            var handlerTypeMap = new List<TypeMap>();
+            LoadHandlerTypeMapFromAssemblies(handlerTypeMap, currentlyLoadedAssemblies);
 
             // find all assemblies files to search for handlers.
             var filesRaw = Directory.GetFiles(handlerAssemblyPath, "*.dll", SearchOption.AllDirectories);
-            
-            // prune out the Microsoft.Bcl nonsense (if present)
-            var files = filesRaw.Where(_ => !_.Contains("Microsoft.Bcl")).ToList();
 
+            // initialize the details about this handler.
+            var assemblies = filesRaw.Select(_ => AssemblyDetails.CreateFromFile(_)).ToList();
+            var machineDetails = MachineDetails.Create();
+            this.harnessStaticDetails = new HarnessStaticDetails
+                                      {
+                                          MachineDetails = machineDetails,
+                                          ExecutingUser = Environment.UserDomainName + "\\" + Environment.UserName,
+                                          Assemblies = assemblies
+                                      };
+
+            // prune out the Microsoft.Bcl nonsense (if present)
+            var filesUnfiltered = filesRaw.Where(_ => !_.Contains("Microsoft.Bcl")).ToList();
+
+            // filter out assemblies that are currently loaded and might create overlap problems...
+            var alreadyLoadedFileNames = currentlyLoadedAssemblies.Select(_ => _.CodeBase.ToLowerInvariant()).ToList();
+            var files = filesUnfiltered.Where(_ => !alreadyLoadedFileNames.Contains(new Uri(_).ToString().ToLowerInvariant())).ToList();
             var pdbFiles = Directory.GetFiles(handlerAssemblyPath, "*.pdb", SearchOption.AllDirectories);
 
             // add an unknown assembly resolver to go try to find the dll in one of the files we have discovered...
             AppDomain.CurrentDomain.AssemblyResolve += (sender, args) =>
-            {
-                var dllNameWithoutExtension = args.Name.Split(',')[0];
-                var dllName = dllNameWithoutExtension + ".dll";
-                var fullDllPath = files.FirstOrDefault(_ => _.EndsWith(dllName));
-                if (fullDllPath == null)
                 {
-                    throw new TypeInitializationException(args.Name, null);
-                }
+                    var dllNameWithoutExtension = args.Name.Split(',')[0];
+                    var dllName = dllNameWithoutExtension + ".dll";
+                    var fullDllPath = files.FirstOrDefault(_ => _.EndsWith(dllName));
+                    if (fullDllPath == null)
+                    {
+                        throw new TypeInitializationException(args.Name, null);
+                    }
 
-                // Can't use Assembly.Load() here because it fails when you have different versions of N-level dependencies...I have no idea why Assembly.LoadFrom works.
-                Log.Write(() => "Loaded Assembly (in AppDomain.CurrentDomain.AssemblyResolve): " + dllNameWithoutExtension + " From: " + fullDllPath);
-                return Assembly.LoadFrom(fullDllPath);
-            };
+                    // Can't use Assembly.Load() here because it fails when you have different versions of N-level dependencies...I have no idea why Assembly.LoadFrom works.
+                    Log.Write(() => "Loaded Assembly (in AppDomain.CurrentDomain.AssemblyResolve): " + dllNameWithoutExtension + " From: " + fullDllPath);
+                    return Assembly.LoadFrom(fullDllPath);
+                };
 
-            var handlerTypeMap = new List<TypeMap>();
-            foreach (var filePathToPotentialHandlerAssembly in files)
-            {
-                try
-                {
-                    var fullDllPath = filePathToPotentialHandlerAssembly;
-                    var dllNameWithoutExtension =
-                        (Path.GetFileName(filePathToPotentialHandlerAssembly) ?? string.Empty).Replace(".dll", string.Empty);
+            var assembliesFromFiles = files.Select(
+                filePathToPotentialHandlerAssembly =>
+                    {
+                        try
+                        {
+                            var fullDllPath = filePathToPotentialHandlerAssembly;
+                            var dllNameWithoutExtension = (Path.GetFileName(filePathToPotentialHandlerAssembly) ?? string.Empty).Replace(".dll", string.Empty);
 
-                    // Can't use Assembly.LoadFrom() here because it fails for some reason.
-                    var assembly = GetAssembly(dllNameWithoutExtension, pdbFiles, fullDllPath);
+                            // Can't use Assembly.LoadFrom() here because it fails for some reason.
+                            var assembly = LoadAssemblyFromDisk(dllNameWithoutExtension, pdbFiles, fullDllPath);
+                            return assembly;
+                        }
+                        catch (ReflectionTypeLoadException reflectionTypeLoadException)
+                        {
+                            throw new ApplicationException(
+                                "Failed to load assembly: " + filePathToPotentialHandlerAssembly + ". "
+                                + string.Join(",", reflectionTypeLoadException.LoaderExceptions.Select(_ => _.ToString())),
+                                reflectionTypeLoadException);
+                        }
+                    });
 
-                    var typesInFile = assembly.GetTypes();
-                    var mapsInFile = typesInFile.GetTypeMapsOfImplementersOfGenericType(typeof(IHandleMessages<>));
-                    handlerTypeMap.AddRange(mapsInFile);
-                }
-                catch (ReflectionTypeLoadException reflectionTypeLoadException)
-                {
-                    throw new ApplicationException(
-                        "Failed to load assembly: " + filePathToPotentialHandlerAssembly + ". "
-                        + string.Join(",", reflectionTypeLoadException.LoaderExceptions.Select(_ => _.ToString())),
-                        reflectionTypeLoadException);
-                }
-            }
-
-            this.LoadContainer(handlerTypeMap);
+            LoadHandlerTypeMapFromAssemblies(handlerTypeMap, assembliesFromFiles);
+            this.LoadContainerFromHandlerTypeMap(handlerTypeMap);
         }
 
-        private void LoadContainer(ICollection<TypeMap> handlerTypeMap)
+        private static void LoadHandlerTypeMapFromAssemblies(List<TypeMap> handlerTypeMap, IEnumerable<Assembly> assemblies)
+        {
+            foreach (var assembly in assemblies)
+            {
+                var typesInFile = assembly.GetTypes();
+                var mapsInFile = typesInFile.GetTypeMapsOfImplementersOfGenericType(typeof(IHandleMessages<>));
+                handlerTypeMap.AddRange(mapsInFile);
+            }
+        }
+
+        private void LoadContainerFromHandlerTypeMap(ICollection<TypeMap> handlerTypeMap)
         {
             foreach (var handlerTypeMapEntry in handlerTypeMap)
             {
@@ -142,32 +166,27 @@ namespace Naos.MessageBus.Core
             // if we weren't in hangfire we'd just persist the dispatcher and keep these two fields inside of it...
             this.simpleInjectorContainer.Register<IDispatchMessages>(
                 () =>
-                    {
-                        var nullAction = new Action(() => { });
-
-                        return new MessageDispatcher(
-                              this.simpleInjectorContainer,
-                              this.sharedStateMap,
-                              this.servicedChannels,
-                              this.typeMatchStrategy,
-                              this.messageDispatcherWaitThreadSleepTime,
-                              this.tracker == null ? nullAction : this.tracker.IncrementActiveJobs,
-                              this.tracker == null ? nullAction : this.tracker.DecrementActiveJobs);
-                    });
+                new MessageDispatcher(
+                    this.simpleInjectorContainer,
+                    this.sharedStateMap,
+                    this.servicedChannels,
+                    this.typeMatchStrategy,
+                    this.messageDispatcherWaitThreadSleepTime,
+                    this.harnessStaticDetails,
+                    this.parcelTrackingSystem,
+                    this.activeMessageTracker,
+                    this.postOffice));
 
             foreach (var registration in this.simpleInjectorContainer.GetCurrentRegistrations())
             {
                 var localScopeRegistration = registration;
                 Log.Write(
                     () =>
-                    string.Format(
-                        "Registered Type in SimpleInjector: {0} -> {1}",
-                        localScopeRegistration.ServiceType.FullName,
-                        localScopeRegistration.Registration.ImplementationType.FullName));
+                    $"Registered Type in SimpleInjector: {localScopeRegistration.ServiceType.FullName} -> {localScopeRegistration.Registration.ImplementationType.FullName}");
             }
         }
 
-        private static Assembly GetAssembly(string dllNameWithoutExtension, string[] pdbFiles, string fullDllPath)
+        private static Assembly LoadAssemblyFromDisk(string dllNameWithoutExtension, string[] pdbFiles, string fullDllPath)
         {
             var pdbName = dllNameWithoutExtension + ".pdb";
             var fullPdbPath = pdbFiles.FirstOrDefault(_ => _.EndsWith(pdbName));

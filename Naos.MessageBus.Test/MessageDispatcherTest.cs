@@ -9,20 +9,17 @@ namespace Naos.MessageBus.Test
     using System;
     using System.Collections.Concurrent;
     using System.Collections.Generic;
-    using System.Dynamic;
     using System.Linq;
     using System.Threading;
     using System.Threading.Tasks;
 
-    using ImpromptuInterface;
-    using ImpromptuInterface.Dynamic;
+    using FakeItEasy;
 
-    using Naos.Cron;
+    using FluentAssertions;
+
     using Naos.MessageBus.Core;
-    using Naos.MessageBus.DataContract;
-    using Naos.MessageBus.DataContract.Exceptions;
-    using Naos.MessageBus.HandlingContract;
-    using Naos.MessageBus.SendingContract;
+    using Naos.MessageBus.Domain;
+    using Naos.MessageBus.Domain.Exceptions;
 
     using SimpleInjector;
 
@@ -36,11 +33,9 @@ namespace Naos.MessageBus.Test
             // arrange
             var container = new Container();
             var trackingSends = new List<Parcel>();
-            var senderConstructor = GetInMemorySender(trackingSends);
-            container.Register(senderConstructor);
+            var senderConstructor = Factory.GetInMemorySender(trackingSends);
 
-            var tracker = new InMemoryJobTracker();
-            var channel = new Channel { Name = "el-channel" };
+            var channel = new SimpleChannel("el-channel");
 
             container.Register<IHandleMessages<FirstEnumMessage>, FirstEnumHandler>();
             container.Register<IHandleMessages<SecondEnumMessage>, SecondEnumHandler>();
@@ -51,8 +46,10 @@ namespace Naos.MessageBus.Test
                 new[] { channel },
                 TypeMatchStrategy.NamespaceAndName,
                 TimeSpan.FromSeconds(.5),
-                tracker.IncrementActiveJobs,
-                tracker.DecrementActiveJobs);
+                new HarnessStaticDetails(),
+                new NullParcelTrackingSystem(),
+                new InMemoryActiveMessageTracker(),
+                senderConstructor());
 
             var firstMessage = new FirstEnumMessage() { Description = "RunMe 1", SeedValue = MyEnum.OtherValue };
             var secondMessage = new SecondEnumMessage() { Description = "RunMe 2" };
@@ -60,44 +57,33 @@ namespace Naos.MessageBus.Test
  
             var messageSequence = new MessageSequence
                                       {
-                                          ChanneledMessages =
+                                          AddressedMessages =
                                               new[]
                                                   {
-                                                      new ChanneledMessage
+                                                      new AddressedMessage
                                                           {
-                                                              Channel = channel,
+                                                              Address = channel,
                                                               Message = firstMessage
                                                           },
-                                                      new ChanneledMessage
+                                                      new AddressedMessage
                                                           {
-                                                              Channel = channel,
+                                                              Address = channel,
                                                               Message = secondMessage
                                                           },
-                                                      new ChanneledMessage
+                                                      new AddressedMessage
                                                           {
-                                                              Channel = channel,
+                                                              Address = channel,
                                                               Message = thirdMessage
                                                           }
                                                   }
                                       };
 
-            var envelopesFromSequence = messageSequence.ChanneledMessages.Select(
-                channeledMessage =>
-                    {
-                        var messageType = channeledMessage.Message.GetType();
-                        return new Envelope()
-                                   {
-                                       Description = channeledMessage.Message.Description,
-                                       MessageAsJson =
-                                           Hangfire.Sender.Serializer.Serialize(channeledMessage.Message),
-                                       MessageType = messageType.ToTypeDescription(),
-                                       Channel = channeledMessage.Channel
-                                   };
-                    }).ToList();
+            var envelopesFromSequence = messageSequence.AddressedMessages.Select(addressedMessage => addressedMessage.ToEnvelope()).ToList();
 
             var parcel = new Parcel { Envelopes = envelopesFromSequence };
 
-            dispatcher.Dispatch("First Message", parcel);
+            var firstTrackingCode = new TrackingCode { EnvelopeId = "1" };
+            dispatcher.Dispatch("First Message", firstTrackingCode, parcel, channel);
 
             // verify remaining envelope got sent
             Assert.Equal(1, trackingSends.Count);
@@ -113,7 +99,8 @@ namespace Naos.MessageBus.Test
             var seedValueAsJson = Serializer.Serialize(firstMessage.SeedValue);
             Assert.Equal(seedValueAsJson, sharedPropertySet.Properties.Single().ValueAsJson);
 
-            dispatcher.Dispatch("Second Message", newParcel);
+            var secondTrackingCode = new TrackingCode { EnvelopeId = "2" };
+            dispatcher.Dispatch("Second Message", secondTrackingCode, newParcel, channel);
 
             // verify new message 
             Assert.Equal(2, trackingSends.Count);
@@ -127,7 +114,7 @@ namespace Naos.MessageBus.Test
         public static void Dispatch_ParcelWithRemainingEnvelopes_RemainingEnvelopesDoNotGetDeserialized()
         {
             // arrange
-            var channel = new Channel { Name = "el-channel" };
+            var channel = new SimpleChannel("el-channel");
             var container = new Container();
 
             container.Register<IHandleMessages<FirstEnumMessage>, FirstEnumHandler>();
@@ -140,35 +127,24 @@ namespace Naos.MessageBus.Test
 
             var envelopesFromSequence = new[]
                                             {
-                                                new Envelope()
-                                                    {
-                                                        Description = firstMessage.Description,
-                                                        MessageAsJson =
-                                                            Hangfire.Sender.Serializer.Serialize(firstMessage),
-                                                        MessageType =
-                                                            firstMessage.GetType().ToTypeDescription(),
-                                                        Channel = channel
-                                                    },
-                                                new Envelope()
-                                                    {
-                                                        Description = "No work",
-                                                        MessageType =
-                                                            new TypeDescription
-                                                                {
-                                                                    Namespace = "Namespace",
-                                                                    Name = "Name",
-                                                                    AssemblyQualifiedName =
-                                                                        "AssemblyQualifiedName"
-                                                                },
-                                                        Channel = channel,
-                                                        MessageAsJson = "WON'T WORK"
-                                                    }
+                                                firstMessage.ToAddressedMessage(channel).ToEnvelope(),
+                                                new Envelope(
+                                                    "2",
+                                                    "No work",
+                                                    channel,
+                                                    "WON'T WORK",
+                                                    new TypeDescription
+                                                        {
+                                                            Namespace = "Namespace",
+                                                            Name = "Name",
+                                                            AssemblyQualifiedName = "AssemblyQualifiedName"
+                                                        })
                                             };
 
             var parcel = new Parcel { Envelopes = envelopesFromSequence };
 
             // act
-            dispatcher.Dispatch("First Message", parcel);
+            dispatcher.Dispatch("First Message", new TrackingCode(), parcel, channel);
 
             // assert
 
@@ -185,7 +161,7 @@ namespace Naos.MessageBus.Test
             }
 
             // arrange
-            var channel = new Channel { Name = "el-channel" };
+            var channel = new SimpleChannel("el-channel");
             var container = new Container();
             container.Register<IHandleMessages<MessageOne>, MessageOneHandler>();
             container.Register<IHandleMessages<MessageTwo>, MessageTwoHandler>();
@@ -197,36 +173,16 @@ namespace Naos.MessageBus.Test
             var firstMessage = new MessageOne() { Description = "RunMe 1" };
             var secondMessage = new MessageTwo() { Description = "RunMe 2" };
 
-            var envelopesFromSequence = new[]
-                                            {
-                                                new Envelope()
-                                                    {
-                                                        Description = firstMessage.Description,
-                                                        MessageAsJson =
-                                                            Hangfire.Sender.Serializer.Serialize(firstMessage),
-                                                        MessageType =
-                                                            firstMessage.GetType().ToTypeDescription(),
-                                                        Channel = channel
-                                                    },
-                                                new Envelope()
-                                                    {
-                                                        Description = secondMessage.Description,
-                                                        MessageAsJson =
-                                                            Hangfire.Sender.Serializer.Serialize(secondMessage),
-                                                        MessageType =
-                                                            secondMessage.GetType().ToTypeDescription(),
-                                                        Channel = channel
-                                                    }
-                                            };
+            var envelopesFromSequence = new[] { firstMessage.ToAddressedMessage(channel).ToEnvelope(), secondMessage.ToAddressedMessage(channel).ToEnvelope() };
 
             var parcel = new Parcel { Envelopes = envelopesFromSequence };
 
             // act
-            dispatcher.Dispatch("First Message", parcel);
+            dispatcher.Dispatch("First Message", new TrackingCode(), parcel, channel);
             Assert.Equal(1, trackingSends.Count);
             var nextMessage = trackingSends.Single();
             trackingSends.Clear();
-            dispatcher.Dispatch("Second Message", nextMessage);
+            dispatcher.Dispatch("Second Message", new TrackingCode(), nextMessage, channel);
             Assert.Equal(0, trackingSends.Count);
 
             // assert
@@ -244,7 +200,7 @@ namespace Naos.MessageBus.Test
             }
 
             // arrange
-            var channel = new Channel { Name = "el-channel" };
+            var channel = new SimpleChannel("el-channel");
             var container = new Container();
             container.Register<IHandleMessages<MessageOneShare>, MessageOneShareHandler>();
             container.Register<IHandleMessages<MessageTwoShare>, MessageTwoShareHandler>();
@@ -256,36 +212,16 @@ namespace Naos.MessageBus.Test
             var firstMessage = new MessageOneShare() { Description = "RunMe 1" };
             var secondMessage = new MessageTwoShare() { Description = "RunMe 2" };
 
-            var envelopesFromSequence = new[]
-                                            {
-                                                new Envelope()
-                                                    {
-                                                        Description = firstMessage.Description,
-                                                        MessageAsJson =
-                                                            Hangfire.Sender.Serializer.Serialize(firstMessage),
-                                                        MessageType =
-                                                            firstMessage.GetType().ToTypeDescription(),
-                                                        Channel = channel
-                                                    },
-                                                new Envelope()
-                                                    {
-                                                        Description = secondMessage.Description,
-                                                        MessageAsJson =
-                                                            Hangfire.Sender.Serializer.Serialize(secondMessage),
-                                                        MessageType =
-                                                            secondMessage.GetType().ToTypeDescription(),
-                                                        Channel = channel
-                                                    }
-                                            };
+            var envelopesFromSequence = new[] { firstMessage.ToAddressedMessage(channel).ToEnvelope(), secondMessage.ToAddressedMessage(channel).ToEnvelope() };
 
             var parcel = new Parcel { Envelopes = envelopesFromSequence };
 
             // act
-            dispatcher.Dispatch("First Message", parcel);
+            dispatcher.Dispatch("First Message", new TrackingCode(), parcel, channel);
             Assert.Equal(1, trackingSends.Count);
             var nextMessage = trackingSends.Single();
             trackingSends.Clear();
-            dispatcher.Dispatch("Second Message", nextMessage);
+            dispatcher.Dispatch("Second Message", new TrackingCode(), nextMessage, channel);
             Assert.Equal(0, trackingSends.Count);
 
             // assert
@@ -293,12 +229,11 @@ namespace Naos.MessageBus.Test
             // by virtue of not throwing we succeeded because the messages didn't throw...
         }
 
-        private static MessageDispatcher GetMessageDispatcher(List<Parcel> trackingSends, Container container, Channel channel)
+        private static MessageDispatcher GetMessageDispatcher(List<Parcel> trackingSends, Container container, IChannel channel)
         {
-            var senderConstructor = GetInMemorySender(trackingSends);
-            container.Register(senderConstructor);
+            var senderConstructor = Factory.GetInMemorySender(trackingSends);
 
-            var tracker = new InMemoryJobTracker();
+            var activeMessageTracker = new InMemoryActiveMessageTracker();
 
             var dispatcher = new MessageDispatcher(
                 container,
@@ -306,16 +241,18 @@ namespace Naos.MessageBus.Test
                 new[] { channel },
                 TypeMatchStrategy.NamespaceAndName,
                 TimeSpan.FromSeconds(.01),
-                tracker.IncrementActiveJobs,
-                tracker.DecrementActiveJobs);
+                new HarnessStaticDetails(),
+                new NullParcelTrackingSystem(),
+                activeMessageTracker,
+                senderConstructor());
             return dispatcher;
         }
 
         [Fact]
         public static void Dispatch_IncrementsAndDecrementsTracker()
         {
-            var tracker = new InMemoryJobTracker();
-            var channel = new Channel { Name = "el-channel" };
+            var activeMessageTracker = new InMemoryActiveMessageTracker();
+            var channel = new SimpleChannel("el-channel");
             var container = new Container();
             container.Register<IHandleMessages<WaitMessage>, WaitMessageHandler>();
             var dispatcher = new MessageDispatcher(
@@ -324,26 +261,20 @@ namespace Naos.MessageBus.Test
                 new[] { channel },
                 TypeMatchStrategy.NamespaceAndName,
                 TimeSpan.FromSeconds(.5),
-                tracker.IncrementActiveJobs,
-                tracker.DecrementActiveJobs);
+                new HarnessStaticDetails(),
+                new NullParcelTrackingSystem(),
+                activeMessageTracker,
+                new PostOffice(new NullParcelTrackingSystem(), new ChannelRouter(new NullChannel())));
 
             var message = new WaitMessage { Description = "RunMe", TimeToWait = TimeSpan.FromSeconds(3) };
-            var jsonMessage = Serializer.Serialize(message);
-            var envelope = new Envelope
-                               {
-                                   Channel = channel,
-                                   Description = "RunMe",
-                                   MessageAsJson = jsonMessage,
-                                   MessageType = message.GetType().ToTypeDescription(),
-                               };
+            var envelope = message.ToAddressedMessage(channel).ToEnvelope();
 
-            Assert.Equal(0, tracker.ActiveJobsCount);
-            ThreadPool.QueueUserWorkItem(
-                state => dispatcher.Dispatch("RunMe", new Parcel { Envelopes = new[] { envelope } }));
+            Assert.Equal(0, activeMessageTracker.ActiveMessagesCount);
+            ThreadPool.QueueUserWorkItem(state => dispatcher.Dispatch("RunMe", new TrackingCode(), new Parcel { Envelopes = new[] { envelope } }, channel));
             Thread.Sleep(2000);
-            Assert.Equal(1, tracker.ActiveJobsCount);
+            Assert.Equal(1, activeMessageTracker.ActiveMessagesCount);
             Thread.Sleep(4000);
-            Assert.Equal(0, tracker.ActiveJobsCount);
+            Assert.Equal(0, activeMessageTracker.ActiveMessagesCount);
         }
 
         [Fact]
@@ -353,67 +284,259 @@ namespace Naos.MessageBus.Test
             container.Register<IHandleMessages<NullMessage>, NullMessageHandler>();
 
             var trackingSends = new List<Parcel>();
-            var senderConstructor = GetInMemorySender(trackingSends);
-            container.Register(senderConstructor);
+            var senderConstructor = Factory.GetInMemorySender(trackingSends);
 
-            var monitoredChannel = new Channel { Name = "ChannelName" };
+            var monitoredChannel = new SimpleChannel("ChannelName");
             var dispatcher = new MessageDispatcher(
                 container,
                 new ConcurrentDictionary<Type, object>(),
                 new[] { monitoredChannel },
                 TypeMatchStrategy.NamespaceAndName,
-                TimeSpan.FromSeconds(.5));
+                TimeSpan.FromSeconds(.5),
+                new HarnessStaticDetails(),
+                new NullParcelTrackingSystem(),
+                new InMemoryActiveMessageTracker(),
+                senderConstructor());
 
-            var validParcel = new Parcel()
-                             {
-                                 Envelopes =
-                                     new[]
-                                         {
-                                             new Envelope()
-                                                 {
-                                                     Channel = monitoredChannel,
-                                                     MessageType = typeof(NullMessage).ToTypeDescription(),
-                                                     MessageAsJson = Serializer.Serialize(new NullMessage())
-                                                 }
-                                         }
-                             };
+            var validParcel = new Parcel { Envelopes = new[] { new NullMessage().ToAddressedMessage(monitoredChannel).ToEnvelope(), } };
 
-            var invalidParcel = new Parcel()
-                             {
-                                 Envelopes =
-                                     new[]
-                                         {
-                                             new Envelope()
-                                                 {
-                                                     Channel = new Channel() { Name = "OtherChannel" },
-                                                     MessageType = typeof(NullMessage).ToTypeDescription(),
-                                                     MessageAsJson = Serializer.Serialize(new NullMessage())
-                                                 }
-                                         }
-                             };
+            var notMonitoredChannel = new SimpleChannel("OtherChannel");
+            var invalidParcel = new Parcel { Envelopes = new[] { new NullMessage().ToAddressedMessage(notMonitoredChannel).ToEnvelope() } };
 
-            dispatcher.Dispatch("ValidParcel", validParcel);
+            dispatcher.Dispatch("ValidParcel", new TrackingCode(), validParcel, monitoredChannel);
             Assert.Equal(0, trackingSends.Count);
-            dispatcher.Dispatch("InvalidParcel", invalidParcel);
+            dispatcher.Dispatch("InvalidParcel", new TrackingCode(), invalidParcel, notMonitoredChannel);
             Assert.Equal(1, trackingSends.Count);
         }
 
-        private static Func<ISendMessages> GetInMemorySender(List<Parcel> trackingSends)
+        [Fact]
+        public static void Dispatch_DispatchingMethodWithAbortAndResend_TracksAddressedThenAbortAndReSends()
         {
-            Func<ISendMessages> senderConstructor = () =>
-                {
-                    dynamic dynamicObject = new ExpandoObject();
-                    dynamicObject.Send = Return<TrackingCode>.Arguments<Parcel>(
-                        (parcel) =>
-                            {
-                                trackingSends.Add(parcel);
-                                return null;
-                            });
+            // skipping on appveyor because it hangs...
+            if (true.ToString().Equals(Environment.GetEnvironmentVariable("APPVEYOR")))
+            {
+                return;
+            }
 
-                    ISendMessages ret = Impromptu.ActLike(dynamicObject);
-                    return ret;
-                };
-            return senderConstructor;
+            var container = new Container();
+            container.Register<IHandleMessages<ThrowsExceptionMessage>, ThrowsExceptionMessageHandler>();
+
+            var trackingCalls = new List<string>();
+            var trackingSends = new List<Parcel>();
+            var trackingSendsFromTracker = new List<Parcel>();
+            var trackingConstructor = Factory.GetInMemoryParcelTrackingSystem(trackingCalls, trackingSendsFromTracker);
+            var senderConstructor = Factory.GetInMemorySender(trackingSends);
+
+            var monitoredChannel = new SimpleChannel("ChannelName");
+            var dispatcher = new MessageDispatcher(
+                container,
+                new ConcurrentDictionary<Type, object>(),
+                new[] { monitoredChannel },
+                TypeMatchStrategy.NamespaceAndName,
+                TimeSpan.FromSeconds(.5),
+                new HarnessStaticDetails(),
+                trackingConstructor(),
+                new InMemoryActiveMessageTracker(),
+                senderConstructor());
+
+            var exception = new AbortParcelDeliveryException("Abort") { Reschedule = true };
+            var parcel = new Parcel
+                             {
+                                 Envelopes =
+                                     new[]
+                                         {
+                                             new ThrowsExceptionMessage()
+                                                 {
+                                                     ExceptionToThrowJson = Serializer.Serialize(exception),
+                                                     ExceptionToThrowType = exception.GetType().ToTypeDescription(),
+                                                     TypeMatchStrategy = TypeMatchStrategy.NamespaceAndName
+                                                 }.ToAddressedMessage(
+                                                     monitoredChannel).ToEnvelope()
+                                         }
+                             };
+
+            dispatcher.Dispatch("Parcel", new TrackingCode(), parcel, monitoredChannel);
+            trackingSends.Should().HaveCount(1);
+            trackingCalls.Should().BeEquivalentTo(nameof(IParcelTrackingSystem.UpdateAttemptingAsync), nameof(IParcelTrackingSystem.UpdateAbortedAsync));
+        }
+
+        [Fact]
+        public static void Dispatch_DispatchingMethodWithAbortAndNoResend_TracksAddressedThenAbortAndDoesNotSend()
+        {
+            // skipping on appveyor because it hangs...
+            if (true.ToString().Equals(Environment.GetEnvironmentVariable("APPVEYOR")))
+            {
+                return;
+            }
+
+            var container = new Container();
+            container.Register<IHandleMessages<ThrowsExceptionMessage>, ThrowsExceptionMessageHandler>();
+
+            var trackingCalls = new List<string>();
+            var trackingSendsFromTracker = new List<Parcel>();
+            var trackingConstructor = Factory.GetInMemoryParcelTrackingSystem(trackingCalls, trackingSendsFromTracker);
+
+            var trackingSends = new List<Parcel>();
+            var senderConstructor = Factory.GetInMemorySender(trackingSends);
+
+            var monitoredChannel = new SimpleChannel("ChannelName");
+            var dispatcher = new MessageDispatcher(
+                container,
+                new ConcurrentDictionary<Type, object>(),
+                new[] { monitoredChannel },
+                TypeMatchStrategy.NamespaceAndName,
+                TimeSpan.FromSeconds(.5),
+                new HarnessStaticDetails(),
+                trackingConstructor(),
+                new InMemoryActiveMessageTracker(),
+                senderConstructor());
+
+            var exception = new AbortParcelDeliveryException("Abort") { Reschedule = false };
+            var parcel = new Parcel
+            {
+                Envelopes =
+                                     new[]
+                                         {
+                                             new ThrowsExceptionMessage()
+                                                 {
+                                                     ExceptionToThrowJson = Serializer.Serialize(exception),
+                                                     ExceptionToThrowType = exception.GetType().ToTypeDescription(),
+                                                     TypeMatchStrategy = TypeMatchStrategy.NamespaceAndName
+                                                 }.ToAddressedMessage(
+                                                     monitoredChannel).ToEnvelope()
+                                         }
+            };
+
+            dispatcher.Dispatch("Parcel", new TrackingCode(), parcel, monitoredChannel);
+            trackingSends.Should().HaveCount(0);
+            trackingCalls.Should().BeEquivalentTo(nameof(IParcelTrackingSystem.UpdateAttemptingAsync), nameof(IParcelTrackingSystem.UpdateAbortedAsync));
+        }
+
+        [Fact]
+        public static void Dispatch_DispatchingMethodWithException_TracksAddressedThenRejectedAndThrows()
+        {
+            // skipping on appveyor because it hangs...
+            if (true.ToString().Equals(Environment.GetEnvironmentVariable("APPVEYOR")))
+            {
+                return;
+            }
+
+            var container = new Container();
+            container.Register<IHandleMessages<ThrowsExceptionMessage>, ThrowsExceptionMessageHandler>();
+
+            var trackingCalls = new List<string>();
+            var trackingSendsFromTracker = new List<Parcel>();
+            var trackingConstructor = Factory.GetInMemoryParcelTrackingSystem(trackingCalls, trackingSendsFromTracker);
+
+            var trackingSends = new List<Parcel>();
+            var senderConstructor = Factory.GetInMemorySender(trackingSends);
+
+            var monitoredChannel = new SimpleChannel("ChannelName");
+            var dispatcher = new MessageDispatcher(
+                container,
+                new ConcurrentDictionary<Type, object>(),
+                new[] { monitoredChannel },
+                TypeMatchStrategy.NamespaceAndName,
+                TimeSpan.FromSeconds(.5),
+                new HarnessStaticDetails(),
+                trackingConstructor(),
+                new InMemoryActiveMessageTracker(),
+                senderConstructor());
+
+            var exception = new NullReferenceException("Failed");
+            var parcel = new Parcel
+            {
+                Envelopes =
+                                     new[]
+                                         {
+                                             new ThrowsExceptionMessage()
+                                                 {
+                                                     ExceptionToThrowJson = Serializer.Serialize(exception),
+                                                     ExceptionToThrowType = exception.GetType().ToTypeDescription(),
+                                                     TypeMatchStrategy = TypeMatchStrategy.NamespaceAndName
+                                                 }.ToAddressedMessage(
+                                                     monitoredChannel).ToEnvelope()
+                                         }
+            };
+
+            Action testCode = () => dispatcher.Dispatch("Parcel", new TrackingCode(), parcel, monitoredChannel);
+            testCode.ShouldThrow<NullReferenceException>().WithMessage(exception.Message);
+
+            trackingSends.Should().HaveCount(0);
+            trackingCalls.Should().BeEquivalentTo(nameof(IParcelTrackingSystem.UpdateAttemptingAsync), nameof(IParcelTrackingSystem.UpdateRejectedAsync));
+        }
+
+        [Fact]
+        public static void Dispatch_DispatchingMethodWithSuccess_TracksAddressedThenDelivered()
+        {
+            var container = new Container();
+            container.Register<IHandleMessages<NullMessage>, NullMessageHandler>();
+
+            var trackingCalls = new List<string>();
+            var trackingSendsFromTracker = new List<Parcel>();
+            var trackingConstructor = Factory.GetInMemoryParcelTrackingSystem(trackingCalls, trackingSendsFromTracker);
+
+            var trackingSends = new List<Parcel>();
+            var senderConstructor = Factory.GetInMemorySender(trackingSends);
+
+            var monitoredChannel = new SimpleChannel("ChannelName");
+            var dispatcher = new MessageDispatcher(
+                container,
+                new ConcurrentDictionary<Type, object>(),
+                new[] { monitoredChannel },
+                TypeMatchStrategy.NamespaceAndName,
+                TimeSpan.FromSeconds(.5),
+                new HarnessStaticDetails(),
+                trackingConstructor(),
+                new InMemoryActiveMessageTracker(),
+                senderConstructor());
+
+            var parcel = new Parcel { Envelopes = new[] { new NullMessage().ToAddressedMessage(monitoredChannel).ToEnvelope() } };
+
+            dispatcher.Dispatch("Parcel", new TrackingCode(), parcel, monitoredChannel);
+
+            trackingSends.Should().HaveCount(0);
+            trackingCalls.Should().BeEquivalentTo(nameof(IParcelTrackingSystem.UpdateAttemptingAsync), nameof(IParcelTrackingSystem.UpdateDeliveredAsync));
+        }
+
+        [Fact]
+        public static void Dispatch_DispatchingMethodWithRecurringHeaderMessage_ReSendsWithoutTracking()
+        {
+            var container = new Container();
+            container.Register<IHandleMessages<NullMessage>, NullMessageHandler>();
+
+            var trackingCalls = new List<string>();
+            var trackingSendsFromTracker = new List<Parcel>();
+            var trackingConstructor = Factory.GetInMemoryParcelTrackingSystem(trackingCalls, trackingSendsFromTracker);
+
+            var trackingSends = new List<Parcel>();
+            var senderConstructor = Factory.GetInMemorySender(trackingSends);
+
+            var monitoredChannel = new SimpleChannel("ChannelName");
+            var dispatcher = new MessageDispatcher(
+                container,
+                new ConcurrentDictionary<Type, object>(),
+                new[] { monitoredChannel },
+                TypeMatchStrategy.NamespaceAndName,
+                TimeSpan.FromSeconds(.5),
+                new HarnessStaticDetails(),
+                trackingConstructor(),
+                new InMemoryActiveMessageTracker(),
+                senderConstructor());
+
+            var parcel = new Parcel
+                             {
+                                 Envelopes =
+                                     new[]
+                                         {
+                                             new RecurringHeaderMessage().ToAddressedMessage().ToEnvelope(),
+                                             new NullMessage().ToAddressedMessage(monitoredChannel).ToEnvelope(),
+                                         }
+                             };
+
+            dispatcher.Dispatch("Parcel", new TrackingCode(), parcel, monitoredChannel);
+            trackingSends.Should().HaveCount(1);
+            trackingCalls.Should().HaveCount(0);
         }
 
         [Fact]
@@ -423,129 +546,155 @@ namespace Naos.MessageBus.Test
             container.Register<IHandleMessages<NullMessage>, NullMessageHandler>();
 
             var trackingSends = new List<Parcel>();
-            Func<ISendMessages> senderConstructor = () =>
-            {
-                dynamic dynamicObject = new ExpandoObject();
-                dynamicObject.SendRecurring = Return<TrackingCode>.Arguments<Parcel, ScheduleBase>(
-                    (parcel, schedule) =>
-                        {
-                            trackingSends.Add(parcel);
-                            return null;
-                        });
 
-                dynamicObject.Send = Return<TrackingCode>.Arguments<Parcel>(
-                    (parcel) =>
-                        {
-                            trackingSends.Add(parcel);
-                            return null;
-                        });
-
-                ISendMessages ret = Impromptu.ActLike(dynamicObject);
-                return ret;
-            };
-
-            container.Register(senderConstructor);
-            var monitoredChannel = new Channel { Name = "ChannelName" };
+            var monitoredChannel = new SimpleChannel("ChannelName");
             var dispatcher = new MessageDispatcher(
                 container,
                 new ConcurrentDictionary<Type, object>(),
                 new[] { monitoredChannel },
                 TypeMatchStrategy.AssemblyQualifiedName,
-                TimeSpan.FromSeconds(.5));
+                TimeSpan.FromSeconds(.5),
+                new HarnessStaticDetails(),
+                new NullParcelTrackingSystem(),
+                new InMemoryActiveMessageTracker(),
+                Factory.GetInMemorySender(trackingSends)());
 
-            var validParcel = new Parcel()
-            {
-                Envelopes =
-                    new[]
-                                         {
-                                             new Envelope()
-                                                 {
-                                                     Channel = monitoredChannel,
-                                                     MessageType = typeof(NullMessage).ToTypeDescription(),
-                                                     MessageAsJson = Serializer.Serialize(new NullMessage())
-                                                 }
-                                         }
-            };
+            var validParcel = new Parcel { Envelopes = new[] { new NullMessage().ToAddressedMessage(monitoredChannel).ToEnvelope() } };
 
-            var invalidParcel = new Parcel()
-            {
-                Envelopes =
-                    new[]
-                                         {
-                                             new Envelope()
-                                                 {
-                                                     Channel = new Channel() { Name = "OtherChannel" },
-                                                     MessageType = typeof(NullMessage).ToTypeDescription(),
-                                                     MessageAsJson = Serializer.Serialize(new NullMessage())
-                                                 }
-                                         }
-            };
+            var notMonitoredChannel = new SimpleChannel("OtherChannel");
+            var invalidParcel = new Parcel { Envelopes = new[] { new NullMessage().ToAddressedMessage(notMonitoredChannel).ToEnvelope() } };
 
-            dispatcher.Dispatch("ValidParcel", validParcel);
+            dispatcher.Dispatch("ValidParcel", new TrackingCode(), validParcel, monitoredChannel);
             Assert.Equal(0, trackingSends.Count);
-            dispatcher.Dispatch("InvalidParcel", invalidParcel);
+            dispatcher.Dispatch("InvalidParcel", new TrackingCode(), invalidParcel, notMonitoredChannel);
             Assert.Equal(1, trackingSends.Count);
         }
 
         [Fact]
         public static void Dispatch_NullParcel_Throws()
         {
-            Action testCode = () => new MessageDispatcher(new Container(), new ConcurrentDictionary<Type, object>(), new List<Channel>(), TypeMatchStrategy.NamespaceAndName, TimeSpan.FromSeconds(.5)).Dispatch("Name", null);
-            var ex = Assert.Throws<DispatchException>(testCode);
-            Assert.Equal("Parcel cannot be null", ex.Message);
+            Action testCode = () => 
+            GetMessageDispatcher().Dispatch("Name", new TrackingCode(), null, new NullChannel());
+            testCode.ShouldThrow<DispatchException>().WithMessage("Parcel cannot be null");
         }
 
         [Fact]
         public static void Dispatch_NullEnvelopesInParcel_Throws()
         {
-            Action testCode = () => new MessageDispatcher(new Container(), new ConcurrentDictionary<Type, object>(), new List<Channel>(), TypeMatchStrategy.NamespaceAndName, TimeSpan.FromSeconds(.5)).Dispatch("Name", new Parcel());
-            var ex = Assert.Throws<DispatchException>(testCode);
-            Assert.Equal("Parcel must contain envelopes", ex.Message);
+            Action testCode = () => GetMessageDispatcher().Dispatch("Name", new TrackingCode(), new Parcel(), new NullChannel());
+            testCode.ShouldThrow<DispatchException>().WithMessage("Parcel must contain envelopes");
         }
 
         [Fact]
         public static void Dispatch_NoEnvelopesInParcel_Throws()
         {
             Action testCode =
-                () => new MessageDispatcher(new Container(), new ConcurrentDictionary<Type, object>(), new List<Channel>(), TypeMatchStrategy.NamespaceAndName, TimeSpan.FromSeconds(.5)).Dispatch("Name", new Parcel { Envelopes = new List<Envelope>() });
-            var ex = Assert.Throws<DispatchException>(testCode);
-            Assert.Equal("Parcel must contain envelopes", ex.Message);
+                () => GetMessageDispatcher().Dispatch("Name", new TrackingCode(), new Parcel { Envelopes = new List<Envelope>() }, new NullChannel());
+            testCode.ShouldThrow<DispatchException>().WithMessage("Parcel must contain envelopes");
         }
 
         [Fact]
         public static void Dispatch_EnvelopeMissingTypeCompletely_Throws()
         {
             Action testCode =
-                () => new MessageDispatcher(new Container(), new ConcurrentDictionary<Type, object>(), new[] { new Channel { Name = "Channel" } }, TypeMatchStrategy.NamespaceAndName, TimeSpan.FromSeconds(.5)).Dispatch("Name", new Parcel { Envelopes = new[] { new Envelope { Channel = new Channel { Name = "Channel" } } } });
-            var ex = Assert.Throws<DispatchException>(testCode);
-            Assert.Equal("Message type not specified in envelope", ex.Message);
+                () =>
+                    {
+                        var channel = new SimpleChannel("Channel");
+                        GetMessageDispatcher(new[] { channel })
+                            .Dispatch("Name", new TrackingCode(), new Parcel { Envelopes = new[] { new Envelope(null, null, channel, null, null) } }, channel);
+                    };
+
+            testCode.ShouldThrow<DispatchException>().WithMessage("Message type not specified in envelope");
         }
 
         [Fact]
         public static void Dispatch_EnvelopeMissingTypeNamespace_Throws()
         {
             Action testCode =
-                () => new MessageDispatcher(new Container(), new ConcurrentDictionary<Type, object>(), new[] { new Channel { Name = "Channel" } }, TypeMatchStrategy.NamespaceAndName, TimeSpan.FromSeconds(.5)).Dispatch("Name", new Parcel { Envelopes = new[] { new Envelope { MessageType = new TypeDescription { AssemblyQualifiedName = "Something", Name = "Something" }, Channel = new Channel { Name = "Channel" } } } });
-            var ex = Assert.Throws<DispatchException>(testCode);
-            Assert.Equal("Message type not specified in envelope", ex.Message);
+                () =>
+                    {
+                        var channel = new SimpleChannel("Channel");
+                        GetMessageDispatcher(new[] { channel })
+                            .Dispatch(
+                                "Name",
+                                new TrackingCode(),
+                                new Parcel
+                                    {
+                                        Envelopes =
+                                            new[]
+                                                {
+                                                    new Envelope(
+                                                        null,
+                                                        null,
+                                                        channel,
+                                                        null,
+                                                        new TypeDescription { AssemblyQualifiedName = "Something", Name = "Something" })
+                                                }
+                                    },
+                                channel);
+                    };
+
+            testCode.ShouldThrow<DispatchException>().WithMessage("Message type not specified in envelope");
         }
 
         [Fact]
         public static void Dispatch_EnvelopeMissingTypeName_Throws()
         {
             Action testCode =
-                () => new MessageDispatcher(new Container(), new ConcurrentDictionary<Type, object>(), new[] { new Channel { Name = "Channel" } }, TypeMatchStrategy.NamespaceAndName, TimeSpan.FromSeconds(.5)).Dispatch("Name", new Parcel { Envelopes = new[] { new Envelope { MessageType = new TypeDescription { AssemblyQualifiedName = "Something", Namespace = "Something" }, Channel = new Channel { Name = "Channel" } } } });
-            var ex = Assert.Throws<DispatchException>(testCode);
-            Assert.Equal("Message type not specified in envelope", ex.Message);
+                () =>
+                    {
+                        var channel = new SimpleChannel("Channel");
+                        GetMessageDispatcher(new[] { channel })
+                            .Dispatch(
+                                "Name",
+                                new TrackingCode(),
+                                new Parcel
+                                    {
+                                        Envelopes =
+                                            new[]
+                                                {
+                                                    new Envelope(
+                                                        null,
+                                                        null,
+                                                        channel,
+                                                        null,
+                                                        new TypeDescription { AssemblyQualifiedName = "Something", Namespace = "Something" })
+                                                }
+                                    },
+                                channel);
+                    };
+
+            testCode.ShouldThrow<DispatchException>().WithMessage("Message type not specified in envelope");
         }
 
         [Fact]
         public static void Dispatch_EnvelopeMissingAssemblyQualifiedType_Throws()
         {
             Action testCode =
-                () => new MessageDispatcher(new Container(), new ConcurrentDictionary<Type, object>(), new[] { new Channel { Name = "Channel" } }, TypeMatchStrategy.NamespaceAndName, TimeSpan.FromSeconds(.5)).Dispatch("Name", new Parcel { Envelopes = new[] { new Envelope { MessageType = new TypeDescription { Name = "Something", Namespace = "Something" }, Channel = new Channel { Name = "Channel" } } } });
-            var ex = Assert.Throws<DispatchException>(testCode);
-            Assert.Equal("Message type not specified in envelope", ex.Message);
+                () =>
+                    {
+                        var channel = new SimpleChannel("Channel");
+                        GetMessageDispatcher(new[] { channel })
+                            .Dispatch(
+                                "Name",
+                                new TrackingCode(),
+                                new Parcel
+                                    {
+                                        Envelopes =
+                                            new[]
+                                                {
+                                                    new Envelope(
+                                                        null,
+                                                        null,
+                                                        channel,
+                                                        null,
+                                                        new TypeDescription { Namespace = "Something", Name = "Something" })
+                                                }
+                                    },
+                                channel);
+                    };
+
+            testCode.ShouldThrow<DispatchException>().WithMessage("Message type not specified in envelope");
         }
 
         [Fact]
@@ -555,63 +704,51 @@ namespace Naos.MessageBus.Test
             container.Register<IHandleMessages<NullMessage>, NullMessageHandler>();
             Action testCode = () =>
                 {
-                    new MessageDispatcher(
-                        container,
-                        new ConcurrentDictionary<Type, object>(),
-                        new[] { new Channel { Name = "Channel" } },
-                        TypeMatchStrategy.NamespaceAndName, 
-                        TimeSpan.FromSeconds(.5)).Dispatch(
+                    var channel = new SimpleChannel("Channel");
+                    GetMessageDispatcher(new[] { channel }, container)
+                        .Dispatch(
                             "Name",
+                            new TrackingCode(),
                             new Parcel
                                 {
                                     Envelopes =
-                                        new[]
-                                            {
-                                                new Envelope
-                                                    {
-                                                        Channel = new Channel { Name = "Channel" },
-                                                     MessageType = typeof(NullMessage).ToTypeDescription(),
-                                                    }
-                                            }
-                                });
+                                        new[] { new Envelope(null, null, channel, null, typeof(NullMessage).ToTypeDescription()) }
+                                },
+                            channel);
                 };
 
-            var ex = Assert.Throws<DispatchException>(testCode);
-            Assert.Equal("First message in parcel deserialized to null", ex.Message);
+            testCode.ShouldThrow<DispatchException>().WithMessage("First message in parcel deserialized to null");
         }
 
         [Fact]
         public static void Dispatch_EnvelopeWithUnregisteredType_Throws()
         {
-            Action testCode =
-                () =>
-                    {
-                        var channel = new Channel { Name = "Channel" };
+            Action testCode = () =>
+                {
+                    var channel = new SimpleChannel("Channel");
 
-                        new MessageDispatcher(
-                              new Container(), 
-                              new ConcurrentDictionary<Type, object>(), 
-                              new[] { channel },
-                              TypeMatchStrategy.NamespaceAndName, 
-                              TimeSpan.FromSeconds(.5))
-                              .Dispatch(
-                                  "Name",
-                                  new Parcel
-                                      {
-                                          Envelopes =
-                                              new[]
-                                                  {
-                                                      new Envelope
-                                                          {
-                                                              Channel = channel,
-                                                              MessageType = typeof(NullMessage).ToTypeDescription()
-                                                          }
-                                                  }
-                                      });
-                    };
+                    var message = new NullMessage();
+                    GetMessageDispatcher(new[] { channel })
+                        .Dispatch(
+                            "Name",
+                            new TrackingCode(),
+                            new Parcel
+                                {
+                                    Envelopes =
+                                        new[]
+                                            {
+                                                new Envelope(
+                                                    null,
+                                                    null,
+                                                    new SimpleChannel("Channel"),
+                                                    Serializer.Serialize(message),
+                                                    message.GetType().ToTypeDescription())
+                                            }
+                                },
+                            channel);
+                };
 
-            var ex = Assert.Throws<DispatchException>(testCode);
-            Assert.True(ex.Message.StartsWith("Unable to find handler for message type"), ex.Message);
+            testCode.ShouldThrow<DispatchException>().Where(_ => _.Message.StartsWith("Unable to find handler for message type"));
         }
 
         [Fact]
@@ -623,25 +760,18 @@ namespace Naos.MessageBus.Test
             var message = new InitialStateMessage();
             var messageJson = Serializer.Serialize(message);
 
-            var channel = new Channel { Name = "fakeChannel" };
-            var messageDispatcher = new MessageDispatcher(simpleInjectorContainer, new ConcurrentDictionary<Type, object>(), new[] { channel }, TypeMatchStrategy.NamespaceAndName, TimeSpan.FromSeconds(.5));
+            var channel = new SimpleChannel("fakeChannel");
+            var messageDispatcher = new MessageDispatcher(simpleInjectorContainer, new ConcurrentDictionary<Type, object>(), new[] { channel }, TypeMatchStrategy.NamespaceAndName, TimeSpan.FromSeconds(.5), new HarnessStaticDetails(), new NullParcelTrackingSystem(), new InMemoryActiveMessageTracker(), new PostOffice(new NullParcelTrackingSystem(), new ChannelRouter(new NullChannel())));
             var parcel = new Parcel
                              {
+                                 Id = Guid.NewGuid(),
                                  Envelopes =
                                      new List<Envelope>(
-                                     new[]
-                                         {
-                                             new Envelope()
-                                                 {
-                                                     Channel = channel,
-                                                     MessageAsJson = messageJson,
-                                                     MessageType = message.GetType().ToTypeDescription()
-                                                 }
-                                         })
+                                     new[] { new Envelope("id", null, channel, messageJson, message.GetType().ToTypeDescription()) })
                              };
 
             Assert.Empty(StateHandler.StateHistory);
-            messageDispatcher.Dispatch("Parcel Name", parcel);
+            messageDispatcher.Dispatch("Parcel Name", new TrackingCode(), parcel, channel);
             Assert.Equal(2, StateHandler.StateHistory.Count);
             Assert.Equal(
                 StateHandler.StateHistory["GenerateInitialState"],
@@ -657,25 +787,18 @@ namespace Naos.MessageBus.Test
             var message = new InitialStateMessage();
             var messageJson = Serializer.Serialize(message);
 
-            var channel = new Channel { Name = "fakeChannel" };
-            var messageDispatcher = new MessageDispatcher(simpleInjectorContainer, new ConcurrentDictionary<Type, object>(), new[] { channel }, TypeMatchStrategy.NamespaceAndName, TimeSpan.FromSeconds(.5));
+            var channel = new SimpleChannel("fakeChannel");
+            var messageDispatcher = new MessageDispatcher(simpleInjectorContainer, new ConcurrentDictionary<Type, object>(), new[] { channel }, TypeMatchStrategy.NamespaceAndName, TimeSpan.FromSeconds(.5), new HarnessStaticDetails(), new NullParcelTrackingSystem(), new InMemoryActiveMessageTracker(), new PostOffice(new NullParcelTrackingSystem(), new ChannelRouter(new NullChannel())));
             var parcel = new Parcel
                              {
+                                 Id = Guid.NewGuid(),
                                  Envelopes =
                                      new List<Envelope>(
-                                     new[]
-                                         {
-                                             new Envelope()
-                                                 {
-                                                     Channel = channel,
-                                                     MessageAsJson = messageJson,
-                                                     MessageType = message.GetType().ToTypeDescription()
-                                                 }
-                                         })
+                                     new[] { new Envelope("id", null, channel, messageJson, message.GetType().ToTypeDescription()) })
                              };
 
             Assert.Empty(StateHandler.StateHistory);
-            messageDispatcher.Dispatch("Parcel Name", parcel);
+            messageDispatcher.Dispatch("Parcel Name", new TrackingCode(), parcel, channel);
             Assert.Equal(2, StateHandler.StateHistory.Count);
             Assert.Equal(
                 StateHandler.StateHistory["GenerateInitialState"],
@@ -683,7 +806,7 @@ namespace Naos.MessageBus.Test
 
             StateHandler.StateHistory.Clear();
             StateHandler.ShouldValidate = true; // this will say that the state is valid and should NOT re-generate
-            messageDispatcher.Dispatch("Parcel Name", parcel);
+            messageDispatcher.Dispatch("Parcel Name", new TrackingCode(), parcel, channel);
             Assert.Equal(2, StateHandler.StateHistory.Count);
             Assert.Equal(
                 StateHandler.StateHistory["ValidateInitialState"],
@@ -700,31 +823,19 @@ namespace Naos.MessageBus.Test
             var message = new InitialStateMessage();
             var messageJson = Serializer.Serialize(message);
 
-            var channel = new Channel { Name = "fakeChannel" };
-            var messageDispatcher = new MessageDispatcher(
-                simpleInjectorContainer,
-                new ConcurrentDictionary<Type, object>(),
-                new[] { channel },
-                TypeMatchStrategy.NamespaceAndName, 
-                TimeSpan.FromSeconds(.5));
+            var channel = new SimpleChannel("fakeChannel");
+            var messageDispatcher = GetMessageDispatcher(new[] { channel }, simpleInjectorContainer);
 
             var parcel = new Parcel
                              {
+                                 Id = Guid.NewGuid(),
                                  Envelopes =
                                      new List<Envelope>(
-                                     new[]
-                                         {
-                                             new Envelope()
-                                                 {
-                                                     Channel = channel,
-                                                     MessageAsJson = messageJson,
-                                                     MessageType = message.GetType().ToTypeDescription()
-                                                 }
-                                         })
+                                     new[] { new Envelope("id", null, channel, messageJson, message.GetType().ToTypeDescription()) })
                              };
 
             Assert.Empty(StateHandler.StateHistory);
-            messageDispatcher.Dispatch("Parcel Name", parcel);
+            messageDispatcher.Dispatch("Parcel Name", new TrackingCode(), parcel, channel);
             Assert.Equal(2, StateHandler.StateHistory.Count);
             Assert.Equal(
                 StateHandler.StateHistory["GenerateInitialState"],
@@ -732,7 +843,7 @@ namespace Naos.MessageBus.Test
 
             StateHandler.StateHistory.Clear();
             StateHandler.ShouldValidate = false; // this will say that the state is NOT valid and should re-generate
-            messageDispatcher.Dispatch("Parcel Name", parcel);
+            messageDispatcher.Dispatch("Parcel Name", new TrackingCode(), parcel, channel);
             Assert.Equal(3, StateHandler.StateHistory.Count);
             Assert.Equal(
                 StateHandler.StateHistory["SeedInitialState"],
@@ -743,6 +854,30 @@ namespace Naos.MessageBus.Test
             Assert.NotEqual(
                 StateHandler.StateHistory["ValidateInitialState"],
                 StateHandler.StateHistory["SeedInitialState"]);
+        }
+
+        private static MessageDispatcher GetMessageDispatcher(IList<IChannel> channels = null, Container container = null)
+        {
+            if (channels == null)
+            {
+                channels = new List<IChannel>();
+            }
+
+            if (container == null)
+            {
+                container = new Container();
+            }
+
+            return new MessageDispatcher(
+                container,
+                new ConcurrentDictionary<Type, object>(),
+                channels,
+                TypeMatchStrategy.NamespaceAndName,
+                TimeSpan.FromSeconds(.5),
+                new HarnessStaticDetails(),
+                new NullParcelTrackingSystem(),
+                new InMemoryActiveMessageTracker(),
+                new PostOffice(new NullParcelTrackingSystem(), new ChannelRouter(new NullChannel())));
         }
 
         public class StateHandler : IHandleMessages<InitialStateMessage>, INeedSharedState<string>

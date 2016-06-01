@@ -18,7 +18,7 @@ namespace Naos.MessageBus.Hangfire.Harness
     using Its.Log.Instrumentation;
 
     using Naos.MessageBus.Core;
-    using Naos.MessageBus.HandlingContract;
+    using Naos.MessageBus.Domain;
 
     /// <inheritdoc />
     public class ApplicationPreload : IProcessHostPreloadClient
@@ -44,7 +44,7 @@ namespace Naos.MessageBus.Hangfire.Harness
                     if (executorRoleSettings != null)
                     {
                         HangfireBootstrapper.Instance.Start(
-                            messageBusHandlerSettings.PersistenceConnectionString,
+                            messageBusHandlerSettings.ConnectionConfiguration,
                             executorRoleSettings);
                     }
                 }

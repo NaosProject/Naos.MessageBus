@@ -8,7 +8,6 @@
 
 namespace Naos.MessageBus.Hangfire.Harness
 {
-    using System;
     using System.Linq;
     using System.Web.Hosting;
 
@@ -16,9 +15,9 @@ namespace Naos.MessageBus.Hangfire.Harness
     using global::Hangfire.SqlServer;
 
     using Naos.MessageBus.Core;
-    using Naos.MessageBus.HandlingContract;
+    using Naos.MessageBus.Domain;
     using Naos.MessageBus.Hangfire.Sender;
-    using Naos.MessageBus.SendingContract;
+    using Naos.MessageBus.Persistence;
 
     /// <inheritdoc />
     public class HangfireBootstrapper : IRegisteredObject
@@ -44,10 +43,10 @@ namespace Naos.MessageBus.Hangfire.Harness
         /// <summary>
         /// Perform a start.
         /// </summary>
-        /// <param name="persistenceConnectionString">Connection string to hangfire persistence.</param>
+        /// <param name="connectionConfig">Connection information to connect to persistence.</param>
         /// <param name="executorRoleSettings">Executor role settings.</param>
         public void Start(
-            string persistenceConnectionString,
+            MessageBusConnectionConfiguration connectionConfig,
             MessageBusHarnessRoleSettingsExecutor executorRoleSettings)
         {
             lock (this.lockObject)
@@ -61,23 +60,31 @@ namespace Naos.MessageBus.Hangfire.Harness
 
                 HostingEnvironment.RegisterObject(this);
 
-                this.LaunchHangfire(persistenceConnectionString, executorRoleSettings);
+                this.LaunchHangfire(connectionConfig, executorRoleSettings);
             }
         }
 
         private void LaunchHangfire(
-            string persistenceConnectionString,
+            MessageBusConnectionConfiguration connectionConfig,
             MessageBusHarnessRoleSettingsExecutor executorRoleSettings)
         {
-            Func<ISendMessages> messageSenderBuilder = () => new MessageSender(persistenceConnectionString);
-            SenderFactory.Initialize(messageSenderBuilder);
+            var activeMessageTracker = new InMemoryActiveMessageTracker();
+
+            var courier = new HangfireCourier(connectionConfig.CourierPersistenceConnectionConfiguration);
+            var parcelTrackingSystem = new ParcelTrackingSystem(courier, connectionConfig.EventPersistenceConnectionConfiguration, connectionConfig.ReadModelPersistenceConnectionConfiguration);
+            var postOffice = new PostOffice(parcelTrackingSystem, courier.DefaultChannelRouter);
+
+            HandlerToolShed.InitializePostOffice(() => postOffice);
+            HandlerToolShed.InitializeParcelTracking(() => parcelTrackingSystem);
 
             this.dispatcherFactory = new DispatcherFactory(
                 executorRoleSettings.HandlerAssemblyPath,
                 executorRoleSettings.ChannelsToMonitor,
-                SenderFactory.GetMessageSender,
                 executorRoleSettings.TypeMatchStrategy,
-                executorRoleSettings.MessageDispatcherWaitThreadSleepTime);
+                executorRoleSettings.MessageDispatcherWaitThreadSleepTime,
+                parcelTrackingSystem,
+                activeMessageTracker,
+                postOffice);
 
             // configure hangfire to use the DispatcherFactory for getting IDispatchMessages calls
             GlobalConfiguration.Configuration.UseActivator(new DispatcherFactoryJobActivator(this.dispatcherFactory));
@@ -85,13 +92,13 @@ namespace Naos.MessageBus.Hangfire.Harness
 
             var options = new BackgroundJobServerOptions
                               {
-                                  Queues = executorRoleSettings.ChannelsToMonitor.Select(_ => _.Name).ToArray(),
+                                  Queues = executorRoleSettings.ChannelsToMonitor.OfType<SimpleChannel>().Select(_ => _.Name).ToArray(),
                                   SchedulePollingInterval = executorRoleSettings.PollingTimeSpan,
                                   WorkerCount = executorRoleSettings.WorkerCount,
                               };
 
             GlobalConfiguration.Configuration.UseSqlServerStorage(
-                persistenceConnectionString,
+                connectionConfig.CourierPersistenceConnectionConfiguration.ToSqlServerConnectionString(),
                 new SqlServerStorageOptions());
 
             this.backgroundJobServer = new BackgroundJobServer(options);

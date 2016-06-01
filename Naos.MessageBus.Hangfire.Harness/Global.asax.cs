@@ -17,7 +17,7 @@ namespace Naos.MessageBus.Hangfire.Harness
     using Its.Configuration;
 
     using Naos.MessageBus.Core;
-    using Naos.MessageBus.HandlingContract;
+    using Naos.MessageBus.Domain;
 
     /// <inheritdoc />
     public class Global : HttpApplication
@@ -36,7 +36,7 @@ namespace Naos.MessageBus.Hangfire.Harness
             if (executorRoleSettings != null)
             {
                 HangfireBootstrapper.Instance.Start(
-                    messageBusHandlerSettings.PersistenceConnectionString,
+                    messageBusHandlerSettings.ConnectionConfiguration,
                     executorRoleSettings);
             }
         }

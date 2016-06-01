@@ -1,14 +1,40 @@
 ﻿{
-    "persistenceConnectionString": "server=localhost",
+    // Server = "server1", Database = "db", Credentials = new Credentials { User = "user", Password = "password".ToSecureString() } }
+    "connectionConfiguration": {
+        "courierPersistenceConnectionConfiguration": {
+            "server": "server1",
+            "credentials": {
+                "user": "user",
+                "password": "password"
+            }
+        },
+        "eventPersistenceConnectionConfiguration": {
+            "server": "server2",
+            "credentials": {
+                "user": "user",
+                "password": "password"
+            }
+        },
+        "readModelPersistenceConnectionConfiguration": {
+            "server": "server3",
+            "credentials": {
+                "user": "user",
+                "password": "password"
+            }
+        }
+    },
     "roleSettings": [
         {
-            "channelsToMonitor": [ { "Name": "monkeys" }, { "Name": "pandas" } ],
+            "channelsToMonitor": [
+                { "name": "monkeys" },
+                { "name": "pandas" }
+            ],
             "workerCount": 4,
             "handlerAssemblyPath": "I:\\Gets\\My\\Dlls\\Here",
             "pollingTimeSpan": "00:01:00",
             "harnessProcessTimeToLive": "00:10:00",
-            "typeMatchStrategy":  "namespaceAndName",
-            "messageDispatcherWaitThreadSleepTime":  "00:00:01",
+            "typeMatchStrategy": "namespaceAndName",
+            "messageDispatcherWaitThreadSleepTime": "00:00:01",
             "retryCount": 0
         }
     ]
