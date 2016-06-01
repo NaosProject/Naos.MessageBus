@@ -173,6 +173,7 @@ namespace Naos.MessageBus.Persistence
                             {
                                 var entry = existingEntries.Single();
                                 entry.ImpactingTopicName = @event.ExtractPayload().Topic.Name;
+                                entry.AffectsStartedDateTimeUtc = @event.Timestamp.UtcDateTime;
                                 entry.Status = TopicStatus.BeingAffected;
                                 entry.ParcelId = @event.ExtractPayload().TrackingCode.ParcelId;
                                 entry.TopicBeingAffectedEnvelopeJson = Serializer.Serialize(@event.ExtractPayload().Envelope);
@@ -184,6 +185,7 @@ namespace Naos.MessageBus.Persistence
                                                 {
                                                     Id = Guid.NewGuid(),
                                                     ImpactingTopicName = @event.ExtractPayload().Topic.Name,
+                                                    AffectsStartedDateTimeUtc = @event.Timestamp.UtcDateTime,
                                                     Status = TopicStatus.BeingAffected,
                                                     ParcelId = @event.ExtractPayload().TrackingCode.ParcelId,
                                                     TopicBeingAffectedEnvelopeJson = Serializer.Serialize(@event.ExtractPayload().Envelope),

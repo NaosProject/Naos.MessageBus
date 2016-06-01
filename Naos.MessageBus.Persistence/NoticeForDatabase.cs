@@ -36,6 +36,11 @@ namespace Naos.MessageBus.Persistence
         public TopicStatus Status { get; set; }
 
         /// <summary>
+        /// Gets or sets the time in UTC that the affects were started.
+        /// </summary>
+        public DateTime? AffectsStartedDateTimeUtc { get; set; }
+
+        /// <summary>
         /// Gets or sets the time in UTC that the affects were complete.
         /// </summary>
         public DateTime? AffectsCompletedDateTimeUtc { get; set; }
