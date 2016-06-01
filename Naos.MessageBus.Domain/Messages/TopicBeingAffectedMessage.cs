@@ -9,7 +9,7 @@ namespace Naos.MessageBus.Domain
     /// <summary>
     /// Message that contains important info to persist.
     /// </summary>
-    public class TopicBeingAffectedMessage : IMessage, IShareDependenciesNoticeThatTopicWasAffected, IShareNoticeAffectedItems
+    public class TopicBeingAffectedMessage : IMessage, IShareDependentTopicStatusReports, IShareAffectedItems
     {
         /// <inheritdoc />
         public string Description { get; set; }
@@ -17,7 +17,7 @@ namespace Naos.MessageBus.Domain
         /// <summary>
         /// Gets or sets the notices as they were evaluated with processing check.
         /// </summary>
-        public NoticeThatTopicWasAffected[] DependenciesNoticeThatTopicWasAffected { get; set; }
+        public TopicStatusReport[] DependentTopicStatusReports { get; set; }
 
         /// <inheritdoc />
         public AffectedItem[] AffectedItems { get; set; }

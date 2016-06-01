@@ -7,6 +7,7 @@
 namespace Naos.MessageBus.Test
 {
     using System;
+    using System.Collections.Generic;
     using System.Linq;
     using System.Threading.Tasks;
 
@@ -33,18 +34,18 @@ namespace Naos.MessageBus.Test
 
             var seededNotices = topics.Cast<ITopic>().ToDictionary(
                 key => key,
-                val => null as NoticeThatTopicWasAffected);
+                val => null as TopicStatusReport);
 
             seededNotices.Add(
                 impactingTopic,
-                new NoticeThatTopicWasAffected
+                new TopicStatusReport
                     {
                         Topic = impactingTopic,
                         AffectsCompletedDateTimeUtc = DateTime.UtcNow,
                         DependencyTopicNoticesAtStart =
                             topics.Select(
                                 _ =>
-                                new NoticeThatTopicWasAffected
+                                new TopicStatusReport
                                     {
                                         Topic = new AffectedTopic(_.Name),
                                         Status = TopicStatus.WasAffected,
@@ -78,11 +79,11 @@ namespace Naos.MessageBus.Test
             var impactingTopic = new AffectedTopic("mine");
             var topics = Some.Dummies<DependencyTopic>().ToList();
 
-            var seededNotices = topics.Cast<ITopic>().ToDictionary(key => key, val => new NoticeThatTopicWasAffected { Topic = new AffectedTopic(val.Name), Status = TopicStatus.BeingAffected });
+            var seededNotices = topics.Cast<ITopic>().ToDictionary(key => key, val => new TopicStatusReport { Topic = new AffectedTopic(val.Name), Status = TopicStatus.BeingAffected });
 
             seededNotices.Add(
                 impactingTopic,
-                new NoticeThatTopicWasAffected
+                new TopicStatusReport
                 {
                     Topic = impactingTopic,
                     AffectsCompletedDateTimeUtc = DateTime.UtcNow,
@@ -90,7 +91,7 @@ namespace Naos.MessageBus.Test
                     DependencyTopicNoticesAtStart =
                             topics.Select(
                                 _ =>
-                                new NoticeThatTopicWasAffected
+                                new TopicStatusReport
                                 {
                                     Topic = new AffectedTopic(_.Name),
                                     Status = TopicStatus.WasAffected,
@@ -117,24 +118,52 @@ namespace Naos.MessageBus.Test
         }
 
         [Fact]
+        public void NoDependenciesAndNoOtherRuns_DoesNotAbort()
+        {
+            // arrange
+            var impactingTopic = new AffectedTopic("mine");
+
+            var message = new AbortIfNoTopicsAffectedAndShareResultsMessage
+            {
+                Description = A.Dummy<string>(),
+                Topic = impactingTopic,
+                DependencyTopics = new DependencyTopic[0],
+                TopicCheckStrategy = TopicCheckStrategy.RequireAllTopicChecksYieldRecent,
+                SimultaneousRunsStrategy = SimultaneousRunsStrategy.AbortSubsequentRunsWhenOneIsRunning
+            };
+
+            var seededNotices = new[] { impactingTopic }.Cast<ITopic>()
+                .ToDictionary(key => key, val => new TopicStatusReport { Topic = new AffectedTopic(val.Name), Status = TopicStatus.WasAffected });
+
+            var tracker = Factory.GetSeededTrackerForGetLatestNoticeAsync(seededNotices);
+
+            var handler = new AbortIfNoTopicsAffectedAndShareResultsMessageHandler();
+
+            // act
+            handler.HandleAsync(message, tracker).Wait();
+
+            // assert - by virtue of arriving here this will have succeeded
+        }
+
+        [Fact]
         public void CurrentNoticeUnknown_Aborts()
         {
             // arrange
             var impactingTopic = new AffectedTopic("mine");
             var topics = Some.Dummies<DependencyTopic>().ToList();
 
-            var seededNotices = topics.Cast<ITopic>().ToDictionary(key => key, val => new NoticeThatTopicWasAffected { Topic = new AffectedTopic(val.Name), Status = TopicStatus.Unknown });
+            var seededNotices = topics.Cast<ITopic>().ToDictionary(key => key, val => new TopicStatusReport { Topic = new AffectedTopic(val.Name), Status = TopicStatus.Unknown });
 
             seededNotices.Add(
                 impactingTopic,
-                new NoticeThatTopicWasAffected
+                new TopicStatusReport
                 {
                     Topic = impactingTopic,
                     AffectsCompletedDateTimeUtc = DateTime.UtcNow,
                     DependencyTopicNoticesAtStart =
                             topics.Select(
                                 _ =>
-                                new NoticeThatTopicWasAffected
+                                new TopicStatusReport
                                 {
                                     Topic = new AffectedTopic(_.Name),
                                     Status = TopicStatus.WasAffected,
@@ -170,18 +199,18 @@ namespace Naos.MessageBus.Test
             var seededNotices = topics.Cast<ITopic>()
                 .ToDictionary(
                     key => key,
-                    val => new NoticeThatTopicWasAffected { Topic = new AffectedTopic(val.Name), Status = TopicStatus.WasAffected, AffectsCompletedDateTimeUtc = DateTime.UtcNow.Subtract(TimeSpan.FromHours(1)) });
+                    val => new TopicStatusReport { Topic = new AffectedTopic(val.Name), Status = TopicStatus.WasAffected, AffectsCompletedDateTimeUtc = DateTime.UtcNow.Subtract(TimeSpan.FromHours(1)) });
 
             seededNotices.Add(
                 impactingTopic,
-                new NoticeThatTopicWasAffected
+                new TopicStatusReport
                 {
                     Topic = impactingTopic,
                     AffectsCompletedDateTimeUtc = DateTime.UtcNow,
                     DependencyTopicNoticesAtStart =
                             topics.Select(
                                 _ =>
-                                new NoticeThatTopicWasAffected
+                                new TopicStatusReport
                                 {
                                     Topic = new AffectedTopic(_.Name),
                                     Status = TopicStatus.WasAffected,
@@ -218,18 +247,18 @@ namespace Naos.MessageBus.Test
             var seededNotices = topics.Cast<ITopic>()
                 .ToDictionary(
                     key => key,
-                    val => new NoticeThatTopicWasAffected { Topic = new AffectedTopic(val.Name), Status = TopicStatus.WasAffected, AffectsCompletedDateTimeUtc = DateTime.UtcNow.Subtract(TimeSpan.FromHours(1)) });
+                    val => new TopicStatusReport { Topic = new AffectedTopic(val.Name), Status = TopicStatus.WasAffected, AffectsCompletedDateTimeUtc = DateTime.UtcNow.Subtract(TimeSpan.FromHours(1)) });
 
             seededNotices.Add(
                 impactingTopic,
-                new NoticeThatTopicWasAffected
+                new TopicStatusReport
                 {
                     Topic = impactingTopic,
                     AffectsCompletedDateTimeUtc = DateTime.UtcNow,
                     DependencyTopicNoticesAtStart =
                             topics.Select(
                                 _ =>
-                                new NoticeThatTopicWasAffected
+                                new TopicStatusReport
                                 {
                                     Topic = new AffectedTopic(_.Name),
                                     Status = TopicStatus.WasAffected,
@@ -264,9 +293,9 @@ namespace Naos.MessageBus.Test
 
             var seededNotices = topics.Cast<ITopic>().ToDictionary(
                 key => key,
-                val => new NoticeThatTopicWasAffected { Topic = new AffectedTopic(val.Name), Status = TopicStatus.WasAffected, AffectsCompletedDateTimeUtc = DateTime.UtcNow });
+                val => new TopicStatusReport { Topic = new AffectedTopic(val.Name), Status = TopicStatus.WasAffected, AffectsCompletedDateTimeUtc = DateTime.UtcNow });
 
-            seededNotices.Add(impactingTopic, null as NoticeThatTopicWasAffected);
+            seededNotices.Add(impactingTopic, null as TopicStatusReport);
 
             var message = new AbortIfNoTopicsAffectedAndShareResultsMessage
             {
@@ -295,17 +324,17 @@ namespace Naos.MessageBus.Test
 
             var seededNotices = topics.Cast<ITopic>().ToDictionary(
                 key => key,
-                val => new NoticeThatTopicWasAffected { Topic = new AffectedTopic(val.Name), Status = TopicStatus.WasAffected, AffectsCompletedDateTimeUtc = DateTime.UtcNow });
+                val => new TopicStatusReport { Topic = new AffectedTopic(val.Name), Status = TopicStatus.WasAffected, AffectsCompletedDateTimeUtc = DateTime.UtcNow });
 
             seededNotices.Add(
                 impactingTopic,
-                new NoticeThatTopicWasAffected
+                new TopicStatusReport
                 {
                     Topic = impactingTopic,
                     Status = TopicStatus.WasAffected,
                     AffectsCompletedDateTimeUtc = DateTime.UtcNow,
                     DependencyTopicNoticesAtStart =
-                            topics.Select(_ => new NoticeThatTopicWasAffected { Topic = new AffectedTopic(_.Name), Status = TopicStatus.WasAffected, AffectsCompletedDateTimeUtc = DateTime.UtcNow.Subtract(TimeSpan.FromHours(1)) }).ToArray()
+                            topics.Select(_ => new TopicStatusReport { Topic = new AffectedTopic(_.Name), Status = TopicStatus.WasAffected, AffectsCompletedDateTimeUtc = DateTime.UtcNow.Subtract(TimeSpan.FromHours(1)) }).ToArray()
                 });
 
             var message = new AbortIfNoTopicsAffectedAndShareResultsMessage
@@ -324,8 +353,8 @@ namespace Naos.MessageBus.Test
             handler.HandleAsync(message, tracker).Wait();
 
             // assert
-            handler.DependenciesNoticeThatTopicWasAffected.Should().HaveCount(topics.Count);
-            handler.DependenciesNoticeThatTopicWasAffected.Select(_ => _.Topic).ShouldAllBeEquivalentTo(topics);
+            handler.DependentTopicStatusReports.Should().HaveCount(topics.Count);
+            handler.DependentTopicStatusReports.Select(_ => _.Topic).ShouldAllBeEquivalentTo(topics);
         }
 
         [Fact]
@@ -335,9 +364,9 @@ namespace Naos.MessageBus.Test
             var impactingTopic = new AffectedTopic("mine");
             var topics = Some.Dummies<DependencyTopic>().ToList();
 
-            var seededNotices = topics.Cast<ITopic>().ToDictionary(key => key, val => null as NoticeThatTopicWasAffected);
+            var seededNotices = topics.Cast<ITopic>().ToDictionary(key => key, val => null as TopicStatusReport);
 
-            seededNotices.Add(impactingTopic, new NoticeThatTopicWasAffected { Topic = impactingTopic, AffectsCompletedDateTimeUtc = DateTime.UtcNow });
+            seededNotices.Add(impactingTopic, new TopicStatusReport { Topic = impactingTopic, AffectsCompletedDateTimeUtc = DateTime.UtcNow });
 
             var message = new AbortIfNoTopicsAffectedAndShareResultsMessage
                               {
@@ -368,20 +397,20 @@ namespace Naos.MessageBus.Test
 
             var seededNotices = topics.Cast<ITopic>().ToDictionary(
                 key => key,
-                val => new NoticeThatTopicWasAffected { Topic = new AffectedTopic(val.Name), Status = TopicStatus.WasAffected, AffectsCompletedDateTimeUtc = DateTime.UtcNow });
+                val => new TopicStatusReport { Topic = new AffectedTopic(val.Name), Status = TopicStatus.WasAffected, AffectsCompletedDateTimeUtc = DateTime.UtcNow });
 
             seededNotices.Add(
                 impactingTopic,
-                new NoticeThatTopicWasAffected
+                new TopicStatusReport
                 {
                     Topic = impactingTopic,
                     Status = TopicStatus.WasAffected,
                     AffectsCompletedDateTimeUtc = DateTime.UtcNow,
                     DependencyTopicNoticesAtStart =
-                            topics.Select(_ => new NoticeThatTopicWasAffected { Topic = new AffectedTopic(_.Name), Status = TopicStatus.WasAffected, AffectsCompletedDateTimeUtc = DateTime.UtcNow.Subtract(TimeSpan.FromHours(1)) }).ToArray()
+                            topics.Select(_ => new TopicStatusReport { Topic = new AffectedTopic(_.Name), Status = TopicStatus.WasAffected, AffectsCompletedDateTimeUtc = DateTime.UtcNow.Subtract(TimeSpan.FromHours(1)) }).ToArray()
                 });
 
-            seededNotices.Add(notCertified, new NoticeThatTopicWasAffected { Topic = notCertified, Status = TopicStatus.BeingAffected });
+            seededNotices.Add(notCertified, new TopicStatusReport { Topic = notCertified, Status = TopicStatus.BeingAffected });
 
             var message = new AbortIfNoTopicsAffectedAndShareResultsMessage
             {
@@ -410,18 +439,18 @@ namespace Naos.MessageBus.Test
 
             var seededNotices = topics.Cast<ITopic>().ToDictionary(
                 key => key,
-                val => new NoticeThatTopicWasAffected { Topic = new AffectedTopic(val.Name), Status = TopicStatus.WasAffected, AffectsCompletedDateTimeUtc = DateTime.UtcNow });
+                val => new TopicStatusReport { Topic = new AffectedTopic(val.Name), Status = TopicStatus.WasAffected, AffectsCompletedDateTimeUtc = DateTime.UtcNow });
 
             seededNotices.Add(
                 impactingTopic,
-                new NoticeThatTopicWasAffected
+                new TopicStatusReport
                     {
                         Topic = impactingTopic,
                         AffectsCompletedDateTimeUtc = DateTime.UtcNow,
                         DependencyTopicNoticesAtStart =
                             topics.Select(
                                 _ =>
-                                new NoticeThatTopicWasAffected
+                                new TopicStatusReport
                                     {
                                         Topic = new AffectedTopic(_.Name),
                                         Status = TopicStatus.WasAffected,
@@ -461,7 +490,7 @@ namespace Naos.MessageBus.Test
                 .ToDictionary(
                     key => key,
                     val =>
-                    new NoticeThatTopicWasAffected
+                    new TopicStatusReport
                         {
                             Topic = new AffectedTopic(val.Name),
                             Status = number++ % 2 == 0 ? TopicStatus.BeingAffected : TopicStatus.WasAffected,
@@ -470,16 +499,16 @@ namespace Naos.MessageBus.Test
 
             seededNotices.Add(
                 impactingTopic,
-                new NoticeThatTopicWasAffected
+                new TopicStatusReport
                     {
                         Topic = impactingTopic,
                         Status = TopicStatus.WasAffected,
                         AffectsCompletedDateTimeUtc = DateTime.UtcNow,
                         DependencyTopicNoticesAtStart =
-                            topics.Select(_ => new NoticeThatTopicWasAffected { Topic = new AffectedTopic(_.Name), Status = TopicStatus.WasAffected, AffectsCompletedDateTimeUtc = DateTime.UtcNow.Subtract(TimeSpan.FromHours(1)) }).ToArray()
+                            topics.Select(_ => new TopicStatusReport { Topic = new AffectedTopic(_.Name), Status = TopicStatus.WasAffected, AffectsCompletedDateTimeUtc = DateTime.UtcNow.Subtract(TimeSpan.FromHours(1)) }).ToArray()
                     });
 
-            seededNotices.Add(notCertified, new NoticeThatTopicWasAffected { Topic = notCertified, Status = TopicStatus.BeingAffected });
+            seededNotices.Add(notCertified, new TopicStatusReport { Topic = notCertified, Status = TopicStatus.BeingAffected });
 
             var message = new AbortIfNoTopicsAffectedAndShareResultsMessage
             {

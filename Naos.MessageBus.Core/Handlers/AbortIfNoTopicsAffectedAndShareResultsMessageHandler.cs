@@ -17,12 +17,12 @@ namespace Naos.MessageBus.Core
     /// <summary>
     /// No implementation handler to handle NullMessages.
     /// </summary>
-    public class AbortIfNoTopicsAffectedAndShareResultsMessageHandler : IHandleMessages<AbortIfNoTopicsAffectedAndShareResultsMessage>, IShareDependenciesNoticeThatTopicWasAffected
+    public class AbortIfNoTopicsAffectedAndShareResultsMessageHandler : IHandleMessages<AbortIfNoTopicsAffectedAndShareResultsMessage>, IShareDependentTopicStatusReports
     {
         /// <summary>
         /// Gets or sets the notices as they were evaluated with processing check.
         /// </summary>
-        public NoticeThatTopicWasAffected[] DependenciesNoticeThatTopicWasAffected { get; set; }
+        public TopicStatusReport[] DependentTopicStatusReports { get; set; }
 
         /// <inheritdoc />
         public async Task HandleAsync(AbortIfNoTopicsAffectedAndShareResultsMessage message)
@@ -58,22 +58,29 @@ namespace Naos.MessageBus.Core
             if (message.SimultaneousRunsStrategy == SimultaneousRunsStrategy.AbortSubsequentRunsWhenOneIsRunning)
             {
                 // only do this check if we need to possibly abort the run
-                var lastNoticeOfMyImpactAll = await tracker.GetLatestNoticeThatTopicWasAffectedAsync(message.Topic);
+                var lastNoticeOfMyImpactAll = await tracker.GetLatestTopicStatusReportAsync(message.Topic);
                 if (lastNoticeOfMyImpactAll?.Status == TopicStatus.BeingAffected)
                 {
                     throw new AbortParcelDeliveryException($"Topic '{message.Topic}' is already being affected.");
                 }
             }
 
-            var lastNoticeOfMyImpact = await tracker.GetLatestNoticeThatTopicWasAffectedAsync(message.Topic, TopicStatus.WasAffected);
+            if (message.DependencyTopics == null || message.DependencyTopics.Count == 0)
+            {
+                // no reason to do anythign else, once we've concluded we don't need to abort for another run
+                //    because there are no dependant topics to get data for, check, or share down...
+                return;
+            }
 
-            var lastRunDependencyNotices = lastNoticeOfMyImpact?.DependencyTopicNoticesAtStart ?? new NoticeThatTopicWasAffected[0];
+            var lastNoticeOfMyImpact = await tracker.GetLatestTopicStatusReportAsync(message.Topic, TopicStatus.WasAffected);
+
+            var lastRunDependencyNotices = lastNoticeOfMyImpact?.DependencyTopicNoticesAtStart ?? new TopicStatusReport[0];
 
             var dependencyTopics = message.DependencyTopics ?? new List<DependencyTopic>();
             var currentDependencyNotices = dependencyTopics.Select(
                 dependencyTopic =>
                     {
-                        var latestNoticeTask = tracker.GetLatestNoticeThatTopicWasAffectedAsync(dependencyTopic);
+                        var latestNoticeTask = tracker.GetLatestTopicStatusReportAsync(dependencyTopic);
                         latestNoticeTask.Wait();
                         var latest = latestNoticeTask.Result;
                         return latest;
@@ -111,7 +118,7 @@ namespace Naos.MessageBus.Core
             }
             else
             {
-                this.DependenciesNoticeThatTopicWasAffected = currentDependencyNotices; // share the dependency notices to store in future notices...
+                this.DependentTopicStatusReports = currentDependencyNotices; // share the dependency notices to store in future notices...
             }
 
             /* no-op */
@@ -124,7 +131,7 @@ namespace Naos.MessageBus.Core
         /// <param name="currentNotice">Current notice.</param>
         /// <param name="previousNotice">Previous notice.</param>
         /// <returns>True if current notice is more recent, otherwise false.</returns>
-        private static bool EvaluateNoticeRecency(NoticeThatTopicWasAffected currentNotice, NoticeThatTopicWasAffected previousNotice)
+        private static bool EvaluateNoticeRecency(TopicStatusReport currentNotice, TopicStatusReport previousNotice)
         {
             // if we don't have a current notice then return NOT recent
             if (currentNotice == null)

@@ -27,6 +27,6 @@ namespace Naos.MessageBus.Domain
         /// <param name="topic">Topic to get the latest notice for.</param>
         /// <param name="statusFilter">Status to filter results to.</param>
         /// <returns>Latest notices for the provided topic.</returns>
-        Task<NoticeThatTopicWasAffected> GetLatestNoticeThatTopicWasAffectedAsync(ITopic topic, TopicStatus statusFilter = TopicStatus.None);
+        Task<TopicStatusReport> GetLatestTopicStatusReportAsync(ITopic topic, TopicStatus statusFilter = TopicStatus.None);
     }
 }

@@ -76,7 +76,7 @@ namespace Naos.MessageBus.Persistence
                 new EnvelopeDeliveryRejected
                     {
                         PayloadJson =
-                            new PayloadEnvelopeDeliveryRejected(command.TrackingCode, ParcelStatus.Rejected, command.Exception).ToJson()
+                            new PayloadEnvelopeDeliveryRejected(command.TrackingCode, ParcelStatus.Rejected, command.ExceptionMessage, command.ExceptionJson).ToJson()
                     });
         }
 
@@ -94,7 +94,7 @@ namespace Naos.MessageBus.Persistence
                     new ParcelDelivered { PayloadJson = new PayloadParcelDelivered(command.TrackingCode.ParcelId, ParcelStatus.Delivered).ToJson() });
             }
 
-            var deliveredEnvelope = command.PreparedEnvelope;
+            var deliveredEnvelope = command.DeliveredEnvelope;
 
             var beingAffected = this.typeComparer.Equals(deliveredEnvelope.MessageType, typeof(TopicBeingAffectedMessage).ToTypeDescription());
             if (beingAffected)

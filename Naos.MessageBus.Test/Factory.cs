@@ -65,14 +65,14 @@ namespace Naos.MessageBus.Test
             return () => ret;
         }
 
-        public static IGetTrackingReports GetSeededTrackerForGetLatestNoticeAsync(Dictionary<ITopic, NoticeThatTopicWasAffected> data)
+        public static IGetTrackingReports GetSeededTrackerForGetLatestNoticeAsync(Dictionary<ITopic, TopicStatusReport> data)
         {
             var tracker = A.Fake<IGetTrackingReports>();
 
             foreach (var item in data)
             {
-                A.CallTo(() => tracker.GetLatestNoticeThatTopicWasAffectedAsync(item.Key, TopicStatus.None)).Returns(Task.FromResult(item.Value));
-                A.CallTo(() => tracker.GetLatestNoticeThatTopicWasAffectedAsync(item.Key, TopicStatus.WasAffected)).Returns(Task.FromResult(item.Value));
+                A.CallTo(() => tracker.GetLatestTopicStatusReportAsync(item.Key, TopicStatus.None)).Returns(Task.FromResult(item.Value));
+                A.CallTo(() => tracker.GetLatestTopicStatusReportAsync(item.Key, TopicStatus.WasAffected)).Returns(Task.FromResult(item.Value));
             }
 
             return tracker;

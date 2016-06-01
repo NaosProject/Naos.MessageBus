@@ -29,6 +29,11 @@ namespace Naos.MessageBus.Domain
         /// <summary>
         /// None state, null object of the enum.
         /// </summary>
-        None
+        None,
+
+        /// <summary>
+        /// Failed state, an attempted run on affecting data could not complete.
+        /// </summary>
+        Failed
     }
 }

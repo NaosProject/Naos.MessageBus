@@ -32,7 +32,7 @@ namespace Naos.MessageBus.Persistence
             get
             {
                 var trackingCodeSet = Validate.That<Reject>(cmd => cmd.TrackingCode != null).WithErrorMessage("TrackingCode must be specified.");
-                var exceptionIsSet = Validate.That<Reject>(cmd => cmd.Exception != null).WithErrorMessage("Exception must be specified.");
+                var exceptionIsSet = Validate.That<Reject>(cmd => cmd.ExceptionMessage != null).WithErrorMessage("Exception message must be specified.");
 
                 return new ValidationPlan<Reject> { trackingCodeSet, exceptionIsSet };
             }
@@ -44,8 +44,13 @@ namespace Naos.MessageBus.Persistence
         public TrackingCode TrackingCode { get; set; }
 
         /// <summary>
-        /// Gets or sets the exception of the rejection.
+        /// Gets or sets the message of the exception.
         /// </summary>
-        public Exception Exception { get; set; }
+        public string ExceptionMessage { get; set; }
+
+        /// <summary>
+        /// Gets or sets the exception serialized as JSON (not guaranteed that is can round trip).
+        /// </summary>
+        public string ExceptionJson { get; set; }
     }
 }

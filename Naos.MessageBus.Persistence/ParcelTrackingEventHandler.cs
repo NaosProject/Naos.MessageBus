@@ -122,9 +122,16 @@ namespace Naos.MessageBus.Persistence
                         using (var db = new TrackedShipmentDbContext(this.readModelPersistenceConnectionConfiguration.ToSqlServerConnectionString()))
                         {
                             // any failure will stop the rest of the parcel
-                            var entry = db.Shipments.Single(_ => _.ParcelId == @event.AggregateId);
-                            entry.Status = @event.ExtractPayload().NewStatus;
-                            entry.LastUpdatedUtc = DateTime.UtcNow;
+                            var shipmentEntry = db.Shipments.Single(_ => _.ParcelId == @event.AggregateId);
+                            shipmentEntry.Status = @event.ExtractPayload().NewStatus;
+                            shipmentEntry.LastUpdatedUtc = DateTime.UtcNow;
+
+                            var noticeEntry = db.Notices.SingleOrDefault(_ => _.ParcelId == @event.AggregateId);
+                            if (noticeEntry != null)
+                            {
+                                noticeEntry.Status = TopicStatus.Failed;
+                            }
+
                             db.SaveChanges();
                         }
                     });

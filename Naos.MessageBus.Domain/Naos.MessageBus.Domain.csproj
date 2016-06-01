@@ -34,12 +34,12 @@
     <DocumentationFile>bin\Release\Naos.MessageBus.Domain.XML</DocumentationFile>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Naos.Cron, Version=1.0.13.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Naos.Cron.1.0.13\lib\net45\Naos.Cron.dll</HintPath>
+    <Reference Include="Naos.Cron, Version=1.0.14.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Naos.Cron.1.0.14\lib\net45\Naos.Cron.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="Naos.Diagnostics.Domain, Version=1.0.5.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Naos.Diagnostics.Domain.1.0.5\lib\net45\Naos.Diagnostics.Domain.dll</HintPath>
+    <Reference Include="Naos.Diagnostics.Domain, Version=1.0.6.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Naos.Diagnostics.Domain.1.0.6\lib\net45\Naos.Diagnostics.Domain.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="Newtonsoft.Json, Version=8.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
@@ -57,6 +57,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include=".Spritely.Recipes\CamelCaseNamesStrictConstructorContractResolver\CamelCaseNamesStrictConstructorContractResolver.cs" />
+    <Compile Include=".Spritely.Recipes\CamelStrictConstructorContractResolver\CamelStrictConstructorContractResolver.cs" />
     <Compile Include=".Spritely.Recipes\Functional\Functional.cs" />
     <Compile Include=".Spritely.Recipes\InheritedTypeJsonConverter\InheritedTypeJsonConverter.cs" />
     <Compile Include=".Spritely.Recipes\JsonConfiguration\JsonConfiguration.cs" />
@@ -66,13 +67,13 @@
     <Compile Include="IRouteUnaddressedMail.cs" />
     <Compile Include="Messages\ThrowsExceptionMessage.cs" />
     <Compile Include="PostOfficeExtensions.cs" />
-    <Compile Include="Sharing\IShareNoticeAffectedItems.cs" />
+    <Compile Include="Sharing\IShareAffectedItems.cs" />
     <Compile Include="Tracking\SimultaneousRunsStrategy.cs" />
     <Compile Include="Tracking\ITopic.cs" />
     <Compile Include="Tracking\TopicCheckStrategy.cs" />
-    <Compile Include="Sharing\IShareDependenciesNoticeThatTopicWasAffected.cs" />
+    <Compile Include="Sharing\IShareDependentTopicStatusReports.cs" />
     <Compile Include="Messages\TopicBeingAffectedMessage.cs" />
-    <Compile Include="Tracking\NoticeThatTopicWasAffected.cs" />
+    <Compile Include="Tracking\TopicStatusReport.cs" />
     <Compile Include="Tracking\TopicStatus.cs" />
     <Compile Include="Messages\RecurringHeaderMessage.cs" />
     <Compile Include="IPersistenceConnectionConfiguration.cs" />

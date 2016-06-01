@@ -23,7 +23,7 @@ namespace Naos.MessageBus.Test
 
     public class TrackingSystemTests
     {
-        [Fact(Skip = "Debug test that writes to a real database.")]
+        [Fact(Skip = "This is for testing against a database.")]
         public async Task Do()
         {
             var messages = new List<LogEntry>();
@@ -70,7 +70,7 @@ namespace Naos.MessageBus.Test
                 parcel = trackingSends.SingleOrDefault()?.Parcel;
             }
 
-            var beingAffectedWasDelivered = false; // after this the latest notice shows the topic as being affected
+            var expectedTopicStatus = TopicStatus.Unknown;
             var seenRejection = false; // after this the parcel will always be in rejected state until aborted or delivered
 
             foreach (var envelope in parcel.Envelopes)
@@ -83,40 +83,43 @@ namespace Naos.MessageBus.Test
                 }
 
                 (await parcelTrackingSystem.GetTrackingReportAsync(new[] { trackingCode })).Single().Status.Should().Be(seenRejection ? ParcelStatus.Rejected : ParcelStatus.Unknown);
-                await ConfirmNoticeState(parcelTrackingSystem, topic, beingAffectedWasDelivered);
+                await ConfirmNoticeState(parcelTrackingSystem, topic, expectedTopicStatus);
 
                 await parcelTrackingSystem.UpdateAttemptingAsync(trackingCode, new HarnessDetails());
                 (await parcelTrackingSystem.GetTrackingReportAsync(new[] { trackingCode })).Single().Status.Should().Be(seenRejection ? ParcelStatus.Rejected : ParcelStatus.Unknown);
-                await ConfirmNoticeState(parcelTrackingSystem, topic, beingAffectedWasDelivered);
+                await ConfirmNoticeState(parcelTrackingSystem, topic, expectedTopicStatus);
 
                 await parcelTrackingSystem.UpdateAbortedAsync(trackingCode, "Try another day");
                 (await parcelTrackingSystem.GetTrackingReportAsync(new[] { trackingCode })).Single().Status.Should().Be(ParcelStatus.Aborted);
-                await ConfirmNoticeState(parcelTrackingSystem, topic, beingAffectedWasDelivered);
+                await ConfirmNoticeState(parcelTrackingSystem, topic, expectedTopicStatus);
 
                 await parcelTrackingSystem.UpdateAttemptingAsync(trackingCode, new HarnessDetails());
                 (await parcelTrackingSystem.GetTrackingReportAsync(new[] { trackingCode })).Single().Status.Should().Be(ParcelStatus.Aborted);
-                await ConfirmNoticeState(parcelTrackingSystem, topic, beingAffectedWasDelivered);
+                await ConfirmNoticeState(parcelTrackingSystem, topic, expectedTopicStatus);
 
                 await parcelTrackingSystem.UpdateRejectedAsync(trackingCode, new NotImplementedException("Not here yet"));
                 (await parcelTrackingSystem.GetTrackingReportAsync(new[] { trackingCode })).Single().Status.Should().Be(ParcelStatus.Rejected);
-                await ConfirmNoticeState(parcelTrackingSystem, topic, beingAffectedWasDelivered);
+
+                // if we've already written a being affected notice then it will be marked as failed...
+                expectedTopicStatus = expectedTopicStatus == TopicStatus.BeingAffected ? TopicStatus.Failed : expectedTopicStatus;
+                await ConfirmNoticeState(parcelTrackingSystem, topic, expectedTopicStatus);
                 seenRejection = true;
 
                 await parcelTrackingSystem.UpdateAttemptingAsync(trackingCode, new HarnessDetails());
                 (await parcelTrackingSystem.GetTrackingReportAsync(new[] { trackingCode })).Single().Status.Should().Be(ParcelStatus.Rejected);
-                await ConfirmNoticeState(parcelTrackingSystem, topic, beingAffectedWasDelivered);
+                await ConfirmNoticeState(parcelTrackingSystem, topic, expectedTopicStatus);
 
                 await parcelTrackingSystem.UpdateDeliveredAsync(trackingCode, envelope);
                 if (envelope.MessageType == typeof(TopicBeingAffectedMessage).ToTypeDescription())
                 {
-                    beingAffectedWasDelivered = true;
+                    expectedTopicStatus = TopicStatus.BeingAffected;
                 }
 
                 // should be last message and will assert differently
                 if (envelope.MessageType != typeof(TopicWasAffectedMessage).ToTypeDescription())
                 {
                     (await parcelTrackingSystem.GetTrackingReportAsync(new[] { trackingCode })).Single().Status.Should().Be(ParcelStatus.Rejected);
-                    await ConfirmNoticeState(parcelTrackingSystem, topic, beingAffectedWasDelivered);
+                    await ConfirmNoticeState(parcelTrackingSystem, topic, expectedTopicStatus);
                 }
             }
 
@@ -124,9 +127,9 @@ namespace Naos.MessageBus.Test
                 .Status.Should()
                 .Be(ParcelStatus.Delivered);
 
-            (await parcelTrackingSystem.GetLatestNoticeThatTopicWasAffectedAsync(topic, TopicStatus.BeingAffected)).Should().BeNull();
-            (await parcelTrackingSystem.GetLatestNoticeThatTopicWasAffectedAsync(topic, TopicStatus.WasAffected)).Should().NotBeNull();
-            (await parcelTrackingSystem.GetLatestNoticeThatTopicWasAffectedAsync(topic)).Status.Should().Be(TopicStatus.WasAffected);
+            (await parcelTrackingSystem.GetLatestTopicStatusReportAsync(topic, TopicStatus.BeingAffected)).Should().BeNull();
+            (await parcelTrackingSystem.GetLatestTopicStatusReportAsync(topic, TopicStatus.WasAffected)).Should().NotBeNull();
+            (await parcelTrackingSystem.GetLatestTopicStatusReportAsync(topic)).Status.Should().Be(TopicStatus.WasAffected);
 
             messages.Count.Should().Be(0);
         }
@@ -134,19 +137,48 @@ namespace Naos.MessageBus.Test
         private static async Task ConfirmNoticeState(
             ParcelTrackingSystem parcelTrackingSystem,
             AffectedTopic affectedTopic,
-            bool beingAffectedWasDelivered)
+            TopicStatus expectedTopicStatus)
         {
-            if (beingAffectedWasDelivered)
+            (await parcelTrackingSystem.GetLatestTopicStatusReportAsync(affectedTopic)).Status.Should().Be(expectedTopicStatus);
+
+            var queryFilterResultIsNullMap = new Dictionary<TopicStatus, bool>();
+
+            switch (expectedTopicStatus)
             {
-                (await parcelTrackingSystem.GetLatestNoticeThatTopicWasAffectedAsync(affectedTopic, TopicStatus.BeingAffected)).Should().NotBeNull();
-                (await parcelTrackingSystem.GetLatestNoticeThatTopicWasAffectedAsync(affectedTopic, TopicStatus.WasAffected)).Should().BeNull();
-                (await parcelTrackingSystem.GetLatestNoticeThatTopicWasAffectedAsync(affectedTopic)).Status.Should().Be(TopicStatus.BeingAffected);
+                case TopicStatus.Unknown:
+                    queryFilterResultIsNullMap.Add(TopicStatus.BeingAffected, true);
+                    queryFilterResultIsNullMap.Add(TopicStatus.WasAffected, true);
+                    queryFilterResultIsNullMap.Add(TopicStatus.Failed, true);
+                    break;
+                case TopicStatus.BeingAffected:
+                    queryFilterResultIsNullMap.Add(TopicStatus.BeingAffected, false);
+                    queryFilterResultIsNullMap.Add(TopicStatus.WasAffected, true);
+                    queryFilterResultIsNullMap.Add(TopicStatus.Failed, true);
+                    break;
+                case TopicStatus.WasAffected:
+                    queryFilterResultIsNullMap.Add(TopicStatus.BeingAffected, true);
+                    queryFilterResultIsNullMap.Add(TopicStatus.WasAffected, false);
+                    queryFilterResultIsNullMap.Add(TopicStatus.Failed, true);
+                    break;
+                case TopicStatus.Failed:
+                    queryFilterResultIsNullMap.Add(TopicStatus.BeingAffected, true);
+                    queryFilterResultIsNullMap.Add(TopicStatus.WasAffected, true);
+                    queryFilterResultIsNullMap.Add(TopicStatus.Failed, false);
+                    break;
+                default:
+                    throw new NotSupportedException("Unsupported expectedTopicStatus: " + expectedTopicStatus);
             }
-            else
+
+            foreach (var queryFilterResultIsNull in queryFilterResultIsNullMap)
             {
-                (await parcelTrackingSystem.GetLatestNoticeThatTopicWasAffectedAsync(affectedTopic, TopicStatus.BeingAffected)).Should().BeNull();
-                (await parcelTrackingSystem.GetLatestNoticeThatTopicWasAffectedAsync(affectedTopic, TopicStatus.WasAffected)).Should().BeNull();
-                (await parcelTrackingSystem.GetLatestNoticeThatTopicWasAffectedAsync(affectedTopic)).Status.Should().Be(TopicStatus.Unknown);
+                if (queryFilterResultIsNull.Value)
+                {
+                    (await parcelTrackingSystem.GetLatestTopicStatusReportAsync(affectedTopic, queryFilterResultIsNull.Key)).Should().BeNull();
+                }
+                else
+                {
+                    (await parcelTrackingSystem.GetLatestTopicStatusReportAsync(affectedTopic, queryFilterResultIsNull.Key)).Should().NotBeNull();
+                }
             }
         }
     }

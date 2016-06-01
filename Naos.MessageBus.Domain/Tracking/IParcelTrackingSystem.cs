@@ -47,9 +47,9 @@ namespace Naos.MessageBus.Domain
         /// Delivery was accepted by the harness.
         /// </summary>
         /// <param name="trackingCode">Tracking code of the parcel.</param>
-        /// <param name="preparedEnvelope">The message as it was given to the handler repackaged.</param>
+        /// <param name="deliveredEnvelope">The message as it was given to the handler repackaged.</param>
         /// <returns>Task for async.</returns>
-        Task UpdateDeliveredAsync(TrackingCode trackingCode, Envelope preparedEnvelope);
+        Task UpdateDeliveredAsync(TrackingCode trackingCode, Envelope deliveredEnvelope);
 
         /// <summary>
         /// Delivery was aborted by the handler.
@@ -73,7 +73,7 @@ namespace Naos.MessageBus.Domain
         }
 
         /// <inheritdoc />
-        public async Task UpdateDeliveredAsync(TrackingCode trackingCode, Envelope preparedEnvelope)
+        public async Task UpdateDeliveredAsync(TrackingCode trackingCode, Envelope deliveredEnvelope)
         {
             /* no-op */
             await Task.FromResult<object>(null);
@@ -114,9 +114,9 @@ namespace Naos.MessageBus.Domain
         }
 
         /// <inheritdoc />
-        public async Task<NoticeThatTopicWasAffected> GetLatestNoticeThatTopicWasAffectedAsync(ITopic topic, TopicStatus statusFilter = TopicStatus.None)
+        public async Task<TopicStatusReport> GetLatestTopicStatusReportAsync(ITopic topic, TopicStatus statusFilter = TopicStatus.None)
         {
-            return await Task.FromResult(null as NoticeThatTopicWasAffected);
+            return await Task.FromResult(null as TopicStatusReport);
         }
     }
 }

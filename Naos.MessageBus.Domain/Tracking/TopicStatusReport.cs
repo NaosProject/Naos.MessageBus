@@ -1,5 +1,5 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="NoticeThatTopicWasAffected.cs" company="Naos">
+// <copyright file="TopicStatusReport.cs" company="Naos">
 //   Copyright 2015 Naos
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
@@ -11,7 +11,7 @@ namespace Naos.MessageBus.Domain
     /// <summary>
     /// Model object to information about affects on topics.
     /// </summary>
-    public class NoticeThatTopicWasAffected
+    public class TopicStatusReport
     {
         /// <summary>
         /// Gets or sets the topic.
@@ -36,6 +36,6 @@ namespace Naos.MessageBus.Domain
         /// <summary>
         /// Gets or sets the notices (if any) that were dependencies on this notice being produced at start of run.
         /// </summary>
-        public NoticeThatTopicWasAffected[] DependencyTopicNoticesAtStart { get; set; }
+        public TopicStatusReport[] DependencyTopicNoticesAtStart { get; set; }
     }
 }

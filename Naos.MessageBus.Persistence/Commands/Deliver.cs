@@ -43,6 +43,6 @@ namespace Naos.MessageBus.Persistence
         /// <summary>
         /// Gets or sets the message as it was given to the handler repackaged.
         /// </summary>
-        public Envelope PreparedEnvelope { get; set; }
+        public Envelope DeliveredEnvelope { get; set; }
     }
 }

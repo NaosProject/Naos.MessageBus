@@ -119,18 +119,18 @@ namespace Naos.MessageBus.Persistence
         {
             var shipment = await this.FetchShipmentAsync(trackingCode);
 
-            var command = new Reject { TrackingCode = trackingCode, Exception = exception };
+            var command = new Reject { TrackingCode = trackingCode, ExceptionMessage = exception.Message, ExceptionJson = Serializer.Serialize(exception) };
             shipment.EnactCommand(command);
 
             await this.SaveShipmentAsync(shipment);
         }
 
         /// <inheritdoc />
-        public async Task UpdateDeliveredAsync(TrackingCode trackingCode, Envelope preparedEnvelope)
+        public async Task UpdateDeliveredAsync(TrackingCode trackingCode, Envelope deliveredEnvelope)
         {
             var shipment = await this.FetchShipmentAsync(trackingCode);
 
-            var command = new Deliver { TrackingCode = trackingCode, PreparedEnvelope = preparedEnvelope };
+            var command = new Deliver { TrackingCode = trackingCode, DeliveredEnvelope = deliveredEnvelope };
             shipment.EnactCommand(command);
 
             await this.SaveShipmentAsync(shipment);
@@ -141,7 +141,7 @@ namespace Naos.MessageBus.Persistence
         {
             var shipment = await this.FetchShipmentAsync(trackingCode);
 
-            var command = new Abort { TrackingCode = trackingCode };
+            var command = new Abort { TrackingCode = trackingCode, Reason = reason };
             shipment.EnactCommand(command);
 
             await this.SaveShipmentAsync(shipment);
@@ -178,7 +178,7 @@ namespace Naos.MessageBus.Persistence
         }
 
         /// <inheritdoc />
-        public async Task<NoticeThatTopicWasAffected> GetLatestNoticeThatTopicWasAffectedAsync(ITopic topic, TopicStatus statusFilter = TopicStatus.None)
+        public async Task<TopicStatusReport> GetLatestTopicStatusReportAsync(ITopic topic, TopicStatus statusFilter = TopicStatus.None)
         {
             if (statusFilter == TopicStatus.Unknown)
             {
@@ -201,18 +201,23 @@ namespace Naos.MessageBus.Persistence
                             {
                                 if (statusFilter != TopicStatus.None)
                                 {
-                                    return Task.FromResult<NoticeThatTopicWasAffected>(null);
+                                    return Task.FromResult<TopicStatusReport>(null);
                                 }
                                 else
                                 {
-                                    return Task.FromResult(new NoticeThatTopicWasAffected { AffectedItems = new AffectedItem[0], DependencyTopicNoticesAtStart = new NoticeThatTopicWasAffected[0] });
+                                    return
+                                        Task.FromResult(
+                                            new TopicStatusReport
+                                                {
+                                                    AffectedItems = new AffectedItem[0],
+                                                    DependencyTopicNoticesAtStart = new TopicStatusReport[0]
+                                                });
                                 }
                             }
                             else
                             {
                                 AffectedItem[] items;
-                                NoticeThatTopicWasAffected[] dependencyNotices;
-                                TopicStatus status;
+                                TopicStatusReport[] dependencyNotices;
 
                                 if (mostRecentNotice.TopicWasAffectedEnvelopeJson == null)
                                 {
@@ -221,14 +226,12 @@ namespace Naos.MessageBus.Persistence
                                         var beingAffectedEnvelope = Serializer.Deserialize<Envelope>(mostRecentNotice.TopicBeingAffectedEnvelopeJson);
                                         var beingAffectedMessage = Serializer.Deserialize<TopicBeingAffectedMessage>(beingAffectedEnvelope.MessageAsJson);
                                         items = beingAffectedMessage.AffectedItems;
-                                        dependencyNotices = beingAffectedMessage.DependenciesNoticeThatTopicWasAffected;
-                                        status = TopicStatus.BeingAffected;
+                                        dependencyNotices = beingAffectedMessage.DependentTopicStatusReports;
                                     }
                                     else
                                     {
                                         items = new AffectedItem[0];
-                                        dependencyNotices = new NoticeThatTopicWasAffected[0];
-                                        status = TopicStatus.Unknown;
+                                        dependencyNotices = new TopicStatusReport[0];
                                     }
                                 }
                                 else
@@ -236,19 +239,18 @@ namespace Naos.MessageBus.Persistence
                                     var wasAffectedEnvelope = Serializer.Deserialize<Envelope>(mostRecentNotice.TopicWasAffectedEnvelopeJson);
                                     var wasAffectedMessage = Serializer.Deserialize<TopicWasAffectedMessage>(wasAffectedEnvelope.MessageAsJson);
                                     items = wasAffectedMessage.AffectedItems;
-                                    dependencyNotices = wasAffectedMessage.DependenciesNoticeThatTopicWasAffected;
-                                    status = TopicStatus.WasAffected;
+                                    dependencyNotices = wasAffectedMessage.DependentTopicStatusReports;
                                 }
 
                                 return
                                     Task.FromResult(
-                                        new NoticeThatTopicWasAffected
+                                        new TopicStatusReport
                                             {
                                                 Topic = new AffectedTopic(topic.Name),
                                                 AffectsCompletedDateTimeUtc = mostRecentNotice.AffectsCompletedDateTimeUtc,
                                                 AffectedItems = items ?? new AffectedItem[0],
-                                                Status = status,
-                                                DependencyTopicNoticesAtStart = dependencyNotices ?? new NoticeThatTopicWasAffected[0]
+                                                Status = mostRecentNotice.Status,
+                                                DependencyTopicNoticesAtStart = dependencyNotices ?? new TopicStatusReport[0]
                                             });
                             }
                         }

@@ -26,9 +26,14 @@ namespace Naos.MessageBus.Persistence
         public IChannel Address { get; internal set; }
 
         /// <summary>
-        /// Gets the exception.
+        /// Gets or sets the message of the exception.
         /// </summary>
-        public Exception Exception { get; internal set; }
+        public string ExceptionMessage { get; set; }
+
+        /// <summary>
+        /// Gets or sets the exception serialized as JSON (not guaranteed that is can round trip).
+        /// </summary>
+        public string ExceptionJson { get; set; }
 
         /// <summary>
         /// Gets the status.

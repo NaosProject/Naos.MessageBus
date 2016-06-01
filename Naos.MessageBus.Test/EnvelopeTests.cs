@@ -55,7 +55,7 @@ namespace Naos.MessageBus.Test
     ""name"": ""TopicBeingAffectedMessage"",
     ""assemblyQualifiedName"": ""Naos.MessageBus.Domain.TopicBeingAffectedMessage, Naos.MessageBus.Domain, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null""
   },
-  ""messageAsJson"": ""{\r\n  \""description\"": \""Topic Being Affected Notice for 1A9D14E8-8219-40B9-BF50-6EF93801C184\"",\r\n  \""dependenciesNoticeThatTopicWasAffected\"": null,\r\n  \""affectedItems\"": null,\r\n  \""topic\"": {\r\n    \""name\"": \""1A9D14E8-8219-40B9-BF50-6EF93801C184\""\r\n  }\r\n}"",
+  ""messageAsJson"": ""{\r\n  \""description\"": \""Topic Being Affected Notice for 1A9D14E8-8219-40B9-BF50-6EF93801C184\"",\r\n  \""dependenciesTopicStatusReport\"": null,\r\n  \""affectedItems\"": null,\r\n  \""topic\"": {\r\n    \""name\"": \""1A9D14E8-8219-40B9-BF50-6EF93801C184\""\r\n  }\r\n}"",
   ""address"": null
 }";
 

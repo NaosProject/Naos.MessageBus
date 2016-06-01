@@ -110,9 +110,9 @@ namespace Naos.MessageBus.Core
                 Action attemptingCallback =
                     () => this.parcelTrackingSystem.UpdateAttemptingAsync(trackingCode, harnessDetails).Wait();
 
-                Action<Envelope> deliveredCallback = preparedEnvelope => this.parcelTrackingSystem.UpdateDeliveredAsync(trackingCode, preparedEnvelope).Wait();
+                Action<Envelope> deliveredCallback = deliveredEnvelope => this.parcelTrackingSystem.UpdateDeliveredAsync(trackingCode, deliveredEnvelope).Wait();
 
-                this.InternalDispatch(parcel, attemptingCallback, deliveredCallback);
+                this.InternalDispatch(parcel, address, attemptingCallback, deliveredCallback);
             }
             catch (RecurringParcelEncounteredException recurringParcelEncounteredException)
             {
@@ -144,7 +144,7 @@ namespace Naos.MessageBus.Core
             }
         }
 
-        private void InternalDispatch(Parcel parcel, Action attemptingCallback, Action<Envelope> deliveredCallback)
+        private void InternalDispatch(Parcel parcel, IChannel address, Action attemptingCallback, Action<Envelope> deliveredCallback)
         {
             attemptingCallback();
 
@@ -156,7 +156,7 @@ namespace Naos.MessageBus.Core
 
             // WARNING: this method change the state of the objects passed in!!!
             this.PrepareMessage(messageToHandle, parcel.SharedInterfaceStates);
-            var preparedEnvelope = messageToHandle.ToAddressedMessage().ToEnvelope();
+            var deliveredEnvelope = messageToHandle.ToAddressedMessage(address).ToEnvelope();
 
             var messageType = messageToHandle.GetType();
             var handlerType = typeof(IHandleMessages<>).MakeGenericType(messageType);
@@ -235,7 +235,7 @@ namespace Naos.MessageBus.Core
             }
 
             // this might one day move above the resend but its safer to not progress in the sequence in case there was a send failure...
-            deliveredCallback(preparedEnvelope);
+            deliveredCallback(deliveredEnvelope);
         }
 
         private void SendRemainingEnvelopes(Guid parcelId, List<Envelope> envelopes, IList<SharedInterfaceState> existingSharedInterfaceStates, object handler = null)

@@ -6,8 +6,6 @@
 
 namespace Naos.MessageBus.Persistence
 {
-    using System;
-
     using Microsoft.Its.Domain;
 
     using Naos.MessageBus.Domain;
@@ -28,7 +26,8 @@ namespace Naos.MessageBus.Persistence
             /// <inheritdoc />
             public override void Update(Shipment aggregate)
             {
-                aggregate.Tracking[this.ExtractPayload().TrackingCode].Exception = this.ExtractPayload().Exception;
+                aggregate.Tracking[this.ExtractPayload().TrackingCode].ExceptionMessage = this.ExtractPayload().ExceptionMessage;
+                aggregate.Tracking[this.ExtractPayload().TrackingCode].ExceptionJson = this.ExtractPayload().ExceptionJson;
                 aggregate.Tracking[this.ExtractPayload().TrackingCode].Status = this.ExtractPayload().NewStatus;
             }
         }
@@ -52,12 +51,14 @@ namespace Naos.MessageBus.Persistence
         /// </summary>
         /// <param name="trackingCode">Tracking code of the envelope that was rejected.</param>
         /// <param name="newStatus">New status of the envelope.</param>
-        /// <param name="exception">Exception of the delivery.</param>
-        public PayloadEnvelopeDeliveryRejected(TrackingCode trackingCode, ParcelStatus newStatus, Exception exception)
+        /// <param name="exceptionMessage">Message of the exception.</param>
+        /// <param name="exceptionJson">Exception serialized as JSON (not guaranteed that is can round trip).</param>
+        public PayloadEnvelopeDeliveryRejected(TrackingCode trackingCode, ParcelStatus newStatus, string exceptionMessage, string exceptionJson)
         {
             this.TrackingCode = trackingCode;
-            this.Exception = exception;
             this.NewStatus = newStatus;
+            this.ExceptionMessage = exceptionMessage;
+            this.ExceptionJson = exceptionJson;
         }
 
         /// <summary>
@@ -71,8 +72,13 @@ namespace Naos.MessageBus.Persistence
         public ParcelStatus NewStatus { get; set; }
 
         /// <summary>
-        /// Gets or sets the exception of the delivery.
+        /// Gets or sets the message of the exception.
         /// </summary>
-        public Exception Exception { get; set; }
+        public string ExceptionMessage { get; set; }
+
+        /// <summary>
+        /// Gets or sets the exception serialized as JSON (not guaranteed that is can round trip).
+        /// </summary>
+        public string ExceptionJson { get; set; }
     }
 }
