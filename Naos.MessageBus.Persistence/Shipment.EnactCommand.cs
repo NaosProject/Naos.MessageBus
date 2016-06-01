@@ -94,7 +94,7 @@ namespace Naos.MessageBus.Persistence
                     new ParcelDelivered { PayloadJson = new PayloadParcelDelivered(command.TrackingCode.ParcelId, ParcelStatus.Delivered).ToJson() });
             }
 
-            var deliveredEnvelope = this.Tracking[command.TrackingCode].Envelope;
+            var deliveredEnvelope = command.PreparedEnvelope;
 
             var beingAffected = this.typeComparer.Equals(deliveredEnvelope.MessageType, typeof(TopicBeingAffectedMessage).ToTypeDescription());
             if (beingAffected)

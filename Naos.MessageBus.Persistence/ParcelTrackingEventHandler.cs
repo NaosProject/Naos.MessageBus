@@ -155,24 +155,41 @@ namespace Naos.MessageBus.Persistence
                         using (var db = new TrackedShipmentDbContext(this.readModelPersistenceConnectionConfiguration.ToSqlServerConnectionString()))
                         {
                             var existingEntries = db.Notices.Where(_ => _.ParcelId == @event.ParcelId).ToList();
-                            if (existingEntries.Count != 0)
+                            if (existingEntries.Count > 1)
                             {
                                 var ids = existingEntries.Select(_ => _.Id).ToList();
                                 throw new ArgumentException(
-                                    "Found existing entries for the specified parcel id while trying to write a record about a topic being affected; IDs: " + string.Join(",", ids));
+                                    "Found existing entries for the specified parcel id while trying to write a record about a topic being affected; IDs: "
+                                    + string.Join(",", ids));
+                            }
+                            else if (existingEntries.Count == 1)
+                            {
+                                var entry = existingEntries.Single();
+                                entry.ImpactingTopicName = @event.ExtractPayload().Topic.Name;
+                                entry.Status = TopicStatus.BeingAffected;
+                                entry.ParcelId = @event.ExtractPayload().TrackingCode.ParcelId;
+                                entry.TopicBeingAffectedEnvelopeJson = Serializer.Serialize(@event.ExtractPayload().Envelope);
+                                entry.LastUpdatedUtc = DateTime.UtcNow;
+                            }
+                            else if (existingEntries.Count == 0)
+                            {
+                                var entry = new NoticeForDatabase
+                                                {
+                                                    Id = Guid.NewGuid(),
+                                                    ImpactingTopicName = @event.ExtractPayload().Topic.Name,
+                                                    Status = TopicStatus.BeingAffected,
+                                                    ParcelId = @event.ExtractPayload().TrackingCode.ParcelId,
+                                                    TopicBeingAffectedEnvelopeJson = Serializer.Serialize(@event.ExtractPayload().Envelope),
+                                                    LastUpdatedUtc = DateTime.UtcNow
+                                                };
+
+                                db.Notices.Add(entry);
+                            }
+                            else
+                            {
+                                throw new NotSupportedException("Should not have reached this area, existing entry count should be greater than 1, 1, or 0...");
                             }
 
-                            var entry = new NoticeForDatabase
-                                            {
-                                                Id = Guid.NewGuid(),
-                                                ImpactingTopicName = @event.ExtractPayload().Topic.Name,
-                                                Status = TopicStatus.BeingAffected,
-                                                ParcelId = @event.ExtractPayload().TrackingCode.ParcelId,
-                                                TopicBeingAffectedEnvelopeJson = Serializer.Serialize(@event.ExtractPayload().Envelope),
-                                                LastUpdatedUtc = DateTime.UtcNow
-                                            };
-
-                            db.Notices.Add(entry);
                             db.SaveChanges();
                         }
                     });

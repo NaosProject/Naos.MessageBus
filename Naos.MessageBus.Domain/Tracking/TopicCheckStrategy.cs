@@ -17,6 +17,11 @@ namespace Naos.MessageBus.Domain
         Unspecified,
 
         /// <summary>
+        /// Always allow to proceed independent of any topic updates.
+        /// </summary>
+        DoNotRequireAnything,
+
+        /// <summary>
         /// Allow the sequence to continue if any dependency topic is recent.
         /// </summary>
         AllowIfAnyTopicCheckYieldsRecent,

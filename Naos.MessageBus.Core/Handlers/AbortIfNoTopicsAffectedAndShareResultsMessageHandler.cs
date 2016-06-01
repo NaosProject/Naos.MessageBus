@@ -55,7 +55,18 @@ namespace Naos.MessageBus.Core
                 throw new ArgumentException("Message.ImpactingTopic cannot be null.");
             }
 
+            if (message.SimultaneousRunsStrategy == SimultaneousRunsStrategy.AbortSubsequentRunsWhenOneIsRunning)
+            {
+                // only do this check if we need to possibly abort the run
+                var lastNoticeOfMyImpactAll = await tracker.GetLatestNoticeThatTopicWasAffectedAsync(message.Topic);
+                if (lastNoticeOfMyImpactAll?.Status == TopicStatus.BeingAffected)
+                {
+                    throw new AbortParcelDeliveryException($"Topic '{message.Topic}' is already being affected.");
+                }
+            }
+
             var lastNoticeOfMyImpact = await tracker.GetLatestNoticeThatTopicWasAffectedAsync(message.Topic, TopicStatus.WasAffected);
+
             var lastRunDependencyNotices = lastNoticeOfMyImpact?.DependencyTopicNoticesAtStart ?? new NoticeThatTopicWasAffected[0];
 
             var dependencyTopics = message.DependencyTopics ?? new List<DependencyTopic>();
@@ -81,6 +92,9 @@ namespace Naos.MessageBus.Core
             bool dataIsRecent;
             switch (message.TopicCheckStrategy)
             {
+                case TopicCheckStrategy.DoNotRequireAnything:
+                    dataIsRecent = true;
+                    break;
                 case TopicCheckStrategy.RequireAllTopicChecksYieldRecent:
                     dataIsRecent = topicsToCheckRecentResults.Values.All(_ => _);
                     break;
@@ -89,11 +103,6 @@ namespace Naos.MessageBus.Core
                     break;
                 default:
                     throw new NotSupportedException("Unsupported TopicCheckStrategy: " + message.TopicCheckStrategy);
-            }
-
-            if (message.SimultaneousRunsStrategy == SimultaneousRunsStrategy.AllowSimultaneousRuns)
-            {
-                dataIsRecent = true;
             }
 
             if (!dataIsRecent)

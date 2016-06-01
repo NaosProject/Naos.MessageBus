@@ -126,11 +126,11 @@ namespace Naos.MessageBus.Persistence
         }
 
         /// <inheritdoc />
-        public async Task UpdateDeliveredAsync(TrackingCode trackingCode)
+        public async Task UpdateDeliveredAsync(TrackingCode trackingCode, Envelope preparedEnvelope)
         {
             var shipment = await this.FetchShipmentAsync(trackingCode);
 
-            var command = new Deliver { TrackingCode = trackingCode };
+            var command = new Deliver { TrackingCode = trackingCode, PreparedEnvelope = preparedEnvelope };
             shipment.EnactCommand(command);
 
             await this.SaveShipmentAsync(shipment);

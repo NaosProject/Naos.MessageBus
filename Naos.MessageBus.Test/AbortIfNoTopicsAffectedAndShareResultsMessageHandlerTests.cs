@@ -86,6 +86,7 @@ namespace Naos.MessageBus.Test
                 {
                     Topic = impactingTopic,
                     AffectsCompletedDateTimeUtc = DateTime.UtcNow,
+                    Status = TopicStatus.BeingAffected,
                     DependencyTopicNoticesAtStart =
                             topics.Select(
                                 _ =>
@@ -112,7 +113,7 @@ namespace Naos.MessageBus.Test
             Func<Task> testCode = () => handler.HandleAsync(message, tracker);
 
             // act & assert
-            testCode.ShouldThrow<AbortParcelDeliveryException>().WithMessage("No new data for topics; " + string.Join(",", topics));
+            testCode.ShouldThrow<AbortParcelDeliveryException>().WithMessage("Topic 'mine' is already being affected.");
         }
 
         [Fact]
@@ -157,6 +158,54 @@ namespace Naos.MessageBus.Test
 
             // act & assert
             testCode.ShouldThrow<AbortParcelDeliveryException>().WithMessage("No new data for topics; " + string.Join(",", topics));
+        }
+
+        [Fact]
+        public void CurrentNoticeDateLessThanPreviousNoticeDateButAlwaysCheckStrategy_DoesNotAbort()
+        {
+            // arrange
+            var impactingTopic = new AffectedTopic("mine");
+            var topics = Some.Dummies<DependencyTopic>().ToList();
+
+            var seededNotices = topics.Cast<ITopic>()
+                .ToDictionary(
+                    key => key,
+                    val => new NoticeThatTopicWasAffected { Topic = new AffectedTopic(val.Name), Status = TopicStatus.WasAffected, AffectsCompletedDateTimeUtc = DateTime.UtcNow.Subtract(TimeSpan.FromHours(1)) });
+
+            seededNotices.Add(
+                impactingTopic,
+                new NoticeThatTopicWasAffected
+                {
+                    Topic = impactingTopic,
+                    AffectsCompletedDateTimeUtc = DateTime.UtcNow,
+                    DependencyTopicNoticesAtStart =
+                            topics.Select(
+                                _ =>
+                                new NoticeThatTopicWasAffected
+                                {
+                                    Topic = new AffectedTopic(_.Name),
+                                    Status = TopicStatus.WasAffected,
+                                    AffectsCompletedDateTimeUtc = DateTime.UtcNow.Add(TimeSpan.FromHours(1))
+                                }).ToArray()
+                });
+
+            var message = new AbortIfNoTopicsAffectedAndShareResultsMessage
+            {
+                Description = A.Dummy<string>(),
+                Topic = impactingTopic,
+                DependencyTopics = topics.ToArray(),
+                TopicCheckStrategy = TopicCheckStrategy.DoNotRequireAnything,
+                SimultaneousRunsStrategy = SimultaneousRunsStrategy.AbortSubsequentRunsWhenOneIsRunning
+            };
+
+            var tracker = Factory.GetSeededTrackerForGetLatestNoticeAsync(seededNotices);
+
+            var handler = new AbortIfNoTopicsAffectedAndShareResultsMessageHandler();
+
+            // act
+            handler.HandleAsync(message, tracker).Wait();
+
+            // assert - by virtue of arriving here this will have succeeded
         }
 
         [Fact]

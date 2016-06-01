@@ -107,11 +107,12 @@ namespace Naos.MessageBus.Core
                 var dynamicDetails = new HarnessDynamicDetails { AvailablePhysicalMemoryInGb = MachineDetails.GetAvailablePhysicalMemoryInGb() };
                 var harnessDetails = new HarnessDetails { StaticDetails = this.harnessStaticDetails, DynamicDetails = dynamicDetails };
 
-                this.parcelTrackingSystem.UpdateAttemptingAsync(trackingCode, harnessDetails).Wait();
+                Action attemptingCallback =
+                    () => this.parcelTrackingSystem.UpdateAttemptingAsync(trackingCode, harnessDetails).Wait();
 
-                this.InternalDispatch(parcel);
+                Action<Envelope> deliveredCallback = preparedEnvelope => this.parcelTrackingSystem.UpdateDeliveredAsync(trackingCode, preparedEnvelope).Wait();
 
-                this.parcelTrackingSystem.UpdateDeliveredAsync(trackingCode).Wait();
+                this.InternalDispatch(parcel, attemptingCallback, deliveredCallback);
             }
             catch (RecurringParcelEncounteredException recurringParcelEncounteredException)
             {
@@ -143,13 +144,19 @@ namespace Naos.MessageBus.Core
             }
         }
 
-        private void InternalDispatch(Parcel parcel)
+        private void InternalDispatch(Parcel parcel, Action attemptingCallback, Action<Envelope> deliveredCallback)
         {
+            attemptingCallback();
+
             var firstEnvelope = parcel.Envelopes.First();
             var remainingEnvelopes = parcel.Envelopes.Skip(1).ToList();
             var firstAddressedMessage = this.DeserializeEnvelopeIntoAddressedMessage(firstEnvelope);
 
             var messageToHandle = firstAddressedMessage.Message;
+
+            // WARNING: this method change the state of the objects passed in!!!
+            this.PrepareMessage(messageToHandle, parcel.SharedInterfaceStates);
+            var preparedEnvelope = messageToHandle.ToAddressedMessage().ToEnvelope();
 
             var messageType = messageToHandle.GetType();
             var handlerType = typeof(IHandleMessages<>).MakeGenericType(messageType);
@@ -171,8 +178,7 @@ namespace Naos.MessageBus.Core
 
             Log.Write(() => "Loaded handler: " + handler.GetType().FullName);
 
-            // WARNING: these methods change the state of the objects passed in!!!
-            this.PrepareMessage(messageToHandle, parcel.SharedInterfaceStates);
+            // WARNING: this method change the state of the objects passed in!!!
             this.PrepareHandler(handler);
 
             using (var activity = Log.Enter(() => new { Message = messageToHandle, Handler = handler }))
@@ -227,6 +233,9 @@ namespace Naos.MessageBus.Core
             {
                 this.SendRemainingEnvelopes(parcel.Id, remainingEnvelopes, parcel.SharedInterfaceStates, handler);
             }
+
+            // this might one day move above the resend but its safer to not progress in the sequence in case there was a send failure...
+            deliveredCallback(preparedEnvelope);
         }
 
         private void SendRemainingEnvelopes(Guid parcelId, List<Envelope> envelopes, IList<SharedInterfaceState> existingSharedInterfaceStates, object handler = null)

@@ -106,7 +106,7 @@ namespace Naos.MessageBus.Test
                 (await parcelTrackingSystem.GetTrackingReportAsync(new[] { trackingCode })).Single().Status.Should().Be(ParcelStatus.Rejected);
                 await ConfirmNoticeState(parcelTrackingSystem, topic, beingAffectedWasDelivered);
 
-                await parcelTrackingSystem.UpdateDeliveredAsync(trackingCode);
+                await parcelTrackingSystem.UpdateDeliveredAsync(trackingCode, envelope);
                 if (envelope.MessageType == typeof(TopicBeingAffectedMessage).ToTypeDescription())
                 {
                     beingAffectedWasDelivered = true;

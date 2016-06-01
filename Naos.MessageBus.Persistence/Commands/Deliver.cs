@@ -39,5 +39,10 @@ namespace Naos.MessageBus.Persistence
         /// Gets or sets the tracking code of the shipment.
         /// </summary>
         public TrackingCode TrackingCode { get; set; }
+
+        /// <summary>
+        /// Gets or sets the message as it was given to the handler repackaged.
+        /// </summary>
+        public Envelope PreparedEnvelope { get; set; }
     }
 }
