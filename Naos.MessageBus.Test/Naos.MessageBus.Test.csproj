@@ -70,11 +70,11 @@
       <Private>True</Private>
     </Reference>
     <Reference Include="Microsoft.Its.Domain, Version=0.14.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Its.Domain.0.14.21-beta\lib\net452\Microsoft.Its.Domain.dll</HintPath>
+      <HintPath>..\packages\Its.Domain.0.14.25\lib\net452\Microsoft.Its.Domain.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="Microsoft.Its.Domain.Sql, Version=0.14.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Its.Domain.Sql.0.14.21-beta\lib\net452\Microsoft.Its.Domain.Sql.dll</HintPath>
+      <HintPath>..\packages\Its.Domain.Sql.0.14.25\lib\net452\Microsoft.Its.Domain.Sql.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="Naos.Cron, Version=1.0.14.0, Culture=neutral, processorArchitecture=MSIL">
