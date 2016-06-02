@@ -717,7 +717,7 @@ namespace Naos.MessageBus.Test
                             channel);
                 };
 
-            testCode.ShouldThrow<DispatchException>().WithMessage("First message in parcel deserialized to null");
+            testCode.ShouldThrow<ArgumentNullException>().WithMessage("Value cannot be null.\r\nParameter name: value");
         }
 
         [Fact]
