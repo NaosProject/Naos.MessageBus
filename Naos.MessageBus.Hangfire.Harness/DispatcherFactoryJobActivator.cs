@@ -13,6 +13,7 @@ namespace Naos.MessageBus.Hangfire.Harness
     using Naos.MessageBus.Core;
     using Naos.MessageBus.Domain;
     using Naos.MessageBus.Domain.Exceptions;
+    using Naos.MessageBus.Hangfire.Sender;
 
     /// <summary>
     /// Hangfire job activator that will lookup the correct implementation of the Hangfire job via SimpleInjector DI container.
@@ -41,9 +42,10 @@ namespace Naos.MessageBus.Hangfire.Harness
         /// <inheritdoc />
         public override object ActivateJob(Type jobType)
         {
-            if (this.typeComparer.Equals(jobType, typeof(IDispatchMessages)))
+            if (this.typeComparer.Equals(jobType, typeof(HangfireDispatcher)))
             {
-                return this.dispatcherFactory.Create();
+                var realDispatcher = this.dispatcherFactory.Create();
+                return new HangfireDispatcher(realDispatcher);
             }
 
             throw new DispatchException(

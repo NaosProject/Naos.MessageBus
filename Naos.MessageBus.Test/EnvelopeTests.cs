@@ -165,7 +165,7 @@ namespace Naos.MessageBus.Test
             var secondId = firstId;
             var secondDescription = firstDescription;
             var secondChannel = firstChannel;
-            var secondMessage = new AbortIfNoTopicsAffectedAndShareResultsMessage();
+            var secondMessage = new AbortIfNoDependencyTopicsAffectedMessage();
             var secondMessageAsJson = Serializer.Serialize(secondMessage);
             var secondMessageType = firstMessage.GetType().ToTypeDescription();
 

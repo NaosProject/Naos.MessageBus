@@ -1,5 +1,5 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="AbortIfNoTopicsAffectedAndShareResultsMessageHandler.cs" company="Naos">
+// <copyright file="AbortIfNoDependencyTopicsAffectedMessageHandler.cs" company="Naos">
 //   Copyright 2015 Naos
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
@@ -7,7 +7,6 @@
 namespace Naos.MessageBus.Core
 {
     using System;
-    using System.Collections.Generic;
     using System.Linq;
     using System.Threading.Tasks;
 
@@ -17,34 +16,16 @@ namespace Naos.MessageBus.Core
     /// <summary>
     /// No implementation handler to handle NullMessages.
     /// </summary>
-    public class AbortIfNoTopicsAffectedAndShareResultsMessageHandler : IHandleMessages<AbortIfNoTopicsAffectedAndShareResultsMessage>, IShareDependentTopicStatusReports
+    public class AbortIfNoDependencyTopicsAffectedMessageHandler : IHandleMessages<AbortIfNoDependencyTopicsAffectedMessage>, IShareTopicStatusReports
     {
         /// <summary>
         /// Gets or sets the notices as they were evaluated with processing check.
         /// </summary>
-        public TopicStatusReport[] DependentTopicStatusReports { get; set; }
+        public TopicStatusReport[] TopicStatusReports { get; set; }
 
         /// <inheritdoc />
-        public async Task HandleAsync(AbortIfNoTopicsAffectedAndShareResultsMessage message)
+        public async Task HandleAsync(AbortIfNoDependencyTopicsAffectedMessage message)
         {
-            var tracker = HandlerToolShed.GetParcelTracker();
-
-            await this.HandleAsync(message, tracker);
-        }
-
-        /// <summary>
-        /// Handle <see cref="AbortIfNoTopicsAffectedAndShareResultsMessage"/> message.
-        /// </summary>
-        /// <param name="message">Message to handle.</param>
-        /// <param name="tracker">Tracker to get information about parcels and notices.</param>
-        /// <returns>Task for async.</returns>
-        public async Task HandleAsync(AbortIfNoTopicsAffectedAndShareResultsMessage message, IGetTrackingReports tracker)
-        {
-            if (tracker == null)
-            {
-                throw new ArgumentException("Tracker cannot be null.");
-            }
-
             if (message == null)
             {
                 throw new ArgumentException("Message cannot be null.");
@@ -52,41 +33,31 @@ namespace Naos.MessageBus.Core
 
             if (message.Topic == null)
             {
-                throw new ArgumentException("Message.ImpactingTopic cannot be null.");
+                throw new ArgumentException($"Message.{nameof(AbortIfNoDependencyTopicsAffectedMessage.Topic)} cannot be null.");
             }
 
-            if (message.SimultaneousRunsStrategy == SimultaneousRunsStrategy.AbortSubsequentRunsWhenOneIsRunning)
+            if (message.TopicStatusReports == null || message.TopicStatusReports.Length == 0)
             {
-                // only do this check if we need to possibly abort the run
-                var lastNoticeOfMyImpactAll = await tracker.GetLatestTopicStatusReportAsync(message.Topic);
-                if (lastNoticeOfMyImpactAll?.Status == TopicStatus.BeingAffected)
-                {
-                    throw new AbortParcelDeliveryException($"Topic '{message.Topic}' is already being affected.");
-                }
+                throw new ArgumentException($"{nameof(IShareTopicStatusReports.TopicStatusReports)} cannot be null or emtpy.");
             }
 
-            if (message.DependencyTopics == null || message.DependencyTopics.Count == 0)
+            var namedDependencyTopics = message.DependencyTopics.Select(_ => new NamedTopic(_.Name)).ToList();
+            var currentDependencyNotices = message.TopicStatusReports.Where(_ => namedDependencyTopics.Contains(_?.Topic.ToNamedTopic())).ToList();
+            if (currentDependencyNotices.Count != message.DependencyTopics.Count)
             {
-                // no reason to do anythign else, once we've concluded we don't need to abort for another run
-                //    because there are no dependant topics to get data for, check, or share down...
-                return;
+                var topicStrings = string.Join(",", message.DependencyTopics);
+                throw new ArgumentException($"Could not find {nameof(TopicStatusReport)} for specified all dependency topics: {topicStrings}");
             }
 
-            var lastNoticeOfMyImpact = await tracker.GetLatestTopicStatusReportAsync(message.Topic, TopicStatus.WasAffected);
+            var currentStatusReportForAffectingTopic = message.TopicStatusReports.SingleOrDefault(_ => message.Topic.Equals(_.Topic));
+            if (currentStatusReportForAffectingTopic == null)
+            {
+                throw new ArgumentException($"Could not find {nameof(TopicStatusReport)} for specified topic: {message.Topic}");
+            }
 
-            var lastRunDependencyNotices = lastNoticeOfMyImpact?.DependencyTopicNoticesAtStart ?? new TopicStatusReport[0];
+            var lastRunDependencyNotices = currentStatusReportForAffectingTopic.DependencyTopicNoticesAtStart ?? new TopicStatusReport[0];
 
-            var dependencyTopics = message.DependencyTopics ?? new List<DependencyTopic>();
-            var currentDependencyNotices = dependencyTopics.Select(
-                dependencyTopic =>
-                    {
-                        var latestNoticeTask = tracker.GetLatestTopicStatusReportAsync(dependencyTopic);
-                        latestNoticeTask.Wait();
-                        var latest = latestNoticeTask.Result;
-                        return latest;
-                    }).ToArray();
-
-            var topicsToCheckRecentResults = dependencyTopics.ToDictionary(
+            var topicsToCheckRecentResults = message.DependencyTopics.ToDictionary(
                 key => key,
                 val =>
                     {
@@ -99,13 +70,13 @@ namespace Naos.MessageBus.Core
             bool dataIsRecent;
             switch (message.TopicCheckStrategy)
             {
-                case TopicCheckStrategy.DoNotRequireAnything:
+                case TopicCheckStrategy.None:
                     dataIsRecent = true;
                     break;
-                case TopicCheckStrategy.RequireAllTopicChecksYieldRecent:
+                case TopicCheckStrategy.All:
                     dataIsRecent = topicsToCheckRecentResults.Values.All(_ => _);
                     break;
-                case TopicCheckStrategy.AllowIfAnyTopicCheckYieldsRecent:
+                case TopicCheckStrategy.Any:
                     dataIsRecent = topicsToCheckRecentResults.Values.Any(_ => _);
                     break;
                 default:
@@ -115,10 +86,6 @@ namespace Naos.MessageBus.Core
             if (!dataIsRecent)
             {
                 throw new AbortParcelDeliveryException("No new data for topics; " + string.Join(",", topicsToCheckRecentResults.Select(_ => _.Key)));
-            }
-            else
-            {
-                this.DependentTopicStatusReports = currentDependencyNotices; // share the dependency notices to store in future notices...
             }
 
             /* no-op */

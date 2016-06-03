@@ -105,5 +105,41 @@ namespace Naos.MessageBus.Test
             Assert.True(first.Equals((object)second));
             Assert.Equal(first.GetHashCode(), second.GetHashCode());
         }
+
+        [Fact]
+        public void Dependant_And_Named_EqualAreEqual_Type()
+        {
+            var firstName = "name1";
+
+            var first = new NamedTopic(firstName);
+
+            var secondName = firstName;
+
+            var second = new DependencyTopic(secondName);
+
+            Assert.True(first == second);
+            Assert.False(first != second);
+            Assert.True(first.Equals(second));
+            Assert.True(first.Equals((object)second));
+            Assert.Equal(first.GetHashCode(), second.GetHashCode());
+        }
+
+        [Fact]
+        public void Named_And_Impacting_EqualAreEqual_Type()
+        {
+            var firstName = "name1";
+
+            var first = new AffectedTopic(firstName);
+
+            var secondName = firstName;
+
+            var second = new NamedTopic(secondName);
+
+            Assert.True(first == second);
+            Assert.False(first != second);
+            Assert.True(first.Equals(second));
+            Assert.True(first.Equals((object)second));
+            Assert.Equal(first.GetHashCode(), second.GetHashCode());
+        }
     }
 }

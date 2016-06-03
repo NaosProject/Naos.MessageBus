@@ -6,8 +6,6 @@
 
 namespace Naos.MessageBus.Domain
 {
-    using System.ComponentModel;
-
     /// <summary>
     /// Interface for dispatching messages to the correct handler.
     /// </summary>
@@ -20,7 +18,6 @@ namespace Naos.MessageBus.Domain
         /// <param name="trackingCode">Tracking code of the parcel being dispatched.</param>
         /// <param name="parcel">Parcel to dispatch.</param>
         /// <param name="address">Address parcel was believed to be delivered to.</param>
-        [DisplayName("{0}")]
         void Dispatch(string displayName, TrackingCode trackingCode, Parcel parcel, IChannel address);
     }
 }

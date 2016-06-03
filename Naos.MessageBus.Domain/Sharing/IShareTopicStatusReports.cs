@@ -1,5 +1,5 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="IShareDependentTopicStatusReports.cs" company="Naos">
+// <copyright file="IShareTopicStatusReports.cs" company="Naos">
 //   Copyright 2015 Naos
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
@@ -9,11 +9,11 @@ namespace Naos.MessageBus.Domain
     /// <summary>
     /// Implementation of <see cref="IShare"/> to share notices.
     /// </summary>
-    public interface IShareDependentTopicStatusReports : IShare
+    public interface IShareTopicStatusReports : IShare
     {
         /// <summary>
-        /// Gets or sets notices.
+        /// Gets or sets the topic status reports to share.
         /// </summary>
-        TopicStatusReport[] DependentTopicStatusReports { get; set; }
+        TopicStatusReport[] TopicStatusReports { get; set; }
     }
 }

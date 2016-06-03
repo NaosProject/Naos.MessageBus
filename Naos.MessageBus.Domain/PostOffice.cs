@@ -86,23 +86,7 @@ namespace Naos.MessageBus.Domain
                 throw new ArgumentException("Must set the Id of the MessageSequence");
             }
 
-            var envelopesFromSequence = messageSequence.AddressedMessages.Select(addressedMessage => addressedMessage.ToEnvelope()).ToList();
-
-            // if this is recurring we must inject a null message that will be handled on the default queue and immediately moved to the next one 
-            //             that will be put in the correct queue...
-            var envelopes = new List<Envelope>();
-            envelopes.AddRange(envelopesFromSequence);
-
-            var parcel = new Parcel
-                             {
-                                 Id = messageSequence.Id,
-                                 Name = messageSequence.Name,
-                                 Envelopes = envelopes,
-                                 Topic = messageSequence.Topic,
-                                 DependencyTopics = messageSequence.DependencyTopics,
-                                 DependencyTopicCheckStrategy = messageSequence.DependencyTopicCheckStrategy,
-                                 SimultaneousRunsStrategy = messageSequence.SimultaneousRunsStrategy
-                             };
+            var parcel = messageSequence.ToParcel();
 
             return this.SendRecurring(parcel, recurringSchedule);
         }
@@ -162,25 +146,49 @@ namespace Naos.MessageBus.Domain
 
         private static Parcel InjectTopicNoticeMessagesIntoNewParcel(Parcel parcel)
         {
+            var dependencyTopics = parcel.DependencyTopics ?? new DependencyTopic[0];
+
             var parcelId = parcel.Id;
             var sharedInterfaceStates = (parcel.SharedInterfaceStates ?? new SharedInterfaceState[0]).Select(_ => _).ToList();
             var envelopes = parcel.Envelopes.Select(_ => _).ToList();
             var newEnvelopes = new List<Envelope>();
 
-            // add a dependency check if we have dependency topics
-            var dependencyTopics = parcel.DependencyTopics ?? new DependencyTopic[0];
+            // must be first message to provide data to others...
+            var allTopics = dependencyTopics.Cast<TopicBase>().Union(new[] { parcel.Topic }).Select(_ => _.ToNamedTopic()).ToArray();
+            var fetchAndShareTopicStatusReportMessage = new FetchAndShareLatestTopicStatusReportsMessage
+                                                            {
+                                                                Description =
+                                                                    $"{parcel.Name} - Fetch and Share Latest Topic Status Reports for: "
+                                                                    + string.Join<TopicBase>(",", allTopics),
+                                                                TopicsToFetchAndShareStatusReportsFrom = allTopics
+                                                            };
+
+            newEnvelopes.Add(fetchAndShareTopicStatusReportMessage.ToAddressedMessage().ToEnvelope());
+
+            if (parcel.SimultaneousRunsStrategy == SimultaneousRunsStrategy.AbortSubsequentRunsWhenOneIsRunning)
+            {
+                var abortIfPendingMessage = new AbortIfTopicsHaveSpecificStatusMessage
+                                                {
+                                                    Description = $"{parcel.Name} - Abort if '{parcel.Topic}' Being Affected",
+                                                    TopicsToCheck = new[] { parcel.Topic.ToNamedTopic() },
+                                                    TopicCheckStrategy = TopicCheckStrategy.All,
+                                                    StatusToAbortOn = TopicStatus.BeingAffected
+                                                };
+
+                newEnvelopes.Add(abortIfPendingMessage.ToAddressedMessage().ToEnvelope());
+            }
+
             if (dependencyTopics.Count > 0)
             {
-                var abortMessage = new AbortIfNoTopicsAffectedAndShareResultsMessage
-                                       {
-                                           Description = $"{parcel.Name} - Checking Depdendency Topics: " + string.Join(",", dependencyTopics),
-                                           Topic = parcel.Topic,
-                                           DependencyTopics = dependencyTopics,
-                                           SimultaneousRunsStrategy = parcel.SimultaneousRunsStrategy,
-                                           TopicCheckStrategy = parcel.DependencyTopicCheckStrategy
-                                       };
+                var abortIfNoNewDataMessage = new AbortIfNoDependencyTopicsAffectedMessage
+                                                  {
+                                                      Description = $"{parcel.Name} - Checking for updates on Depdendency Topics: " + string.Join(",", dependencyTopics),
+                                                      Topic = parcel.Topic,
+                                                      DependencyTopics = dependencyTopics,
+                                                      TopicCheckStrategy = parcel.DependencyTopicCheckStrategy
+                                                  };
 
-                newEnvelopes.Add(abortMessage.ToAddressedMessage().ToEnvelope());
+                newEnvelopes.Add(abortIfNoNewDataMessage.ToAddressedMessage().ToEnvelope());
             }
 
             // add a being affected message

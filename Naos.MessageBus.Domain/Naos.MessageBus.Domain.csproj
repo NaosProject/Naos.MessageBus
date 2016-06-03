@@ -66,13 +66,15 @@
     <Compile Include=".Spritely.Recipes\SecureString\SecureString.cs" />
     <Compile Include="ChannelRouter.cs" />
     <Compile Include="IRouteUnaddressedMail.cs" />
+    <Compile Include="Messages\FetchAndShareLatestTopicStatusReportsMessage.cs" />
+    <Compile Include="Messages\AbortIfTopicsHaveSpecificStatusMessage.cs" />
     <Compile Include="Messages\ThrowsExceptionMessage.cs" />
     <Compile Include="PostOfficeExtensions.cs" />
     <Compile Include="Sharing\IShareAffectedItems.cs" />
     <Compile Include="Tracking\SimultaneousRunsStrategy.cs" />
     <Compile Include="Tracking\ITopic.cs" />
     <Compile Include="Tracking\TopicCheckStrategy.cs" />
-    <Compile Include="Sharing\IShareDependentTopicStatusReports.cs" />
+    <Compile Include="Sharing\IShareTopicStatusReports.cs" />
     <Compile Include="Messages\TopicBeingAffectedMessage.cs" />
     <Compile Include="Tracking\TopicStatusReport.cs" />
     <Compile Include="Tracking\TopicStatus.cs" />
@@ -125,7 +127,7 @@
     <Compile Include="TypeDescription.cs" />
     <Compile Include="TypeMap.cs" />
     <Compile Include="TypeMatchStrategy.cs" />
-    <Compile Include="Messages\AbortIfNoTopicsAffectedAndShareResultsMessage.cs" />
+    <Compile Include="Messages\AbortIfNoDependencyTopicsAffectedMessage.cs" />
     <Compile Include="Messages\WaitForTrackingCodesToBeInStatusMessage.cs" />
     <Compile Include="Messages\WaitMessage.cs" />
   </ItemGroup>

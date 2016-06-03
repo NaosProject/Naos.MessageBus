@@ -7,12 +7,42 @@
 namespace Naos.MessageBus.Domain
 {
     using System;
+    using System.Collections.Generic;
+    using System.Linq;
 
     /// <summary>
     /// Collection of envelopes to use as a unit.
     /// </summary>
     public static class PostOfficeExtensions
     {
+        /// <summary>
+        /// Creates a <see cref="Parcel"/> from the <see cref="MessageSequence"/>.
+        /// </summary>
+        /// <param name="messageSequence">The <see cref="MessageSequence"/> to package into a parcel.</param>
+        /// <returns>Constructed <see cref="Parcel"/> from the provided <see cref="MessageSequence"/>.</returns>
+        public static Parcel ToParcel(this MessageSequence messageSequence)
+        {
+            var envelopesFromSequence = messageSequence.AddressedMessages.Select(addressedMessage => addressedMessage.ToEnvelope()).ToList();
+
+            // if this is recurring we must inject a null message that will be handled on the default queue and immediately moved to the next one 
+            //             that will be put in the correct queue...
+            var envelopes = new List<Envelope>();
+            envelopes.AddRange(envelopesFromSequence);
+
+            var parcel = new Parcel
+                             {
+                                 Id = messageSequence.Id,
+                                 Name = messageSequence.Name,
+                                 Envelopes = envelopes,
+                                 Topic = messageSequence.Topic,
+                                 DependencyTopics = messageSequence.DependencyTopics,
+                                 DependencyTopicCheckStrategy = messageSequence.DependencyTopicCheckStrategy,
+                                 SimultaneousRunsStrategy = messageSequence.SimultaneousRunsStrategy
+                             };
+
+            return parcel;
+        }
+
         /// <summary>
         /// Extension on <see cref="IMessage"/> to convert into an addressed message.
         /// </summary>
