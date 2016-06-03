@@ -110,6 +110,21 @@ namespace Naos.MessageBus.Domain
     }
 
     /// <summary>
+    /// Meaningless topic to pass around.
+    /// </summary>
+    public class NamedTopic : TopicBase
+    {
+        /// <summary>
+        /// Initializes a new instance of the <see cref="NamedTopic"/> class.
+        /// </summary>
+        /// <param name="name">Topic name.</param>
+        public NamedTopic(string name)
+            : base(name)
+        {
+        }
+    }
+
+    /// <summary>
     /// Topic that is impacted by a workflow.
     /// </summary>
     public class AffectedTopic : TopicBase
@@ -136,6 +151,34 @@ namespace Naos.MessageBus.Domain
         public DependencyTopic(string name)
             : base(name)
         {
+        }
+    }
+
+    /// <summary>
+    /// Extension methods on topic.
+    /// </summary>
+    public static class TopicExtensions
+    {
+        /// <summary>
+        /// Converts the topic into a <see cref="NamedTopic"/>.
+        /// </summary>
+        /// <param name="topic">Topic to convert.</param>
+        /// <returns>A <see cref="NamedTopic"/> version of current topic.</returns>
+        public static NamedTopic ToNamedTopic(this ITopic topic)
+        {
+            if (topic == null)
+            {
+                return null;
+            }
+
+            if (topic.GetType() == typeof(NamedTopic))
+            {
+                return (NamedTopic)topic;
+            }
+            else
+            {
+                return new NamedTopic(topic.Name);
+            }
         }
     }
 }

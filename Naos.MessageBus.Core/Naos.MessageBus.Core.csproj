@@ -82,12 +82,14 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Handlers\AbortIfNoDependencyTopicsAffectedMessageHandler.cs" />
+    <Compile Include="Handlers\AbortIfTopicsHaveSpecificStatusMessageHandler.cs" />
     <Compile Include="Handlers\TopicBeingAffectedMessageHandler.cs" />
     <Compile Include="RecurringParcelEncounteredException.cs" />
     <Compile Include="Handlers\ShareNowPlusTimeAsExpirationMessageHandler.cs" />
     <Compile Include="Handlers\ShareTrackingCodesMessageHandler.cs" />
     <Compile Include="Handlers\WaitForTrackingCodesMessageHandler.cs" />
-    <Compile Include="Handlers\AbortIfNoTopicsAffectedAndShareResultsMessageHandler.cs" />
+    <Compile Include="Handlers\FetchAndShareLatestTopicStatusReportsMessageHandler.cs" />
     <Compile Include="DispatcherFactory.cs" />
     <Compile Include="ITrackActiveMessages.cs" />
     <Compile Include="Logging.cs" />

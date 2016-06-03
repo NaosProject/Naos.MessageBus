@@ -226,7 +226,7 @@ namespace Naos.MessageBus.Persistence
                                         var beingAffectedEnvelope = Serializer.Deserialize<Envelope>(mostRecentNotice.TopicBeingAffectedEnvelopeJson);
                                         var beingAffectedMessage = Serializer.Deserialize<TopicBeingAffectedMessage>(beingAffectedEnvelope.MessageAsJson);
                                         items = beingAffectedMessage.AffectedItems;
-                                        dependencyNotices = beingAffectedMessage.DependentTopicStatusReports;
+                                        dependencyNotices = beingAffectedMessage.TopicStatusReports;
                                     }
                                     else
                                     {
@@ -239,7 +239,7 @@ namespace Naos.MessageBus.Persistence
                                     var wasAffectedEnvelope = Serializer.Deserialize<Envelope>(mostRecentNotice.TopicWasAffectedEnvelopeJson);
                                     var wasAffectedMessage = Serializer.Deserialize<TopicWasAffectedMessage>(wasAffectedEnvelope.MessageAsJson);
                                     items = wasAffectedMessage.AffectedItems;
-                                    dependencyNotices = wasAffectedMessage.DependentTopicStatusReports;
+                                    dependencyNotices = wasAffectedMessage.TopicStatusReports;
                                 }
 
                                 return

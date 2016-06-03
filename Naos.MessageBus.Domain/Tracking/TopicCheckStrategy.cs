@@ -17,18 +17,18 @@ namespace Naos.MessageBus.Domain
         Unspecified,
 
         /// <summary>
-        /// Always allow to proceed independent of any topic updates.
+        /// No strategy just ignore logic.
         /// </summary>
-        DoNotRequireAnything,
+        None,
 
         /// <summary>
-        /// Allow the sequence to continue if any dependency topic is recent.
+        /// Match on any topic.
         /// </summary>
-        AllowIfAnyTopicCheckYieldsRecent,
+        Any,
 
         /// <summary>
-        /// Allow the sequence to continue only if all dependency topic checks are are recent.
+        /// Match only on all topics.
         /// </summary>
-        RequireAllTopicChecksYieldRecent
+        All
     }
 }

@@ -54,7 +54,7 @@ namespace Naos.MessageBus.Test
                 "name",
                 topic,
                 null,
-                TopicCheckStrategy.AllowIfAnyTopicCheckYieldsRecent,
+                TopicCheckStrategy.Any,
                 SimultaneousRunsStrategy.AbortSubsequentRunsWhenOneIsRunning);
 
             Parcel parcel = null;

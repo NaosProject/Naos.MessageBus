@@ -145,13 +145,15 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include=".Spritely.Recipes\SecureString\SecureString.cs" />
+    <Compile Include="AbortIfTopicsHaveSpecificStatusMessageHandlerTests.cs" />
+    <Compile Include="FetchAndShareLatestTopicStatusReportsMessageHandlerTests.cs" />
+    <Compile Include="AbortIfNoDependencyTopicsAffectedMessageHandlerTests.cs" />
     <Compile Include="AutoFakeItEasyBootstrapper.cs" />
     <Compile Include="Factory.cs" />
     <Compile Include="HangfireCourierTest.cs" />
     <Compile Include="TopicTests.cs" />
     <Compile Include="EnvelopeTests.cs" />
     <Compile Include="SharingHandlerTests.cs" />
-    <Compile Include="AbortIfNoTopicsAffectedAndShareResultsMessageHandlerTests.cs" />
     <Compile Include="PostOfficeTests.cs" />
     <Compile Include="TrackingSystemTests.cs" />
     <Compile Include="TrackingCodeTest.cs" />

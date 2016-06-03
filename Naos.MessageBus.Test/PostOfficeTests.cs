@@ -87,7 +87,7 @@ namespace Naos.MessageBus.Test
                 name,
                 new AffectedTopic(myTopic),
                 null,
-                TopicCheckStrategy.AllowIfAnyTopicCheckYieldsRecent,
+                TopicCheckStrategy.Any,
                 SimultaneousRunsStrategy.AbortSubsequentRunsWhenOneIsRunning);
 
             // assert
@@ -95,19 +95,32 @@ namespace Naos.MessageBus.Test
             parcel.Id.Should().Be(trackingCode.ParcelId);
             parcel.Name.Should().Be(name);
 
-            parcel.Envelopes.Count.Should().Be(3);
+            parcel.Envelopes.Count.Should().Be(5);
+
+            // abort if pending
+            var indexFetch = 0;
+            parcel.Envelopes.Skip(indexFetch).First().MessageType.Should().Be(typeof(FetchAndShareLatestTopicStatusReportsMessage).ToTypeDescription());
+            Serializer.Deserialize<FetchAndShareLatestTopicStatusReportsMessage>(parcel.Envelopes.Skip(indexFetch).First().MessageAsJson).TopicsToFetchAndShareStatusReportsFrom.Single().Name.Should().Be(myTopic);
+
+            // abort if pending
+            var indexAbort = 1;
+            parcel.Envelopes.Skip(indexAbort).First().MessageType.Should().Be(typeof(AbortIfTopicsHaveSpecificStatusMessage).ToTypeDescription());
+            Serializer.Deserialize<AbortIfTopicsHaveSpecificStatusMessage>(parcel.Envelopes.Skip(indexAbort).First().MessageAsJson).TopicsToCheck.Single().Name.Should().Be(myTopic);
 
             // being affected
-            parcel.Envelopes.Skip(0).First().MessageType.Should().Be(typeof(TopicBeingAffectedMessage).ToTypeDescription());
-            Serializer.Deserialize<TopicBeingAffectedMessage>(parcel.Envelopes.First().MessageAsJson).Topic.Name.Should().Be(myTopic);
+            var indexBeing = 2;
+            parcel.Envelopes.Skip(indexBeing).First().MessageType.Should().Be(typeof(TopicBeingAffectedMessage).ToTypeDescription());
+            Serializer.Deserialize<TopicBeingAffectedMessage>(parcel.Envelopes.Skip(indexBeing).First().MessageAsJson).Topic.Name.Should().Be(myTopic);
 
             // mine
-            parcel.Envelopes.Skip(1).First().MessageType.Should().Be(typeof(NullMessage).ToTypeDescription());
-            parcel.Envelopes.Skip(1).First().Address.Should().Be(channel);
+            var indexMine = 3;
+            parcel.Envelopes.Skip(indexMine).First().MessageType.Should().Be(typeof(NullMessage).ToTypeDescription());
+            parcel.Envelopes.Skip(indexMine).First().Address.Should().Be(channel);
 
             // was affected
-            parcel.Envelopes.Last().MessageType.Should().Be(typeof(TopicWasAffectedMessage).ToTypeDescription());
-            Serializer.Deserialize<TopicWasAffectedMessage>(parcel.Envelopes.Last().MessageAsJson).Topic.Name.Should().Be(myTopic);
+            var indexWas = 4;
+            parcel.Envelopes.Skip(indexWas).First().MessageType.Should().Be(typeof(TopicWasAffectedMessage).ToTypeDescription());
+            Serializer.Deserialize<TopicWasAffectedMessage>(parcel.Envelopes.Skip(indexWas).First().MessageAsJson).Topic.Name.Should().Be(myTopic);
         }
 
         public static void SendRerringWithChannelEqualNullGetsSetToNullChannel()
@@ -156,7 +169,7 @@ namespace Naos.MessageBus.Test
                 name,
                 new AffectedTopic(myTopic),
                 dependantTopics,
-                TopicCheckStrategy.AllowIfAnyTopicCheckYieldsRecent,
+                TopicCheckStrategy.Any,
                 SimultaneousRunsStrategy.AbortSubsequentRunsWhenOneIsRunning);
 
             // assert
@@ -164,24 +177,40 @@ namespace Naos.MessageBus.Test
             parcel.Id.Should().Be(trackingCode.ParcelId);
             parcel.Name.Should().Be(name);
 
-            parcel.Envelopes.Count.Should().Be(4);
+            parcel.Envelopes.Count.Should().Be(6);
 
-            // abort
-            parcel.Envelopes.First().MessageType.Should().Be(typeof(AbortIfNoTopicsAffectedAndShareResultsMessage).ToTypeDescription());
-            Serializer.Deserialize<AbortIfNoTopicsAffectedAndShareResultsMessage>(parcel.Envelopes.First().MessageAsJson).Topic.Name.Should().Be(myTopic);
-            Serializer.Deserialize<AbortIfNoTopicsAffectedAndShareResultsMessage>(parcel.Envelopes.First().MessageAsJson).DependencyTopics.ShouldBeEquivalentTo(dependantTopics);
+            // abort if pending
+            var indexFetch = 0;
+            parcel.Envelopes.Skip(indexFetch).First().MessageType.Should().Be(typeof(FetchAndShareLatestTopicStatusReportsMessage).ToTypeDescription());
+            Serializer.Deserialize<FetchAndShareLatestTopicStatusReportsMessage>(parcel.Envelopes.Skip(indexFetch).First().MessageAsJson)
+                .TopicsToFetchAndShareStatusReportsFrom.ShouldAllBeEquivalentTo(
+                    dependantTopics.Select(_ => _.ToNamedTopic()).Union(new[] { new NamedTopic(myTopic) }).ToArray());
+
+            // abort if pending
+            var indexAbort = 1;
+            parcel.Envelopes.Skip(indexAbort).First().MessageType.Should().Be(typeof(AbortIfTopicsHaveSpecificStatusMessage).ToTypeDescription());
+            Serializer.Deserialize<AbortIfTopicsHaveSpecificStatusMessage>(parcel.Envelopes.Skip(indexAbort).First().MessageAsJson).TopicsToCheck.Single().Name.Should().Be(myTopic);
+
+            // abort if no new
+            var indexNoNewAbort = 2;
+            parcel.Envelopes.Skip(indexNoNewAbort).First().MessageType.Should().Be(typeof(AbortIfNoDependencyTopicsAffectedMessage).ToTypeDescription());
+            Serializer.Deserialize<AbortIfNoDependencyTopicsAffectedMessage>(parcel.Envelopes.Skip(indexNoNewAbort).First().MessageAsJson).Topic.Name.Should().Be(myTopic);
+            Serializer.Deserialize<AbortIfNoDependencyTopicsAffectedMessage>(parcel.Envelopes.Skip(indexNoNewAbort).First().MessageAsJson).DependencyTopics.ShouldBeEquivalentTo(dependantTopics);
 
             // being affected
-            parcel.Envelopes.Skip(1).First().MessageType.Should().Be(typeof(TopicBeingAffectedMessage).ToTypeDescription());
-            Serializer.Deserialize<TopicBeingAffectedMessage>(parcel.Envelopes.First().MessageAsJson).Topic.Name.Should().Be(myTopic);
+            var indexBeing = 3;
+            parcel.Envelopes.Skip(indexBeing).First().MessageType.Should().Be(typeof(TopicBeingAffectedMessage).ToTypeDescription());
+            Serializer.Deserialize<TopicBeingAffectedMessage>(parcel.Envelopes.Skip(indexBeing).First().MessageAsJson).Topic.Name.Should().Be(myTopic);
 
             // mine
-            parcel.Envelopes.Skip(2).First().MessageType.Should().Be(typeof(NullMessage).ToTypeDescription());
-            parcel.Envelopes.Skip(2).First().Address.Should().Be(channel);
+            var indexMine = 4;
+            parcel.Envelopes.Skip(indexMine).First().MessageType.Should().Be(typeof(NullMessage).ToTypeDescription());
+            parcel.Envelopes.Skip(indexMine).First().Address.Should().Be(channel);
 
             // was affected
-            parcel.Envelopes.Last().MessageType.Should().Be(typeof(TopicWasAffectedMessage).ToTypeDescription());
-            Serializer.Deserialize<TopicWasAffectedMessage>(parcel.Envelopes.Last().MessageAsJson).Topic.Name.Should().Be(myTopic);
+            var indexWas = 5;
+            parcel.Envelopes.Skip(indexWas).First().MessageType.Should().Be(typeof(TopicWasAffectedMessage).ToTypeDescription());
+            Serializer.Deserialize<TopicWasAffectedMessage>(parcel.Envelopes.Skip(indexWas).First().MessageAsJson).Topic.Name.Should().Be(myTopic);
         }
     }
 }
