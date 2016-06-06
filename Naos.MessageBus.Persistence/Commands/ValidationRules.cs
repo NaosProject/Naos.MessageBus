@@ -45,5 +45,17 @@ namespace Naos.MessageBus.Persistence
             trackingCode =>
             Validate.That<Shipment>(_ => _.Tracking[trackingCode].Status == ParcelStatus.OutForDelivery)
                 .WithErrorMessage("Must be OutForDelivery to Accept OR Reject.");
+
+        /// <summary>
+        /// Validate status is in a final state to Resend (Aborted, Rejected, or Delivered).
+        /// </summary>
+        public static readonly Func<TrackingCode, IValidationRule<Shipment>> IsAbortedOrRejectedOrDelivered =
+            trackingCode =>
+            Validate.That<Shipment>(
+                _ =>
+                _.Tracking[trackingCode].Status == ParcelStatus.Aborted || 
+                _.Tracking[trackingCode].Status == ParcelStatus.Rejected || 
+                _.Tracking[trackingCode].Status == ParcelStatus.Delivered)
+                .WithErrorMessage("Must be in a final state to Resend (Aborted, Rejected, or Delivered).");
     }
 }

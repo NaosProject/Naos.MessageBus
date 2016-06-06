@@ -29,11 +29,12 @@ namespace Naos.MessageBus.Persistence
             /// <inheritdoc />
             public override void Update(Shipment aggregate)
             {
-                aggregate.Parcel = this.ExtractPayload().Parcel;
+                var payload = this.ExtractPayload();
+                aggregate.Parcel = payload.Parcel;
                 aggregate.Tracking =
-                    this.ExtractPayload()
+                    payload
                         .Parcel.Envelopes.ToDictionary(
-                            key => new TrackingCode { ParcelId = this.ExtractPayload().Parcel.Id, EnvelopeId = key.Id },
+                            key => new TrackingCode { ParcelId = payload.Parcel.Id, EnvelopeId = key.Id },
                             val => new TrackingDetails { Envelope = val });
             }
         }

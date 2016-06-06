@@ -22,9 +22,11 @@ namespace Naos.MessageBus.Persistence
     /// </summary>
     public class ParcelTrackingEventHandler : IUpdateProjectionWhen<Shipment.Created>,
                                          IUpdateProjectionWhen<Shipment.EnvelopeSent>,
+                                         IUpdateProjectionWhen<Shipment.EnvelopeResendRequested>,
                                          IUpdateProjectionWhen<Shipment.EnvelopeDeliveryRejected>,
-                                         IUpdateProjectionWhen<Shipment.ParcelDelivered>,
                                          IUpdateProjectionWhen<Shipment.EnvelopeDeliveryAborted>,
+                                         IUpdateProjectionWhen<Shipment.EnvelopeDelivered>,
+                                         IUpdateProjectionWhen<Shipment.ParcelDelivered>,
                                          IUpdateProjectionWhen<Shipment.TopicBeingAffected>,
                                          IUpdateProjectionWhen<Shipment.TopicWasAffected>
     {
@@ -70,31 +72,71 @@ namespace Naos.MessageBus.Persistence
         }
 
         /// <inheritdoc />
+        public void UpdateProjection(Shipment.EnvelopeResendRequested @event)
+        {
+            CrateLocator crateLocator = null;
+            this.RunWithRetry(
+                () =>
+                    {
+                        using (var db = new TrackedShipmentDbContext(this.readModelPersistenceConnectionConfiguration.ToSqlServerConnectionString()))
+                        {
+                            var shipmentEntry = db.Shipments.Single(_ => _.ParcelId == @event.AggregateId);
+                            crateLocator = string.IsNullOrEmpty(shipmentEntry.CurrentCrateLocatorJson)
+                                               ? null
+                                               : Serializer.Deserialize<CrateLocator>(shipmentEntry.CurrentCrateLocatorJson);
+                        }
+                    });
+
+            if (crateLocator == null)
+            {
+                throw new ArgumentException("Could not find current crate locator for parcel: " + @event.AggregateId);
+            }
+
+            this.courier.Resend(crateLocator);
+        }
+
+        /// <inheritdoc />
         public void UpdateProjection(Shipment.EnvelopeSent @event)
         {
-            var parcel = @event.ExtractPayload().Parcel;
+            var eventPayload = @event.ExtractPayload();
+            var parcel = eventPayload.Parcel;
             var schedule = (ScheduleBase)new NullSchedule();
+            var trackingCode = eventPayload.TrackingCode;
 
-            if (parcel.Envelopes.First().Id == @event.ExtractPayload().TrackingCode.EnvelopeId)
+            if (parcel.Envelopes.First().Id == trackingCode.EnvelopeId)
             {
                 this.RunWithRetry(
                     () =>
                         {
                             using (var db = new TrackedShipmentDbContext(this.readModelPersistenceConnectionConfiguration.ToSqlServerConnectionString()))
                             {
-                                var entry = db.Shipments.Single(_ => _.ParcelId == @event.AggregateId);
-                                schedule = string.IsNullOrEmpty(entry.RecurringScheduleJson)
+                                var shipmentEntry = db.Shipments.Single(_ => _.ParcelId == @event.AggregateId);
+                                schedule = string.IsNullOrEmpty(shipmentEntry.RecurringScheduleJson)
                                                ? new NullSchedule()
-                                               : Serializer.Deserialize<ScheduleBase>(entry.RecurringScheduleJson);
+                                               : Serializer.Deserialize<ScheduleBase>(shipmentEntry.RecurringScheduleJson);
                             }
                         });
             }
 
             var label = !string.IsNullOrWhiteSpace(parcel.Name) ? parcel.Name : "Sequence " + parcel.Id + " - " + parcel.Envelopes.First().Description;
-            var crate = new Crate { TrackingCode = @event.ExtractPayload().TrackingCode, Address = @event.ExtractPayload().Address, Label = label, Parcel = parcel, RecurringSchedule = schedule };
+            var crate = new Crate { TrackingCode = trackingCode, Address = eventPayload.Address, Label = label, Parcel = parcel, RecurringSchedule = schedule };
 
-            // TODO: save this?
             var courierTrackingCode = this.courier.Send(crate);
+            var crateLocator = new CrateLocator { TrackingCode = trackingCode, CourierTrackingCode = courierTrackingCode };
+
+            // save the crate locator for furture reference
+            this.RunWithRetry(
+                () =>
+                {
+                    using (var db = new TrackedShipmentDbContext(this.readModelPersistenceConnectionConfiguration.ToSqlServerConnectionString()))
+                    {
+                        var shipmentEntry = db.Shipments.Single(_ => _.ParcelId == @event.AggregateId);
+                        shipmentEntry.Status = eventPayload.NewStatus;
+                        shipmentEntry.CurrentCrateLocatorJson = Serializer.Serialize(crateLocator);
+                        shipmentEntry.LastUpdatedUtc = DateTime.UtcNow;
+                        db.SaveChanges();
+                    }
+                });
         }
 
         /// <inheritdoc />
@@ -105,9 +147,9 @@ namespace Naos.MessageBus.Persistence
                 {
                     using (var db = new TrackedShipmentDbContext(this.readModelPersistenceConnectionConfiguration.ToSqlServerConnectionString()))
                     {
-                        var entry = db.Shipments.Single(_ => _.ParcelId == @event.AggregateId);
-                        entry.Status = @event.ExtractPayload().NewStatus;
-                        entry.LastUpdatedUtc = DateTime.UtcNow;
+                        var shipmentEntry = db.Shipments.Single(_ => _.ParcelId == @event.AggregateId);
+                        shipmentEntry.Status = @event.ExtractPayload().NewStatus;
+                        shipmentEntry.LastUpdatedUtc = DateTime.UtcNow;
                         db.SaveChanges();
                     }
                 });
@@ -138,6 +180,22 @@ namespace Naos.MessageBus.Persistence
         }
 
         /// <inheritdoc />
+        public void UpdateProjection(Shipment.EnvelopeDelivered @event)
+        {
+            this.RunWithRetry(
+                () =>
+                {
+                    using (var db = new TrackedShipmentDbContext(this.readModelPersistenceConnectionConfiguration.ToSqlServerConnectionString()))
+                    {
+                        var shipmentEntry = db.Shipments.Single(_ => _.ParcelId == @event.AggregateId);
+                        shipmentEntry.Status = @event.ExtractPayload().NewStatus;
+                        shipmentEntry.LastUpdatedUtc = DateTime.UtcNow;
+                        db.SaveChanges();
+                    }
+                });
+        }
+
+        /// <inheritdoc />
         public void UpdateProjection(Shipment.ParcelDelivered @event)
         {
             this.RunWithRetry(
@@ -145,9 +203,9 @@ namespace Naos.MessageBus.Persistence
                     {
                         using (var db = new TrackedShipmentDbContext(this.readModelPersistenceConnectionConfiguration.ToSqlServerConnectionString()))
                         {
-                            var entry = db.Shipments.Single(_ => _.ParcelId == @event.AggregateId);
-                            entry.Status = @event.ExtractPayload().NewStatus;
-                            entry.LastUpdatedUtc = DateTime.UtcNow;
+                            var shipmentEntry = db.Shipments.Single(_ => _.ParcelId == @event.AggregateId);
+                            shipmentEntry.Status = @event.ExtractPayload().NewStatus;
+                            shipmentEntry.LastUpdatedUtc = DateTime.UtcNow;
                             db.SaveChanges();
                         }
                     });

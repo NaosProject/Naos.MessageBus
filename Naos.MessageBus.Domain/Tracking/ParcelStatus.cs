@@ -32,13 +32,13 @@ namespace Naos.MessageBus.Domain
         Aborted,
 
         /// <summary>
-        /// Parcel was accepted.
-        /// </summary>
-        Delivered,
-
-        /// <summary>
         /// Parcel was rejected.
         /// </summary>
-        Rejected
+        Rejected,
+
+        /// <summary>
+        /// Parcel was accepted.
+        /// </summary>
+        Delivered
     }
 }

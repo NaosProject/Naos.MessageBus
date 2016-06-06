@@ -98,7 +98,9 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Authorization.cs" />
+    <Compile Include="Commands\RequestResend.cs" />
     <Compile Include="Events\IUsePayload.cs" />
+    <Compile Include="Events\Shipment.EnvelopeResendRequested.cs" />
     <Compile Include="NoticeForDatabase.cs" />
     <Compile Include="Commands\Abort.cs" />
     <Compile Include="Events\Shipment.TopicBeingAffected.cs" />

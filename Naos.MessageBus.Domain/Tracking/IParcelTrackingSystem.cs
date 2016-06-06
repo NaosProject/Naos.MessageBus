@@ -58,6 +58,13 @@ namespace Naos.MessageBus.Domain
         /// <param name="reason">Reason for aborting.</param>
         /// <returns>Task for async.</returns>
         Task UpdateAbortedAsync(TrackingCode trackingCode, string reason);
+
+        /// <summary>
+        /// Resend a rejected parcel.
+        /// </summary>
+        /// <param name="trackingCode">Tracking code to resend.</param>
+        /// <returns>Task for async.</returns>
+        Task ResendAsync(TrackingCode trackingCode);
     }
 
     /// <summary>
@@ -81,6 +88,13 @@ namespace Naos.MessageBus.Domain
 
         /// <inheritdoc />
         public async Task UpdateAbortedAsync(TrackingCode trackingCode, string reason)
+        {
+            /* no-op */
+            await Task.FromResult<object>(null);
+        }
+
+        /// <inheritdoc />
+        public async Task ResendAsync(TrackingCode trackingCode)
         {
             /* no-op */
             await Task.FromResult<object>(null);

@@ -78,6 +78,18 @@ namespace Naos.MessageBus.Test
             return tracker;
         }
 
+        public static IGetTrackingReports GetSeededTrackerForGetTrackingReportAsync(IReadOnlyCollection<Tuple<TrackingCode[], List<ParcelTrackingReport>>> data)
+        {
+            var tracker = A.Fake<IGetTrackingReports>();
+
+            foreach (var item in data)
+            {
+                A.CallTo(() => tracker.GetTrackingReportAsync((IReadOnlyCollection<TrackingCode>)item.Item1)).Returns(Task.FromResult((IReadOnlyCollection<ParcelTrackingReport>)item.Item2));
+            }
+
+            return tracker;
+        }
+
         public static IPostOffice GetInMemoryParcelTrackingSystemBackedPostOffice(List<string> trackingCalls, List<Parcel> trackingSends)
         {
             var parcelTrackingSystemBuilder = Factory.GetInMemoryParcelTrackingSystem(trackingCalls, trackingSends);

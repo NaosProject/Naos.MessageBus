@@ -20,13 +20,15 @@ namespace Naos.MessageBus.Core
         /// <inheritdoc />
         public async Task HandleAsync(WaitForTrackingCodesToBeInStatusMessage message)
         {
+            var parcelTracker = HandlerToolShed.GetParcelTracker();
+
             var allStatusesAreAcceptable = false;
             while (!allStatusesAreAcceptable)
             {
                 Thread.Sleep(message.WaitTimeBetweenChecks);
-                var expected = message.AllowedStatuses.OrderBy(_ => _).ToArray();
+                var expected = message.AllowedStatuses.Distinct().OrderBy(_ => _).ToArray();
 
-                var reports = await HandlerToolShed.GetParcelTracker().GetTrackingReportAsync(message.TrackingCodes);
+                var reports = await parcelTracker.GetTrackingReportAsync(message.TrackingCodes);
                 var actual = reports.Select(_ => _.Status).Distinct().OrderBy(_ => _).ToArray();
 
                 allStatusesAreAcceptable = expected.SequenceEqual(actual);

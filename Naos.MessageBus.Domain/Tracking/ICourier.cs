@@ -17,6 +17,12 @@ namespace Naos.MessageBus.Domain
         /// <param name="crate">Crate that parcels are packed up in to be transported.</param>
         /// <returns>Courier specific tracking id.</returns>
         string Send(Crate crate);
+
+        /// <summary>
+        /// Resends an existing crate through the shipping system.
+        /// </summary>
+        /// <param name="crateLocator">Locator to find existing crate.</param>
+        void Resend(CrateLocator crateLocator);
     }
 
     /// <summary>
@@ -29,6 +35,12 @@ namespace Naos.MessageBus.Domain
         {
             /* no-op */
             return null;
+        }
+
+        /// <inheritdoc />
+        public void Resend(CrateLocator crateLocator)
+        {
+            /* no-op */
         }
     }
 }

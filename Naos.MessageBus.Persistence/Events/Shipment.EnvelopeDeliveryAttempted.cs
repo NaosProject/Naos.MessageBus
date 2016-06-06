@@ -26,8 +26,9 @@ namespace Naos.MessageBus.Persistence
             /// <inheritdoc />
             public override void Update(Shipment aggregate)
             {
-                aggregate.Tracking[this.ExtractPayload().TrackingCode].Recipient = this.ExtractPayload().Recipient;
-                aggregate.Tracking[this.ExtractPayload().TrackingCode].Status = this.ExtractPayload().NewStatus;
+                var payload = this.ExtractPayload();
+                aggregate.Tracking[payload.TrackingCode].Recipient = payload.Recipient;
+                aggregate.Tracking[payload.TrackingCode].Status = payload.NewStatus;
             }
         }
     }

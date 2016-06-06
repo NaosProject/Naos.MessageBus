@@ -85,6 +85,7 @@
     <Compile Include="Handlers\AbortIfNoDependencyTopicsAffectedMessageHandler.cs" />
     <Compile Include="Handlers\AbortIfTopicsHaveSpecificStatusMessageHandler.cs" />
     <Compile Include="Handlers\TopicBeingAffectedMessageHandler.cs" />
+    <Compile Include="Handlers\RetryTrackingCodesInSpecificStatusesMessageHandler.cs" />
     <Compile Include="RecurringParcelEncounteredException.cs" />
     <Compile Include="Handlers\ShareNowPlusTimeAsExpirationMessageHandler.cs" />
     <Compile Include="Handlers\ShareTrackingCodesMessageHandler.cs" />
