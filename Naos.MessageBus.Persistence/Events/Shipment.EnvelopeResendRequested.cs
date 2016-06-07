@@ -1,5 +1,5 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="Shipment.EnvelopeSent.cs" company="Naos">
+// <copyright file="Shipment.EnvelopeResendRequested.cs" company="Naos">
 //   Copyright 2015 Naos
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
@@ -18,7 +18,7 @@ namespace Naos.MessageBus.Persistence
         /// <summary>
         /// A shipment has been sent.
         /// </summary>
-        public class EnvelopeSent : Event<Shipment>, IUsePayload<PayloadEnvelopeSent>
+        public class EnvelopeResendRequested : Event<Shipment>, IUsePayload<PayloadEnvelopeResendRequested>
         {
             /// <inheritdoc />
             public string PayloadJson { get; set; }
@@ -35,29 +35,25 @@ namespace Naos.MessageBus.Persistence
     /// <summary>
     /// Payload of <see cref="Shipment.EnvelopeSent"/>.
     /// </summary>
-    public class PayloadEnvelopeSent : IPayload
+    public class PayloadEnvelopeResendRequested : IPayload
     {
         /// <summary>
-        /// Initializes a new instance of the <see cref="PayloadEnvelopeSent"/> class.
+        /// Initializes a new instance of the <see cref="PayloadEnvelopeResendRequested"/> class.
         /// </summary>
-        public PayloadEnvelopeSent()
+        public PayloadEnvelopeResendRequested()
         {
             // TODO: Remove this and setters after serialization is fixed...
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="PayloadEnvelopeSent"/> class.
+        /// Initializes a new instance of the <see cref="PayloadEnvelopeResendRequested"/> class.
         /// </summary>
         /// <param name="trackingCode">Tracking code of the event.</param>
         /// <param name="newStatus">New status the event produces.</param>
-        /// <param name="parcel">Containing parcel of the envelope.</param>
-        /// <param name="address">Address if present.</param>
-        public PayloadEnvelopeSent(TrackingCode trackingCode, ParcelStatus newStatus, Parcel parcel, IChannel address)
+        public PayloadEnvelopeResendRequested(TrackingCode trackingCode, ParcelStatus newStatus)
         {
             this.TrackingCode = trackingCode;
             this.NewStatus = newStatus;
-            this.Parcel = parcel;
-            this.Address = address;
         }
 
         /// <summary>
@@ -69,15 +65,5 @@ namespace Naos.MessageBus.Persistence
         /// Gets or sets the new status the event produces.
         /// </summary>
         public ParcelStatus NewStatus { get; set; }
-
-        /// <summary>
-        /// Gets or sets the containing parcel of the envelope.
-        /// </summary>
-        public Parcel Parcel { get; set; }
-
-        /// <summary>
-        /// Gets or sets the address if present.
-        /// </summary>
-        public IChannel Address { get; set; }
     }
 }

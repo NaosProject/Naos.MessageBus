@@ -88,10 +88,25 @@ namespace Naos.MessageBus.Persistence
         }
 
         /// <inheritdoc />
+        public async Task ResendAsync(TrackingCode trackingCode)
+        {
+            // shipment may already exist and this is just another envelope to deal with...
+            var shipment = await this.FetchShipmentAsync(trackingCode.ParcelId);
+            if (shipment == null)
+            {
+                throw new ArgumentException("Could not find shipment: " + trackingCode);
+            }
+
+            var command = new RequestResend { TrackingCode = trackingCode };
+            shipment.EnactCommand(command);
+            await this.SaveShipmentAsync(shipment);
+        }
+
+        /// <inheritdoc />
         public async Task UpdateSentAsync(TrackingCode trackingCode, Parcel parcel, IChannel address, ScheduleBase recurringSchedule)
         {
             // shipment may already exist and this is just another envelope to deal with...
-            var shipment = await this.FetchShipmentAsync(trackingCode);
+            var shipment = await this.FetchShipmentAsync(trackingCode.ParcelId);
             if (shipment == null)
             {
                 var commandCreate = new Create { AggregateId = parcel.Id, Parcel = parcel, RecurringSchedule = recurringSchedule };
@@ -106,7 +121,7 @@ namespace Naos.MessageBus.Persistence
         /// <inheritdoc />
         public async Task UpdateAttemptingAsync(TrackingCode trackingCode, HarnessDetails harnessDetails)
         {
-            var shipment = await this.FetchShipmentAsync(trackingCode);
+            var shipment = await this.FetchShipmentAsync(trackingCode.ParcelId);
 
             var command = new Attempt { TrackingCode = trackingCode, Recipient = harnessDetails };
             shipment.EnactCommand(command);
@@ -117,7 +132,7 @@ namespace Naos.MessageBus.Persistence
         /// <inheritdoc />
         public async Task UpdateRejectedAsync(TrackingCode trackingCode, Exception exception)
         {
-            var shipment = await this.FetchShipmentAsync(trackingCode);
+            var shipment = await this.FetchShipmentAsync(trackingCode.ParcelId);
 
             var command = new Reject { TrackingCode = trackingCode, ExceptionMessage = exception.Message, ExceptionJson = Serializer.Serialize(exception) };
             shipment.EnactCommand(command);
@@ -128,7 +143,7 @@ namespace Naos.MessageBus.Persistence
         /// <inheritdoc />
         public async Task UpdateDeliveredAsync(TrackingCode trackingCode, Envelope deliveredEnvelope)
         {
-            var shipment = await this.FetchShipmentAsync(trackingCode);
+            var shipment = await this.FetchShipmentAsync(trackingCode.ParcelId);
 
             var command = new Deliver { TrackingCode = trackingCode, DeliveredEnvelope = deliveredEnvelope };
             shipment.EnactCommand(command);
@@ -139,7 +154,7 @@ namespace Naos.MessageBus.Persistence
         /// <inheritdoc />
         public async Task UpdateAbortedAsync(TrackingCode trackingCode, string reason)
         {
-            var shipment = await this.FetchShipmentAsync(trackingCode);
+            var shipment = await this.FetchShipmentAsync(trackingCode.ParcelId);
 
             var command = new Abort { TrackingCode = trackingCode, Reason = reason };
             shipment.EnactCommand(command);
@@ -147,9 +162,9 @@ namespace Naos.MessageBus.Persistence
             await this.SaveShipmentAsync(shipment);
         }
 
-        private async Task<Shipment> FetchShipmentAsync(TrackingCode trackingCode)
+        private async Task<Shipment> FetchShipmentAsync(Guid parcelId)
         {
-            var shipment = await this.RunWithRetryAsync(() => this.configuration.Repository<Shipment>().GetLatest(trackingCode.ParcelId));
+            var shipment = await this.RunWithRetryAsync(() => this.configuration.Repository<Shipment>().GetLatest(parcelId));
             return shipment;
         }
 
@@ -167,10 +182,20 @@ namespace Naos.MessageBus.Persistence
                         using (var db = new TrackedShipmentDbContext(this.readModelPersistenceConnectionConfiguration.ToSqlServerConnectionString()))
                         {
                             var parcelIds = trackingCodes.Select(_ => _.ParcelId).Distinct().ToList();
+                            var matchingShipments = db.Shipments.Where(_ => parcelIds.Contains(_.ParcelId)).ToList();
                             var results =
-                                db.Shipments.Where(_ => parcelIds.Contains(_.ParcelId))
-                                    .Select(_ => new ParcelTrackingReport { ParcelId = _.ParcelId, Status = _.Status, LastUpdatedUtc = _.LastUpdatedUtc })
-                                    .ToList();
+                                matchingShipments.Select(
+                                    _ =>
+                                    new ParcelTrackingReport
+                                        {
+                                            ParcelId = _.ParcelId,
+                                            CurrentTrackingCode =
+                                                string.IsNullOrEmpty(_.CurrentCrateLocatorJson)
+                                                    ? null
+                                                    : Serializer.Deserialize<CrateLocator>(_.CurrentCrateLocatorJson).TrackingCode,
+                                            Status = _.Status,
+                                            LastUpdatedUtc = _.LastUpdatedUtc
+                                        }).ToList();
 
                             return Task.FromResult(results);
                         }
@@ -209,6 +234,8 @@ namespace Naos.MessageBus.Persistence
                                         Task.FromResult(
                                             new TopicStatusReport
                                                 {
+                                                    Topic = new AffectedTopic(topic.Name),
+                                                    Status = TopicStatus.Unknown,
                                                     AffectedItems = new AffectedItem[0],
                                                     DependencyTopicNoticesAtStart = new TopicStatusReport[0]
                                                 });

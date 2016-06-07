@@ -45,6 +45,8 @@ namespace Naos.MessageBus.Hangfire.Sender
         public string Send(Crate crate)
         {
             GlobalConfiguration.Configuration.UseSqlServerStorage(this.courierPersistenceConnectionConfiguration.ToSqlServerConnectionString());
+            var client = new BackgroundJobClient();
+
             var parcel = UncrateParcel(crate);
 
             var channel = crate.Address;
@@ -56,7 +58,6 @@ namespace Naos.MessageBus.Hangfire.Sender
                 throw new ArgumentException("Only addresses of type 'SimpleChannel' are currently supported.");
             }
 
-            var client = new BackgroundJobClient();
             var state = new EnqueuedState { Queue = simpleChannel.Name, };
 
             Expression<Action<HangfireDispatcher>> methodCall =
@@ -75,6 +76,18 @@ namespace Naos.MessageBus.Hangfire.Sender
             }
 
             return hangfireId;
+        }
+
+        /// <inheritdoc />
+        public void Resend(CrateLocator crateLocator)
+        {
+            GlobalConfiguration.Configuration.UseSqlServerStorage(this.courierPersistenceConnectionConfiguration.ToSqlServerConnectionString());
+            var client = new BackgroundJobClient();
+            var success = client.Requeue(crateLocator.CourierTrackingCode);
+            if (!success)
+            {
+                throw new ApplicationException("Failed to requeue Hangfire");
+            }
         }
 
         /// <summary>

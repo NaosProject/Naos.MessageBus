@@ -15,7 +15,6 @@ namespace Naos.MessageBus.Test
 
     using Its.Log.Instrumentation;
 
-    using Naos.Cron;
     using Naos.MessageBus.Domain;
     using Naos.MessageBus.Persistence;
 

@@ -50,6 +50,12 @@ namespace Naos.MessageBus.Domain
         TrackingCode Send(Parcel parcel);
 
         /// <summary>
+        /// Resend a rejected parcel.
+        /// </summary>
+        /// <param name="trackingCode">Tracking code to resend.</param>
+        void Resend(TrackingCode trackingCode);
+
+        /// <summary>
         /// Sends a message to recur on a schedule.
         /// </summary>
         /// <param name="message">Message to send.</param>

@@ -98,6 +98,12 @@ namespace Naos.MessageBus.Domain
         }
 
         /// <inheritdoc />
+        public void Resend(TrackingCode trackingCode)
+        {
+            this.parcelTrackingSystem.ResendAsync(trackingCode).Wait();
+        }
+
+        /// <inheritdoc />
         public TrackingCode SendRecurring(Parcel parcel, ScheduleBase recurringSchedule)
         {
             if (parcel.Topic != null)
@@ -182,7 +188,7 @@ namespace Naos.MessageBus.Domain
             {
                 var abortIfNoNewDataMessage = new AbortIfNoDependencyTopicsAffectedMessage
                                                   {
-                                                      Description = $"{parcel.Name} - Checking for updates on Depdendency Topics: " + string.Join(",", dependencyTopics),
+                                                      Description = $"{parcel.Name} - Abort if no updates on Depdendency Topics: " + string.Join(",", dependencyTopics),
                                                       Topic = parcel.Topic,
                                                       DependencyTopics = dependencyTopics,
                                                       TopicCheckStrategy = parcel.DependencyTopicCheckStrategy
@@ -194,7 +200,7 @@ namespace Naos.MessageBus.Domain
             // add a being affected message
             var beingAffectedMessage = new TopicBeingAffectedMessage
                                      {
-                                         Description = $"{parcel.Name} - Affecting Topic: {parcel.Topic}",
+                                         Description = $"{parcel.Name} - Begin affecting Topic: {parcel.Topic}",
                                          Topic = parcel.Topic
                                      };
 
@@ -206,7 +212,7 @@ namespace Naos.MessageBus.Domain
             // add the final was affected message
             var wasAffectedMessage = new TopicWasAffectedMessage
                                        {
-                                           Description = $"{parcel.Name} - Affected Topic: {parcel.Topic}",
+                                           Description = $"{parcel.Name} - Finished affecting Topic: {parcel.Topic}",
                                            Topic = parcel.Topic
                                        };
 

@@ -21,6 +21,11 @@ namespace Naos.MessageBus.Persistence
         public Guid ParcelId { get; set; }
 
         /// <summary>
+        /// Gets or sets the current crate locator as JSON.
+        /// </summary>
+        public string CurrentCrateLocatorJson { get; set; }
+
+        /// <summary>
         /// Gets or sets the status of the parcel.
         /// </summary>
         public ParcelStatus Status { get; set; }

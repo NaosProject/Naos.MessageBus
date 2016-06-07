@@ -31,6 +31,16 @@ namespace Naos.MessageBus.Persistence
         /// Enact the <see cref="Send"/> command.
         /// </summary>
         /// <param name="command">Command to enact on aggregate.</param>
+        public void EnactCommand(RequestResend command)
+        {
+            this.RecordEvent(
+                new EnvelopeResendRequested { PayloadJson = new PayloadEnvelopeResendRequested(command.TrackingCode, ParcelStatus.InTransit).ToJson() });
+        }
+
+        /// <summary>
+        /// Enact the <see cref="Send"/> command.
+        /// </summary>
+        /// <param name="command">Command to enact on aggregate.</param>
         public void EnactCommand(Send command)
         {
             this.RecordEvent(

@@ -8,8 +8,6 @@ namespace Naos.MessageBus.Domain
 {
     using System;
 
-    using Naos.Cron;
-
     /// <summary>
     /// Model object to hold details that can be retrieved about a tracked shipment.
     /// </summary>
@@ -19,6 +17,11 @@ namespace Naos.MessageBus.Domain
         /// Gets or sets the parcel's ID.
         /// </summary>
         public Guid ParcelId { get; set; }
+
+        /// <summary>
+        /// Gets or sets the current tracking code (there can be multiple envelopes in a parcel).
+        /// </summary>
+        public TrackingCode CurrentTrackingCode { get; set; }
 
         /// <summary>
         /// Gets or sets the status of the parcel.

@@ -16,13 +16,8 @@ namespace Naos.MessageBus.Core
     /// <summary>
     /// No implementation handler to handle NullMessages.
     /// </summary>
-    public class AbortIfNoDependencyTopicsAffectedMessageHandler : IHandleMessages<AbortIfNoDependencyTopicsAffectedMessage>, IShareTopicStatusReports
+    public class AbortIfNoDependencyTopicsAffectedMessageHandler : IHandleMessages<AbortIfNoDependencyTopicsAffectedMessage>
     {
-        /// <summary>
-        /// Gets or sets the notices as they were evaluated with processing check.
-        /// </summary>
-        public TopicStatusReport[] TopicStatusReports { get; set; }
-
         /// <inheritdoc />
         public async Task HandleAsync(AbortIfNoDependencyTopicsAffectedMessage message)
         {
