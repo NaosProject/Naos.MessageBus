@@ -78,16 +78,29 @@ namespace Naos.MessageBus.Test
             return tracker;
         }
 
+        public static IGetTrackingReports GetRoundRobinStatusImplOfGetTrackingReportAsync(TrackingCode trackingCode, ParcelStatus[] parcelStatusesToRoundRobin, IList<string> trackingCalls = null)
+        {
+            return new RoundRobinStatusTracker(trackingCode, parcelStatusesToRoundRobin, trackingCalls ?? new List<string>());
+        }
+
         public static IGetTrackingReports GetSeededTrackerForGetTrackingReportAsync(IReadOnlyCollection<Tuple<TrackingCode[], List<ParcelTrackingReport>>> data)
         {
-            var tracker = A.Fake<IGetTrackingReports>();
+            var ret = new SeededTracker(data);
+
+            return ret;
+
+            /*
+             * Totally does not work because it can't match on the array in the CallTo signature and tries to create a fake IReadOnlyCollection
+             * this is why I just use a mock where i can match the inputs to the seed data map.
+            var tracker = A.Dummy<IGetTrackingReports>();
 
             foreach (var item in data)
             {
-                A.CallTo(() => tracker.GetTrackingReportAsync((IReadOnlyCollection<TrackingCode>)item.Item1)).Returns(Task.FromResult((IReadOnlyCollection<ParcelTrackingReport>)item.Item2));
+                A.CallTo(() => tracker.GetTrackingReportAsync(item.Item1)).Returns(Task.FromResult((IReadOnlyCollection<ParcelTrackingReport>)item.Item2));
             }
 
             return tracker;
+            */
         }
 
         public static IPostOffice GetInMemoryParcelTrackingSystemBackedPostOffice(List<string> trackingCalls, List<Parcel> trackingSends)
@@ -95,6 +108,75 @@ namespace Naos.MessageBus.Test
             var parcelTrackingSystemBuilder = Factory.GetInMemoryParcelTrackingSystem(trackingCalls, trackingSends);
             var ret = new PostOffice(parcelTrackingSystemBuilder(), new ChannelRouter(new NullChannel()));
             return ret;
+        }
+
+        public class SeededTracker : IGetTrackingReports
+        {
+            private readonly IReadOnlyCollection<Tuple<TrackingCode[], List<ParcelTrackingReport>>> seedData;
+
+            public SeededTracker(IReadOnlyCollection<Tuple<TrackingCode[], List<ParcelTrackingReport>>> seedData)
+            {
+                this.seedData = seedData;
+            }
+
+            /// <inheritdoc />
+            public async Task<IReadOnlyCollection<ParcelTrackingReport>> GetTrackingReportAsync(IReadOnlyCollection<TrackingCode> trackingCodes)
+            {
+                var ret = this.seedData.Single(_ => _.Item1.Length == trackingCodes.Count && _.Item1.All(trackingCodes.Contains)).Item2;
+                return await Task.FromResult(ret);
+            }
+
+            /// <inheritdoc />
+            public Task<TopicStatusReport> GetLatestTopicStatusReportAsync(ITopic topic, TopicStatus statusFilter = TopicStatus.None)
+            {
+                throw new NotImplementedException();
+            }
+        }
+
+        public class RoundRobinStatusTracker : IGetTrackingReports
+        {
+            private readonly TrackingCode trackingCode;
+
+            private readonly ParcelStatus[] parcelStatusesToRoundRobin;
+
+            private readonly IList<string> trackingCalls;
+
+            private int index;
+
+            public RoundRobinStatusTracker()
+            {
+            }
+
+            public RoundRobinStatusTracker(TrackingCode trackingCode, ParcelStatus[] parcelStatusesToRoundRobin, IList<string> trackingCalls)
+            {
+                this.trackingCode = trackingCode;
+                this.parcelStatusesToRoundRobin = parcelStatusesToRoundRobin;
+                this.trackingCalls = trackingCalls;
+                this.index = 0;
+            }
+
+            /// <inheritdoc />
+            public async Task<IReadOnlyCollection<ParcelTrackingReport>> GetTrackingReportAsync(IReadOnlyCollection<TrackingCode> trackingCodes)
+            {
+                this.trackingCalls.Add(nameof(IGetTrackingReports.GetTrackingReportAsync));
+                var status = this.parcelStatusesToRoundRobin[this.index];
+                this.index = this.index + 1;
+                var ret = new ParcelTrackingReport
+                              {
+                                  CurrentTrackingCode = this.trackingCode,
+                                  ParcelId = this.trackingCode.ParcelId,
+                                  Status = status,
+                                  LastUpdatedUtc = DateTime.UtcNow
+                              };
+
+                return await Task.FromResult(new[] { ret });
+            }
+
+            /// <inheritdoc />
+            public Task<TopicStatusReport> GetLatestTopicStatusReportAsync(ITopic topic, TopicStatus statusFilter = TopicStatus.None)
+            {
+                throw new NotImplementedException();
+            }
         }
     }
 }

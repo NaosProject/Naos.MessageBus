@@ -146,6 +146,8 @@
   <ItemGroup>
     <Compile Include=".Spritely.Recipes\SecureString\SecureString.cs" />
     <Compile Include="AbortIfTopicsHaveSpecificStatusMessageHandlerTests.cs" />
+    <Compile Include="WaitForTrackingCodesMessageHandlerTests.cs" />
+    <Compile Include="RetryTrackingCodesInSpecificStatusesMessageHandlerTests.cs" />
     <Compile Include="FetchAndShareLatestTopicStatusReportsMessageHandlerTests.cs" />
     <Compile Include="AbortIfNoDependencyTopicsAffectedMessageHandlerTests.cs" />
     <Compile Include="AutoFakeItEasyBootstrapper.cs" />

@@ -72,13 +72,26 @@ namespace Naos.MessageBus.Core
                 if (breakTheWhileLoop && parcelsThatNeedRetrying.Any() && message.ThrowIfRetriesExceededWithSpecificStatuses)
                 {
                     var failedParcelsString = string.Join(",", parcelsThatNeedRetrying.Select(_ => $"{_.CurrentTrackingCode}:{_.Status}"));
-                    throw new ArgumentException(
+                    throw new RetryFailedToProcessOutOfRetryStatusException(
                         $"Some messages failed to get out of needing retry status but retry attempt ({message.NumberOfRetriesToAttempt}) exhausted - {failedParcelsString}");
                 }
             }
 
             /* no-op */
             await Task.FromResult<object>(null);
+        }
+    }
+
+    /// <summary>
+    /// Exception for when the <see cref="RetryTrackingCodesInSpecificStatusesMessageHandler"/> has run all retries 
+    /// but still has messages in the status list to retry as specified 
+    /// in the provided <see cref="RetryTrackingCodesInSpecificStatusesMessage"/>.
+    /// </summary>
+    public class RetryFailedToProcessOutOfRetryStatusException : Exception
+    {
+        /// <inheritdoc />
+        public RetryFailedToProcessOutOfRetryStatusException(string message) : base(message)
+        {
         }
     }
 }
