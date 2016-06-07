@@ -253,7 +253,10 @@ namespace Naos.MessageBus.Persistence
                                         var beingAffectedEnvelope = Serializer.Deserialize<Envelope>(mostRecentNotice.TopicBeingAffectedEnvelopeJson);
                                         var beingAffectedMessage = Serializer.Deserialize<TopicBeingAffectedMessage>(beingAffectedEnvelope.MessageAsJson);
                                         items = beingAffectedMessage.AffectedItems;
-                                        dependencyNotices = beingAffectedMessage.TopicStatusReports;
+
+                                        // filter out our own status report...
+                                        dependencyNotices =
+                                            (beingAffectedMessage.TopicStatusReports ?? new TopicStatusReport[0]).Where(_ => !topic.Equals(_.Topic)).ToArray();
                                     }
                                     else
                                     {
@@ -266,7 +269,10 @@ namespace Naos.MessageBus.Persistence
                                     var wasAffectedEnvelope = Serializer.Deserialize<Envelope>(mostRecentNotice.TopicWasAffectedEnvelopeJson);
                                     var wasAffectedMessage = Serializer.Deserialize<TopicWasAffectedMessage>(wasAffectedEnvelope.MessageAsJson);
                                     items = wasAffectedMessage.AffectedItems;
-                                    dependencyNotices = wasAffectedMessage.TopicStatusReports;
+
+                                    // filter out our own status report...
+                                    dependencyNotices =
+                                        (wasAffectedMessage.TopicStatusReports ?? new TopicStatusReport[0]).Where(_ => !topic.Equals(_.Topic)).ToArray();
                                 }
 
                                 return
@@ -277,7 +283,7 @@ namespace Naos.MessageBus.Persistence
                                                 AffectsCompletedDateTimeUtc = mostRecentNotice.AffectsCompletedDateTimeUtc,
                                                 AffectedItems = items ?? new AffectedItem[0],
                                                 Status = mostRecentNotice.Status,
-                                                DependencyTopicNoticesAtStart = dependencyNotices ?? new TopicStatusReport[0]
+                                                DependencyTopicNoticesAtStart = dependencyNotices
                                             });
                             }
                         }

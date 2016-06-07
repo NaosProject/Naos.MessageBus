@@ -42,6 +42,7 @@ namespace Naos.MessageBus.Test
                                     {
                                         Topic = impactingTopic,
                                         AffectsCompletedDateTimeUtc = DateTime.UtcNow,
+                                        Status = TopicStatus.WasAffected,
                                         DependencyTopicNoticesAtStart =
                                             topics.Select(
                                                 _ =>
@@ -89,6 +90,7 @@ namespace Naos.MessageBus.Test
                                     {
                                         Topic = impactingTopic,
                                         AffectsCompletedDateTimeUtc = DateTime.UtcNow,
+                                        Status = TopicStatus.WasAffected,
                                         DependencyTopicNoticesAtStart =
                                             topics.Select(
                                                 _ =>
@@ -196,6 +198,7 @@ namespace Naos.MessageBus.Test
                                     {
                                         Topic = impactingTopic,
                                         AffectsCompletedDateTimeUtc = DateTime.UtcNow,
+                                        Status = TopicStatus.WasAffected,
                                         DependencyTopicNoticesAtStart =
                                             topics.Select(
                                                 _ =>
@@ -279,6 +282,7 @@ namespace Naos.MessageBus.Test
                             new TopicStatusReport
                                 {
                                     Topic = impactingTopic,
+                                    Status = TopicStatus.WasAffected,
                                     AffectsCompletedDateTimeUtc = DateTime.UtcNow,
                                     DependencyTopicNoticesAtStart = topicStatusReports
                                 }

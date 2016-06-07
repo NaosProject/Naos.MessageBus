@@ -50,7 +50,10 @@ namespace Naos.MessageBus.Core
                 throw new ArgumentException($"Could not find {nameof(TopicStatusReport)} for specified topic: {message.Topic}");
             }
 
-            var lastRunDependencyNotices = currentStatusReportForAffectingTopic.DependencyTopicNoticesAtStart ?? new TopicStatusReport[0];
+            // only use the previous dependency notices if it was a succesful run...
+            var lastRunDependencyNotices = (currentStatusReportForAffectingTopic.Status == TopicStatus.WasAffected
+                                                ? currentStatusReportForAffectingTopic.DependencyTopicNoticesAtStart
+                                                : null) ?? new TopicStatusReport[0];
 
             var topicsToCheckRecentResults = message.DependencyTopics.ToDictionary(
                 key => key,
