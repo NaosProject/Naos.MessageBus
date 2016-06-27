@@ -87,7 +87,7 @@ namespace Naos.MessageBus.Core
             var filesRaw = Directory.GetFiles(handlerAssemblyPath, "*.dll", SearchOption.AllDirectories);
 
             // initialize the details about this handler.
-            var assemblies = filesRaw.Select(_ => AssemblyDetails.CreateFromFile(_)).ToList();
+            var assemblies = filesRaw.Select(SafeFetchAssemblyDetails).ToList();
             var machineDetails = MachineDetails.Create();
             this.harnessStaticDetails = new HarnessStaticDetails
                                       {
@@ -139,10 +139,26 @@ namespace Naos.MessageBus.Core
                                 + string.Join(",", reflectionTypeLoadException.LoaderExceptions.Select(_ => _.ToString())),
                                 reflectionTypeLoadException);
                         }
-                    });
+                    }).ToList();
 
             LoadHandlerTypeMapFromAssemblies(handlerTypeMap, assembliesFromFiles);
             this.LoadContainerFromHandlerTypeMap(handlerTypeMap);
+        }
+
+        private static AssemblyDetails SafeFetchAssemblyDetails(string assemblyFilePath)
+        {
+            var ret = new AssemblyDetails { FilePath = assemblyFilePath };
+
+            try
+            {
+                ret = AssemblyDetails.CreateFromFile(assemblyFilePath);
+            }
+            catch (Exception)
+            {
+                /* no-op - swallow this because we will just get what we get... */
+            }
+
+            return ret;
         }
 
         private static void LoadHandlerTypeMapFromAssemblies(List<TypeMap> handlerTypeMap, IEnumerable<Assembly> assemblies)
