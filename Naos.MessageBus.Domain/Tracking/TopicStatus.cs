@@ -17,6 +17,11 @@ namespace Naos.MessageBus.Domain
         Unknown,
 
         /// <summary>
+        /// None state, null object of the enum.
+        /// </summary>
+        None,
+
+        /// <summary>
         /// Topic is being affected currently by another process.
         /// </summary>
         BeingAffected,
@@ -27,9 +32,9 @@ namespace Naos.MessageBus.Domain
         WasAffected,
 
         /// <summary>
-        /// None state, null object of the enum.
+        /// Aborted state, an attempted run on affecting data was cancelled.
         /// </summary>
-        None,
+        Aborted,
 
         /// <summary>
         /// Failed state, an attempted run on affecting data could not complete.

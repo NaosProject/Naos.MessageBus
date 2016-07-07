@@ -56,16 +56,16 @@ namespace Naos.MessageBus.Test
                             })
                     .ToArray();
 
-            var message = new AbortIfTopicsHaveSpecificStatusMessage()
+            var message = new AbortIfTopicsHaveSpecificStatusesMessage()
             {
                 Description = A.Dummy<string>(),                
-                StatusToAbortOn = TopicStatus.BeingAffected,
+                StatusesToAbortOn = new[] { TopicStatus.BeingAffected },
                 TopicCheckStrategy = TopicCheckStrategy.Any,
                 TopicStatusReports = reports,
                 TopicsToCheck = reports.Select(_ => _.Topic.ToNamedTopic()).ToArray()
             };
 
-            var handler = new AbortIfTopicsHaveSpecificStatusMessageHandler();
+            var handler = new AbortIfTopicsHaveSpecificStatusesMessageHandler();
             Func<Task> testCode = () => handler.HandleAsync(message);
             Action testCodeSync = () => testCode().Wait();
 
@@ -109,16 +109,16 @@ namespace Naos.MessageBus.Test
                             })
                     .ToArray();
 
-            var message = new AbortIfTopicsHaveSpecificStatusMessage()
+            var message = new AbortIfTopicsHaveSpecificStatusesMessage()
             {
                 Description = A.Dummy<string>(),
-                StatusToAbortOn = TopicStatus.BeingAffected,
+                StatusesToAbortOn = new[] { TopicStatus.BeingAffected },
                 TopicCheckStrategy = TopicCheckStrategy.Any,
                 TopicStatusReports = reports,
                 TopicsToCheck = reports.Select(_ => _.Topic.ToNamedTopic()).ToArray()
             };
 
-            var handler = new AbortIfTopicsHaveSpecificStatusMessageHandler();
+            var handler = new AbortIfTopicsHaveSpecificStatusesMessageHandler();
             Func<Task> testCode = () => handler.HandleAsync(message);
 
             // act
@@ -138,16 +138,16 @@ namespace Naos.MessageBus.Test
             var reports =
                 topics.Cast<ITopic>().Select(_ => new TopicStatusReport { Topic = new AffectedTopic(_.Name), Status = TopicStatus.BeingAffected }).ToArray();
 
-            var message = new AbortIfTopicsHaveSpecificStatusMessage()
+            var message = new AbortIfTopicsHaveSpecificStatusesMessage()
             {
                 Description = A.Dummy<string>(),
-                StatusToAbortOn = TopicStatus.BeingAffected,
+                StatusesToAbortOn = new[] { TopicStatus.BeingAffected },
                 TopicCheckStrategy = TopicCheckStrategy.All,
                 TopicStatusReports = reports,
                 TopicsToCheck = reports.Select(_ => _.Topic.ToNamedTopic()).ToArray()
             };
 
-            var handler = new AbortIfTopicsHaveSpecificStatusMessageHandler();
+            var handler = new AbortIfTopicsHaveSpecificStatusesMessageHandler();
             Func<Task> testCode = () => handler.HandleAsync(message);
             Action testCodeSync = () => testCode().Wait();
 
@@ -190,16 +190,16 @@ namespace Naos.MessageBus.Test
                             })
                     .ToArray();
 
-            var message = new AbortIfTopicsHaveSpecificStatusMessage()
+            var message = new AbortIfTopicsHaveSpecificStatusesMessage()
             {
                 Description = A.Dummy<string>(),
-                StatusToAbortOn = TopicStatus.BeingAffected,
+                StatusesToAbortOn = new[] { TopicStatus.BeingAffected },
                 TopicCheckStrategy = TopicCheckStrategy.All,
                 TopicStatusReports = reports,
                 TopicsToCheck = reports.Select(_ => _.Topic.ToNamedTopic()).ToArray()
             };
 
-            var handler = new AbortIfTopicsHaveSpecificStatusMessageHandler();
+            var handler = new AbortIfTopicsHaveSpecificStatusesMessageHandler();
             Func<Task> testCode = () => handler.HandleAsync(message);
 
             // act
