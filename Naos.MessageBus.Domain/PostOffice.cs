@@ -173,12 +173,12 @@ namespace Naos.MessageBus.Domain
 
             if (parcel.SimultaneousRunsStrategy == SimultaneousRunsStrategy.AbortSubsequentRunsWhenOneIsRunning)
             {
-                var abortIfPendingMessage = new AbortIfTopicsHaveSpecificStatusMessage
+                var abortIfPendingMessage = new AbortIfTopicsHaveSpecificStatusesMessage
                                                 {
-                                                    Description = $"{parcel.Name} - Abort if '{parcel.Topic}' Being Affected",
+                                                    Description = $"{parcel.Name} - Abort if '{parcel.Topic}' Being Affected or Failed",
                                                     TopicsToCheck = new[] { parcel.Topic.ToNamedTopic() },
                                                     TopicCheckStrategy = TopicCheckStrategy.All,
-                                                    StatusToAbortOn = TopicStatus.BeingAffected
+                                                    StatusesToAbortOn = new[] { TopicStatus.BeingAffected, TopicStatus.Failed }
                                                 };
 
                 newEnvelopes.Add(abortIfPendingMessage.ToAddressedMessage().ToEnvelope());

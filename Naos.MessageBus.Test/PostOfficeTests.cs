@@ -104,8 +104,8 @@ namespace Naos.MessageBus.Test
 
             // abort if pending
             var indexAbort = 1;
-            parcel.Envelopes.Skip(indexAbort).First().MessageType.Should().Be(typeof(AbortIfTopicsHaveSpecificStatusMessage).ToTypeDescription());
-            Serializer.Deserialize<AbortIfTopicsHaveSpecificStatusMessage>(parcel.Envelopes.Skip(indexAbort).First().MessageAsJson).TopicsToCheck.Single().Name.Should().Be(myTopic);
+            parcel.Envelopes.Skip(indexAbort).First().MessageType.Should().Be(typeof(AbortIfTopicsHaveSpecificStatusesMessage).ToTypeDescription());
+            Serializer.Deserialize<AbortIfTopicsHaveSpecificStatusesMessage>(parcel.Envelopes.Skip(indexAbort).First().MessageAsJson).TopicsToCheck.Single().Name.Should().Be(myTopic);
 
             // being affected
             var indexBeing = 2;
@@ -188,8 +188,8 @@ namespace Naos.MessageBus.Test
 
             // abort if pending
             var indexAbort = 1;
-            parcel.Envelopes.Skip(indexAbort).First().MessageType.Should().Be(typeof(AbortIfTopicsHaveSpecificStatusMessage).ToTypeDescription());
-            Serializer.Deserialize<AbortIfTopicsHaveSpecificStatusMessage>(parcel.Envelopes.Skip(indexAbort).First().MessageAsJson).TopicsToCheck.Single().Name.Should().Be(myTopic);
+            parcel.Envelopes.Skip(indexAbort).First().MessageType.Should().Be(typeof(AbortIfTopicsHaveSpecificStatusesMessage).ToTypeDescription());
+            Serializer.Deserialize<AbortIfTopicsHaveSpecificStatusesMessage>(parcel.Envelopes.Skip(indexAbort).First().MessageAsJson).TopicsToCheck.Single().Name.Should().Be(myTopic);
 
             // abort if no new
             var indexNoNewAbort = 2;

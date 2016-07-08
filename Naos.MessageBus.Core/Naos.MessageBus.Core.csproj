@@ -83,7 +83,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Handlers\AbortIfNoDependencyTopicsAffectedMessageHandler.cs" />
-    <Compile Include="Handlers\AbortIfTopicsHaveSpecificStatusMessageHandler.cs" />
+    <Compile Include="Handlers\AbortIfTopicsHaveSpecificStatusesMessageHandler.cs" />
     <Compile Include="Handlers\TopicBeingAffectedMessageHandler.cs" />
     <Compile Include="Handlers\RetryTrackingCodesInSpecificStatusesMessageHandler.cs" />
     <Compile Include="RecurringParcelEncounteredException.cs" />
@@ -100,6 +100,7 @@
     <Compile Include="Handlers\WaitMessageHandler.cs" />
     <Compile Include="Handlers\NullMessageHandler.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="SynchronizedPostOffice.cs" />
     <Compile Include="SharedPropertyHelper.cs" />
   </ItemGroup>
   <ItemGroup>

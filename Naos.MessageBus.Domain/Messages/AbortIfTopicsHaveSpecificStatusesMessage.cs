@@ -1,5 +1,5 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="AbortIfTopicsHaveSpecificStatusMessage.cs" company="Naos">
+// <copyright file="AbortIfTopicsHaveSpecificStatusesMessage.cs" company="Naos">
 //   Copyright 2015 Naos
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
@@ -9,7 +9,7 @@ namespace Naos.MessageBus.Domain
     /// <summary>
     /// Message to abort if a topics are all in a specific status.
     /// </summary>
-    public class AbortIfTopicsHaveSpecificStatusMessage : IMessage, IShareTopicStatusReports
+    public class AbortIfTopicsHaveSpecificStatusesMessage : IMessage, IShareTopicStatusReports
     {
         /// <inheritdoc />
         public string Description { get; set; }
@@ -25,9 +25,9 @@ namespace Naos.MessageBus.Domain
         public TopicCheckStrategy TopicCheckStrategy { get; set; }
 
         /// <summary>
-        /// Gets or sets the status that should be checked.
+        /// Gets or sets the statuses that should be checked against.
         /// </summary>
-        public TopicStatus StatusToAbortOn { get; set; }
+        public TopicStatus[] StatusesToAbortOn { get; set; }
 
         /// <summary>
         /// Gets or sets topic status reports that is expected to contain reports of the topics to check.

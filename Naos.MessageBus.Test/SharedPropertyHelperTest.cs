@@ -23,6 +23,24 @@ namespace Naos.MessageBus.Test
     public class SharedPropertyHelperTest
     {
         [Fact]
+        public static void GetAndApplySharedPropertySet_ShareContractOfComplexType_CanBeExtractedAndApplied()
+        {
+            var testHandler = new TestComplexShareHandler { ComplexShareObject = new ComplexShareObject("we did it!"), OtherProp = "monkey" };
+            var testMessage = new TestComplexShareMessage();
+
+            var sharedProperties = SharedPropertyHelper.GetSharedInterfaceStates(testHandler);
+            var sharedPropertiesAsJson = Serializer.Serialize(sharedProperties);
+            var sharedPropertiesFromJson = Serializer.Deserialize<IList<SharedInterfaceState>>(sharedPropertiesAsJson);
+            SharedPropertyHelper.ApplySharedInterfaceState(
+                TypeMatchStrategy.NamespaceAndName,
+                sharedPropertiesFromJson.Single(),
+                testMessage);
+
+            Assert.Equal(testHandler.ComplexShareObject.Prop, testMessage.ComplexShareObject.Prop);
+            Assert.Equal(testHandler.OtherProp, testMessage.OtherProp);
+        }
+
+        [Fact]
         public static void GetAndApplySharedPropertySet_ShareContractOfString_CanBeExtractedAndApplied()
         {
             var testHandler = new CopyFileHandler() { FilePath = "This should be set on the message" };
@@ -196,6 +214,37 @@ namespace Naos.MessageBus.Test
             SharedPropertyHelper.ApplySharedProperties(TypeMatchStrategy.NamespaceAndName, testHandler, testMessage);
             Assert.Equal(testHandler.EnumValueToShare, testMessage.EnumValueToShare);
         }
+    }
+
+    public class ComplexShareObject
+    {
+        public ComplexShareObject(string prop)
+        {
+            this.Prop = prop;
+        }
+
+        public string Prop { get; set; }
+    }
+
+    public interface IShareComplexType : IShare
+    {
+        ComplexShareObject ComplexShareObject { get; set; }
+
+        string OtherProp { get; set; }
+    }
+
+    public class TestComplexShareMessage : IShareComplexType
+    {
+        public ComplexShareObject ComplexShareObject { get; set; }
+
+        public string OtherProp { get; set; }
+    }
+
+    public class TestComplexShareHandler : IShareComplexType
+    {
+        public ComplexShareObject ComplexShareObject { get; set; }
+
+        public string OtherProp { get; set; }
     }
 
     public class FirstEnumHandler : IHandleMessages<FirstEnumMessage>, IShareEnum

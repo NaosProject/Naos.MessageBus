@@ -1,5 +1,5 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="AbortIfTopicsHaveSpecificStatusMessageHandler.cs" company="Naos">
+// <copyright file="AbortIfTopicsHaveSpecificStatusesMessageHandler.cs" company="Naos">
 //   Copyright 2015 Naos
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
@@ -16,10 +16,10 @@ namespace Naos.MessageBus.Core
     /// <summary>
     /// No implementation handler to handle NullMessages.
     /// </summary>
-    public class AbortIfTopicsHaveSpecificStatusMessageHandler : IHandleMessages<AbortIfTopicsHaveSpecificStatusMessage>
+    public class AbortIfTopicsHaveSpecificStatusesMessageHandler : IHandleMessages<AbortIfTopicsHaveSpecificStatusesMessage>
     {
         /// <inheritdoc />
-        public async Task HandleAsync(AbortIfTopicsHaveSpecificStatusMessage message)
+        public async Task HandleAsync(AbortIfTopicsHaveSpecificStatusesMessage message)
         {
             if (message == null)
             {
@@ -28,7 +28,7 @@ namespace Naos.MessageBus.Core
 
             if (message.TopicsToCheck == null || !message.TopicsToCheck.Any())
             {
-                throw new ArgumentException($"Message.{nameof(AbortIfTopicsHaveSpecificStatusMessage.TopicsToCheck)} cannot be null.");
+                throw new ArgumentException($"Message.{nameof(AbortIfTopicsHaveSpecificStatusesMessage.TopicsToCheck)} cannot be null.");
             }
 
             if (message.TopicCheckStrategy == TopicCheckStrategy.None)
@@ -51,19 +51,20 @@ namespace Naos.MessageBus.Core
             }
 
             var statusString = string.Join(",", latestTopics.Select(_ => $"{_.Topic}: {_.Status}"));
+            var statusesToAbortString = string.Join(",", message.StatusesToAbortOn);
             switch (message.TopicCheckStrategy)
             {
                 case TopicCheckStrategy.Any:
-                    if (latestTopics.Any(_ => _.Status == message.StatusToAbortOn))
+                    if (latestTopics.Any(_ => message.StatusesToAbortOn.Contains(_.Status)))
                     {
-                        throw new AbortParcelDeliveryException($"Found one topic with status {message.StatusToAbortOn} - {statusString}.");
+                        throw new AbortParcelDeliveryException($"Found one topic with status {statusesToAbortString} - {statusString}.");
                     }
 
                     break;
                 case TopicCheckStrategy.All:
-                    if (latestTopics.All(_ => _.Status == message.StatusToAbortOn))
+                    if (latestTopics.All(_ => message.StatusesToAbortOn.Contains(_.Status)))
                     {
-                        throw new AbortParcelDeliveryException($"Found all topics to have status {message.StatusToAbortOn} - {statusString}.");
+                        throw new AbortParcelDeliveryException($"Found all topics to have status {statusesToAbortString} - {statusString}.");
                     }
 
                     break;
