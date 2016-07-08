@@ -229,13 +229,12 @@ namespace Naos.MessageBus.Core
                 }
             }
 
+            deliveredCallback(deliveredEnvelope);
+
             if (remainingEnvelopes.Any())
             {
                 this.SendRemainingEnvelopes(parcel.Id, remainingEnvelopes, parcel.SharedInterfaceStates, handler);
             }
-
-            // this might one day move above the resend but its safer to not progress in the sequence in case there was a send failure...
-            deliveredCallback(deliveredEnvelope);
         }
 
         private void SendRemainingEnvelopes(Guid parcelId, List<Envelope> envelopes, IList<SharedInterfaceState> existingSharedInterfaceStates, object handler = null)
