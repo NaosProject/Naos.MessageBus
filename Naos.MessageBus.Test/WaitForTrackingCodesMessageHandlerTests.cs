@@ -52,5 +52,29 @@ namespace Naos.MessageBus.Test
             // assert
             trackingCalls.Distinct().SingleOrDefault().Should().Be(nameof(IGetTrackingReports.GetTrackingReportAsync));
         }
+
+        [Fact]
+        public void EmptyTrackingCodes___Exits()
+        {
+            // arrange
+            var parcelStatusToBreakOn = ParcelStatus.Rejected;
+
+            var message = new WaitForTrackingCodesToBeInStatusMessage
+                              {
+                                  Description = "Description",
+                                  WaitTimeBetweenChecks = TimeSpan.FromSeconds(.01),
+                                  TrackingCodes = new TrackingCode[0],
+                                  AllowedStatuses = new[] { parcelStatusToBreakOn }
+                              };
+
+            var parcelTracker = Factory.GetSeededTrackerForGetTrackingReportAsync(new List<Tuple<TrackingCode[], List<ParcelTrackingReport>>>());
+            var handler = new WaitForTrackingCodesToBeInStatusMessageHandler();
+
+            // act
+            Action testCode = () => handler.HandleAsync(message, parcelTracker).Wait();
+            testCode();
+
+            // assert - by arriving here it is working...
+        }
     }
 }

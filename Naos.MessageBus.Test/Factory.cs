@@ -122,8 +122,8 @@ namespace Naos.MessageBus.Test
             /// <inheritdoc />
             public async Task<IReadOnlyCollection<ParcelTrackingReport>> GetTrackingReportAsync(IReadOnlyCollection<TrackingCode> trackingCodes)
             {
-                var ret = this.seedData.Single(_ => _.Item1.Length == trackingCodes.Count && _.Item1.All(trackingCodes.Contains)).Item2;
-                return await Task.FromResult(ret);
+                var ret = this.seedData.SingleOrDefault(_ => _.Item1.Length == trackingCodes.Count && _.Item1.All(trackingCodes.Contains))?.Item2;
+                return await Task.FromResult(ret ?? new List<ParcelTrackingReport>());
             }
 
             /// <inheritdoc />

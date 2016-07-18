@@ -33,8 +33,8 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Conditions, Version=2.0.1.19, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Conditions.2.0.1\lib\portable-net45+win+wpa81+wp80+MonoAndroid10+MonoTouch10\Conditions.dll</HintPath>
+    <Reference Include="Conditions, Version=2.1.0.24, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Conditions.2.1.0\lib\portable-net45+win+wpa81+wp80+MonoAndroid10+MonoTouch10\Conditions.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="EntityFramework, Version=6.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089, processorArchitecture=MSIL">
@@ -49,12 +49,12 @@
       <HintPath>..\packages\FakeItEasy.2.1.0\lib\net40\FakeItEasy.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="FluentAssertions, Version=4.9.1.0, Culture=neutral, PublicKeyToken=33f2691a05b67b6a, processorArchitecture=MSIL">
-      <HintPath>..\packages\FluentAssertions.4.9.1\lib\net45\FluentAssertions.dll</HintPath>
+    <Reference Include="FluentAssertions, Version=4.12.0.0, Culture=neutral, PublicKeyToken=33f2691a05b67b6a, processorArchitecture=MSIL">
+      <HintPath>..\packages\FluentAssertions.4.12.0\lib\net45\FluentAssertions.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="FluentAssertions.Core, Version=4.9.1.0, Culture=neutral, PublicKeyToken=33f2691a05b67b6a, processorArchitecture=MSIL">
-      <HintPath>..\packages\FluentAssertions.4.9.1\lib\net45\FluentAssertions.Core.dll</HintPath>
+    <Reference Include="FluentAssertions.Core, Version=4.12.0.0, Culture=neutral, PublicKeyToken=33f2691a05b67b6a, processorArchitecture=MSIL">
+      <HintPath>..\packages\FluentAssertions.4.12.0\lib\net45\FluentAssertions.Core.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="Its.Configuration, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
@@ -97,8 +97,8 @@
       <HintPath>..\packages\AutoFixture.3.47.8\lib\net40\Ploeh.AutoFixture.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="SimpleInjector, Version=3.1.5.0, Culture=neutral, PublicKeyToken=984cb50dea722e99, processorArchitecture=MSIL">
-      <HintPath>..\packages\SimpleInjector.3.1.5\lib\net45\SimpleInjector.dll</HintPath>
+    <Reference Include="SimpleInjector, Version=3.2.0.0, Culture=neutral, PublicKeyToken=984cb50dea722e99, processorArchitecture=MSIL">
+      <HintPath>..\packages\SimpleInjector.3.2.0\lib\net45\SimpleInjector.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="System" />

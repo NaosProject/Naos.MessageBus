@@ -308,5 +308,38 @@ namespace Naos.MessageBus.Test
             var resends = trackingCalls.Where(_ => _ == nameof(IParcelTrackingSystem.ResendAsync));
             resends.Count().Should().Be(0);
         }
+
+        [Fact]
+        public void EmptyTrackingCodes___Exits()
+        {
+            // arrange
+            var parcelStatusToRetryOn = ParcelStatus.Delivered;
+            var retryCount = 10;
+            var throwIfRetriesExceededWithSpecificStatuses = true;
+
+            var message = new RetryTrackingCodesInSpecificStatusesMessage
+                              {
+                                  Description = "Description",
+                                  NumberOfRetriesToAttempt = retryCount,
+                                  StatusesToRetry = new[] { parcelStatusToRetryOn },
+                                  WaitTimeBetweenChecks = TimeSpan.FromSeconds(.01),
+                                  TrackingCodes = new TrackingCode[0],
+                                  ThrowIfRetriesExceededWithSpecificStatuses = throwIfRetriesExceededWithSpecificStatuses
+                              };
+
+            var trackingCalls = new List<string>();
+            var trackingSends = new List<Parcel>();
+            var postOffice = Factory.GetInMemoryParcelTrackingSystemBackedPostOffice(trackingCalls, trackingSends);
+            var parcelTracker = Factory.GetSeededTrackerForGetTrackingReportAsync(new List<Tuple<TrackingCode[], List<ParcelTrackingReport>>>());
+            var handler = new RetryTrackingCodesInSpecificStatusesMessageHandler();
+
+            // act
+            Action testCode = () => handler.HandleAsync(message, postOffice, parcelTracker).Wait();
+            testCode();
+
+            // assert
+            var resends = trackingCalls.Where(_ => _ == nameof(IParcelTrackingSystem.ResendAsync));
+            resends.Count().Should().Be(0);
+        }
     }
 }
