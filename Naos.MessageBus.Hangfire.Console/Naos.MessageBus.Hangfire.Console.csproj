@@ -39,6 +39,10 @@
     <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="CLAP, Version=4.6.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\CLAP.4.6\lib\net35\CLAP.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="EntityFramework, Version=6.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089, processorArchitecture=MSIL">
       <HintPath>..\packages\EntityFramework.6.1.3\lib\net45\EntityFramework.dll</HintPath>
       <Private>True</Private>
@@ -92,6 +96,7 @@
   <ItemGroup>
     <Compile Include="DispatcherFactoryJobActivator.cs" />
     <Compile Include="ItsLogPassThroughProvider.cs" />
+    <Compile Include="HangfireHarnessManager.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SimpleInjectorJobActivator.cs" />
