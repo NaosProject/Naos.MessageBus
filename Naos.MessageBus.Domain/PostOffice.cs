@@ -8,6 +8,7 @@ namespace Naos.MessageBus.Domain
 {
     using System;
     using System.Collections.Generic;
+    using System.Diagnostics;
     using System.Linq;
 
     using Naos.Cron;
@@ -106,6 +107,9 @@ namespace Naos.MessageBus.Domain
         /// <inheritdoc />
         public TrackingCode SendRecurring(Parcel parcel, ScheduleBase recurringSchedule)
         {
+            var stopwatch = new Stopwatch();
+            stopwatch.Reset();
+            stopwatch.Start();
             if (parcel.Topic != null)
             {
                 if (parcel.SimultaneousRunsStrategy == SimultaneousRunsStrategy.Unspecified)
@@ -144,8 +148,14 @@ namespace Naos.MessageBus.Domain
             var address = firstEnvelope.Address == null || this.typeComparer.Equals(firstEnvelope.Address.GetType(), typeof(NullChannel))
                               ? this.unaddressedMailRouter.FindAddress(parcel)
                               : firstEnvelope.Address;
+            stopwatch.Stop();
+            Its.Log.Instrumentation.Log.Write($"TELEMETRY - P.O. Prep: {stopwatch.Elapsed}");
 
+            stopwatch.Reset();
+            stopwatch.Start();
             this.parcelTrackingSystem.UpdateSentAsync(trackingCode, parcel, address, recurringSchedule).Wait();
+            stopwatch.Stop();
+            Its.Log.Instrumentation.Log.Write($"TELEMETRY - P.O. UpdateSent: {stopwatch.Elapsed}");
 
             return trackingCode;
         }

@@ -38,6 +38,8 @@ namespace Naos.MessageBus.Persistence
 
         private readonly Configuration configuration;
 
+        private readonly Stopwatch stopwatch = new Stopwatch();
+
         /// <summary>
         /// Initializes a new instance of the <see cref="ParcelTrackingSystem"/> class.
         /// </summary>
@@ -105,17 +107,40 @@ namespace Naos.MessageBus.Persistence
         /// <inheritdoc />
         public async Task UpdateSentAsync(TrackingCode trackingCode, Parcel parcel, IChannel address, ScheduleBase recurringSchedule)
         {
+            this.stopwatch.Reset();
+            this.stopwatch.Start();
+
             // shipment may already exist and this is just another envelope to deal with...
             var shipment = await this.FetchShipmentAsync(trackingCode.ParcelId);
+            this.stopwatch.Stop();
+
+            Log.Write($"TELEMETRY - P.T.S. FetchExisting: {this.stopwatch.Elapsed}");
+
             if (shipment == null)
             {
+                this.stopwatch.Reset();
+                this.stopwatch.Start();
                 var commandCreate = new Create { AggregateId = parcel.Id, Parcel = parcel, RecurringSchedule = recurringSchedule };
                 shipment = new Shipment(commandCreate);
+                this.stopwatch.Stop();
+
+                Log.Write($"TELEMETRY - P.T.S. CreateCommand: {this.stopwatch.Elapsed}");
             }
 
             var command = new Send { TrackingCode = trackingCode, Address = address, Parcel = parcel };
+            this.stopwatch.Reset();
+            this.stopwatch.Start();
             shipment.EnactCommand(command);
+            this.stopwatch.Stop();
+
+            Log.Write($"TELEMETRY - P.T.S. EnactCommand: {this.stopwatch.Elapsed}");
+
+            this.stopwatch.Reset();
+            this.stopwatch.Start();
             await this.SaveShipmentAsync(shipment);
+            this.stopwatch.Stop();
+
+            Log.Write($"TELEMETRY - P.T.S. Save: {this.stopwatch.Elapsed}");
         }
 
         /// <inheritdoc />

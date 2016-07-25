@@ -7,7 +7,10 @@
 namespace Naos.MessageBus.Persistence
 {
     using System;
+    using System.Data;
     using System.Data.Entity.Migrations;
+    using System.Data.SqlClient;
+    using System.Diagnostics;
     using System.Linq;
 
     using Microsoft.Its.Domain;
@@ -30,6 +33,8 @@ namespace Naos.MessageBus.Persistence
                                          IUpdateProjectionWhen<Shipment.TopicBeingAffected>,
                                          IUpdateProjectionWhen<Shipment.TopicWasAffected>
     {
+        private readonly Stopwatch stopwatch = new Stopwatch();
+
         private readonly ICourier courier;
 
         private readonly ReadModelPersistenceConnectionConfiguration readModelPersistenceConnectionConfiguration;
@@ -52,23 +57,75 @@ namespace Naos.MessageBus.Persistence
         /// <inheritdoc />
         public void UpdateProjection(Shipment.Created @event)
         {
-            var scheduleJson = Serializer.Serialize(@event.ExtractPayload().RecurringSchedule);
-            this.RunWithRetry(
-                () =>
-                    {
-                        using (var db = new TrackedShipmentDbContext(this.readModelPersistenceConnectionConfiguration.ToSqlServerConnectionString()))
-                        {
-                            var entry = new ShipmentForDatabase
-                                            {
-                                                ParcelId = @event.ExtractPayload().Parcel.Id,
-                                                RecurringScheduleJson = scheduleJson,
-                                                LastUpdatedUtc = DateTime.UtcNow
-                                            };
+            this.stopwatch.Reset();
+            this.stopwatch.Start();
+            var payload = @event.ExtractPayload();
+            this.stopwatch.Stop();
+            Its.Log.Instrumentation.Log.Write($"TELEMETRY - E.H. ExtractCreatedPayload: {this.stopwatch.Elapsed}");
 
-                            db.Shipments.AddOrUpdate(entry);
-                            db.SaveChanges();
-                        }
-                    });
+            this.stopwatch.Reset();
+            this.stopwatch.Start();
+            var scheduleJson = Serializer.Serialize(payload.RecurringSchedule);
+            this.stopwatch.Stop();
+            Its.Log.Instrumentation.Log.Write($"TELEMETRY - E.H. SerializeSchedule: {this.stopwatch.Elapsed}");
+
+            this.stopwatch.Reset();
+            this.stopwatch.Start();
+            var sqlServerConnectionString = this.readModelPersistenceConnectionConfiguration.ToSqlServerConnectionString();
+            this.stopwatch.Stop();
+            Its.Log.Instrumentation.Log.Write($"TELEMETRY - E.H. GetConnectionString: {this.stopwatch.Elapsed}");
+
+            // ado style
+            SqlConnection conn = null;
+            try
+            {
+                this.stopwatch.Reset();
+                this.stopwatch.Start();
+                conn = new SqlConnection(sqlServerConnectionString);
+                this.stopwatch.Stop();
+                Its.Log.Instrumentation.Log.Write($"TELEMETRY - E.H. CreateConnection: {this.stopwatch.Elapsed}");
+
+                this.stopwatch.Reset();
+                this.stopwatch.Start();
+                conn.Open();
+                this.stopwatch.Stop();
+                Its.Log.Instrumentation.Log.Write($"TELEMETRY - E.H. OpenConnection: {this.stopwatch.Elapsed}");
+
+                this.stopwatch.Reset();
+                this.stopwatch.Start();
+                var sql = "insert into shipmentfordatabases (ParcelId, RecurringScheduleJson, LastUpdatedUtc, Status) values (@a, @b, @c, @d)";
+                var command = new SqlCommand(sql, conn);
+                var a = new SqlParameter("@a", SqlDbType.UniqueIdentifier) { Value = payload.Parcel.Id };
+                command.Parameters.Add(a);
+                var b = new SqlParameter("@b", SqlDbType.NVarChar) { Value = scheduleJson };
+                command.Parameters.Add(b);
+                var c = new SqlParameter("@c", SqlDbType.DateTime) { Value = DateTime.UtcNow };
+                command.Parameters.Add(c);
+                var d = new SqlParameter("@d", SqlDbType.Int) { Value = ParcelStatus.Unknown };
+                command.Parameters.Add(d);
+                this.stopwatch.Stop();
+                Its.Log.Instrumentation.Log.Write($"TELEMETRY - E.H. CreateInsertObjects: {this.stopwatch.Elapsed}");
+
+                this.stopwatch.Reset();
+                this.stopwatch.Start();
+                command.ExecuteNonQuery();
+                this.stopwatch.Stop();
+                Its.Log.Instrumentation.Log.Write($"TELEMETRY - E.H. ExecuteInsert: {this.stopwatch.Elapsed}");
+
+                this.stopwatch.Reset();
+                this.stopwatch.Start();
+                conn.Close();
+                this.stopwatch.Stop();
+                Its.Log.Instrumentation.Log.Write($"TELEMETRY - E.H. CloseConnection: {this.stopwatch.Elapsed}");
+            }
+            finally
+            {
+                this.stopwatch.Reset();
+                this.stopwatch.Start();
+                conn?.Dispose();
+                this.stopwatch.Stop();
+                Its.Log.Instrumentation.Log.Write($"TELEMETRY - E.H. DisposeConnection: {this.stopwatch.Elapsed}");
+            }
         }
 
         /// <inheritdoc />
@@ -98,11 +155,18 @@ namespace Naos.MessageBus.Persistence
         /// <inheritdoc />
         public void UpdateProjection(Shipment.EnvelopeSent @event)
         {
+            this.stopwatch.Reset();
+            this.stopwatch.Start();
+
             var eventPayload = @event.ExtractPayload();
             var parcel = eventPayload.Parcel;
             var schedule = (ScheduleBase)new NullSchedule();
             var trackingCode = eventPayload.TrackingCode;
+            this.stopwatch.Stop();
+            Its.Log.Instrumentation.Log.Write($"TELEMETRY - E.H. ExtractSentPayload: {this.stopwatch.Elapsed}");
 
+            this.stopwatch.Reset();
+            this.stopwatch.Start();
             if (parcel.Envelopes.First().Id == trackingCode.EnvelopeId)
             {
                 this.RunWithRetry(
@@ -118,13 +182,21 @@ namespace Naos.MessageBus.Persistence
                         });
             }
 
+            this.stopwatch.Stop();
+            Its.Log.Instrumentation.Log.Write($"TELEMETRY - E.H. FetchSchedule: {this.stopwatch.Elapsed}");
+
+            this.stopwatch.Reset();
+            this.stopwatch.Start();
             var label = !string.IsNullOrWhiteSpace(parcel.Name) ? parcel.Name : "Sequence " + parcel.Id + " - " + parcel.Envelopes.First().Description;
             var crate = new Crate { TrackingCode = trackingCode, Address = eventPayload.Address, Label = label, Parcel = parcel, RecurringSchedule = schedule };
-
             var courierTrackingCode = this.courier.Send(crate);
+            this.stopwatch.Stop();
+            Its.Log.Instrumentation.Log.Write($"TELEMETRY - E.H. SendToHangfire: {this.stopwatch.Elapsed}");
             var crateLocator = new CrateLocator { TrackingCode = trackingCode, CourierTrackingCode = courierTrackingCode };
 
             // save the crate locator for furture reference
+            this.stopwatch.Reset();
+            this.stopwatch.Start();
             this.RunWithRetry(
                 () =>
                 {
@@ -137,6 +209,8 @@ namespace Naos.MessageBus.Persistence
                         db.SaveChanges();
                     }
                 });
+            this.stopwatch.Stop();
+            Its.Log.Instrumentation.Log.Write($"TELEMETRY - E.H. SaveCrateLocator: {this.stopwatch.Elapsed}");
         }
 
         /// <inheritdoc />

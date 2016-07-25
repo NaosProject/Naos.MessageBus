@@ -8,6 +8,7 @@ namespace Naos.MessageBus.Core
 {
     using System;
     using System.Diagnostics;
+    using System.Globalization;
     using System.IO;
     using System.Web.Hosting;
 
@@ -60,14 +61,28 @@ namespace Naos.MessageBus.Core
 
             // TODO: Trace.Listeners.Add(new TextWriterTraceListener("Log_TextWriterOutput.log", "myListener"));
             var fileLock = new object();
-            Log.EntryPosted += (sender, args) =>
+
+            EventHandler<InstrumentationEventArgs> oldLogSubscription = (sender, args) =>
+            {
+                var logEntry = (args.LogEntry ?? new LogEntry("Null LogEntry Supplied to EntryPosted")).ToLogString() + Environment.NewLine;
+                lock (fileLock)
                 {
-                    var logEntry = (args.LogEntry ?? new LogEntry("Null LogEntry Supplied to EntryPosted")).ToLogString() + Environment.NewLine;
+                    File.AppendAllText(logProcessorSettings.LogFilePath, logEntry);
+                }
+            };
+
+            EventHandler<InstrumentationEventArgs> logSubscription = (sender, args) =>
+                {
+                    var subject = args.LogEntry?.Subject ?? "Null LogEntry or Subject Supplied to EntryPosted in " + nameof(Logging);
+                    var message = DateTime.UtcNow.ToString("o", CultureInfo.InvariantCulture) + ": " + subject.ToLogString();
+
                     lock (fileLock)
                     {
-                        File.AppendAllText(logProcessorSettings.LogFilePath, logEntry);
+                        File.AppendAllText(logProcessorSettings.LogFilePath, message + Environment.NewLine);
                     }
                 };
+
+            Log.EntryPosted += logSubscription;
         }
 
         private static string GetCallerFriendlyName()
