@@ -171,12 +171,25 @@ namespace Naos.MessageBus.Persistence
                 this.RunWithRetry(
                     () =>
                         {
-                            using (var db = new TrackedShipmentDbContext(this.readModelPersistenceConnectionConfiguration.ToSqlServerConnectionString()))
+                            var sqlServerConnectionString = this.readModelPersistenceConnectionConfiguration.ToSqlServerConnectionString();
+                            SqlConnection conn = null;
+                            try
                             {
-                                var shipmentEntry = db.Shipments.Single(_ => _.ParcelId == @event.AggregateId);
-                                schedule = string.IsNullOrEmpty(shipmentEntry.RecurringScheduleJson)
+                                conn = new SqlConnection(sqlServerConnectionString);
+                                conn.Open();
+                                var sql = "select recurringschedulejson from shipmentfordatabases where parcelid = @id";
+                                var command = new SqlCommand(sql, conn);
+                                var a = new SqlParameter("@id", SqlDbType.UniqueIdentifier) { Value = @event.AggregateId };
+                                command.Parameters.Add(a);
+                                var scheduleJson = command.ExecuteScalar();
+                                schedule = string.IsNullOrEmpty(scheduleJson?.ToString())
                                                ? new NullSchedule()
-                                               : Serializer.Deserialize<ScheduleBase>(shipmentEntry.RecurringScheduleJson);
+                                               : Serializer.Deserialize<ScheduleBase>(scheduleJson.ToString());
+                                conn.Close();
+                            }
+                            finally
+                            {
+                                conn?.Dispose();
                             }
                         });
             }
