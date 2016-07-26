@@ -166,12 +166,12 @@ namespace Naos.MessageBus.Persistence
 
             stopwatch.Reset();
             stopwatch.Start();
+            var sqlServerConnectionString = this.readModelPersistenceConnectionConfiguration.ToSqlServerConnectionString();
             if (parcel.Envelopes.First().Id == trackingCode.EnvelopeId)
             {
                 this.RunWithRetry(
                     () =>
                         {
-                            var sqlServerConnectionString = this.readModelPersistenceConnectionConfiguration.ToSqlServerConnectionString();
                             SqlConnection conn = null;
                             try
                             {
@@ -212,13 +212,21 @@ namespace Naos.MessageBus.Persistence
             this.RunWithRetry(
                 () =>
                 {
-                    using (var db = new TrackedShipmentDbContext(this.readModelPersistenceConnectionConfiguration.ToSqlServerConnectionString()))
+                    using (var conn = new SqlConnection(sqlServerConnectionString))
                     {
-                        var shipmentEntry = db.Shipments.Single(_ => _.ParcelId == @event.AggregateId);
-                        shipmentEntry.Status = eventPayload.NewStatus;
-                        shipmentEntry.CurrentCrateLocatorJson = Serializer.Serialize(crateLocator);
-                        shipmentEntry.LastUpdatedUtc = DateTime.UtcNow;
-                        db.SaveChanges();
+                        conn.Open();
+                        var sql = "update shipmentfordatabases set Status = @newStatus, CurrentCrateLocatorJson = @crateLocatorJson, LastUpdatedUtc = @utcNow  where parcelid = @id";
+                        var command = new SqlCommand(sql, conn);
+                        var paramNewStatus = new SqlParameter("@newStatus", SqlDbType.Int) { Value = eventPayload.NewStatus };
+                        command.Parameters.Add(paramNewStatus);
+                        var paramCrateLocatorJson = new SqlParameter("@crateLocatorJson", SqlDbType.NVarChar) { Value = Serializer.Serialize(crateLocator) };
+                        command.Parameters.Add(paramCrateLocatorJson);
+                        var paramUtcNow = new SqlParameter("@utcNow", SqlDbType.DateTime) { Value = DateTime.UtcNow };
+                        command.Parameters.Add(paramUtcNow);
+                        var paramId = new SqlParameter("@id", SqlDbType.UniqueIdentifier) { Value = @event.AggregateId };
+                        command.Parameters.Add(paramId);
+                        command.ExecuteNonQuery();
+                        conn.Close();
                     }
                 });
             stopwatch.Stop();
