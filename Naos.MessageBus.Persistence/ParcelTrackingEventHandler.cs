@@ -7,7 +7,8 @@
 namespace Naos.MessageBus.Persistence
 {
     using System;
-    using System.Data.Entity.Migrations;
+    using System.Data;
+    using System.Data.SqlClient;
     using System.Linq;
 
     using Microsoft.Its.Domain;
@@ -52,23 +53,33 @@ namespace Naos.MessageBus.Persistence
         /// <inheritdoc />
         public void UpdateProjection(Shipment.Created @event)
         {
-            var scheduleJson = Serializer.Serialize(@event.ExtractPayload().RecurringSchedule);
-            this.RunWithRetry(
-                () =>
-                    {
-                        using (var db = new TrackedShipmentDbContext(this.readModelPersistenceConnectionConfiguration.ToSqlServerConnectionString()))
-                        {
-                            var entry = new ShipmentForDatabase
-                                            {
-                                                ParcelId = @event.ExtractPayload().Parcel.Id,
-                                                RecurringScheduleJson = scheduleJson,
-                                                LastUpdatedUtc = DateTime.UtcNow
-                                            };
+            var payload = @event.ExtractPayload();
+            var scheduleJson = Serializer.Serialize(payload.RecurringSchedule);
+            var sqlServerConnectionString = this.readModelPersistenceConnectionConfiguration.ToSqlServerConnectionString();
 
-                            db.Shipments.AddOrUpdate(entry);
-                            db.SaveChanges();
-                        }
-                    });
+            // ado style
+            SqlConnection conn = null;
+            try
+            {
+                conn = new SqlConnection(sqlServerConnectionString);
+                conn.Open();
+                var sql = "insert into shipmentfordatabases (ParcelId, RecurringScheduleJson, LastUpdatedUtc, Status) values (@a, @b, @c, @d)";
+                var command = new SqlCommand(sql, conn);
+                var a = new SqlParameter("@a", SqlDbType.UniqueIdentifier) { Value = payload.Parcel.Id };
+                command.Parameters.Add(a);
+                var b = new SqlParameter("@b", SqlDbType.NVarChar) { Value = scheduleJson };
+                command.Parameters.Add(b);
+                var c = new SqlParameter("@c", SqlDbType.DateTime) { Value = DateTime.UtcNow };
+                command.Parameters.Add(c);
+                var d = new SqlParameter("@d", SqlDbType.Int) { Value = ParcelStatus.Unknown };
+                command.Parameters.Add(d);
+                command.ExecuteNonQuery();
+                conn.Close();
+            }
+            finally
+            {
+                conn?.Dispose();
+            }
         }
 
         /// <inheritdoc />
@@ -77,15 +88,15 @@ namespace Naos.MessageBus.Persistence
             CrateLocator crateLocator = null;
             this.RunWithRetry(
                 () =>
+                {
+                    using (var db = new TrackedShipmentDbContext(this.readModelPersistenceConnectionConfiguration.ToSqlServerConnectionString()))
                     {
-                        using (var db = new TrackedShipmentDbContext(this.readModelPersistenceConnectionConfiguration.ToSqlServerConnectionString()))
-                        {
-                            var shipmentEntry = db.Shipments.Single(_ => _.ParcelId == @event.AggregateId);
-                            crateLocator = string.IsNullOrEmpty(shipmentEntry.CurrentCrateLocatorJson)
-                                               ? null
-                                               : Serializer.Deserialize<CrateLocator>(shipmentEntry.CurrentCrateLocatorJson);
-                        }
-                    });
+                        var shipmentEntry = db.Shipments.Single(_ => _.ParcelId == @event.AggregateId);
+                        crateLocator = string.IsNullOrEmpty(shipmentEntry.CurrentCrateLocatorJson)
+                                           ? null
+                                           : Serializer.Deserialize<CrateLocator>(shipmentEntry.CurrentCrateLocatorJson);
+                    }
+                });
 
             if (crateLocator == null)
             {
@@ -102,25 +113,36 @@ namespace Naos.MessageBus.Persistence
             var parcel = eventPayload.Parcel;
             var schedule = (ScheduleBase)new NullSchedule();
             var trackingCode = eventPayload.TrackingCode;
-
+            var sqlServerConnectionString = this.readModelPersistenceConnectionConfiguration.ToSqlServerConnectionString();
             if (parcel.Envelopes.First().Id == trackingCode.EnvelopeId)
             {
                 this.RunWithRetry(
                     () =>
+                    {
+                        SqlConnection conn = null;
+                        try
                         {
-                            using (var db = new TrackedShipmentDbContext(this.readModelPersistenceConnectionConfiguration.ToSqlServerConnectionString()))
-                            {
-                                var shipmentEntry = db.Shipments.Single(_ => _.ParcelId == @event.AggregateId);
-                                schedule = string.IsNullOrEmpty(shipmentEntry.RecurringScheduleJson)
-                                               ? new NullSchedule()
-                                               : Serializer.Deserialize<ScheduleBase>(shipmentEntry.RecurringScheduleJson);
-                            }
-                        });
+                            conn = new SqlConnection(sqlServerConnectionString);
+                            conn.Open();
+                            var sql = "select recurringschedulejson from shipmentfordatabases where parcelid = @id";
+                            var command = new SqlCommand(sql, conn);
+                            var a = new SqlParameter("@id", SqlDbType.UniqueIdentifier) { Value = @event.AggregateId };
+                            command.Parameters.Add(a);
+                            var scheduleJson = command.ExecuteScalar();
+                            schedule = string.IsNullOrEmpty(scheduleJson?.ToString())
+                                           ? new NullSchedule()
+                                           : Serializer.Deserialize<ScheduleBase>(scheduleJson.ToString());
+                            conn.Close();
+                        }
+                        finally
+                        {
+                            conn?.Dispose();
+                        }
+                    });
             }
 
             var label = !string.IsNullOrWhiteSpace(parcel.Name) ? parcel.Name : "Sequence " + parcel.Id + " - " + parcel.Envelopes.First().Description;
             var crate = new Crate { TrackingCode = trackingCode, Address = eventPayload.Address, Label = label, Parcel = parcel, RecurringSchedule = schedule };
-
             var courierTrackingCode = this.courier.Send(crate);
             var crateLocator = new CrateLocator { TrackingCode = trackingCode, CourierTrackingCode = courierTrackingCode };
 
@@ -128,13 +150,21 @@ namespace Naos.MessageBus.Persistence
             this.RunWithRetry(
                 () =>
                 {
-                    using (var db = new TrackedShipmentDbContext(this.readModelPersistenceConnectionConfiguration.ToSqlServerConnectionString()))
+                    using (var conn = new SqlConnection(sqlServerConnectionString))
                     {
-                        var shipmentEntry = db.Shipments.Single(_ => _.ParcelId == @event.AggregateId);
-                        shipmentEntry.Status = eventPayload.NewStatus;
-                        shipmentEntry.CurrentCrateLocatorJson = Serializer.Serialize(crateLocator);
-                        shipmentEntry.LastUpdatedUtc = DateTime.UtcNow;
-                        db.SaveChanges();
+                        conn.Open();
+                        var sql = "update shipmentfordatabases set Status = @newStatus, CurrentCrateLocatorJson = @crateLocatorJson, LastUpdatedUtc = @utcNow  where parcelid = @id";
+                        var command = new SqlCommand(sql, conn);
+                        var paramNewStatus = new SqlParameter("@newStatus", SqlDbType.Int) { Value = eventPayload.NewStatus };
+                        command.Parameters.Add(paramNewStatus);
+                        var paramCrateLocatorJson = new SqlParameter("@crateLocatorJson", SqlDbType.NVarChar) { Value = Serializer.Serialize(crateLocator) };
+                        command.Parameters.Add(paramCrateLocatorJson);
+                        var paramUtcNow = new SqlParameter("@utcNow", SqlDbType.DateTime) { Value = DateTime.UtcNow };
+                        command.Parameters.Add(paramUtcNow);
+                        var paramId = new SqlParameter("@id", SqlDbType.UniqueIdentifier) { Value = @event.AggregateId };
+                        command.Parameters.Add(paramId);
+                        command.ExecuteNonQuery();
+                        conn.Close();
                     }
                 });
         }
@@ -160,23 +190,23 @@ namespace Naos.MessageBus.Persistence
         {
             this.RunWithRetry(
                 () =>
+                {
+                    using (var db = new TrackedShipmentDbContext(this.readModelPersistenceConnectionConfiguration.ToSqlServerConnectionString()))
                     {
-                        using (var db = new TrackedShipmentDbContext(this.readModelPersistenceConnectionConfiguration.ToSqlServerConnectionString()))
+                        // any failure will stop the rest of the parcel
+                        var shipmentEntry = db.Shipments.Single(_ => _.ParcelId == @event.AggregateId);
+                        shipmentEntry.Status = @event.ExtractPayload().NewStatus;
+                        shipmentEntry.LastUpdatedUtc = DateTime.UtcNow;
+
+                        var noticeEntry = db.Notices.SingleOrDefault(_ => _.ParcelId == @event.AggregateId);
+                        if (noticeEntry != null)
                         {
-                            // any failure will stop the rest of the parcel
-                            var shipmentEntry = db.Shipments.Single(_ => _.ParcelId == @event.AggregateId);
-                            shipmentEntry.Status = @event.ExtractPayload().NewStatus;
-                            shipmentEntry.LastUpdatedUtc = DateTime.UtcNow;
-
-                            var noticeEntry = db.Notices.SingleOrDefault(_ => _.ParcelId == @event.AggregateId);
-                            if (noticeEntry != null)
-                            {
-                                noticeEntry.Status = TopicStatus.Failed;
-                            }
-
-                            db.SaveChanges();
+                            noticeEntry.Status = TopicStatus.Failed;
                         }
-                    });
+
+                        db.SaveChanges();
+                    }
+                });
         }
 
         /// <inheritdoc />
@@ -200,15 +230,15 @@ namespace Naos.MessageBus.Persistence
         {
             this.RunWithRetry(
                 () =>
+                {
+                    using (var db = new TrackedShipmentDbContext(this.readModelPersistenceConnectionConfiguration.ToSqlServerConnectionString()))
                     {
-                        using (var db = new TrackedShipmentDbContext(this.readModelPersistenceConnectionConfiguration.ToSqlServerConnectionString()))
-                        {
-                            var shipmentEntry = db.Shipments.Single(_ => _.ParcelId == @event.AggregateId);
-                            shipmentEntry.Status = @event.ExtractPayload().NewStatus;
-                            shipmentEntry.LastUpdatedUtc = DateTime.UtcNow;
-                            db.SaveChanges();
-                        }
-                    });
+                        var shipmentEntry = db.Shipments.Single(_ => _.ParcelId == @event.AggregateId);
+                        shipmentEntry.Status = @event.ExtractPayload().NewStatus;
+                        shipmentEntry.LastUpdatedUtc = DateTime.UtcNow;
+                        db.SaveChanges();
+                    }
+                });
         }
 
         /// <inheritdoc />
@@ -216,50 +246,50 @@ namespace Naos.MessageBus.Persistence
         {
             this.RunWithRetry(
                 () =>
+                {
+                    using (var db = new TrackedShipmentDbContext(this.readModelPersistenceConnectionConfiguration.ToSqlServerConnectionString()))
                     {
-                        using (var db = new TrackedShipmentDbContext(this.readModelPersistenceConnectionConfiguration.ToSqlServerConnectionString()))
+                        var existingEntries = db.Notices.Where(_ => _.ParcelId == @event.ParcelId).ToList();
+                        if (existingEntries.Count > 1)
                         {
-                            var existingEntries = db.Notices.Where(_ => _.ParcelId == @event.ParcelId).ToList();
-                            if (existingEntries.Count > 1)
-                            {
-                                var ids = existingEntries.Select(_ => _.Id).ToList();
-                                throw new ArgumentException(
-                                    "Found existing entries for the specified parcel id while trying to write a record about a topic being affected; IDs: "
-                                    + string.Join(",", ids));
-                            }
-                            else if (existingEntries.Count == 1)
-                            {
-                                var entry = existingEntries.Single();
-                                entry.ImpactingTopicName = @event.ExtractPayload().Topic.Name;
-                                entry.AffectsStartedDateTimeUtc = @event.Timestamp.UtcDateTime;
-                                entry.Status = TopicStatus.BeingAffected;
-                                entry.ParcelId = @event.ExtractPayload().TrackingCode.ParcelId;
-                                entry.TopicBeingAffectedEnvelopeJson = Serializer.Serialize(@event.ExtractPayload().Envelope);
-                                entry.LastUpdatedUtc = DateTime.UtcNow;
-                            }
-                            else if (existingEntries.Count == 0)
-                            {
-                                var entry = new NoticeForDatabase
-                                                {
-                                                    Id = Guid.NewGuid(),
-                                                    ImpactingTopicName = @event.ExtractPayload().Topic.Name,
-                                                    AffectsStartedDateTimeUtc = @event.Timestamp.UtcDateTime,
-                                                    Status = TopicStatus.BeingAffected,
-                                                    ParcelId = @event.ExtractPayload().TrackingCode.ParcelId,
-                                                    TopicBeingAffectedEnvelopeJson = Serializer.Serialize(@event.ExtractPayload().Envelope),
-                                                    LastUpdatedUtc = DateTime.UtcNow
-                                                };
-
-                                db.Notices.Add(entry);
-                            }
-                            else
-                            {
-                                throw new NotSupportedException("Should not have reached this area, existing entry count should be greater than 1, 1, or 0...");
-                            }
-
-                            db.SaveChanges();
+                            var ids = existingEntries.Select(_ => _.Id).ToList();
+                            throw new ArgumentException(
+                                "Found existing entries for the specified parcel id while trying to write a record about a topic being affected; IDs: "
+                                + string.Join(",", ids));
                         }
-                    });
+                        else if (existingEntries.Count == 1)
+                        {
+                            var entry = existingEntries.Single();
+                            entry.ImpactingTopicName = @event.ExtractPayload().Topic.Name;
+                            entry.AffectsStartedDateTimeUtc = @event.Timestamp.UtcDateTime;
+                            entry.Status = TopicStatus.BeingAffected;
+                            entry.ParcelId = @event.ExtractPayload().TrackingCode.ParcelId;
+                            entry.TopicBeingAffectedEnvelopeJson = Serializer.Serialize(@event.ExtractPayload().Envelope);
+                            entry.LastUpdatedUtc = DateTime.UtcNow;
+                        }
+                        else if (existingEntries.Count == 0)
+                        {
+                            var entry = new NoticeForDatabase
+                            {
+                                Id = Guid.NewGuid(),
+                                ImpactingTopicName = @event.ExtractPayload().Topic.Name,
+                                AffectsStartedDateTimeUtc = @event.Timestamp.UtcDateTime,
+                                Status = TopicStatus.BeingAffected,
+                                ParcelId = @event.ExtractPayload().TrackingCode.ParcelId,
+                                TopicBeingAffectedEnvelopeJson = Serializer.Serialize(@event.ExtractPayload().Envelope),
+                                LastUpdatedUtc = DateTime.UtcNow
+                            };
+
+                            db.Notices.Add(entry);
+                        }
+                        else
+                        {
+                            throw new NotSupportedException("Should not have reached this area, existing entry count should be greater than 1, 1, or 0...");
+                        }
+
+                        db.SaveChanges();
+                    }
+                });
         }
 
         /// <inheritdoc />
@@ -283,13 +313,13 @@ namespace Naos.MessageBus.Persistence
                         if (entry == null)
                         {
                             entry = new NoticeForDatabase
-                                        {
-                                            Id = Guid.NewGuid(),
-                                            ImpactingTopicName = @event.ExtractPayload().Topic.Name,
-                                            Status = TopicStatus.BeingAffected,
-                                            ParcelId = @event.ExtractPayload().TrackingCode.ParcelId,
-                                            LastUpdatedUtc = DateTime.UtcNow
-                                        };
+                            {
+                                Id = Guid.NewGuid(),
+                                ImpactingTopicName = @event.ExtractPayload().Topic.Name,
+                                Status = TopicStatus.BeingAffected,
+                                ParcelId = @event.ExtractPayload().TrackingCode.ParcelId,
+                                LastUpdatedUtc = DateTime.UtcNow
+                            };
 
                             db.Notices.Add(entry);
                         }

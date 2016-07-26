@@ -110,7 +110,10 @@ namespace Naos.MessageBus.Persistence
             if (shipment == null)
             {
                 var commandCreate = new Create { AggregateId = parcel.Id, Parcel = parcel, RecurringSchedule = recurringSchedule };
-                shipment = new Shipment(commandCreate);
+
+                // shipment = new Shipment(commandCreate);  // we are not using this approach because it's too slow
+                shipment = new Shipment(parcel.Id);
+                shipment.EnactCommand(commandCreate);
             }
 
             var command = new Send { TrackingCode = trackingCode, Address = address, Parcel = parcel };
@@ -178,28 +181,28 @@ namespace Naos.MessageBus.Persistence
         {
             return await this.RunWithRetryAsync(
                 () =>
+                {
+                    using (var db = new TrackedShipmentDbContext(this.readModelPersistenceConnectionConfiguration.ToSqlServerConnectionString()))
                     {
-                        using (var db = new TrackedShipmentDbContext(this.readModelPersistenceConnectionConfiguration.ToSqlServerConnectionString()))
-                        {
-                            var parcelIds = trackingCodes.Select(_ => _.ParcelId).Distinct().ToList();
-                            var matchingShipments = db.Shipments.Where(_ => parcelIds.Contains(_.ParcelId)).ToList();
-                            var results =
-                                matchingShipments.Select(
-                                    _ =>
-                                    new ParcelTrackingReport
-                                        {
-                                            ParcelId = _.ParcelId,
-                                            CurrentTrackingCode =
-                                                string.IsNullOrEmpty(_.CurrentCrateLocatorJson)
-                                                    ? null
-                                                    : Serializer.Deserialize<CrateLocator>(_.CurrentCrateLocatorJson).TrackingCode,
-                                            Status = _.Status,
-                                            LastUpdatedUtc = _.LastUpdatedUtc
-                                        }).ToList();
+                        var parcelIds = trackingCodes.Select(_ => _.ParcelId).Distinct().ToList();
+                        var matchingShipments = db.Shipments.Where(_ => parcelIds.Contains(_.ParcelId)).ToList();
+                        var results =
+                            matchingShipments.Select(
+                                _ =>
+                                new ParcelTrackingReport
+                                {
+                                    ParcelId = _.ParcelId,
+                                    CurrentTrackingCode =
+                                            string.IsNullOrEmpty(_.CurrentCrateLocatorJson)
+                                                ? null
+                                                : Serializer.Deserialize<CrateLocator>(_.CurrentCrateLocatorJson).TrackingCode,
+                                    Status = _.Status,
+                                    LastUpdatedUtc = _.LastUpdatedUtc
+                                }).ToList();
 
-                            return Task.FromResult(results);
-                        }
-                    });
+                        return Task.FromResult(results);
+                    }
+                });
         }
 
         /// <inheritdoc />
@@ -212,82 +215,82 @@ namespace Naos.MessageBus.Persistence
 
             return await this.RunWithRetryAsync(
                 () =>
+                {
+                    using (var db = new TrackedShipmentDbContext(this.readModelPersistenceConnectionConfiguration.ToSqlServerConnectionString()))
                     {
-                        using (var db = new TrackedShipmentDbContext(this.readModelPersistenceConnectionConfiguration.ToSqlServerConnectionString()))
-                        {
-                            var mostRecentNotice =
-                                db.Notices.Where(_ => _.ImpactingTopicName == topic.Name)
-                                    .Where(_ => statusFilter == TopicStatus.None || _.Status == statusFilter)
-                                    .OrderBy(_ => _.LastUpdatedUtc)
-                                    .ToList()
-                                    .LastOrDefault();
+                        var mostRecentNotice =
+                            db.Notices.Where(_ => _.ImpactingTopicName == topic.Name)
+                                .Where(_ => statusFilter == TopicStatus.None || _.Status == statusFilter)
+                                .OrderBy(_ => _.LastUpdatedUtc)
+                                .ToList()
+                                .LastOrDefault();
 
-                            if (mostRecentNotice == null)
+                        if (mostRecentNotice == null)
+                        {
+                            if (statusFilter != TopicStatus.None)
                             {
-                                if (statusFilter != TopicStatus.None)
+                                return Task.FromResult<TopicStatusReport>(null);
+                            }
+                            else
+                            {
+                                return
+                                    Task.FromResult(
+                                        new TopicStatusReport
+                                        {
+                                            Topic = new AffectedTopic(topic.Name),
+                                            Status = TopicStatus.Unknown,
+                                            AffectedItems = new AffectedItem[0],
+                                            DependencyTopicNoticesAtStart = new TopicStatusReport[0]
+                                        });
+                            }
+                        }
+                        else
+                        {
+                            AffectedItem[] items;
+                            TopicStatusReport[] dependencyNotices;
+
+                            if (mostRecentNotice.TopicWasAffectedEnvelopeJson == null)
+                            {
+                                if (mostRecentNotice.TopicBeingAffectedEnvelopeJson != null)
                                 {
-                                    return Task.FromResult<TopicStatusReport>(null);
+                                    var beingAffectedEnvelope = Serializer.Deserialize<Envelope>(mostRecentNotice.TopicBeingAffectedEnvelopeJson);
+                                    var beingAffectedMessage = Serializer.Deserialize<TopicBeingAffectedMessage>(beingAffectedEnvelope.MessageAsJson);
+                                    items = beingAffectedMessage.AffectedItems;
+
+                                    // filter out our own status report...
+                                    dependencyNotices =
+                                        (beingAffectedMessage.TopicStatusReports ?? new TopicStatusReport[0]).Where(_ => !topic.Equals(_.Topic)).ToArray();
                                 }
                                 else
                                 {
-                                    return
-                                        Task.FromResult(
-                                            new TopicStatusReport
-                                                {
-                                                    Topic = new AffectedTopic(topic.Name),
-                                                    Status = TopicStatus.Unknown,
-                                                    AffectedItems = new AffectedItem[0],
-                                                    DependencyTopicNoticesAtStart = new TopicStatusReport[0]
-                                                });
+                                    items = new AffectedItem[0];
+                                    dependencyNotices = new TopicStatusReport[0];
                                 }
                             }
                             else
                             {
-                                AffectedItem[] items;
-                                TopicStatusReport[] dependencyNotices;
+                                var wasAffectedEnvelope = Serializer.Deserialize<Envelope>(mostRecentNotice.TopicWasAffectedEnvelopeJson);
+                                var wasAffectedMessage = Serializer.Deserialize<TopicWasAffectedMessage>(wasAffectedEnvelope.MessageAsJson);
+                                items = wasAffectedMessage.AffectedItems;
 
-                                if (mostRecentNotice.TopicWasAffectedEnvelopeJson == null)
-                                {
-                                    if (mostRecentNotice.TopicBeingAffectedEnvelopeJson != null)
-                                    {
-                                        var beingAffectedEnvelope = Serializer.Deserialize<Envelope>(mostRecentNotice.TopicBeingAffectedEnvelopeJson);
-                                        var beingAffectedMessage = Serializer.Deserialize<TopicBeingAffectedMessage>(beingAffectedEnvelope.MessageAsJson);
-                                        items = beingAffectedMessage.AffectedItems;
-
-                                        // filter out our own status report...
-                                        dependencyNotices =
-                                            (beingAffectedMessage.TopicStatusReports ?? new TopicStatusReport[0]).Where(_ => !topic.Equals(_.Topic)).ToArray();
-                                    }
-                                    else
-                                    {
-                                        items = new AffectedItem[0];
-                                        dependencyNotices = new TopicStatusReport[0];
-                                    }
-                                }
-                                else
-                                {
-                                    var wasAffectedEnvelope = Serializer.Deserialize<Envelope>(mostRecentNotice.TopicWasAffectedEnvelopeJson);
-                                    var wasAffectedMessage = Serializer.Deserialize<TopicWasAffectedMessage>(wasAffectedEnvelope.MessageAsJson);
-                                    items = wasAffectedMessage.AffectedItems;
-
-                                    // filter out our own status report...
-                                    dependencyNotices =
-                                        (wasAffectedMessage.TopicStatusReports ?? new TopicStatusReport[0]).Where(_ => !topic.Equals(_.Topic)).ToArray();
-                                }
-
-                                return
-                                    Task.FromResult(
-                                        new TopicStatusReport
-                                            {
-                                                Topic = new AffectedTopic(topic.Name),
-                                                AffectsCompletedDateTimeUtc = mostRecentNotice.AffectsCompletedDateTimeUtc,
-                                                AffectedItems = items ?? new AffectedItem[0],
-                                                Status = mostRecentNotice.Status,
-                                                DependencyTopicNoticesAtStart = dependencyNotices
-                                            });
+                                // filter out our own status report...
+                                dependencyNotices =
+                                    (wasAffectedMessage.TopicStatusReports ?? new TopicStatusReport[0]).Where(_ => !topic.Equals(_.Topic)).ToArray();
                             }
+
+                            return
+                                Task.FromResult(
+                                    new TopicStatusReport
+                                    {
+                                        Topic = new AffectedTopic(topic.Name),
+                                        AffectsCompletedDateTimeUtc = mostRecentNotice.AffectsCompletedDateTimeUtc,
+                                        AffectedItems = items ?? new AffectedItem[0],
+                                        Status = mostRecentNotice.Status,
+                                        DependencyTopicNoticesAtStart = dependencyNotices
+                                    });
                         }
-                    });
+                    }
+                });
         }
 
         private async Task<T> RunWithRetryAsync<T>(Func<Task<T>> func)

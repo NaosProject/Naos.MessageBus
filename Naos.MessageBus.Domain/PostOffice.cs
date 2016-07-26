@@ -35,11 +35,11 @@ namespace Naos.MessageBus.Domain
 
         /// <inheritdoc />
         public TrackingCode Send(
-            IMessage message, 
-            IChannel channel, 
+            IMessage message,
+            IChannel channel,
             string name = null,
-            AffectedTopic topic = null, 
-            IReadOnlyCollection<DependencyTopic> dependencyTopics = null, 
+            AffectedTopic topic = null,
+            IReadOnlyCollection<DependencyTopic> dependencyTopics = null,
             TopicCheckStrategy dependencyTopicCheckStrategy = TopicCheckStrategy.Unspecified,
             SimultaneousRunsStrategy simultaneousRunsStrategy = SimultaneousRunsStrategy.Unspecified)
         {
@@ -54,26 +54,26 @@ namespace Naos.MessageBus.Domain
 
         /// <inheritdoc />
         public TrackingCode SendRecurring(
-            IMessage message, 
-            IChannel channel, 
+            IMessage message,
+            IChannel channel,
             ScheduleBase recurringSchedule,
             string name = null,
-            AffectedTopic topic = null, 
-            IReadOnlyCollection<DependencyTopic> dependencyTopics = null, 
+            AffectedTopic topic = null,
+            IReadOnlyCollection<DependencyTopic> dependencyTopics = null,
             TopicCheckStrategy dependencyTopicCheckStrategy = TopicCheckStrategy.Unspecified,
             SimultaneousRunsStrategy simultaneousRunsStrategy = SimultaneousRunsStrategy.Unspecified)
         {
             var messageSequenceId = Guid.NewGuid();
             var messageSequence = new MessageSequence
-                                      {
-                                          Id = messageSequenceId,
-                                          Name = name,
-                                          AddressedMessages = new[] { message.ToAddressedMessage(channel) },
-                                          Topic = topic,
-                                          DependencyTopics = dependencyTopics,
-                                          DependencyTopicCheckStrategy = dependencyTopicCheckStrategy,
-                                          SimultaneousRunsStrategy = simultaneousRunsStrategy
-                                      };
+            {
+                Id = messageSequenceId,
+                Name = name,
+                AddressedMessages = new[] { message.ToAddressedMessage(channel) },
+                Topic = topic,
+                DependencyTopics = dependencyTopics,
+                DependencyTopicCheckStrategy = dependencyTopicCheckStrategy,
+                SimultaneousRunsStrategy = simultaneousRunsStrategy
+            };
 
             return this.SendRecurring(messageSequence, recurringSchedule);
         }
@@ -144,9 +144,7 @@ namespace Naos.MessageBus.Domain
             var address = firstEnvelope.Address == null || this.typeComparer.Equals(firstEnvelope.Address.GetType(), typeof(NullChannel))
                               ? this.unaddressedMailRouter.FindAddress(parcel)
                               : firstEnvelope.Address;
-
             this.parcelTrackingSystem.UpdateSentAsync(trackingCode, parcel, address, recurringSchedule).Wait();
-
             return trackingCode;
         }
 
@@ -162,24 +160,24 @@ namespace Naos.MessageBus.Domain
             // must be first message to provide data to others...
             var allTopics = dependencyTopics.Cast<TopicBase>().Union(new[] { parcel.Topic }).Select(_ => _.ToNamedTopic()).ToArray();
             var fetchAndShareTopicStatusReportMessage = new FetchAndShareLatestTopicStatusReportsMessage
-                                                            {
-                                                                Description =
+            {
+                Description =
                                                                     $"{parcel.Name} - Fetch and Share Latest Topic Status Reports for: "
                                                                     + string.Join<TopicBase>(",", allTopics),
-                                                                TopicsToFetchAndShareStatusReportsFrom = allTopics
-                                                            };
+                TopicsToFetchAndShareStatusReportsFrom = allTopics
+            };
 
             newEnvelopes.Add(fetchAndShareTopicStatusReportMessage.ToAddressedMessage().ToEnvelope());
 
             if (parcel.SimultaneousRunsStrategy == SimultaneousRunsStrategy.AbortSubsequentRunsWhenOneIsRunning)
             {
                 var abortIfPendingMessage = new AbortIfTopicsHaveSpecificStatusesMessage
-                                                {
-                                                    Description = $"{parcel.Name} - Abort if '{parcel.Topic}' Being Affected or Failed",
-                                                    TopicsToCheck = new[] { parcel.Topic.ToNamedTopic() },
-                                                    TopicCheckStrategy = TopicCheckStrategy.All,
-                                                    StatusesToAbortOn = new[] { TopicStatus.BeingAffected, TopicStatus.Failed }
-                                                };
+                {
+                    Description = $"{parcel.Name} - Abort if '{parcel.Topic}' Being Affected or Failed",
+                    TopicsToCheck = new[] { parcel.Topic.ToNamedTopic() },
+                    TopicCheckStrategy = TopicCheckStrategy.All,
+                    StatusesToAbortOn = new[] { TopicStatus.BeingAffected, TopicStatus.Failed }
+                };
 
                 newEnvelopes.Add(abortIfPendingMessage.ToAddressedMessage().ToEnvelope());
             }
@@ -187,22 +185,22 @@ namespace Naos.MessageBus.Domain
             if (dependencyTopics.Count > 0)
             {
                 var abortIfNoNewDataMessage = new AbortIfNoDependencyTopicsAffectedMessage
-                                                  {
-                                                      Description = $"{parcel.Name} - Abort if no updates on Depdendency Topics: " + string.Join(",", dependencyTopics),
-                                                      Topic = parcel.Topic,
-                                                      DependencyTopics = dependencyTopics,
-                                                      TopicCheckStrategy = parcel.DependencyTopicCheckStrategy
-                                                  };
+                {
+                    Description = $"{parcel.Name} - Abort if no updates on Depdendency Topics: " + string.Join(",", dependencyTopics),
+                    Topic = parcel.Topic,
+                    DependencyTopics = dependencyTopics,
+                    TopicCheckStrategy = parcel.DependencyTopicCheckStrategy
+                };
 
                 newEnvelopes.Add(abortIfNoNewDataMessage.ToAddressedMessage().ToEnvelope());
             }
 
             // add a being affected message
             var beingAffectedMessage = new TopicBeingAffectedMessage
-                                     {
-                                         Description = $"{parcel.Name} - Begin affecting Topic: {parcel.Topic}",
-                                         Topic = parcel.Topic
-                                     };
+            {
+                Description = $"{parcel.Name} - Begin affecting Topic: {parcel.Topic}",
+                Topic = parcel.Topic
+            };
 
             newEnvelopes.Add(beingAffectedMessage.ToAddressedMessage().ToEnvelope());
 
@@ -211,10 +209,10 @@ namespace Naos.MessageBus.Domain
 
             // add the final was affected message
             var wasAffectedMessage = new TopicWasAffectedMessage
-                                       {
-                                           Description = $"{parcel.Name} - Finished affecting Topic: {parcel.Topic}",
-                                           Topic = parcel.Topic
-                                       };
+            {
+                Description = $"{parcel.Name} - Finished affecting Topic: {parcel.Topic}",
+                Topic = parcel.Topic
+            };
 
             newEnvelopes.Add(wasAffectedMessage.ToAddressedMessage().ToEnvelope());
 
