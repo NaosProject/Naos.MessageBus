@@ -120,7 +120,10 @@ namespace Naos.MessageBus.Persistence
                 stopwatch.Reset();
                 stopwatch.Start();
                 var commandCreate = new Create { AggregateId = parcel.Id, Parcel = parcel, RecurringSchedule = recurringSchedule };
-                shipment = new Shipment(commandCreate);
+                
+                // shipment = new Shipment(commandCreate);  // we are not using this approach because it's too slow
+                shipment = new Shipment(parcel.Id);
+                shipment.EnactCommand(commandCreate);
                 stopwatch.Stop();
 
                 Log.Write($"TELEMETRY - P.T.S. CreateCommand: {stopwatch.Elapsed}");
