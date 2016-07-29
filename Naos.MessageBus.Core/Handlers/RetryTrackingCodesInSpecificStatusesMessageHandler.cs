@@ -11,6 +11,8 @@ namespace Naos.MessageBus.Core
     using System.Threading;
     using System.Threading.Tasks;
 
+    using Its.Log.Instrumentation;
+
     using Naos.MessageBus.Domain;
 
     /// <summary>
@@ -55,15 +57,20 @@ namespace Naos.MessageBus.Core
 
                 var retryAttempted = false;
                 var parcelsThatNeedRetrying = reports.Where(_ => message.StatusesToRetry.Contains(_.Status)).ToList();
+                Log.Write($"Found {parcelsThatNeedRetrying.Count} parcels to retry.");
                 foreach (var parcelThatNeedsRetrying in parcelsThatNeedRetrying)
                 {
                     var currentRetryCount = trackingCodeRetryCountMap[parcelThatNeedsRetrying.CurrentTrackingCode];
-                    if (message.NumberOfRetriesToAttempt == -1 || 
-                        currentRetryCount < message.NumberOfRetriesToAttempt)
+                    if (message.NumberOfRetriesToAttempt == -1 || currentRetryCount < message.NumberOfRetriesToAttempt)
                     {
+                        Log.Write($"Attempting retry {parcelThatNeedsRetrying.CurrentTrackingCode}");
                         postOffice.Resend(parcelThatNeedsRetrying.CurrentTrackingCode);
                         trackingCodeRetryCountMap[parcelThatNeedsRetrying.CurrentTrackingCode] = currentRetryCount + 1;
                         retryAttempted = true;
+                    }
+                    else
+                    {
+                        Log.Write($"Retry needed for {parcelThatNeedsRetrying.CurrentTrackingCode} but exceeded max retries {message.NumberOfRetriesToAttempt}");
                     }
                 }
 
