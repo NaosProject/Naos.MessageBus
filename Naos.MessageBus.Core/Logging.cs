@@ -10,6 +10,7 @@ namespace Naos.MessageBus.Core
     using System.Diagnostics;
     using System.Globalization;
     using System.IO;
+    using System.Linq;
     using System.Web.Hosting;
 
     using Its.Log.Instrumentation;
@@ -73,13 +74,25 @@ namespace Naos.MessageBus.Core
 
             EventHandler<InstrumentationEventArgs> logSubscription = (sender, args) =>
                 {
-                    var subject = args.LogEntry?.Subject ?? "Null LogEntry or Subject Supplied to EntryPosted in " + nameof(Logging);
-                    var message = DateTime.UtcNow.ToString("o", CultureInfo.InvariantCulture) + ": " + subject.ToLogString();
+                    string logMessage = null;
+                    if (args.LogEntry != null)
+                    {
+                        logMessage = args.LogEntry.Subject?.ToLogString() ?? "Null LogEntry or Subject Supplied to EntryPosted in " + nameof(Logging);
+                        if ((args.LogEntry.Params != null) && args.LogEntry.Params.Any())
+                        {
+                            foreach (var param in args.LogEntry.Params)
+                            {
+                                logMessage = logMessage + " - " + param.ToLogString();
+                            }
+                        }
+                    }
+
+                    var message = DateTime.UtcNow.ToString("o", CultureInfo.InvariantCulture) + ": " + logMessage.ToLogString();
 
                     lock (fileLock)
                     {
                         File.AppendAllText(logProcessorSettings.LogFilePath, message + Environment.NewLine);
-                    }
+                    }                    
                 };
 
             Log.EntryPosted += logSubscription;
