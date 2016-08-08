@@ -10,6 +10,7 @@ namespace Naos.MessageBus.Core
     using System.Collections.Concurrent;
     using System.Collections.Generic;
     using System.Linq;
+    using System.Runtime.ExceptionServices;
     using System.Threading;
     using System.Threading.Tasks;
 
@@ -116,7 +117,7 @@ namespace Naos.MessageBus.Core
             }
             catch (RecurringParcelEncounteredException recurringParcelEncounteredException)
             {
-                // this is a very special case, this was invoked with a recurring header message as the next message, we need to reset the 
+                // this is a very special case, this was invoked with a recurring header message as the next message, we need to reset the
                 //        parcel id and then resend but we will not update any status because the new send with the new id will take care of that
                 Log.Write("Encountered recurring envelope: " + recurringParcelEncounteredException.Message);
                 var remainingEnvelopes = parcel.Envelopes.Skip(1).ToList();
@@ -212,11 +213,11 @@ namespace Naos.MessageBus.Core
                         if (this.typeComparer.Equals(exception.GetType(), typeof(AggregateException)) && exception.InnerExceptions.Count == 1 && exception.InnerException != null)
                         {
                             // if this is just wrapping a single exception then no need to keep the wrapper...
-                            throw exception.InnerException;
+                            ExceptionDispatchInfo.Capture(exception.InnerException).Throw();
                         }
                         else
                         {
-                            throw exception;
+                            ExceptionDispatchInfo.Capture(exception).Throw();
                         }
                     }
 
