@@ -62,9 +62,9 @@ namespace Naos.MessageBus.Hangfire.Sender
 
             Expression<Action<HangfireDispatcher>> methodCall =
                 _ => _.HangfireDispatch(
-                    crate.Label, 
-                    Serializer.Serialize(crate.TrackingCode), 
-                    Serializer.Serialize(parcel), 
+                    crate.Label,
+                    Serializer.Serialize(crate.TrackingCode),
+                    Serializer.Serialize(parcel),
                     Serializer.Serialize(channel));
 
             var hangfireId = client.Create<HangfireDispatcher>(methodCall, state);
@@ -99,7 +99,7 @@ namespace Naos.MessageBus.Hangfire.Sender
         {
             Parcel parcel;
 
-            if (crate.RecurringSchedule.GetType().ToTypeDescription() != typeof(NullSchedule).ToTypeDescription())
+            if (crate.RecurringSchedule != null && crate.RecurringSchedule.GetType().ToTypeDescription() != typeof(NullSchedule).ToTypeDescription())
             {
                 // need to inject a recurring message to make it work...
                 var newEnvelopes =
