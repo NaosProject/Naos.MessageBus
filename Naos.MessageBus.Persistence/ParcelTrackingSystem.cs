@@ -60,6 +60,12 @@ namespace Naos.MessageBus.Persistence
                 new EventStoreDatabaseInitializer<EventStoreDbContext>().InitializeDatabase(context);
             }
 
+            // create read model database if not already done
+            using (var db = new TrackedShipmentDbContext(this.readModelPersistenceConnectionConfiguration.ToSqlServerConnectionString()))
+            {
+                db.Database.CreateIfNotExists();
+            }
+
             // the event bus is needed for projection events to be proliferated
             var eventBus = new InProcessEventBus();
 
