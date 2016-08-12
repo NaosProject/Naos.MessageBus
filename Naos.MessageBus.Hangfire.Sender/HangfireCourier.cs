@@ -18,6 +18,8 @@ namespace Naos.MessageBus.Hangfire.Sender
     using Naos.Cron;
     using Naos.MessageBus.Domain;
 
+    using Polly;
+
     /// <inheritdoc />
     public class HangfireCourier : ICourier
     {
@@ -27,13 +29,17 @@ namespace Naos.MessageBus.Hangfire.Sender
 
         private readonly CourierPersistenceConnectionConfiguration courierPersistenceConnectionConfiguration;
 
+        private readonly int retryCount;
+
         /// <summary>
         /// Initializes a new instance of the <see cref="HangfireCourier"/> class.
         /// </summary>
         /// <param name="courierPersistenceConnectionConfiguration">Hangfire persistence connection string.</param>
-        public HangfireCourier(CourierPersistenceConnectionConfiguration courierPersistenceConnectionConfiguration)
+        /// <param name="retryCount">Number of retries to attempt if error encountered (default if 5).</param>
+        public HangfireCourier(CourierPersistenceConnectionConfiguration courierPersistenceConnectionConfiguration, int retryCount = 5)
         {
             this.courierPersistenceConnectionConfiguration = courierPersistenceConnectionConfiguration;
+            this.retryCount = retryCount;
         }
 
         /// <summary>
@@ -44,7 +50,10 @@ namespace Naos.MessageBus.Hangfire.Sender
         /// <inheritdoc />
         public string Send(Crate crate)
         {
-            GlobalConfiguration.Configuration.UseSqlServerStorage(this.courierPersistenceConnectionConfiguration.ToSqlServerConnectionString());
+            // run this with retries because it will sometimes fail due to high load/high connection count
+            this.RunWithRetry(
+                () => GlobalConfiguration.Configuration.UseSqlServerStorage(this.courierPersistenceConnectionConfiguration.ToSqlServerConnectionString()));
+
             var client = new BackgroundJobClient();
 
             var parcel = UncrateParcel(crate);
@@ -153,6 +162,16 @@ namespace Naos.MessageBus.Hangfire.Sender
                     "Channel name must be lowercase alphanumeric with underscores ONLY.  The supplied channel name: "
                     + simpleChannel.Name);
             }
+        }
+
+        private void RunWithRetry(Action action)
+        {
+            Policy.Handle<Exception>().WaitAndRetry(this.retryCount, attempt => TimeSpan.FromSeconds(attempt * 5)).Execute(action);
+        }
+
+        private T RunWithRetry<T>(Func<T> func)
+        {
+            return Policy.Handle<Exception>().WaitAndRetry(this.retryCount, attempt => TimeSpan.FromSeconds(attempt * 5)).Execute(func);
         }
     }
 }

@@ -337,5 +337,10 @@ namespace Naos.MessageBus.Persistence
         {
             Policy.Handle<Exception>().WaitAndRetry(this.retryCount, attempt => TimeSpan.FromSeconds(attempt * 5)).Execute(action);
         }
+
+        private T RunWithRetry<T>(Func<T> func)
+        {
+            return Policy.Handle<Exception>().WaitAndRetry(this.retryCount, attempt => TimeSpan.FromSeconds(attempt * 5)).Execute(func);
+        }
     }
 }

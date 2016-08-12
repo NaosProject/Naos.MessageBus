@@ -46,7 +46,7 @@ namespace Naos.MessageBus.Core
                 throw new ArgumentException($"Invalid specified retry statuses - Allowed: {allowedString} - Specified: {userSpecifiedString}");
             }
 
-            var trackingCodeRetryCountMap = message.TrackingCodes.ToDictionary(key => key, val => 0);
+            var parcelIdRetryCountMap = message.TrackingCodes.ToDictionary(key => key.ParcelId, val => 0);
 
             var breakTheWhileLoop = false;
             while (!breakTheWhileLoop)
@@ -60,12 +60,12 @@ namespace Naos.MessageBus.Core
                 Log.Write($"Found {parcelsThatNeedRetrying.Count} parcels to retry.");
                 foreach (var parcelThatNeedsRetrying in parcelsThatNeedRetrying)
                 {
-                    var currentRetryCount = trackingCodeRetryCountMap[parcelThatNeedsRetrying.CurrentTrackingCode];
+                    var currentRetryCount = parcelIdRetryCountMap[parcelThatNeedsRetrying.CurrentTrackingCode.ParcelId];
                     if (message.NumberOfRetriesToAttempt == -1 || currentRetryCount < message.NumberOfRetriesToAttempt)
                     {
                         Log.Write($"Attempting retry {parcelThatNeedsRetrying.CurrentTrackingCode}");
                         postOffice.Resend(parcelThatNeedsRetrying.CurrentTrackingCode);
-                        trackingCodeRetryCountMap[parcelThatNeedsRetrying.CurrentTrackingCode] = currentRetryCount + 1;
+                        parcelIdRetryCountMap[parcelThatNeedsRetrying.CurrentTrackingCode.ParcelId] = currentRetryCount + 1;
                         retryAttempted = true;
                     }
                     else

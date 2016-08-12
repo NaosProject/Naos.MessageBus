@@ -69,6 +69,7 @@ namespace Naos.MessageBus.Hangfire.Console
                     courier,
                     messageBusHandlerSettings.ConnectionConfiguration.EventPersistenceConnectionConfiguration,
                     messageBusHandlerSettings.ConnectionConfiguration.ReadModelPersistenceConnectionConfiguration);
+
                 var postOffice = new PostOffice(parcelTrackingSystem, courier.DefaultChannelRouter);
 
                 HandlerToolShed.InitializePostOffice(() => postOffice);

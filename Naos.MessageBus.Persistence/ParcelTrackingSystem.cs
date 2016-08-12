@@ -70,7 +70,7 @@ namespace Naos.MessageBus.Persistence
             var eventBus = new InProcessEventBus();
 
             // update handler to synchronously process updates to read models (using the IUpdateProjectionWhen<TEvent> interface)
-            var updateTrackedShipment = new ParcelTrackingEventHandler(courier, this.readModelPersistenceConnectionConfiguration);
+            var updateTrackedShipment = new ParcelTrackingEventHandler(courier, this.readModelPersistenceConnectionConfiguration, this.retryCount);
 
             // subscribe handler to bus to get updates
             eventBus.Subscribe(updateTrackedShipment);
