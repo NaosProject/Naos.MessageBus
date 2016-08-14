@@ -56,7 +56,7 @@ namespace Naos.MessageBus.Core
             this.TopicStatusReports = message.TopicsToFetchAndShareStatusReportsFrom.Select(
                 topic =>
                     {
-                        var latestReport = tracker.GetLatestTopicStatusReportAsync(topic);
+                        var latestReport = tracker.GetLatestTopicStatusReportAsync(topic, message.Filter ?? TopicStatus.None);
                         latestReport.Wait();
                         var latest = latestReport.Result;
                         return latest;

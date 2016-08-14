@@ -164,7 +164,8 @@ namespace Naos.MessageBus.Domain
                 Description =
                                                                     $"{parcel.Name} - Fetch and Share Latest Topic Status Reports for: "
                                                                     + string.Join<TopicBase>(",", allTopics),
-                TopicsToFetchAndShareStatusReportsFrom = allTopics
+                TopicsToFetchAndShareStatusReportsFrom = allTopics,
+                Filter = TopicStatus.None
             };
 
             newEnvelopes.Add(fetchAndShareTopicStatusReportMessage.ToAddressedMessage().ToEnvelope());

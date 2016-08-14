@@ -20,5 +20,10 @@ namespace Naos.MessageBus.Domain
         /// Gets or sets the topics to get the latest status report of and then share.
         /// </summary>
         public IReadOnlyCollection<NamedTopic> TopicsToFetchAndShareStatusReportsFrom { get; set; }
+
+        /// <summary>
+        /// Gets or sets a filter to be used when fetching the topics.
+        /// </summary>
+        public TopicStatus? Filter { get; set; }
     }
 }

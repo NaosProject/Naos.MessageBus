@@ -25,6 +25,32 @@ namespace Naos.MessageBus.Test
     public class AbortIfNoDependencyTopicsAffectedMessageHandlerTests
     {
         [Fact]
+        public void ErroredDependentTopic_Aborts()
+        {
+            var impactingTopic = "cmfc";
+            var dependentTopics = new[] { "cme", "cmc", "cmf" };
+
+            var reportsJson = "[{\"topic\": {\r\n        \"name\": \"cmf\"\r\n      },\r\n      \"affectedItems\": [],\r\n      \"status\": \"failed\",\r\n      \"affectsCompletedDateTimeUtc\": null,\r\n      \"dependencyTopicNoticesAtStart\": [\r\n        {\r\n          \"topic\": {\r\n            \"name\": \"cmc\"\r\n          },\r\n          \"affectedItems\": [],\r\n          \"status\": \"wasAffected\",\r\n          \"affectsCompletedDateTimeUtc\": \"2016-08-13T06:36:48.84\",\r\n          \"dependencyTopicNoticesAtStart\": [\r\n            {\r\n              \"topic\": {\r\n                \"name\": \"cmd\"\r\n              },\r\n              \"affectedItems\": [],\r\n              \"status\": \"wasAffected\",\r\n              \"affectsCompletedDateTimeUtc\": \"2016-08-13T06:26:39.71\",\r\n              \"dependencyTopicNoticesAtStart\": []\r\n            }\r\n          ]\r\n        },\r\n        {\r\n          \"topic\": {\r\n            \"name\": \"cme\"\r\n          },\r\n          \"affectedItems\": [],\r\n          \"status\": \"wasAffected\",\r\n          \"affectsCompletedDateTimeUtc\": \"2016-08-13T06:36:48.153\",\r\n          \"dependencyTopicNoticesAtStart\": [\r\n            {\r\n              \"topic\": {\r\n                \"name\": \"cmd\"\r\n              },\r\n              \"affectedItems\": [],\r\n              \"status\": \"wasAffected\",\r\n              \"affectsCompletedDateTimeUtc\": \"2016-08-13T06:26:39.71\",\r\n              \"dependencyTopicNoticesAtStart\": []\r\n            }\r\n          ]\r\n        },\r\n        {\r\n          \"topic\": {\r\n            \"name\": \"cmd\"\r\n          },\r\n          \"affectedItems\": [],\r\n          \"status\": \"wasAffected\",\r\n          \"affectsCompletedDateTimeUtc\": \"2016-08-13T06:26:39.71\",\r\n          \"dependencyTopicNoticesAtStart\": []\r\n        }\r\n      ]\r\n    },\r\n    {\r\n      \"topic\": {\r\n        \"name\": \"cme\"\r\n      },\r\n      \"affectedItems\": [],\r\n      \"status\": \"wasAffected\",\r\n      \"affectsCompletedDateTimeUtc\": \"2016-08-13T06:36:48.153\",\r\n      \"dependencyTopicNoticesAtStart\": [\r\n        {\r\n          \"topic\": {\r\n            \"name\": \"cmd\"\r\n          },\r\n          \"affectedItems\": [],\r\n          \"status\": \"wasAffected\",\r\n          \"affectsCompletedDateTimeUtc\": \"2016-08-13T06:26:39.71\",\r\n          \"dependencyTopicNoticesAtStart\": []\r\n        }\r\n      ]\r\n    },\r\n    {\r\n      \"topic\": {\r\n        \"name\": \"cmc\"\r\n      },\r\n      \"affectedItems\": [],\r\n      \"status\": \"wasAffected\",\r\n      \"affectsCompletedDateTimeUtc\": \"2016-08-13T06:36:48.84\",\r\n      \"dependencyTopicNoticesAtStart\": [\r\n        {\r\n          \"topic\": {\r\n            \"name\": \"cmd\"\r\n          },\r\n          \"affectedItems\": [],\r\n          \"status\": \"wasAffected\",\r\n          \"affectsCompletedDateTimeUtc\": \"2016-08-13T06:26:39.71\",\r\n          \"dependencyTopicNoticesAtStart\": []\r\n        }\r\n      ]\r\n    },\r\n    {\r\n      \"topic\": {\r\n        \"name\": \"cmfc\"\r\n      },\r\n      \"affectedItems\": [],\r\n      \"status\": \"unknown\",\r\n      \"affectsCompletedDateTimeUtc\": null,\r\n      \"dependencyTopicNoticesAtStart\": []\r\n    }\r\n  ]";
+
+            var reports = Serializer.Deserialize<TopicStatusReport[]>(reportsJson);
+
+            var message = new AbortIfNoDependencyTopicsAffectedMessage
+            {
+                Description = A.Dummy<string>(),
+                Topic = new AffectedTopic(impactingTopic),
+                DependencyTopics = dependentTopics.Select(_ => new DependencyTopic(_)).ToArray(),
+                TopicCheckStrategy = TopicCheckStrategy.All,
+                TopicStatusReports = reports
+            };
+
+            var handler = new AbortIfNoDependencyTopicsAffectedMessageHandler();
+            Func<Task> testCode = () => handler.HandleAsync(message);
+
+            // act & assert
+            testCode.ShouldThrow<AbortParcelDeliveryException>().WithMessage("No new data for topics; " + string.Join(",", dependentTopics));
+        }
+
+        [Fact]
         public void MissingCurrentNotice_Aborts()
         {
             // arrange

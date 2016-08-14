@@ -59,7 +59,7 @@ namespace Naos.MessageBus.Core
                 key => key,
                 val =>
                     {
-                        var currentNotice = currentDependencyNotices.SingleOrDefault(_ => _ != null && _.Topic == val);
+                        var currentNotice = currentDependencyNotices.SingleOrDefault(_ => _ != null && _.Topic == val && _.Status == TopicStatus.WasAffected);
                         var lastRunNotice = lastRunDependencyNotices.SingleOrDefault(_ => _.Topic == val);
 
                         return EvaluateNoticeRecency(currentNotice, lastRunNotice);
