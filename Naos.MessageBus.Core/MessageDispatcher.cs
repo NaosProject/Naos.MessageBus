@@ -157,7 +157,7 @@ namespace Naos.MessageBus.Core
 
             // WARNING: this method change the state of the objects passed in!!!
             this.PrepareMessage(messageToHandle, parcel.SharedInterfaceStates);
-            var deliveredEnvelope = messageToHandle.ToAddressedMessage(address).ToEnvelope();
+            var deliveredEnvelope = messageToHandle.ToAddressedMessage(address).ToEnvelope(firstEnvelope.Id);
             Log.Write(() => "Delivered Envelope Json: " + Serializer.Serialize(deliveredEnvelope));
 
             var messageType = messageToHandle.GetType();

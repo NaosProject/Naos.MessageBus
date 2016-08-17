@@ -62,13 +62,15 @@ namespace Naos.MessageBus.Domain
         /// Extension on <see cref="AddressedMessage"/> to wrap in an envelope.
         /// </summary>
         /// <param name="addressedMessage">Addressed message to wrap.</param>
+        /// <param name="envelopeId">Optional to set the envelope ID, a new GUID will be chosen if not provided.</param>
         /// <returns><see cref="Envelope"/> with addressed message.</returns>
-        public static Envelope ToEnvelope(this AddressedMessage addressedMessage)
+        public static Envelope ToEnvelope(this AddressedMessage addressedMessage, string envelopeId = null)
         {
+            var id = envelopeId ?? Guid.NewGuid().ToString().ToUpperInvariant();
             var messageType = addressedMessage.Message.GetType();
 
             return new Envelope(
-                Guid.NewGuid().ToString().ToUpperInvariant(),
+                id,
                 addressedMessage.Message.Description,
                 addressedMessage.Address,
                 Serializer.Serialize(addressedMessage.Message),
