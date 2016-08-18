@@ -596,20 +596,24 @@ namespace Naos.MessageBus.Test
         [Fact]
         public static void Dispatch_EnvelopeMissingTypeCompletely_Throws()
         {
+            var trackingCode = new TrackingCode { ParcelId = Guid.NewGuid(), EnvelopeId = Guid.NewGuid().ToString() };
+
             Action testCode =
                 () =>
                     {
                         var channel = new SimpleChannel("Channel");
                         GetMessageDispatcher(new[] { channel })
-                            .Dispatch("Name", new TrackingCode(), new Parcel { Envelopes = new[] { new Envelope(null, null, channel, null, null) } }, channel);
+                            .Dispatch("Name", trackingCode, new Parcel { Envelopes = new[] { new Envelope(null, null, channel, null, null) } }, channel);
                     };
 
-            testCode.ShouldThrow<DispatchException>().WithMessage("Message type not specified in envelope");
+            testCode.ShouldThrow<DispatchException>().WithMessage($"Message type not specified in envelope; {trackingCode}");
         }
 
         [Fact]
         public static void Dispatch_EnvelopeMissingTypeNamespace_Throws()
         {
+            var trackingCode = new TrackingCode { ParcelId = Guid.NewGuid(), EnvelopeId = Guid.NewGuid().ToString() };
+
             Action testCode =
                 () =>
                     {
@@ -617,7 +621,7 @@ namespace Naos.MessageBus.Test
                         GetMessageDispatcher(new[] { channel })
                             .Dispatch(
                                 "Name",
-                                new TrackingCode(),
+                                trackingCode,
                                 new Parcel
                                     {
                                         Envelopes =
@@ -634,12 +638,14 @@ namespace Naos.MessageBus.Test
                                 channel);
                     };
 
-            testCode.ShouldThrow<DispatchException>().WithMessage("Message type not specified in envelope");
+            testCode.ShouldThrow<DispatchException>().WithMessage($"Message type not specified in envelope; {trackingCode}");
         }
 
         [Fact]
         public static void Dispatch_EnvelopeMissingTypeName_Throws()
         {
+            var trackingCode = new TrackingCode { ParcelId = Guid.NewGuid(), EnvelopeId = Guid.NewGuid().ToString() };
+
             Action testCode =
                 () =>
                     {
@@ -647,7 +653,7 @@ namespace Naos.MessageBus.Test
                         GetMessageDispatcher(new[] { channel })
                             .Dispatch(
                                 "Name",
-                                new TrackingCode(),
+                                trackingCode,
                                 new Parcel
                                     {
                                         Envelopes =
@@ -664,12 +670,14 @@ namespace Naos.MessageBus.Test
                                 channel);
                     };
 
-            testCode.ShouldThrow<DispatchException>().WithMessage("Message type not specified in envelope");
+            testCode.ShouldThrow<DispatchException>().WithMessage($"Message type not specified in envelope; {trackingCode}");
         }
 
         [Fact]
         public static void Dispatch_EnvelopeMissingAssemblyQualifiedType_Throws()
         {
+            var trackingCode = new TrackingCode { ParcelId = Guid.NewGuid(), EnvelopeId = Guid.NewGuid().ToString() };
+
             Action testCode =
                 () =>
                     {
@@ -677,7 +685,7 @@ namespace Naos.MessageBus.Test
                         GetMessageDispatcher(new[] { channel })
                             .Dispatch(
                                 "Name",
-                                new TrackingCode(),
+                                trackingCode,
                                 new Parcel
                                     {
                                         Envelopes =
@@ -694,7 +702,7 @@ namespace Naos.MessageBus.Test
                                 channel);
                     };
 
-            testCode.ShouldThrow<DispatchException>().WithMessage("Message type not specified in envelope");
+            testCode.ShouldThrow<DispatchException>().WithMessage($"Message type not specified in envelope; {trackingCode}");
         }
 
         [Fact]

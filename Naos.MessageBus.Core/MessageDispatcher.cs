@@ -26,7 +26,7 @@ namespace Naos.MessageBus.Core
     public class MessageDispatcher : IDispatchMessages
     {
         // Make this permissive since it's the underlying logic and shouldn't be coupled to whether handlers are matched in strict mode...
-        private readonly TypeComparer typeComparer = new TypeComparer(TypeMatchStrategy.NamespaceAndName);
+        private readonly TypeComparer internalTypeComparer = new TypeComparer(TypeMatchStrategy.NamespaceAndName);
 
         private readonly Container simpleInjectorContainer;
 
@@ -34,7 +34,7 @@ namespace Naos.MessageBus.Core
 
         private readonly ICollection<IChannel> servicedChannels;
 
-        private readonly TypeMatchStrategy typeMatchStrategy;
+        private readonly TypeMatchStrategy messageHandlerChoosingTypeMatchStrategy;
 
         private readonly TimeSpan messageDispatcherWaitThreadSleepTime;
 
@@ -52,18 +52,18 @@ namespace Naos.MessageBus.Core
         /// <param name="simpleInjectorContainer">DI container to use for looking up handlers.</param>
         /// <param name="handlerSharedStateMap">Initial state dictionary for handlers the require state to be seeded.</param>
         /// <param name="servicedChannels">Channels being services by this dispatcher.</param>
-        /// <param name="typeMatchStrategy">Message type match strategy for use when selecting a handler.</param>
+        /// <param name="messageHandlerChoosingTypeMatchStrategy">Message type match strategy for use when selecting a handler.</param>
         /// <param name="messageDispatcherWaitThreadSleepTime">Amount of time to sleep while waiting on messages to be handled.</param>
         /// <param name="harnessStaticDetails">Details about the harness.</param>
         /// <param name="parcelTrackingSystem">Courier to track parcel events.</param>
         /// <param name="activeMessageTracker">Interface to track active messages to know if handler harness can shutdown.</param>
         /// <param name="postOffice">Interface to send parcels.</param>
-        public MessageDispatcher(Container simpleInjectorContainer, ConcurrentDictionary<Type, object> handlerSharedStateMap, ICollection<IChannel> servicedChannels, TypeMatchStrategy typeMatchStrategy, TimeSpan messageDispatcherWaitThreadSleepTime, HarnessStaticDetails harnessStaticDetails, IParcelTrackingSystem parcelTrackingSystem, ITrackActiveMessages activeMessageTracker, IPostOffice postOffice)
+        public MessageDispatcher(Container simpleInjectorContainer, ConcurrentDictionary<Type, object> handlerSharedStateMap, ICollection<IChannel> servicedChannels, TypeMatchStrategy messageHandlerChoosingTypeMatchStrategy, TimeSpan messageDispatcherWaitThreadSleepTime, HarnessStaticDetails harnessStaticDetails, IParcelTrackingSystem parcelTrackingSystem, ITrackActiveMessages activeMessageTracker, IPostOffice postOffice)
         {
             this.simpleInjectorContainer = simpleInjectorContainer;
             this.handlerSharedStateMap = handlerSharedStateMap;
             this.servicedChannels = servicedChannels;
-            this.typeMatchStrategy = typeMatchStrategy;
+            this.messageHandlerChoosingTypeMatchStrategy = messageHandlerChoosingTypeMatchStrategy;
             this.messageDispatcherWaitThreadSleepTime = messageDispatcherWaitThreadSleepTime;
 
             this.harnessStaticDetails = harnessStaticDetails;
@@ -100,7 +100,7 @@ namespace Naos.MessageBus.Core
 
                 // this is a very special case and must be checked before marking any status changes to the parcel (otherwise it should be in InternalDispatch...)
                 var firstEnvelope = parcel.Envelopes.First();
-                if (this.typeComparer.Equals(firstEnvelope.MessageType, typeof(RecurringHeaderMessage).ToTypeDescription()))
+                if (this.internalTypeComparer.Equals(firstEnvelope.MessageType, typeof(RecurringHeaderMessage).ToTypeDescription()))
                 {
                     throw new RecurringParcelEncounteredException(firstEnvelope.Description);
                 }
@@ -113,7 +113,7 @@ namespace Naos.MessageBus.Core
 
                 Action<Envelope> deliveredCallback = deliveredEnvelope => this.parcelTrackingSystem.UpdateDeliveredAsync(trackingCode, deliveredEnvelope).Wait();
 
-                this.InternalDispatch(parcel, address, attemptingCallback, deliveredCallback);
+                this.InternalDispatch(parcel, address, trackingCode, firstEnvelope, attemptingCallback, deliveredCallback);
             }
             catch (RecurringParcelEncounteredException recurringParcelEncounteredException)
             {
@@ -121,7 +121,7 @@ namespace Naos.MessageBus.Core
                 //        parcel id and then resend but we will not update any status because the new send with the new id will take care of that
                 Log.Write("Encountered recurring envelope: " + recurringParcelEncounteredException.Message);
                 var remainingEnvelopes = parcel.Envelopes.Skip(1).ToList();
-                this.SendRemainingEnvelopes(Guid.NewGuid(), remainingEnvelopes, parcel.SharedInterfaceStates);
+                this.SendRemainingEnvelopes(Guid.NewGuid(), trackingCode, remainingEnvelopes, parcel.SharedInterfaceStates);
             }
             catch (AbortParcelDeliveryException abortParcelDeliveryException)
             {
@@ -145,25 +145,24 @@ namespace Naos.MessageBus.Core
             }
         }
 
-        private void InternalDispatch(Parcel parcel, IChannel address, Action attemptingCallback, Action<Envelope> deliveredCallback)
+        private void InternalDispatch(Parcel parcel, IChannel address, TrackingCode trackingCode, Envelope firstEnvelope, Action attemptingCallback, Action<Envelope> deliveredCallback)
         {
             attemptingCallback();
 
-            var firstEnvelope = parcel.Envelopes.First();
             var remainingEnvelopes = parcel.Envelopes.Skip(1).ToList();
-            var firstAddressedMessage = this.DeserializeEnvelopeIntoAddressedMessage(firstEnvelope);
+            var firstAddressedMessage = this.DeserializeEnvelopeIntoAddressedMessage(trackingCode, firstEnvelope);
 
             var messageToHandle = firstAddressedMessage.Message;
 
             // WARNING: this method change the state of the objects passed in!!!
-            this.PrepareMessage(messageToHandle, parcel.SharedInterfaceStates);
+            this.PrepareMessage(trackingCode, messageToHandle, parcel.SharedInterfaceStates);
             var deliveredEnvelope = messageToHandle.ToAddressedMessage(address).ToEnvelope(firstEnvelope.Id);
             Log.Write(() => "Delivered Envelope Json: " + Serializer.Serialize(deliveredEnvelope));
 
             var messageType = messageToHandle.GetType();
             var handlerType = typeof(IHandleMessages<>).MakeGenericType(messageType);
 
-            Log.Write(() => "Attempting to get handler for type: " + handlerType.FullName);
+            Log.Write(() => $"Attempting to get handler; {trackingCode}, Type: {handlerType.FullName}");
             object handler;
             var matchingRegistration =
                 this.simpleInjectorContainer.GetCurrentRegistrations()
@@ -175,15 +174,15 @@ namespace Naos.MessageBus.Core
             }
             else
             {
-                throw new ApplicationException("Could not find type in container: " + handlerType.FullName);
+                throw new ApplicationException($"Could not find type in container; {trackingCode}, Type: {handlerType.FullName}");
             }
 
-            Log.Write(() => "Loaded handler: " + handler.GetType().FullName);
+            Log.Write(() => $"Loaded handler; {trackingCode}, Type: {handler.GetType().FullName}");
 
             // WARNING: this method change the state of the objects passed in!!!
-            this.PrepareHandler(handler);
+            this.PrepareHandler(trackingCode, handler);
 
-            using (var activity = Log.Enter(() => new { Message = messageToHandle, Handler = handler }))
+            using (var activity = Log.Enter(() => new { TrackingCode = trackingCode, MessageDescription = messageToHandle.Description, HandlerType = handlerType }))
             {
                 try
                 {
@@ -194,7 +193,7 @@ namespace Naos.MessageBus.Core
                     if (task == null)
                     {
                         throw new ArgumentException(
-                            "Failed to get a task result from Handle method, necessary to perform the wait for async operations...");
+                            $"Failed to get a task result from Handle method, necessary to perform the wait for async operations; {trackingCode}");
                     }
 
                     if (task.Status == TaskStatus.Created)
@@ -210,8 +209,8 @@ namespace Naos.MessageBus.Core
 
                     if (task.Status == TaskStatus.Faulted)
                     {
-                        var exception = task.Exception ?? new AggregateException("No exception came back from task but status was Faulted.");
-                        if (this.typeComparer.Equals(exception.GetType(), typeof(AggregateException)) && exception.InnerExceptions.Count == 1 && exception.InnerException != null)
+                        var exception = task.Exception ?? new AggregateException($"No exception came back from task but status was Faulted; {trackingCode}");
+                        if (this.internalTypeComparer.Equals(exception.GetType(), typeof(AggregateException)) && exception.InnerExceptions.Count == 1 && exception.InnerException != null)
                         {
                             // if this is just wrapping a single exception then no need to keep the wrapper...
                             ExceptionDispatchInfo.Capture(exception.InnerException).Throw();
@@ -222,7 +221,7 @@ namespace Naos.MessageBus.Core
                         }
                     }
 
-                    activity.Confirm(() => "Successfully handled message. Task ended with status: " + task.Status);
+                    activity.Confirm(() => $"Successfully handled message. Task ended with status: {task.Status}");
                 }
                 catch (Exception ex)
                 {
@@ -235,13 +234,13 @@ namespace Naos.MessageBus.Core
 
             if (remainingEnvelopes.Any())
             {
-                this.SendRemainingEnvelopes(parcel.Id, remainingEnvelopes, parcel.SharedInterfaceStates, handler);
+                this.SendRemainingEnvelopes(trackingCode.ParcelId, trackingCode, remainingEnvelopes, parcel.SharedInterfaceStates, handler);
             }
         }
 
-        private void SendRemainingEnvelopes(Guid parcelId, List<Envelope> envelopes, IList<SharedInterfaceState> existingSharedInterfaceStates, object handler = null)
+        private void SendRemainingEnvelopes(Guid parcelId, TrackingCode trackingCodeYieldingEnvelopes, List<Envelope> envelopes, IList<SharedInterfaceState> existingSharedInterfaceStates, object handler = null)
         {
-            using (var activity = Log.Enter(() => new { RemainingEnvelopes = envelopes }))
+            using (var activity = Log.Enter(() => new { TrackingCode = trackingCodeYieldingEnvelopes, RemainingEnvelopes = envelopes }))
             {
                 try
                 {
@@ -265,7 +264,7 @@ namespace Naos.MessageBus.Core
 
                     var envelopesParcel = new Parcel
                                               {
-                                                  Id = parcelId, // persist the batch ID for collation
+                                                  Id = parcelId, // parcel ID provided may or may not match the tracking code's parcel ID...
                                                   Name = envelopes.FirstOrDefault()?.Description,
                                                   Envelopes = envelopes,
                                                   SharedInterfaceStates = shareSets
@@ -283,13 +282,13 @@ namespace Naos.MessageBus.Core
             }
         }
 
-        private void PrepareHandler(object handler)
+        private void PrepareHandler(TrackingCode trackingCode, object handler)
         {
             var handlerActualType = handler.GetType();
             var handlerInterfaces = handlerActualType.GetInterfaces();
-            if (handlerInterfaces.Any(_ => _.IsGenericType && this.typeComparer.Equals(_.GetGenericTypeDefinition(), typeof(INeedSharedState<>))))
+            if (handlerInterfaces.Any(_ => _.IsGenericType && this.internalTypeComparer.Equals(_.GetGenericTypeDefinition(), typeof(INeedSharedState<>))))
             {
-                using (var activity = Log.Enter(() => new { HandlerType = handlerActualType, Handler = handler }))
+                using (var activity = Log.Enter(() => new { TrackingCode = trackingCode, HandlerType = handlerActualType }))
                 {
                     try
                     {
@@ -362,7 +361,7 @@ namespace Naos.MessageBus.Core
             }
         }
 
-        private void PrepareMessage(IMessage message, IList<SharedInterfaceState> sharedProperties)
+        private void PrepareMessage(TrackingCode trackingCode, IMessage message, IList<SharedInterfaceState> sharedProperties)
         {
             if (sharedProperties == null)
             {
@@ -372,7 +371,7 @@ namespace Naos.MessageBus.Core
             var messageAsShare = message as IShare;
             if (messageAsShare != null && sharedProperties.Count > 0)
             {
-                using (var activity = Log.Enter(() => new { Message = message }))
+                using (var activity = Log.Enter(() => new { TrackingCode = trackingCode, MessageDescription = message.Description }))
                 {
                     try
                     {
@@ -383,7 +382,7 @@ namespace Naos.MessageBus.Core
                         foreach (var sharedPropertySet in sharedProperties)
                         {
                             SharedPropertyHelper.ApplySharedInterfaceState(
-                                this.typeMatchStrategy,
+                                this.messageHandlerChoosingTypeMatchStrategy,
                                 sharedPropertySet,
                                 messageAsShare);
                         }
@@ -399,11 +398,11 @@ namespace Naos.MessageBus.Core
             }
         }
 
-        private AddressedMessage DeserializeEnvelopeIntoAddressedMessage(Envelope envelope)
+        private AddressedMessage DeserializeEnvelopeIntoAddressedMessage(TrackingCode trackingCode, Envelope envelope)
         {
             if (string.IsNullOrEmpty(envelope.MessageType?.AssemblyQualifiedName) || string.IsNullOrEmpty(envelope.MessageType.Namespace) || string.IsNullOrEmpty(envelope.MessageType.Name))
             {
-                throw new DispatchException("Message type not specified in envelope");
+                throw new DispatchException($"Message type not specified in envelope; {trackingCode}");
             }
 
             var messageType = this.ResolveMessageTypeUsingRegisteredHandlers(envelope.MessageType);
@@ -420,7 +419,7 @@ namespace Naos.MessageBus.Core
 
             if (ret.Message == null)
             {
-                throw new DispatchException("First message in parcel deserialized to null");
+                throw new DispatchException($"First message in parcel deserialized to null; {trackingCode}");
             }
 
             return ret;
@@ -434,7 +433,7 @@ namespace Naos.MessageBus.Core
                     .ToList()
                     .GetTypeMapsOfImplementersOfGenericType(typeof(IHandleMessages<>));
 
-            var typeComparer = new TypeComparer(this.typeMatchStrategy);
+            var typeComparer = new TypeComparer(this.messageHandlerChoosingTypeMatchStrategy);
             foreach (var registeredHandler in registeredHandlers)
             {
                 var messageTypeFromRegistered = registeredHandler.InterfaceType.GenericTypeArguments.Single();
