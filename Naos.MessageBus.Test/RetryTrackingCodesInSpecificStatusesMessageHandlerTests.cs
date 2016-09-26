@@ -18,6 +18,7 @@ namespace Naos.MessageBus.Test
     using Naos.MessageBus.Core;
     using Naos.MessageBus.Domain;
     using Naos.MessageBus.Domain.Exceptions;
+    using Naos.MessageBus.Persistence;
 
     using OBeautifulCode.AutoFakeItEasy;
 
@@ -258,6 +259,44 @@ namespace Naos.MessageBus.Test
             // should have exhausted retries
             var resends = trackingCalls.Where(_ => _ == nameof(IParcelTrackingSystem.ResendAsync));
             resends.Count().Should().Be(retryCount);
+        }
+
+        [Fact]
+        public void StatusToRetry_Matches_Eventually__Exits__CallsResend()
+        {
+            // arrange
+            var trackingCode = new TrackingCode { ParcelId = Guid.NewGuid(), EnvelopeId = Guid.NewGuid().ToString() };
+            var parcelStatusToRetryOn = ParcelStatus.Rejected;
+
+            var message = new RetryTrackingCodesInSpecificStatusesMessage
+            {
+                Description = "Description",
+                WaitTimeBetweenChecks = TimeSpan.FromSeconds(.01),
+                TrackingCodes = new[] { trackingCode },
+                StatusesToRetry = new[] { parcelStatusToRetryOn },
+                NumberOfRetriesToAttempt = 1,
+                ThrowIfRetriesExceededWithSpecificStatuses = true
+            };
+
+            var trackingCalls = new List<string>();
+            var seedStatuses = new[]
+                                   {
+                                       ParcelStatus.InTransit, ParcelStatus.OutForDelivery, parcelStatusToRetryOn, ParcelStatus.InTransit,
+                                       ParcelStatus.OutForDelivery, ParcelStatus.Delivered
+                                   };
+            var parcelTracker = Factory.GetRoundRobinStatusImplOfGetTrackingReportAsync(trackingCode, seedStatuses, trackingCalls);
+            var trackingParcelsFromSent = new List<Parcel>();
+            var parcelTrackingSystem = Factory.GetInMemoryParcelTrackingSystem(trackingCalls, trackingParcelsFromSent)();
+            var postOffice = new PostOffice(parcelTrackingSystem, new ChannelRouter(new SimpleChannel("default")));
+            var handler = new RetryTrackingCodesInSpecificStatusesMessageHandler();
+
+            // act
+            Action testCode = () => handler.HandleAsync(message, postOffice, parcelTracker).Wait();
+            testCode();
+
+            // assert
+            trackingCalls.Where(_ => _ == nameof(IGetTrackingReports.GetTrackingReportAsync)).ToList().Count.Should().BeGreaterOrEqualTo(seedStatuses.Length);
+            trackingCalls.Where(_ => _ == nameof(IParcelTrackingSystem.ResendAsync)).ToList().Count.Should().BeGreaterOrEqualTo(1);
         }
 
         [Fact]

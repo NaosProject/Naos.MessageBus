@@ -57,6 +57,8 @@ namespace Naos.MessageBus.Core
 
                 var retryAttempted = false;
                 var parcelsThatNeedRetrying = reports.Where(_ => message.StatusesToRetry.Contains(_.Status)).ToList();
+                var parcelsThatPotentiallyNeedRetrying = reports.Where(_ => _.Status == ParcelStatus.InTransit || _.Status == ParcelStatus.OutForDelivery).ToList();
+
                 Log.Write($"Found {parcelsThatNeedRetrying.Count} parcels to retry.");
                 foreach (var parcelThatNeedsRetrying in parcelsThatNeedRetrying)
                 {
@@ -74,7 +76,8 @@ namespace Naos.MessageBus.Core
                     }
                 }
 
-                breakTheWhileLoop = !retryAttempted;
+                // TODO: maybe convert to use WaitForTrackingCodesToBeInStatusesMessageHandler... if (parcelsThatPotentiallyNeedRetrying.Count != 0) { WaitForTrackingCodesToBeInStatusesMessageHandler.Handle } ?
+                breakTheWhileLoop = !retryAttempted && parcelsThatPotentiallyNeedRetrying.Count == 0;
 
                 if (breakTheWhileLoop && parcelsThatNeedRetrying.Any() && message.ThrowIfRetriesExceededWithSpecificStatuses)
                 {
