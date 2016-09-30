@@ -31,6 +31,8 @@ namespace Naos.MessageBus.Hangfire.Sender
 
         private readonly int retryCount;
 
+        private readonly SimpleChannel defaultChannel = new SimpleChannel("default");
+
         /// <summary>
         /// Initializes a new instance of the <see cref="HangfireCourier"/> class.
         /// </summary>
@@ -45,7 +47,7 @@ namespace Naos.MessageBus.Hangfire.Sender
         /// <summary>
         /// Gets the default channel for Hangfire.
         /// </summary>
-        public IRouteUnaddressedMail DefaultChannelRouter => new ChannelRouter(new SimpleChannel("default"));
+        public IRouteUnaddressedMail DefaultChannelRouter => new ChannelRouter(this.defaultChannel);
 
         /// <inheritdoc />
         public string Send(Crate crate)
@@ -57,7 +59,7 @@ namespace Naos.MessageBus.Hangfire.Sender
             var client = new BackgroundJobClient();
 
             var channel = crate.Address;
-            var parcel = UncrateParcel(crate, ref channel);
+            var parcel = UncrateParcel(crate, this.defaultChannel, ref channel);
 
             ThrowIfInvalidChannel(channel);
 
@@ -103,9 +105,10 @@ namespace Naos.MessageBus.Hangfire.Sender
         /// Uncrates a parcel for use in Hangfire sending/scheduling.
         /// </summary>
         /// <param name="crate">Crate that was provided from PostOffice.</param>
+        /// <param name="defaultChannel">Default channel to assign recurring jobs to.</param>
         /// <param name="channel">The <see cref="IChannel"/> by reference because in event of recurring job the channel will be stripped.</param>
         /// <returns>Parcel that was in the crate with any necessary adjustments.</returns>
-        public static Parcel UncrateParcel(Crate crate, ref IChannel channel)
+        public static Parcel UncrateParcel(Crate crate, IChannel defaultChannel, ref IChannel channel)
         {
             Parcel parcel;
 
@@ -119,7 +122,7 @@ namespace Naos.MessageBus.Hangfire.Sender
                 parcel = newParcel;
 
                 // reset the channel to null to ensure that it's not redirected until the injected recurring message is dealt with (this is strictly a way to get around hangfire's inability to recur on an exact channel...)
-                channel = null;
+                channel = defaultChannel;
             }
             else
             {

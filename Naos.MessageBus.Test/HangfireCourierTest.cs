@@ -94,6 +94,8 @@ namespace Naos.MessageBus.Test
             // arrange
             var schedule = new DailyScheduleInUtc();
             IChannel channel = new SimpleChannel("channel");
+            IChannel defaultChannel = new SimpleChannel("default");
+
             var parcelIn = new Parcel
             {
                 Envelopes =
@@ -135,12 +137,12 @@ namespace Naos.MessageBus.Test
             };
 
             // act
-            var actualParcelOut = HangfireCourier.UncrateParcel(crate, ref channel);
+            var actualParcelOut = HangfireCourier.UncrateParcel(crate, defaultChannel, ref channel);
 
             // assert
             actualParcelOut.Envelopes.Should().HaveCount(expectedParcelOut.Envelopes.Count);
             actualParcelOut.Envelopes.First().MessageType.Should().Be(expectedParcelOut.Envelopes.First().MessageType);
-            channel.Should().BeNull();
+            channel.Should().Be(defaultChannel);
         }
 
         [Fact]
@@ -149,6 +151,8 @@ namespace Naos.MessageBus.Test
             // arrange
             var schedule = new NullSchedule();
             IChannel channel = new SimpleChannel("channel");
+            IChannel defaultChannel = new SimpleChannel("default");
+
             var parcelIn = new Parcel
             {
                 Id = Guid.NewGuid(),
@@ -186,11 +190,11 @@ namespace Naos.MessageBus.Test
             };
 
             // act
-            var actualParcelOut = HangfireCourier.UncrateParcel(crate, ref channel);
+            var actualParcelOut = HangfireCourier.UncrateParcel(crate, defaultChannel, ref channel);
 
             // assert
             actualParcelOut.Envelopes.Should().BeEquivalentTo(expectedParcelOut.Envelopes);
-            channel.Should().NotBeNull();
+            channel.Should().NotBe(defaultChannel);
         }
     }
 }
