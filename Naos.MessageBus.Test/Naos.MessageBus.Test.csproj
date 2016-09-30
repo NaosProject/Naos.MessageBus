@@ -148,6 +148,7 @@
     <Compile Include="AbortIfTopicsHaveSpecificStatusMessageHandlerTests.cs" />
     <Compile Include="AutoFakeItEasyBootstrapper.cs" />
     <Compile Include="DispatcherFactoryTest.cs" />
+    <Compile Include="SendParcelMessageHandlerTest.cs" />
     <Compile Include="WaitForTrackingCodesMessageHandlerTests.cs" />
     <Compile Include="RetryTrackingCodesInSpecificStatusesMessageHandlerTests.cs" />
     <Compile Include="FetchAndShareLatestTopicStatusReportsMessageHandlerTests.cs" />
