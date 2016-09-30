@@ -89,10 +89,11 @@ namespace Naos.MessageBus.Test
         }
 
         [Fact]
-        public static void ThrowIfInvalidChannel_NonNullSchedule_RecurringMessageInjected()
+        public static void ThrowIfInvalidChannel_NonNullSchedule_RecurringMessageInjectedAndChannelReset()
         {
             // arrange
             var schedule = new DailyScheduleInUtc();
+            IChannel channel = new SimpleChannel("channel");
             var parcelIn = new Parcel
             {
                 Envelopes =
@@ -101,7 +102,7 @@ namespace Naos.MessageBus.Test
                                                new Envelope(
                                                    "id",
                                                    "description",
-                                                   new SimpleChannel("channel"),
+                                                   channel,
                                                    "message",
                                                    typeof(NullMessage).ToTypeDescription())
                                            }
@@ -115,13 +116,13 @@ namespace Naos.MessageBus.Test
                                                         new Envelope(
                                                             "id",
                                                             "description",
-                                                            new SimpleChannel("channel"),
+                                                            channel,
                                                             "message",
                                                             typeof(RecurringHeaderMessage).ToTypeDescription()),
                                                         new Envelope(
                                                             "id",
                                                             "description",
-                                                            new SimpleChannel("channel"),
+                                                            channel,
                                                             "message",
                                                             typeof(NullMessage).ToTypeDescription())
                                                     }
@@ -134,18 +135,20 @@ namespace Naos.MessageBus.Test
             };
 
             // act
-            var actualParcelOut = HangfireCourier.UncrateParcel(crate);
+            var actualParcelOut = HangfireCourier.UncrateParcel(crate, ref channel);
 
             // assert
             actualParcelOut.Envelopes.Should().HaveCount(expectedParcelOut.Envelopes.Count);
             actualParcelOut.Envelopes.First().MessageType.Should().Be(expectedParcelOut.Envelopes.First().MessageType);
+            channel.Should().BeNull();
         }
 
         [Fact]
-        public static void ThrowIfInvalidChannel_NullSchedule_NoMessageInjected()
+        public static void ThrowIfInvalidChannel_NullSchedule_NoMessageInjectedChannelUnaffected()
         {
             // arrange
             var schedule = new NullSchedule();
+            IChannel channel = new SimpleChannel("channel");
             var parcelIn = new Parcel
             {
                 Id = Guid.NewGuid(),
@@ -155,7 +158,7 @@ namespace Naos.MessageBus.Test
                                                new Envelope(
                                                    "id",
                                                    "description",
-                                                   new SimpleChannel("channel"),
+                                                   channel,
                                                    "message",
                                                    typeof(NullMessage).ToTypeDescription())
                                            }
@@ -170,7 +173,7 @@ namespace Naos.MessageBus.Test
                                                         new Envelope(
                                                             "id",
                                                             "description",
-                                                            new SimpleChannel("channel"),
+                                                            channel,
                                                             "message",
                                                             typeof(NullMessage).ToTypeDescription())
                                                     }
@@ -183,10 +186,11 @@ namespace Naos.MessageBus.Test
             };
 
             // act
-            var actualParcelOut = HangfireCourier.UncrateParcel(crate);
+            var actualParcelOut = HangfireCourier.UncrateParcel(crate, ref channel);
 
             // assert
             actualParcelOut.Envelopes.Should().BeEquivalentTo(expectedParcelOut.Envelopes);
+            channel.Should().NotBeNull();
         }
     }
 }

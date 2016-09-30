@@ -56,9 +56,9 @@ namespace Naos.MessageBus.Hangfire.Sender
 
             var client = new BackgroundJobClient();
 
-            var parcel = UncrateParcel(crate);
-
             var channel = crate.Address;
+            var parcel = UncrateParcel(crate, ref channel);
+
             ThrowIfInvalidChannel(channel);
 
             var simpleChannel = channel as SimpleChannel;
@@ -103,8 +103,9 @@ namespace Naos.MessageBus.Hangfire.Sender
         /// Uncrates a parcel for use in Hangfire sending/scheduling.
         /// </summary>
         /// <param name="crate">Crate that was provided from PostOffice.</param>
+        /// <param name="channel">The <see cref="IChannel"/> by reference because in event of recurring job the channel will be stripped.</param>
         /// <returns>Parcel that was in the crate with any necessary adjustments.</returns>
-        public static Parcel UncrateParcel(Crate crate)
+        public static Parcel UncrateParcel(Crate crate, ref IChannel channel)
         {
             Parcel parcel;
 
@@ -116,6 +117,9 @@ namespace Naos.MessageBus.Hangfire.Sender
                 newEnvelopes.AddRange(crate.Parcel.Envelopes.Select(_ => _));
                 var newParcel = new Parcel { Id = crate.Parcel.Id, SharedInterfaceStates = crate.Parcel.SharedInterfaceStates, Envelopes = newEnvelopes };
                 parcel = newParcel;
+
+                // reset the channel to null to ensure that it's not redirected until the injected recurring message is dealt with (this is strictly a way to get around hangfire's inability to recur on an exact channel...)
+                channel = null;
             }
             else
             {
