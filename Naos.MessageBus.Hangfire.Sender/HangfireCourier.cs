@@ -110,9 +110,9 @@ namespace Naos.MessageBus.Hangfire.Sender
 
             if (crate.RecurringSchedule != null && crate.RecurringSchedule.GetType().ToTypeDescription() != typeof(NullSchedule).ToTypeDescription())
             {
-                // need to inject a recurring message to make it work...
+                // need to inject a recurring message to make it work (must be the default channel because it will go there anyway)...
                 var newEnvelopes =
-                    new List<Envelope>(new[] { new RecurringHeaderMessage { Description = crate.Label }.ToAddressedMessage(crate.Address).ToEnvelope() });
+                    new List<Envelope>(new[] { new RecurringHeaderMessage { Description = crate.Label }.ToAddressedMessage().ToEnvelope() });
                 newEnvelopes.AddRange(crate.Parcel.Envelopes.Select(_ => _));
                 var newParcel = new Parcel { Id = crate.Parcel.Id, SharedInterfaceStates = crate.Parcel.SharedInterfaceStates, Envelopes = newEnvelopes };
                 parcel = newParcel;
