@@ -84,6 +84,7 @@
   <ItemGroup>
     <Compile Include="Handlers\AbortIfNoDependencyTopicsAffectedMessageHandler.cs" />
     <Compile Include="Handlers\AbortIfTopicsHaveSpecificStatusesMessageHandler.cs" />
+    <Compile Include="Handlers\SendParcelMessageHandler.cs" />
     <Compile Include="Handlers\TopicBeingAffectedMessageHandler.cs" />
     <Compile Include="Handlers\RetryTrackingCodesInSpecificStatusesMessageHandler.cs" />
     <Compile Include="RecurringParcelEncounteredException.cs" />

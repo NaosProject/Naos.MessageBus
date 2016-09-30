@@ -72,6 +72,7 @@
     <Compile Include="IRouteUnaddressedMail.cs" />
     <Compile Include="Messages\FetchAndShareLatestTopicStatusReportsMessage.cs" />
     <Compile Include="Messages\AbortIfTopicsHaveSpecificStatusesMessage.cs" />
+    <Compile Include="Messages\SendParcelMessage.cs" />
     <Compile Include="Messages\ThrowsExceptionMessage.cs" />
     <Compile Include="Messages\RetryTrackingCodesInSpecificStatusesMessage.cs" />
     <Compile Include="PostOfficeExtensions.cs" />

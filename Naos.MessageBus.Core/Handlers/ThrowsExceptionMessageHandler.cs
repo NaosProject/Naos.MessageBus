@@ -14,9 +14,7 @@ namespace Naos.MessageBus.Core
 
     using Naos.MessageBus.Domain;
 
-    /// <summary>
-    /// No implementation handler to handle WaitMessages.
-    /// </summary>
+    /// <inheritdoc />
     public class ThrowsExceptionMessageHandler : IHandleMessages<ThrowsExceptionMessage>
     {
         /// <inheritdoc />
