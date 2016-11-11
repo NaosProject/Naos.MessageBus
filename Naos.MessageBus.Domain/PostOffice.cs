@@ -120,17 +120,6 @@ namespace Naos.MessageBus.Domain
 
                 parcel = InjectTopicNoticeMessagesIntoNewParcel(parcel);
             }
-            else
-            {
-                if (
-                    parcel.Envelopes.Any(
-                        _ =>
-                            TypeComparer.Equals(_.MessageType, typeof(TopicBeingAffectedMessage).ToTypeDescription())
-                            || TypeComparer.Equals(_.MessageType, typeof(TopicWasAffectedMessage).ToTypeDescription())))
-                {
-                    throw new ArgumentException("Cannot have topic affected messages without specifying the topic on the parcel.");
-                }
-            }
 
             if (parcel.Id == default(Guid))
             {
