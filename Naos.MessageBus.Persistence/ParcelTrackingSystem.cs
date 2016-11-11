@@ -20,7 +20,7 @@ namespace Naos.MessageBus.Persistence
 
     using Naos.Cron;
     using Naos.MessageBus.Domain;
-    using Naos.Recipes.ItsDomain;
+    using Naos.MessageBus.Persistence.NaosRecipes.ItsDomain;
 
     using Polly;
 
