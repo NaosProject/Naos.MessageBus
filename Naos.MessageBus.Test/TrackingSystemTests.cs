@@ -18,6 +18,8 @@ namespace Naos.MessageBus.Test
     using Naos.MessageBus.Domain;
     using Naos.MessageBus.Persistence;
 
+    using OBeautifulCode.Reflection;
+
     using Xunit;
 
     public class TrackingSystemTests

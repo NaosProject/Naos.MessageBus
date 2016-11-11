@@ -13,6 +13,8 @@ namespace Naos.MessageBus.Core
     using Naos.MessageBus.Domain;
     using Naos.MessageBus.Domain.Exceptions;
 
+    using OBeautifulCode.Reflection;
+
     /// <summary>
     /// Code to handle merging IShare properties.
     /// </summary>

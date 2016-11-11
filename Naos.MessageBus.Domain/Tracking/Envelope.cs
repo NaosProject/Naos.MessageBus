@@ -8,6 +8,8 @@ namespace Naos.MessageBus.Domain
 {
     using System;
 
+    using OBeautifulCode.Reflection;
+
     /// <summary>
     /// Container object to use when re-hydrating a message.
     /// </summary>

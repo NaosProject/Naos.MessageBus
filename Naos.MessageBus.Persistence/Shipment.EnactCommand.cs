@@ -13,6 +13,8 @@ namespace Naos.MessageBus.Persistence
 
     using Naos.MessageBus.Domain;
 
+    using OBeautifulCode.Reflection;
+
     /// <summary>
     /// Aggregate for capturing shipment tracking events.
     /// </summary>

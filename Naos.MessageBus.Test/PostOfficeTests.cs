@@ -15,6 +15,8 @@ namespace Naos.MessageBus.Test
     using Naos.Cron;
     using Naos.MessageBus.Domain;
 
+    using OBeautifulCode.Reflection;
+
     using Xunit;
 
     public class PostOfficeTests

@@ -10,6 +10,8 @@ namespace Naos.MessageBus.Domain
     using System.Collections.Generic;
     using System.Linq;
 
+    using OBeautifulCode.Reflection;
+
     /// <summary>
     /// Collection of envelopes to use as a unit.
     /// </summary>

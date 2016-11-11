@@ -13,6 +13,8 @@ namespace Naos.MessageBus.Test
 
     using Naos.MessageBus.Domain;
 
+    using OBeautifulCode.Reflection;
+
     using Xunit;
 
     public class TypeDescriptionTests
@@ -24,7 +26,7 @@ namespace Naos.MessageBus.Test
             var type = typeof(string);
 
             // act
-            var description = TypeDescription.FromType(type);
+            var description = type.ToTypeDescription();
 
             // assert
             Assert.Equal(type.AssemblyQualifiedName, description.AssemblyQualifiedName);
@@ -38,11 +40,11 @@ namespace Naos.MessageBus.Test
             // arrange
             Action testCode = () =>
                 {
-                    TypeDescription.FromType(null);
+                    ((Type)null).ToTypeDescription();
                 };
 
             // act & assert
-            testCode.ShouldThrow<ArgumentException>().WithMessage("Type cannot be null");
+            testCode.ShouldThrow<ArgumentException>();
         }
 
         [Fact]
@@ -58,20 +60,6 @@ namespace Naos.MessageBus.Test
             Assert.Equal(type.AssemblyQualifiedName, description.AssemblyQualifiedName);
             Assert.Equal(type.Namespace, description.Namespace);
             Assert.Equal(type.Name, description.Name);
-        }
-
-        [Fact]
-        public void ToTypeDescription_NullType_Throws()
-        {
-            // arrange
-            Action testCode = () =>
-                {
-                    Type type = null;
-                    type.ToTypeDescription();
-                };
-
-            // act & assert
-            testCode.ShouldThrow<ArgumentException>().WithMessage("Type cannot be null");
         }
     }
 }

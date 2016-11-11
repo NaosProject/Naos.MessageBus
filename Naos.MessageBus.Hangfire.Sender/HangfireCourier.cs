@@ -18,6 +18,8 @@ namespace Naos.MessageBus.Hangfire.Sender
     using Naos.Cron;
     using Naos.MessageBus.Domain;
 
+    using OBeautifulCode.Reflection;
+
     using Polly;
 
     /// <inheritdoc />

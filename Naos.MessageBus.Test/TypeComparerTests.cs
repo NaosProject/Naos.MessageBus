@@ -13,6 +13,8 @@ namespace Naos.MessageBus.Test
     using Naos.MessageBus.Core;
     using Naos.MessageBus.Domain;
 
+    using OBeautifulCode.Reflection;
+
     using Xunit;
 
     public class TypeComparerTests

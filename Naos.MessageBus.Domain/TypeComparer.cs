@@ -9,6 +9,8 @@ namespace Naos.MessageBus.Domain
     using System;
     using System.Collections.Generic;
 
+    using OBeautifulCode.Reflection;
+
     /// <summary>
     /// Type comparer using the provided strategy.
     /// </summary>
@@ -74,7 +76,7 @@ namespace Naos.MessageBus.Domain
         /// <returns>True for equality and false otherwise.</returns>
         public bool Equals(string namespaceX, string nameX, string assemblyQualifiedNameX, string namespaceY, string nameY, string assemblyQualifiedNameY)
         {
-            var ret = false;
+            bool ret;
             switch (this.typeMatchStrategy)
             {
                 case TypeMatchStrategy.NamespaceAndName:

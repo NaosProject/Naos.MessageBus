@@ -6,6 +6,8 @@
 
 namespace Naos.MessageBus.Domain
 {
+    using OBeautifulCode.Reflection;
+
     /// <summary>
     /// Message to force an error using provided exception.
     /// </summary>

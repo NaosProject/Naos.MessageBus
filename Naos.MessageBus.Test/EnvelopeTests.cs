@@ -10,6 +10,8 @@ namespace Naos.MessageBus.Test
 
     using Naos.MessageBus.Domain;
 
+    using OBeautifulCode.Reflection;
+
     using Xunit;
 
     public class EnvelopeTests
