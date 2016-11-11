@@ -32,7 +32,7 @@ namespace Naos.MessageBus.Hangfire.Harness
             {
                 try
                 {
-                    Settings.Deserialize = Serializer.Deserialize;
+                    Settings.Deserialize = (type, serialized) => serialized.FromJson(type);
                     var messageBusHandlerSettings = Settings.Get<MessageBusHarnessSettings>();
                     Logging.Setup(messageBusHandlerSettings);
                     LogProvider.SetCurrentLogProvider(new ItsLogPassThroughProvider());

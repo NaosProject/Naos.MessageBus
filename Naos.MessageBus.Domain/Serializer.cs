@@ -16,36 +16,35 @@ namespace Naos.MessageBus.Domain
     public static class Serializer
     {
         /// <summary>
-        /// Gets the object from the JSON with specific settings needed for project objects.
+        /// Extension method on object to serialize as JSON.
         /// </summary>
-        /// <typeparam name="T">Type of object to return.</typeparam>
-        /// <param name="json">JSON to deserialize.</param>
-        /// <returns>Object of type T to be returned.</returns>
-        public static T Deserialize<T>(string json) where T : class
-        {
-            return DefaultJsonSerializer.DeserializeObject<T>(json);
-        }
-
-        /// <summary>
-        /// Gets the object from the JSON with specific settings needed for project objects.
-        /// </summary>
-        /// <param name="type">Type of object to return.</param>
-        /// <param name="json">JSON to deserialize.</param>
-        /// <returns>Object of type T to be returned.</returns>
-        public static object Deserialize(Type type, string json)
-        {
-            return DefaultJsonSerializer.DeserializeObject(json, type);
-        }
-
-        /// <summary>
-        /// Serializes the provided object and returns JSON (using specific settings for this project).
-        /// </summary>
-        /// <typeparam name="T">Type of object to serialize.</typeparam>
-        /// <param name="objectToSerialize">Object to serialize to JSON.</param>
-        /// <returns>String of JSON.</returns>
-        public static string Serialize<T>(T objectToSerialize)
+        /// <param name="objectToSerialize">Object to serialize.</param>
+        /// <returns>JSON as a string.</returns>
+        public static string ToJson(this object objectToSerialize)
         {
             return DefaultJsonSerializer.SerializeObject(objectToSerialize);
+        }
+
+        /// <summary>
+        /// Extension method on object to serialize as JSON.
+        /// </summary>
+        /// <typeparam name="T">Type to deserialize.</typeparam>
+        /// <param name="jsonToDeserialize">JSON string to serialize.</param>
+        /// <returns>Object deserialized from JSON.</returns>
+        public static T FromJson<T>(this string jsonToDeserialize) where T : class
+        {
+            return DefaultJsonSerializer.DeserializeObject<T>(jsonToDeserialize);
+        }
+
+        /// <summary>
+        /// Extension method on object to serialize as JSON.
+        /// </summary>
+        /// <param name="jsonToDeserialize">JSON string to serialize.</param>
+        /// <param name="typeToDeserialize">Type to deserialize.</param>
+        /// <returns>Object deserialized from JSON.</returns>
+        public static object FromJson(this string jsonToDeserialize, Type typeToDeserialize)
+        {
+            return DefaultJsonSerializer.DeserializeObject(jsonToDeserialize, typeToDeserialize);
         }
     }
 }

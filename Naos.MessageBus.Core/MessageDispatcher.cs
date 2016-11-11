@@ -157,7 +157,7 @@ namespace Naos.MessageBus.Core
             // WARNING: this method change the state of the objects passed in!!!
             this.PrepareMessage(trackingCode, messageToHandle, parcel.SharedInterfaceStates);
             var deliveredEnvelope = messageToHandle.ToAddressedMessage(address).ToEnvelope(firstEnvelope.Id);
-            Log.Write(() => "Delivered Envelope Json: " + Serializer.Serialize(deliveredEnvelope));
+            Log.Write(() => $"Delivered Envelope Json: {deliveredEnvelope.ToJson()}");
 
             var messageType = messageToHandle.GetType();
             var handlerType = typeof(IHandleMessages<>).MakeGenericType(messageType);
@@ -407,15 +407,7 @@ namespace Naos.MessageBus.Core
 
             var messageType = this.ResolveMessageTypeUsingRegisteredHandlers(envelope.MessageType);
 
-            var ret = new AddressedMessage
-            {
-                Message =
-                    (IMessage)
-                    Serializer.Deserialize(
-                        messageType,
-                        envelope.MessageAsJson),
-                Address = envelope.Address
-            };
+            var ret = new AddressedMessage { Message = (IMessage)envelope.MessageAsJson.FromJson(messageType), Address = envelope.Address };
 
             if (ret.Message == null)
             {

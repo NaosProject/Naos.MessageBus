@@ -156,7 +156,7 @@ namespace Naos.MessageBus.Test
         public void ListTypeIsTypeDescriptedAndDeserializedWithGenericInfo()
         {
             var obj = new List<string>(new[] { "hello" }).ToArray();
-            var json = Serializer.Serialize(obj);
+            var json = obj.ToJson();
             var sharedProperty = new SharedProperty
                                      {
                                          Name = "Property",

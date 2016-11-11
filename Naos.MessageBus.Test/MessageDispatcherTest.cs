@@ -96,7 +96,7 @@ namespace Naos.MessageBus.Test
             Assert.True(
                 typeComparer.Equals(typeof(IShareEnum).ToTypeDescription(), sharedPropertySet.InterfaceType)); 
             Assert.Equal("EnumValueToShare", sharedPropertySet.Properties.Single().Name);
-            var seedValueAsJson = Serializer.Serialize(firstMessage.SeedValue);
+            var seedValueAsJson = firstMessage.SeedValue.ToJson();
             Assert.Equal(seedValueAsJson, sharedPropertySet.Properties.Single().ValueAsJson);
 
             var secondTrackingCode = new TrackingCode { EnvelopeId = "2" };
@@ -347,7 +347,7 @@ namespace Naos.MessageBus.Test
                                          {
                                              new ThrowsExceptionMessage()
                                                  {
-                                                     ExceptionToThrowJson = Serializer.Serialize(exception),
+                                                     ExceptionToThrowJson = exception.ToJson(),
                                                      ExceptionToThrowType = exception.GetType().ToTypeDescription(),
                                                      TypeMatchStrategy = TypeMatchStrategy.NamespaceAndName
                                                  }.ToAddressedMessage(
@@ -399,7 +399,7 @@ namespace Naos.MessageBus.Test
                                          {
                                              new ThrowsExceptionMessage()
                                                  {
-                                                     ExceptionToThrowJson = Serializer.Serialize(exception),
+                                                     ExceptionToThrowJson = exception.ToJson(),
                                                      ExceptionToThrowType = exception.GetType().ToTypeDescription(),
                                                      TypeMatchStrategy = TypeMatchStrategy.NamespaceAndName
                                                  }.ToAddressedMessage(
@@ -451,7 +451,7 @@ namespace Naos.MessageBus.Test
                                          {
                                              new ThrowsExceptionMessage()
                                                  {
-                                                     ExceptionToThrowJson = Serializer.Serialize(exception),
+                                                     ExceptionToThrowJson = exception.ToJson(),
                                                      ExceptionToThrowType = exception.GetType().ToTypeDescription(),
                                                      TypeMatchStrategy = TypeMatchStrategy.NamespaceAndName
                                                  }.ToAddressedMessage(
@@ -749,7 +749,7 @@ namespace Naos.MessageBus.Test
                                                     null,
                                                     null,
                                                     new SimpleChannel("Channel"),
-                                                    Serializer.Serialize(message),
+                                                    message.ToJson(),
                                                     message.GetType().ToTypeDescription())
                                             }
                                 },
@@ -766,7 +766,7 @@ namespace Naos.MessageBus.Test
             var simpleInjectorContainer = new Container();
             simpleInjectorContainer.Register(typeof(IHandleMessages<InitialStateMessage>), typeof(StateHandler));
             var message = new InitialStateMessage();
-            var messageJson = Serializer.Serialize(message);
+            var messageJson = message.ToJson();
 
             var channel = new SimpleChannel("fakeChannel");
             var messageDispatcher = new MessageDispatcher(simpleInjectorContainer, new ConcurrentDictionary<Type, object>(), new[] { channel }, TypeMatchStrategy.NamespaceAndName, TimeSpan.FromSeconds(.5), new HarnessStaticDetails(), new NullParcelTrackingSystem(), new InMemoryActiveMessageTracker(), new PostOffice(new NullParcelTrackingSystem(), new ChannelRouter(new NullChannel())));
@@ -793,7 +793,7 @@ namespace Naos.MessageBus.Test
             var simpleInjectorContainer = new Container();
             simpleInjectorContainer.Register(typeof(IHandleMessages<InitialStateMessage>), typeof(StateHandler));
             var message = new InitialStateMessage();
-            var messageJson = Serializer.Serialize(message);
+            var messageJson = message.ToJson();
 
             var channel = new SimpleChannel("fakeChannel");
             var messageDispatcher = new MessageDispatcher(simpleInjectorContainer, new ConcurrentDictionary<Type, object>(), new[] { channel }, TypeMatchStrategy.NamespaceAndName, TimeSpan.FromSeconds(.5), new HarnessStaticDetails(), new NullParcelTrackingSystem(), new InMemoryActiveMessageTracker(), new PostOffice(new NullParcelTrackingSystem(), new ChannelRouter(new NullChannel())));
@@ -829,7 +829,7 @@ namespace Naos.MessageBus.Test
             var simpleInjectorContainer = new Container();
             simpleInjectorContainer.Register(typeof(IHandleMessages<InitialStateMessage>), typeof(StateHandler));
             var message = new InitialStateMessage();
-            var messageJson = Serializer.Serialize(message);
+            var messageJson = message.ToJson();
 
             var channel = new SimpleChannel("fakeChannel");
             var messageDispatcher = GetMessageDispatcher(new[] { channel }, simpleInjectorContainer);

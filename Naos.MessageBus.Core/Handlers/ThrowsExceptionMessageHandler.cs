@@ -23,7 +23,7 @@ namespace Naos.MessageBus.Core
             Log.Write(new LogEntry(message.Description, message));
 
             var type = ResolveTypeDescriptionFromLoadedTypes(message.ExceptionToThrowType, message.TypeMatchStrategy);
-            var exception = Serializer.Deserialize(type, message.ExceptionToThrowJson) as Exception;
+            var exception = message.ExceptionToThrowJson.FromJson(type) as Exception;
             if (exception == null)
             {
                 throw new NullReferenceException("Failed to deserialize the exception correctly.");

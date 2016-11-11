@@ -20,6 +20,7 @@ namespace Naos.MessageBus.Persistence
 
     using Naos.Cron;
     using Naos.MessageBus.Domain;
+    using Naos.Recipes.ItsDomain;
 
     using Polly;
 
@@ -82,7 +83,7 @@ namespace Naos.MessageBus.Persistence
             IEventSourcedRepository<Shipment> eventSourcedRepository = new SqlEventSourcedRepository<Shipment>(eventBus, createEventStoreDbContext);
 
             // CreateCommand will throw without having authorization - just opening for all in this example
-            Authorization.AuthorizeAllCommands();
+            Authorization<Shipment>.AuthorizeAllCommands();
 
             // setup the configuration which can be used to retrieve the repository when needed
             this.configuration =
@@ -143,7 +144,7 @@ namespace Naos.MessageBus.Persistence
         {
             var shipment = await this.FetchShipmentAsync(trackingCode.ParcelId);
 
-            var command = new Reject { TrackingCode = trackingCode, ExceptionMessage = exception.Message, ExceptionJson = Serializer.Serialize(exception) };
+            var command = new Reject { TrackingCode = trackingCode, ExceptionMessage = exception.Message, ExceptionJson = exception.ToJson() };
             shipment.EnactCommand(command);
 
             await this.SaveShipmentAsync(shipment);
@@ -201,7 +202,7 @@ namespace Naos.MessageBus.Persistence
                                     CurrentTrackingCode =
                                             string.IsNullOrEmpty(_.CurrentCrateLocatorJson)
                                                 ? null
-                                                : Serializer.Deserialize<CrateLocator>(_.CurrentCrateLocatorJson).TrackingCode,
+                                                : _.CurrentCrateLocatorJson.FromJson<CrateLocator>().TrackingCode,
                                     Status = _.Status,
                                     LastUpdatedUtc = _.LastUpdatedUtc
                                 }).ToList();
@@ -259,8 +260,8 @@ namespace Naos.MessageBus.Persistence
                             {
                                 if (mostRecentNotice.TopicBeingAffectedEnvelopeJson != null)
                                 {
-                                    var beingAffectedEnvelope = Serializer.Deserialize<Envelope>(mostRecentNotice.TopicBeingAffectedEnvelopeJson);
-                                    var beingAffectedMessage = Serializer.Deserialize<TopicBeingAffectedMessage>(beingAffectedEnvelope.MessageAsJson);
+                                    var beingAffectedEnvelope = mostRecentNotice.TopicBeingAffectedEnvelopeJson.FromJson<Envelope>();
+                                    var beingAffectedMessage = beingAffectedEnvelope.MessageAsJson.FromJson<TopicBeingAffectedMessage>();
                                     items = beingAffectedMessage.AffectedItems;
 
                                     // filter out our own status report...
@@ -275,8 +276,8 @@ namespace Naos.MessageBus.Persistence
                             }
                             else
                             {
-                                var wasAffectedEnvelope = Serializer.Deserialize<Envelope>(mostRecentNotice.TopicWasAffectedEnvelopeJson);
-                                var wasAffectedMessage = Serializer.Deserialize<TopicWasAffectedMessage>(wasAffectedEnvelope.MessageAsJson);
+                                var wasAffectedEnvelope = mostRecentNotice.TopicWasAffectedEnvelopeJson.FromJson<Envelope>();
+                                var wasAffectedMessage = wasAffectedEnvelope.MessageAsJson.FromJson<TopicWasAffectedMessage>();
                                 items = wasAffectedMessage.AffectedItems;
 
                                 // filter out our own status report...

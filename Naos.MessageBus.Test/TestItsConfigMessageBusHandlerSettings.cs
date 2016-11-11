@@ -74,7 +74,7 @@ namespace Naos.MessageBus.Test
             Settings.Reset();
             Settings.SettingsDirectory = Settings.SettingsDirectory.Replace("\\bin\\Debug", string.Empty);
             Settings.Precedence = new[] { precedence };
-            Settings.Deserialize = Serializer.Deserialize;
+            Settings.Deserialize = (type, serialized) => serialized.FromJson(type);
             return Settings.Get<MessageBusHarnessSettings>();
         }
     }

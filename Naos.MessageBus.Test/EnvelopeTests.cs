@@ -21,7 +21,7 @@ namespace Naos.MessageBus.Test
             var firstDescription = "description1";
             var firstChannel = new SimpleChannel("channel1");
             var message = new NullMessage();
-            var firstMessageAsJson = Serializer.Serialize(message);
+            var firstMessageAsJson = message.ToJson();
             var firstMessageType = message.GetType().ToTypeDescription();
 
             var first = new Envelope(firstId, firstDescription, firstChannel, firstMessageAsJson, firstMessageType);
@@ -60,7 +60,7 @@ namespace Naos.MessageBus.Test
 }";
 
             // act
-            var obj = Serializer.Deserialize<Envelope>(json);
+            var obj = json.FromJson<Envelope>();
 
             // assert
             obj.Should().NotBeNull();
@@ -73,7 +73,7 @@ namespace Naos.MessageBus.Test
             var firstDescription = "description1";
             var firstChannel = new SimpleChannel("channel1");
             var message = new NullMessage();
-            var firstMessageAsJson = Serializer.Serialize(message);
+            var firstMessageAsJson = message.ToJson();
             var firstMessageType = message.GetType().ToTypeDescription();
 
             var first = new Envelope(firstId, firstDescription, firstChannel, firstMessageAsJson, firstMessageType);
@@ -101,7 +101,7 @@ namespace Naos.MessageBus.Test
             var firstDescription = "description1";
             var firstChannel = new SimpleChannel("channel1");
             var message = new NullMessage();
-            var firstMessageAsJson = Serializer.Serialize(message);
+            var firstMessageAsJson = message.ToJson();
             var firstMessageType = message.GetType().ToTypeDescription();
 
             var first = new Envelope(firstId, firstDescription, firstChannel, firstMessageAsJson, firstMessageType);
@@ -129,7 +129,7 @@ namespace Naos.MessageBus.Test
             var firstDescription = "description1";
             var firstChannel = new SimpleChannel("channel1");
             var message = new NullMessage();
-            var firstMessageAsJson = Serializer.Serialize(message);
+            var firstMessageAsJson = message.ToJson();
             var firstMessageType = message.GetType().ToTypeDescription();
 
             var first = new Envelope(firstId, firstDescription, firstChannel, firstMessageAsJson, firstMessageType);
@@ -157,7 +157,7 @@ namespace Naos.MessageBus.Test
             var firstDescription = "description1";
             var firstChannel = new SimpleChannel("channel1");
             var firstMessage = new NullMessage();
-            var firstMessageAsJson = Serializer.Serialize(firstMessage);
+            var firstMessageAsJson = firstMessage.ToJson();
             var firstMessageType = firstMessage.GetType().ToTypeDescription();
 
             var first = new Envelope(firstId, firstDescription, firstChannel, firstMessageAsJson, firstMessageType);
@@ -166,7 +166,7 @@ namespace Naos.MessageBus.Test
             var secondDescription = firstDescription;
             var secondChannel = firstChannel;
             var secondMessage = new AbortIfNoDependencyTopicsAffectedMessage();
-            var secondMessageAsJson = Serializer.Serialize(secondMessage);
+            var secondMessageAsJson = secondMessage.ToJson();
             var secondMessageType = firstMessage.GetType().ToTypeDescription();
 
             var second = new Envelope(secondId, secondDescription, secondChannel, secondMessageAsJson, secondMessageType);
@@ -186,7 +186,7 @@ namespace Naos.MessageBus.Test
             var firstDescription = "description1";
             var firstChannel = new SimpleChannel("channel1");
             var firstMessage = new NullMessage();
-            var firstMessageAsJson = Serializer.Serialize(firstMessage);
+            var firstMessageAsJson = firstMessage.ToJson();
             var firstMessageType = firstMessage.GetType().ToTypeDescription();
 
             var first = new Envelope(firstId, firstDescription, firstChannel, firstMessageAsJson, firstMessageType);
@@ -195,7 +195,7 @@ namespace Naos.MessageBus.Test
             var secondDescription = firstDescription;
             var secondChannel = firstChannel;
             var secondMessage = new NullMessage();
-            var secondMessageAsJson = Serializer.Serialize(secondMessage);
+            var secondMessageAsJson = secondMessage.ToJson();
             var secondMessageType = typeof(RecurringHeaderMessage).ToTypeDescription();
 
             var second = new Envelope(secondId, secondDescription, secondChannel, secondMessageAsJson, secondMessageType);

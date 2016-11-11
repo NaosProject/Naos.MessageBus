@@ -100,17 +100,17 @@ namespace Naos.MessageBus.Test
             // abort if pending
             var indexFetch = 0;
             parcel.Envelopes.Skip(indexFetch).First().MessageType.Should().Be(typeof(FetchAndShareLatestTopicStatusReportsMessage).ToTypeDescription());
-            Serializer.Deserialize<FetchAndShareLatestTopicStatusReportsMessage>(parcel.Envelopes.Skip(indexFetch).First().MessageAsJson).TopicsToFetchAndShareStatusReportsFrom.Single().Name.Should().Be(myTopic);
+            parcel.Envelopes.Skip(indexFetch).First().MessageAsJson.FromJson<FetchAndShareLatestTopicStatusReportsMessage>().TopicsToFetchAndShareStatusReportsFrom.Single().Name.Should().Be(myTopic);
 
             // abort if pending
             var indexAbort = 1;
             parcel.Envelopes.Skip(indexAbort).First().MessageType.Should().Be(typeof(AbortIfTopicsHaveSpecificStatusesMessage).ToTypeDescription());
-            Serializer.Deserialize<AbortIfTopicsHaveSpecificStatusesMessage>(parcel.Envelopes.Skip(indexAbort).First().MessageAsJson).TopicsToCheck.Single().Name.Should().Be(myTopic);
+            parcel.Envelopes.Skip(indexAbort).First().MessageAsJson.FromJson<AbortIfTopicsHaveSpecificStatusesMessage>().TopicsToCheck.Single().Name.Should().Be(myTopic);
 
             // being affected
             var indexBeing = 2;
             parcel.Envelopes.Skip(indexBeing).First().MessageType.Should().Be(typeof(TopicBeingAffectedMessage).ToTypeDescription());
-            Serializer.Deserialize<TopicBeingAffectedMessage>(parcel.Envelopes.Skip(indexBeing).First().MessageAsJson).Topic.Name.Should().Be(myTopic);
+            parcel.Envelopes.Skip(indexBeing).First().MessageAsJson.FromJson<TopicBeingAffectedMessage>().Topic.Name.Should().Be(myTopic);
 
             // mine
             var indexMine = 3;
@@ -120,9 +120,10 @@ namespace Naos.MessageBus.Test
             // was affected
             var indexWas = 4;
             parcel.Envelopes.Skip(indexWas).First().MessageType.Should().Be(typeof(TopicWasAffectedMessage).ToTypeDescription());
-            Serializer.Deserialize<TopicWasAffectedMessage>(parcel.Envelopes.Skip(indexWas).First().MessageAsJson).Topic.Name.Should().Be(myTopic);
+            parcel.Envelopes.Skip(indexWas).First().MessageAsJson.FromJson<TopicWasAffectedMessage>().Topic.Name.Should().Be(myTopic);
         }
 
+        [Fact]
         public static void SendRerringWithChannelEqualNullGetsSetToNullChannel()
         {
             // arrange
@@ -182,25 +183,25 @@ namespace Naos.MessageBus.Test
             // abort if pending
             var indexFetch = 0;
             parcel.Envelopes.Skip(indexFetch).First().MessageType.Should().Be(typeof(FetchAndShareLatestTopicStatusReportsMessage).ToTypeDescription());
-            Serializer.Deserialize<FetchAndShareLatestTopicStatusReportsMessage>(parcel.Envelopes.Skip(indexFetch).First().MessageAsJson)
+            parcel.Envelopes.Skip(indexFetch).First().MessageAsJson.FromJson<FetchAndShareLatestTopicStatusReportsMessage>()
                 .TopicsToFetchAndShareStatusReportsFrom.ShouldAllBeEquivalentTo(
                     dependantTopics.Select(_ => _.ToNamedTopic()).Union(new[] { new NamedTopic(myTopic) }).ToArray());
 
             // abort if pending
             var indexAbort = 1;
             parcel.Envelopes.Skip(indexAbort).First().MessageType.Should().Be(typeof(AbortIfTopicsHaveSpecificStatusesMessage).ToTypeDescription());
-            Serializer.Deserialize<AbortIfTopicsHaveSpecificStatusesMessage>(parcel.Envelopes.Skip(indexAbort).First().MessageAsJson).TopicsToCheck.Single().Name.Should().Be(myTopic);
+            parcel.Envelopes.Skip(indexAbort).First().MessageAsJson.FromJson<AbortIfTopicsHaveSpecificStatusesMessage>().TopicsToCheck.Single().Name.Should().Be(myTopic);
 
             // abort if no new
             var indexNoNewAbort = 2;
             parcel.Envelopes.Skip(indexNoNewAbort).First().MessageType.Should().Be(typeof(AbortIfNoDependencyTopicsAffectedMessage).ToTypeDescription());
-            Serializer.Deserialize<AbortIfNoDependencyTopicsAffectedMessage>(parcel.Envelopes.Skip(indexNoNewAbort).First().MessageAsJson).Topic.Name.Should().Be(myTopic);
-            Serializer.Deserialize<AbortIfNoDependencyTopicsAffectedMessage>(parcel.Envelopes.Skip(indexNoNewAbort).First().MessageAsJson).DependencyTopics.ShouldBeEquivalentTo(dependantTopics);
+            parcel.Envelopes.Skip(indexNoNewAbort).First().MessageAsJson.FromJson<AbortIfNoDependencyTopicsAffectedMessage>().Topic.Name.Should().Be(myTopic);
+            parcel.Envelopes.Skip(indexNoNewAbort).First().MessageAsJson.FromJson<AbortIfNoDependencyTopicsAffectedMessage>().DependencyTopics.ShouldBeEquivalentTo(dependantTopics);
 
             // being affected
             var indexBeing = 3;
             parcel.Envelopes.Skip(indexBeing).First().MessageType.Should().Be(typeof(TopicBeingAffectedMessage).ToTypeDescription());
-            Serializer.Deserialize<TopicBeingAffectedMessage>(parcel.Envelopes.Skip(indexBeing).First().MessageAsJson).Topic.Name.Should().Be(myTopic);
+            parcel.Envelopes.Skip(indexBeing).First().MessageAsJson.FromJson<TopicBeingAffectedMessage>().Topic.Name.Should().Be(myTopic);
 
             // mine
             var indexMine = 4;
@@ -210,7 +211,391 @@ namespace Naos.MessageBus.Test
             // was affected
             var indexWas = 5;
             parcel.Envelopes.Skip(indexWas).First().MessageType.Should().Be(typeof(TopicWasAffectedMessage).ToTypeDescription());
-            Serializer.Deserialize<TopicWasAffectedMessage>(parcel.Envelopes.Skip(indexWas).First().MessageAsJson).Topic.Name.Should().Be(myTopic);
+            parcel.Envelopes.Skip(indexWas).First().MessageAsJson.FromJson<TopicWasAffectedMessage>().Topic.Name.Should().Be(myTopic);
+        }
+
+        [Fact]
+        public static void SendRecurringParcelWithImpactedTopicAndNoDependantTopicsAndAffectedMessages_InjectsMessagesButDoesntDuplicate()
+        {
+            // arrange
+            var trackingCalls = new List<string>();
+            var trackingSends = new List<Parcel>();
+            var postOffice = Factory.GetInMemoryParcelTrackingSystemBackedPostOffice(trackingCalls, trackingSends);
+
+            var myTopic = "me";
+            var name = "Something";
+            var schedule = new DailyScheduleInUtc();
+            var channel = new SimpleChannel("something");
+            var parcelToSend = new Parcel()
+                                   {
+                                       DependencyTopicCheckStrategy = TopicCheckStrategy.Any,
+                                       SimultaneousRunsStrategy = SimultaneousRunsStrategy.AbortSubsequentRunsWhenOneIsRunning,
+                                       Id = Guid.NewGuid(),
+                                       DependencyTopics = null,
+                                       Name = name,
+                                       Topic = new AffectedTopic(myTopic),
+                                       Envelopes =
+                                           new[]
+                                               {
+                                                   new TopicBeingAffectedMessage { Topic = new AffectedTopic(myTopic) }.ToAddressedMessage(channel).ToEnvelope(),
+                                                   new NullMessage().ToAddressedMessage(channel).ToEnvelope(),
+                                                   new TopicWasAffectedMessage() { Topic = new AffectedTopic(myTopic) }.ToAddressedMessage(channel).ToEnvelope(),
+                                               }
+                                   };
+
+            // act
+            var trackingCode = postOffice.SendRecurring(parcelToSend, schedule);
+
+            // assert
+            var parcel = trackingSends.Single();
+            parcel.Id.Should().Be(trackingCode.ParcelId);
+            parcel.Name.Should().Be(name);
+
+            parcel.Envelopes.Count.Should().Be(5);
+
+            // abort if pending
+            var indexFetch = 0;
+            parcel.Envelopes.Skip(indexFetch).First().MessageType.Should().Be(typeof(FetchAndShareLatestTopicStatusReportsMessage).ToTypeDescription());
+            parcel.Envelopes.Skip(indexFetch).First().MessageAsJson.FromJson<FetchAndShareLatestTopicStatusReportsMessage>().TopicsToFetchAndShareStatusReportsFrom.Single().Name.Should().Be(myTopic);
+
+            // abort if pending
+            var indexAbort = 1;
+            parcel.Envelopes.Skip(indexAbort).First().MessageType.Should().Be(typeof(AbortIfTopicsHaveSpecificStatusesMessage).ToTypeDescription());
+            parcel.Envelopes.Skip(indexAbort).First().MessageAsJson.FromJson<AbortIfTopicsHaveSpecificStatusesMessage>().TopicsToCheck.Single().Name.Should().Be(myTopic);
+
+            // being affected
+            var indexBeing = 2;
+            parcel.Envelopes.Skip(indexBeing).First().MessageType.Should().Be(typeof(TopicBeingAffectedMessage).ToTypeDescription());
+            parcel.Envelopes.Skip(indexBeing).First().MessageAsJson.FromJson<TopicBeingAffectedMessage>().Topic.Name.Should().Be(myTopic);
+
+            // mine
+            var indexMine = 3;
+            parcel.Envelopes.Skip(indexMine).First().MessageType.Should().Be(typeof(NullMessage).ToTypeDescription());
+            parcel.Envelopes.Skip(indexMine).First().Address.Should().Be(channel);
+
+            // was affected
+            var indexWas = 4;
+            parcel.Envelopes.Skip(indexWas).First().MessageType.Should().Be(typeof(TopicWasAffectedMessage).ToTypeDescription());
+            parcel.Envelopes.Skip(indexWas).First().MessageAsJson.FromJson<TopicWasAffectedMessage>().Topic.Name.Should().Be(myTopic);
+        }
+
+        [Fact]
+        public static void SendRecurringParcelWithImpactedTopicAndNoDependantTopicsAndAffectedMessages_InjectsMessagesButDoesntDuplicateOrChangeOrder()
+        {
+            // arrange
+            var trackingCalls = new List<string>();
+            var trackingSends = new List<Parcel>();
+            var postOffice = Factory.GetInMemoryParcelTrackingSystemBackedPostOffice(trackingCalls, trackingSends);
+
+            var myTopic = "me";
+            var name = "Something";
+            var schedule = new DailyScheduleInUtc();
+            var channel = new SimpleChannel("something");
+            var parcelToSend = new Parcel()
+                                   {
+                                       DependencyTopicCheckStrategy = TopicCheckStrategy.Any,
+                                       SimultaneousRunsStrategy = SimultaneousRunsStrategy.AbortSubsequentRunsWhenOneIsRunning,
+                                       Id = Guid.NewGuid(),
+                                       DependencyTopics = null,
+                                       Name = name,
+                                       Topic = new AffectedTopic(myTopic),
+                                       Envelopes =
+                                           new[]
+                                               {
+                                                   new NullMessage().ToAddressedMessage(channel).ToEnvelope(),
+                                                   new TopicBeingAffectedMessage { Topic = new AffectedTopic(myTopic) }.ToAddressedMessage(channel).ToEnvelope(),
+                                                   new TopicWasAffectedMessage() { Topic = new AffectedTopic(myTopic) }.ToAddressedMessage(channel).ToEnvelope(),
+                                                   new NullMessage().ToAddressedMessage(channel).ToEnvelope(),
+                                               }
+            };
+
+            // act
+            var trackingCode = postOffice.SendRecurring(parcelToSend, schedule);
+
+            // assert
+            var parcel = trackingSends.Single();
+            parcel.Id.Should().Be(trackingCode.ParcelId);
+            parcel.Name.Should().Be(name);
+
+            parcel.Envelopes.Count.Should().Be(6);
+
+            // abort if pending
+            var indexFetch = 0;
+            parcel.Envelopes.Skip(indexFetch).First().MessageType.Should().Be(typeof(FetchAndShareLatestTopicStatusReportsMessage).ToTypeDescription());
+            parcel.Envelopes.Skip(indexFetch).First().MessageAsJson.FromJson<FetchAndShareLatestTopicStatusReportsMessage>().TopicsToFetchAndShareStatusReportsFrom.Single().Name.Should().Be(myTopic);
+
+            // abort if pending
+            var indexAbort = 1;
+            parcel.Envelopes.Skip(indexAbort).First().MessageType.Should().Be(typeof(AbortIfTopicsHaveSpecificStatusesMessage).ToTypeDescription());
+            parcel.Envelopes.Skip(indexAbort).First().MessageAsJson.FromJson<AbortIfTopicsHaveSpecificStatusesMessage>().TopicsToCheck.Single().Name.Should().Be(myTopic);
+
+            // mine
+            var indexMine = 2;
+            parcel.Envelopes.Skip(indexMine).First().MessageType.Should().Be(typeof(NullMessage).ToTypeDescription());
+            parcel.Envelopes.Skip(indexMine).First().Address.Should().Be(channel);
+
+            // being affected
+            var indexBeing = 3;
+            parcel.Envelopes.Skip(indexBeing).First().MessageType.Should().Be(typeof(TopicBeingAffectedMessage).ToTypeDescription());
+            parcel.Envelopes.Skip(indexBeing).First().MessageAsJson.FromJson<TopicBeingAffectedMessage>().Topic.Name.Should().Be(myTopic);
+
+            // was affected
+            var indexWas = 4;
+            parcel.Envelopes.Skip(indexWas).First().MessageType.Should().Be(typeof(TopicWasAffectedMessage).ToTypeDescription());
+            parcel.Envelopes.Skip(indexWas).First().MessageAsJson.FromJson<TopicWasAffectedMessage>().Topic.Name.Should().Be(myTopic);
+
+            // mine
+            var indexLast = 5;
+            parcel.Envelopes.Skip(indexLast).First().MessageType.Should().Be(typeof(NullMessage).ToTypeDescription());
+            parcel.Envelopes.Skip(indexLast).First().Address.Should().Be(channel);
+        }
+
+        [Fact]
+        public static void SendRecurringParcelWithBeingAffectedMessageAndNoImpactingTopic_Throws()
+        {
+            // arrange
+            var trackingCalls = new List<string>();
+            var trackingSends = new List<Parcel>();
+            var postOffice = Factory.GetInMemoryParcelTrackingSystemBackedPostOffice(trackingCalls, trackingSends);
+
+            var myTopic = "me";
+            var name = "Something";
+            var schedule = new DailyScheduleInUtc();
+            var channel = new SimpleChannel("something");
+            var parcelToSend = new Parcel()
+                                   {
+                                       DependencyTopicCheckStrategy = TopicCheckStrategy.Any,
+                                       SimultaneousRunsStrategy = SimultaneousRunsStrategy.AbortSubsequentRunsWhenOneIsRunning,
+                                       Id = Guid.NewGuid(),
+                                       DependencyTopics = null,
+                                       Name = name,
+                                       Envelopes =
+                                           new[]
+                                               {
+                                                   new NullMessage().ToAddressedMessage(channel).ToEnvelope(),
+                                                   new TopicBeingAffectedMessage { Topic = new AffectedTopic(myTopic) }.ToAddressedMessage(channel).ToEnvelope(),
+                                                   new NullMessage().ToAddressedMessage(channel).ToEnvelope(),
+                                               }
+                                   };
+
+            Action action = () => postOffice.SendRecurring(parcelToSend, schedule);
+
+            // act & assert
+            action.ShouldThrow<ArgumentException>().WithMessage("Cannot have topic affected messages without specifying the topic on the parcel.");
+        }
+
+        [Fact]
+        public static void SendRecurringParcelWithWasAffectedMessagesAndNoImpactingTopic_Throws()
+        {
+            // arrange
+            var trackingCalls = new List<string>();
+            var trackingSends = new List<Parcel>();
+            var postOffice = Factory.GetInMemoryParcelTrackingSystemBackedPostOffice(trackingCalls, trackingSends);
+
+            var myTopic = "me";
+            var name = "Something";
+            var schedule = new DailyScheduleInUtc();
+            var channel = new SimpleChannel("something");
+            var parcelToSend = new Parcel()
+                                   {
+                                       DependencyTopicCheckStrategy = TopicCheckStrategy.Any,
+                                       SimultaneousRunsStrategy = SimultaneousRunsStrategy.AbortSubsequentRunsWhenOneIsRunning,
+                                       Id = Guid.NewGuid(),
+                                       DependencyTopics = null,
+                                       Name = name,
+                                       Envelopes =
+                                           new[]
+                                               {
+                                                   new NullMessage().ToAddressedMessage(channel).ToEnvelope(),
+                                                   new TopicWasAffectedMessage() { Topic = new AffectedTopic(myTopic) }.ToAddressedMessage(channel).ToEnvelope(),
+                                                   new NullMessage().ToAddressedMessage(channel).ToEnvelope(),
+                                               }
+                                   };
+
+            Action action = () => postOffice.SendRecurring(parcelToSend, schedule);
+
+            // act & assert
+            action.ShouldThrow<ArgumentException>().WithMessage("Cannot have topic affected messages without specifying the topic on the parcel.");
+        }
+
+        [Fact]
+        public static void SendRecurringParcelWithBeingAffectedMessagesAndDifferentTopic_Throws()
+        {
+            // arrange
+            var trackingCalls = new List<string>();
+            var trackingSends = new List<Parcel>();
+            var postOffice = Factory.GetInMemoryParcelTrackingSystemBackedPostOffice(trackingCalls, trackingSends);
+
+            var myTopic = "me";
+            var name = "Something";
+            var schedule = new DailyScheduleInUtc();
+            var channel = new SimpleChannel("something");
+            var parcelToSend = new Parcel()
+                                   {
+                                       DependencyTopicCheckStrategy = TopicCheckStrategy.Any,
+                                       SimultaneousRunsStrategy = SimultaneousRunsStrategy.AbortSubsequentRunsWhenOneIsRunning,
+                                       Id = Guid.NewGuid(),
+                                       Topic = new AffectedTopic("something"),
+                                       DependencyTopics = null,
+                                       Name = name,
+                                       Envelopes =
+                                           new[]
+                                               {
+                                                   new NullMessage().ToAddressedMessage(channel).ToEnvelope(),
+                                                   new TopicBeingAffectedMessage { Topic = new AffectedTopic(myTopic) }.ToAddressedMessage(channel).ToEnvelope(),
+                                                   new NullMessage().ToAddressedMessage(channel).ToEnvelope(),
+                                               }
+                                   };
+
+            Action action = () => postOffice.SendRecurring(parcelToSend, schedule);
+
+            // act & assert
+            action.ShouldThrow<ArgumentException>().WithMessage("Cannot have a TopicBeingAffectedMessage with a different topic than the parcel.");
+        }
+
+        [Fact]
+        public static void SendRecurringParcelWithWasAffectedMessagesAndDifferentTopic_Throws()
+        {
+            // arrange
+            var trackingCalls = new List<string>();
+            var trackingSends = new List<Parcel>();
+            var postOffice = Factory.GetInMemoryParcelTrackingSystemBackedPostOffice(trackingCalls, trackingSends);
+
+            var myTopic = "me";
+            var name = "Something";
+            var schedule = new DailyScheduleInUtc();
+            var channel = new SimpleChannel("something");
+            var parcelToSend = new Parcel()
+                                   {
+                                       DependencyTopicCheckStrategy = TopicCheckStrategy.Any,
+                                       SimultaneousRunsStrategy = SimultaneousRunsStrategy.AbortSubsequentRunsWhenOneIsRunning,
+                                       Id = Guid.NewGuid(),
+                                       Topic = new AffectedTopic("something"),
+                                       DependencyTopics = null,
+                                       Name = name,
+                                       Envelopes =
+                                           new[]
+                                               {
+                                                   new NullMessage().ToAddressedMessage(channel).ToEnvelope(),
+                                                   new TopicWasAffectedMessage() { Topic = new AffectedTopic(myTopic) }.ToAddressedMessage(channel).ToEnvelope(),
+                                                   new NullMessage().ToAddressedMessage(channel).ToEnvelope(),
+                                               }
+                                   };
+
+            Action action = () => postOffice.SendRecurring(parcelToSend, schedule);
+
+            // act & assert
+            action.ShouldThrow<ArgumentException>().WithMessage("Cannot have a TopicWasAffectedMessage with a different topic than the parcel.");
+        }
+
+        [Fact]
+        public static void SendRecurringParcelWithAffectedMessagesAndMultipleBeingAffected_Throws()
+        {
+            // arrange
+            var trackingCalls = new List<string>();
+            var trackingSends = new List<Parcel>();
+            var postOffice = Factory.GetInMemoryParcelTrackingSystemBackedPostOffice(trackingCalls, trackingSends);
+
+            var myTopic = "me";
+            var name = "Something";
+            var schedule = new DailyScheduleInUtc();
+            var channel = new SimpleChannel("something");
+            var parcelToSend = new Parcel()
+                                   {
+                                       DependencyTopicCheckStrategy = TopicCheckStrategy.Any,
+                                       SimultaneousRunsStrategy = SimultaneousRunsStrategy.AbortSubsequentRunsWhenOneIsRunning,
+                                       Id = Guid.NewGuid(),
+                                       Topic = new AffectedTopic(myTopic),
+                                       DependencyTopics = null,
+                                       Name = name,
+                                       Envelopes =
+                                           new[]
+                                               {
+                                                   new NullMessage().ToAddressedMessage(channel).ToEnvelope(),
+                                                   new TopicBeingAffectedMessage { Topic = new AffectedTopic(myTopic) }.ToAddressedMessage(channel).ToEnvelope(),
+                                                   new TopicBeingAffectedMessage { Topic = new AffectedTopic(myTopic) }.ToAddressedMessage(channel).ToEnvelope(),
+                                                   new TopicWasAffectedMessage() { Topic = new AffectedTopic(myTopic) }.ToAddressedMessage(channel).ToEnvelope(),
+                                                   new NullMessage().ToAddressedMessage(channel).ToEnvelope(),
+                                               }
+                                   };
+
+            Action action = () => postOffice.SendRecurring(parcelToSend, schedule);
+
+            // act & assert
+            action.ShouldThrow<ArgumentException>().WithMessage("Cannot have multiple TopicBeingAffectedMessages.");
+        }
+
+        [Fact]
+        public static void SendRecurringParcelWithAffectedMessagesAndMultipleWasAffected_Throws()
+        {
+            // arrange
+            var trackingCalls = new List<string>();
+            var trackingSends = new List<Parcel>();
+            var postOffice = Factory.GetInMemoryParcelTrackingSystemBackedPostOffice(trackingCalls, trackingSends);
+
+            var myTopic = "me";
+            var name = "Something";
+            var schedule = new DailyScheduleInUtc();
+            var channel = new SimpleChannel("something");
+            var parcelToSend = new Parcel()
+                                   {
+                                       DependencyTopicCheckStrategy = TopicCheckStrategy.Any,
+                                       SimultaneousRunsStrategy = SimultaneousRunsStrategy.AbortSubsequentRunsWhenOneIsRunning,
+                                       Id = Guid.NewGuid(),
+                                       Topic = new AffectedTopic(myTopic),
+                                       DependencyTopics = null,
+                                       Name = name,
+                                       Envelopes =
+                                           new[]
+                                               {
+                                                   new NullMessage().ToAddressedMessage(channel).ToEnvelope(),
+                                                   new TopicBeingAffectedMessage { Topic = new AffectedTopic(myTopic) }.ToAddressedMessage(channel).ToEnvelope(),
+                                                   new TopicWasAffectedMessage() { Topic = new AffectedTopic(myTopic) }.ToAddressedMessage(channel).ToEnvelope(),
+                                                   new TopicWasAffectedMessage() { Topic = new AffectedTopic(myTopic) }.ToAddressedMessage(channel).ToEnvelope(),
+                                                   new NullMessage().ToAddressedMessage(channel).ToEnvelope(),
+                                               }
+                                   };
+
+            Action action = () => postOffice.SendRecurring(parcelToSend, schedule);
+
+            // act & assert
+            action.ShouldThrow<ArgumentException>().WithMessage("Cannot have multiple TopicWasAffectedMessages.");
+        }
+
+        [Fact]
+        public static void SendRecurringParcelWithAffectedMessagesOutOfOrder_Throws()
+        {
+            // arrange
+            var trackingCalls = new List<string>();
+            var trackingSends = new List<Parcel>();
+            var postOffice = Factory.GetInMemoryParcelTrackingSystemBackedPostOffice(trackingCalls, trackingSends);
+
+            var myTopic = "me";
+            var name = "Something";
+            var schedule = new DailyScheduleInUtc();
+            var channel = new SimpleChannel("something");
+            var parcelToSend = new Parcel()
+                                   {
+                                       DependencyTopicCheckStrategy = TopicCheckStrategy.Any,
+                                       SimultaneousRunsStrategy = SimultaneousRunsStrategy.AbortSubsequentRunsWhenOneIsRunning,
+                                       Id = Guid.NewGuid(),
+                                       DependencyTopics = null,
+                                       Topic = new AffectedTopic(myTopic),
+                                       Name = name,
+                                       Envelopes =
+                                           new[]
+                                               {
+                                                   new NullMessage().ToAddressedMessage(channel).ToEnvelope(),
+                                                   new TopicWasAffectedMessage() { Topic = new AffectedTopic(myTopic) }.ToAddressedMessage(channel).ToEnvelope(),
+                                                   new TopicBeingAffectedMessage { Topic = new AffectedTopic(myTopic) }.ToAddressedMessage(channel).ToEnvelope(),
+                                                   new NullMessage().ToAddressedMessage(channel).ToEnvelope(),
+                                               }
+                                   };
+
+            Action action = () => postOffice.SendRecurring(parcelToSend, schedule);
+
+            // act & assert
+            action.ShouldThrow<ArgumentException>().WithMessage("Cannot have a TopicBeingAffected after a TopicWasAffected.");
         }
     }
 }

@@ -29,8 +29,8 @@ namespace Naos.MessageBus.Test
             var testMessage = new TestComplexShareMessage();
 
             var sharedProperties = SharedPropertyHelper.GetSharedInterfaceStates(testHandler);
-            var sharedPropertiesAsJson = Serializer.Serialize(sharedProperties);
-            var sharedPropertiesFromJson = Serializer.Deserialize<IList<SharedInterfaceState>>(sharedPropertiesAsJson);
+            var sharedPropertiesAsJson = sharedProperties.ToJson();
+            var sharedPropertiesFromJson = sharedPropertiesAsJson.FromJson<IList<SharedInterfaceState>>();
             SharedPropertyHelper.ApplySharedInterfaceState(
                 TypeMatchStrategy.NamespaceAndName,
                 sharedPropertiesFromJson.Single(),
@@ -47,8 +47,8 @@ namespace Naos.MessageBus.Test
             var testMessage = new DeleteFileMessage();
 
             var sharedProperties = SharedPropertyHelper.GetSharedInterfaceStates(testHandler);
-            var sharedPropertiesAsJson = Serializer.Serialize(sharedProperties);
-            var sharedPropertiesFromJson = Serializer.Deserialize<IList<SharedInterfaceState>>(sharedPropertiesAsJson);
+            var sharedPropertiesAsJson = sharedProperties.ToJson();
+            var sharedPropertiesFromJson = sharedPropertiesAsJson.FromJson<IList<SharedInterfaceState>>();
             SharedPropertyHelper.ApplySharedInterfaceState(
                 TypeMatchStrategy.NamespaceAndName,
                 sharedPropertiesFromJson.Single(),
@@ -64,8 +64,8 @@ namespace Naos.MessageBus.Test
             var testMessage = new CountMessage();
 
             var sharedProperties = SharedPropertyHelper.GetSharedInterfaceStates(testHandler);
-            var sharedPropertiesAsJson = Serializer.Serialize(sharedProperties);
-            var sharedPropertiesFromJson = Serializer.Deserialize<IList<SharedInterfaceState>>(sharedPropertiesAsJson);
+            var sharedPropertiesAsJson = sharedProperties.ToJson();
+            var sharedPropertiesFromJson = sharedPropertiesAsJson.FromJson<IList<SharedInterfaceState>>();
             SharedPropertyHelper.ApplySharedInterfaceState(
                 TypeMatchStrategy.NamespaceAndName,
                 sharedPropertiesFromJson.Single(),
@@ -81,8 +81,8 @@ namespace Naos.MessageBus.Test
             var testMessage = new SecondEnumMessage();
 
             var sharedProperties = SharedPropertyHelper.GetSharedInterfaceStates(testHandler);
-            var sharedPropertiesAsJson = Serializer.Serialize(sharedProperties);
-            var sharedPropertiesFromJson = Serializer.Deserialize<IList<SharedInterfaceState>>(sharedPropertiesAsJson);
+            var sharedPropertiesAsJson = sharedProperties.ToJson();
+            var sharedPropertiesFromJson = sharedPropertiesAsJson.FromJson<IList<SharedInterfaceState>>();
             SharedPropertyHelper.ApplySharedInterfaceState(
                 TypeMatchStrategy.NamespaceAndName,
                 sharedPropertiesFromJson.Single(),

@@ -16,7 +16,7 @@ namespace Naos.MessageBus.Domain
     public class PostOffice : IPostOffice
     {
         // Make this permissive since it's the underlying logic and shouldn't be coupled to whether handlers are matched in strict mode...
-        private readonly TypeComparer typeComparer = new TypeComparer(TypeMatchStrategy.NamespaceAndName);
+        private static readonly TypeComparer TypeComparer = new TypeComparer(TypeMatchStrategy.NamespaceAndName);
 
         private readonly IParcelTrackingSystem parcelTrackingSystem;
 
@@ -120,6 +120,17 @@ namespace Naos.MessageBus.Domain
 
                 parcel = InjectTopicNoticeMessagesIntoNewParcel(parcel);
             }
+            else
+            {
+                if (
+                    parcel.Envelopes.Any(
+                        _ =>
+                            TypeComparer.Equals(_.MessageType, typeof(TopicBeingAffectedMessage).ToTypeDescription())
+                            || TypeComparer.Equals(_.MessageType, typeof(TopicWasAffectedMessage).ToTypeDescription())))
+                {
+                    throw new ArgumentException("Cannot have topic affected messages without specifying the topic on the parcel.");
+                }
+            }
 
             if (parcel.Id == default(Guid))
             {
@@ -141,7 +152,7 @@ namespace Naos.MessageBus.Domain
             var trackingCode = new TrackingCode { ParcelId = parcel.Id, EnvelopeId = firstEnvelope.Id };
 
             // update to send unaddressed mail to the sorting channel
-            var address = firstEnvelope.Address == null || this.typeComparer.Equals(firstEnvelope.Address.GetType(), typeof(NullChannel))
+            var address = firstEnvelope.Address == null || TypeComparer.Equals(firstEnvelope.Address.GetType(), typeof(NullChannel))
                               ? this.unaddressedMailRouter.FindAddress(parcel)
                               : firstEnvelope.Address;
             this.parcelTrackingSystem.UpdateSentAsync(trackingCode, parcel, address, recurringSchedule).Wait();
@@ -203,7 +214,24 @@ namespace Naos.MessageBus.Domain
                 Topic = parcel.Topic
             };
 
-            newEnvelopes.Add(beingAffectedMessage.ToAddressedMessage().ToEnvelope());
+            var beingAffectedEnvelopes = envelopes.Where(_ => TypeComparer.Equals(_.MessageType, beingAffectedMessage.GetType().ToTypeDescription())).ToList();
+            if (beingAffectedEnvelopes.Count > 0)
+            {
+                if (beingAffectedEnvelopes.Count > 1)
+                {
+                    throw new ArgumentException("Cannot have multiple TopicBeingAffectedMessages.");
+                }
+
+                if (beingAffectedEnvelopes.Count == 1
+                    && !beingAffectedEnvelopes.Single().MessageAsJson.FromJson<TopicBeingAffectedMessage>().Topic.Equals(parcel.Topic))
+                {
+                    throw new ArgumentException("Cannot have a TopicBeingAffectedMessage with a different topic than the parcel.");
+                }
+            }
+            else
+            {
+                newEnvelopes.Add(beingAffectedMessage.ToAddressedMessage().ToEnvelope());
+            }
 
             // add the envelopes passed in
             newEnvelopes.AddRange(envelopes);
@@ -215,7 +243,30 @@ namespace Naos.MessageBus.Domain
                 Topic = parcel.Topic
             };
 
-            newEnvelopes.Add(wasAffectedMessage.ToAddressedMessage().ToEnvelope());
+            var wasAffectedEnvelopes = envelopes.Where(_ => TypeComparer.Equals(_.MessageType, wasAffectedMessage.GetType().ToTypeDescription())).ToList();
+            if (wasAffectedEnvelopes.Count > 0)
+            {
+                if (wasAffectedEnvelopes.Count > 1)
+                {
+                    throw new ArgumentException("Cannot have multiple TopicWasAffectedMessages.");
+                }
+
+                if (wasAffectedEnvelopes.Count == 1
+                    && !wasAffectedEnvelopes.Single().MessageAsJson.FromJson<TopicWasAffectedMessage>().Topic.Equals(parcel.Topic))
+                {
+                    throw new ArgumentException("Cannot have a TopicWasAffectedMessage with a different topic than the parcel.");
+                }
+            }
+            else
+            {
+                newEnvelopes.Add(wasAffectedMessage.ToAddressedMessage().ToEnvelope());
+            }
+
+            if (beingAffectedEnvelopes.Count == 1 && wasAffectedEnvelopes.Count == 1
+                && (envelopes.IndexOf(beingAffectedEnvelopes.Single()) > envelopes.IndexOf(wasAffectedEnvelopes.Single())))
+            {
+                throw new ArgumentException("Cannot have a TopicBeingAffected after a TopicWasAffected.");
+            }
 
             var newParcel = new Parcel { Id = parcelId, Name = parcel.Name, SharedInterfaceStates = sharedInterfaceStates, Envelopes = newEnvelopes };
 

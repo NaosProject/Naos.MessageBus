@@ -38,9 +38,9 @@ namespace Naos.MessageBus.Persistence
         /// <typeparam name="T">Type to serialize.</typeparam>
         /// <param name="objectToPayload">Object to turn into a payload.</param>
         /// <returns>JSON string.</returns>
-        public static string ToJson<T>(this T objectToPayload) where T : IPayload
+        public static string ToJsonPayload<T>(this T objectToPayload) where T : IPayload
         {
-            return Serializer.Serialize(objectToPayload);
+            return objectToPayload.ToJson();
         }
 
         /// <summary>
@@ -51,7 +51,7 @@ namespace Naos.MessageBus.Persistence
         /// <returns>Extracted object.</returns>
         public static T ExtractPayload<T>(this IUsePayload<T> payloadedObject) where T : class, IPayload
         {
-            return Serializer.Deserialize<T>(payloadedObject.PayloadJson);
+            return payloadedObject.PayloadJson.FromJson<T>();
         }
     }
 }

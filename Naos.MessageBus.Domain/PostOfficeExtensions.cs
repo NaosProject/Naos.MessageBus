@@ -73,7 +73,7 @@ namespace Naos.MessageBus.Domain
                 id,
                 addressedMessage.Message.Description,
                 addressedMessage.Address,
-                Serializer.Serialize(addressedMessage.Message),
+                addressedMessage.Message.ToJson(),
                 messageType.ToTypeDescription());
         }
     }

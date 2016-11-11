@@ -109,7 +109,7 @@ namespace Naos.MessageBus.Core
                 {
                     var propertyName = prop.Name;
                     var propertyValue = prop.GetValue(sourceObject);
-                    var propertyValueAsJson = Serializer.Serialize(propertyValue);
+                    var propertyValueAsJson = propertyValue.ToJson();
                     var propertyEntry = new SharedProperty
                                             {
                                                 Name = propertyName,
@@ -183,7 +183,7 @@ namespace Naos.MessageBus.Core
                     + sharedProperty.ValueType.AssemblyQualifiedName);
             }
 
-            var ret = Serializer.Deserialize(type, sharedProperty.ValueAsJson);
+            var ret = sharedProperty.ValueAsJson.FromJson(type);
             return ret;
         }
 

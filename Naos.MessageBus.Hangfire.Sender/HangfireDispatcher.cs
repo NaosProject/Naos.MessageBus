@@ -36,9 +36,9 @@ namespace Naos.MessageBus.Hangfire.Sender
         [DisplayName("{0}")]
         public void HangfireDispatch(string displayName, string trackingCodeJson, string parcelJson, string channelJson)
         {
-            var trackingCode = Serializer.Deserialize<TrackingCode>(trackingCodeJson);
-            var parcel = Serializer.Deserialize<Parcel>(parcelJson);
-            var channel = Serializer.Deserialize<IChannel>(channelJson);
+            var trackingCode = trackingCodeJson.FromJson<TrackingCode>();
+            var parcel = parcelJson.FromJson<Parcel>();
+            var channel = channelJson.FromJson<IChannel>();
             this.dispatcher.Dispatch(displayName, trackingCode, parcel, channel);
         }
     }

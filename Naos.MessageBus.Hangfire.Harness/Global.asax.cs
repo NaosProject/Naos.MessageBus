@@ -25,7 +25,7 @@ namespace Naos.MessageBus.Hangfire.Harness
         /// <inheritdoc />
         protected void Application_Start(object sender, EventArgs e)
         {
-            Settings.Deserialize = Serializer.Deserialize;
+            Settings.Deserialize = (type, serialized) => serialized.FromJson(type);
             var messageBusHandlerSettings = Settings.Get<MessageBusHarnessSettings>();
             Logging.Setup(messageBusHandlerSettings);
             LogProvider.SetCurrentLogProvider(new ItsLogPassThroughProvider());

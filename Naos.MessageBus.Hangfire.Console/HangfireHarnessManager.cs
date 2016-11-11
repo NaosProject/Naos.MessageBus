@@ -47,7 +47,7 @@ namespace Naos.MessageBus.Hangfire.Console
                 Debugger.Launch();
             }
 
-            Settings.Deserialize = Serializer.Deserialize;
+            Settings.Deserialize = (type, serialized) => serialized.FromJson(type);
             var messageBusHandlerSettings = Settings.Get<MessageBusHarnessSettings>();
             Logging.Setup(messageBusHandlerSettings);
             LogProvider.SetCurrentLogProvider(new ItsLogPassThroughProvider());
