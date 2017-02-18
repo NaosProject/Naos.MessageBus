@@ -21,7 +21,7 @@ namespace Naos.MessageBus.Test
     using Naos.MessageBus.Domain;
     using Naos.MessageBus.Domain.Exceptions;
 
-    using OBeautifulCode.Reflection;
+    using OBeautifulCode.TypeRepresentation;
 
     using SimpleInjector;
 

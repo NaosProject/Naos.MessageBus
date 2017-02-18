@@ -7,9 +7,9 @@
 namespace Naos.MessageBus.Persistence
 {
     using System;
-    using System.Collections.Concurrent;
     using System.Collections.Generic;
-    using System.Diagnostics;
+
+    using static System.FormattableString;
     using System.Linq;
     using System.Threading.Tasks;
 
@@ -22,22 +22,20 @@ namespace Naos.MessageBus.Persistence
     using Naos.MessageBus.Domain;
     using Naos.MessageBus.Persistence.NaosRecipes.ItsDomain;
 
-    using Polly;
-
-    using EventHandlingError = Microsoft.Its.Domain.EventHandlingError;
+    using Spritely.Redo;
 
     /// <summary>
     /// Implementation of the <see cref="IParcelTrackingSystem"/> using Its.CQRS.
     /// </summary>
     public class ParcelTrackingSystem : IParcelTrackingSystem
     {
-        private readonly ConcurrentBag<EventHandlingError> eventBusErrors = new ConcurrentBag<EventHandlingError>();
-
         private readonly ReadModelPersistenceConnectionConfiguration readModelPersistenceConnectionConfiguration;
 
         private readonly int retryCount;
 
         private readonly Configuration configuration;
+
+        private readonly ParcelTrackingEventHandler eventHandler;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ParcelTrackingSystem"/> class.
@@ -67,31 +65,14 @@ namespace Naos.MessageBus.Persistence
                 db.Database.CreateIfNotExists();
             }
 
-            // the event bus is needed for projection events to be proliferated
-            var eventBus = new InProcessEventBus();
-
             // update handler to synchronously process updates to read models (using the IUpdateProjectionWhen<TEvent> interface)
-            var updateTrackedShipment = new ParcelTrackingEventHandler(courier, this.readModelPersistenceConnectionConfiguration, this.retryCount);
-
-            // subscribe handler to bus to get updates
-            eventBus.Subscribe(updateTrackedShipment);
-            eventBus.Errors.Subscribe(
-                e => Log.Write(new LogEntry(e.ToString(), e) { EventType = e.Exception != null ? TraceEventType.Error : TraceEventType.Information }));
-            eventBus.Errors.Subscribe(e => this.eventBusErrors.Add(e));
-
-            // create a new event sourced repository to seed the config DI with for commands to interact with
-            IEventSourcedRepository<Shipment> eventSourcedRepository = new SqlEventSourcedRepository<Shipment>(eventBus, createEventStoreDbContext);
+            this.eventHandler = new ParcelTrackingEventHandler(courier, this.readModelPersistenceConnectionConfiguration, this.retryCount);
 
             // CreateCommand will throw without having authorization - just opening for all in this example
             Authorization<Shipment>.AuthorizeAllCommands();
 
             // setup the configuration which can be used to retrieve the repository when needed
-            this.configuration =
-                new Configuration()
-                    .UseSqlEventStore()
-                    .UseDependency(t => eventSourcedRepository)
-                    .UseDependency(t => createEventStoreDbContext())
-                    .UseEventBus(eventBus);
+            this.configuration = new Configuration().UseSqlEventStore().UseDependency(t => createEventStoreDbContext());
         }
 
         /// <inheritdoc />
@@ -105,13 +86,16 @@ namespace Naos.MessageBus.Persistence
             }
 
             var command = new RequestResend { TrackingCode = trackingCode };
-            shipment.EnactCommand(command);
+            var yieldedEvents = shipment.EnactCommand(command);
             await this.SaveShipmentAsync(shipment);
+            this.eventHandler.UpdateProjection(yieldedEvents);
         }
 
         /// <inheritdoc />
         public async Task UpdateSentAsync(TrackingCode trackingCode, Parcel parcel, IChannel address, ScheduleBase recurringSchedule)
         {
+            var yieldedEvents = new List<Event>();
+
             // shipment may already exist and this is just another envelope to deal with...
             var shipment = await this.FetchShipmentAsync(trackingCode.ParcelId);
             if (shipment == null)
@@ -120,12 +104,16 @@ namespace Naos.MessageBus.Persistence
 
                 // shipment = new Shipment(commandCreate);  // we are not using this approach because it's too slow
                 shipment = new Shipment(parcel.Id);
-                shipment.EnactCommand(commandCreate);
+                var yieldedCreateEvents = shipment.EnactCommand(commandCreate);
+                yieldedEvents.AddRange(yieldedCreateEvents);
             }
 
             var command = new Send { TrackingCode = trackingCode, Address = address, Parcel = parcel };
-            shipment.EnactCommand(command);
+            var yieldedSendEvents = shipment.EnactCommand(command);
+            yieldedEvents.AddRange(yieldedSendEvents);
+
             await this.SaveShipmentAsync(shipment);
+            this.eventHandler.UpdateProjection(yieldedEvents);
         }
 
         /// <inheritdoc />
@@ -134,9 +122,10 @@ namespace Naos.MessageBus.Persistence
             var shipment = await this.FetchShipmentAsync(trackingCode.ParcelId);
 
             var command = new Attempt { TrackingCode = trackingCode, Recipient = harnessDetails };
-            shipment.EnactCommand(command);
+            var yieldedEvents = shipment.EnactCommand(command);
 
             await this.SaveShipmentAsync(shipment);
+            this.eventHandler.UpdateProjection(yieldedEvents);
         }
 
         /// <inheritdoc />
@@ -145,9 +134,10 @@ namespace Naos.MessageBus.Persistence
             var shipment = await this.FetchShipmentAsync(trackingCode.ParcelId);
 
             var command = new Reject { TrackingCode = trackingCode, ExceptionMessage = exception.Message, ExceptionJson = exception.ToJson() };
-            shipment.EnactCommand(command);
+            var yieldedEvents = shipment.EnactCommand(command);
 
             await this.SaveShipmentAsync(shipment);
+            this.eventHandler.UpdateProjection(yieldedEvents);
         }
 
         /// <inheritdoc />
@@ -156,9 +146,10 @@ namespace Naos.MessageBus.Persistence
             var shipment = await this.FetchShipmentAsync(trackingCode.ParcelId);
 
             var command = new Deliver { TrackingCode = trackingCode, DeliveredEnvelope = deliveredEnvelope };
-            shipment.EnactCommand(command);
+            var yieldedEvents = shipment.EnactCommand(command);
 
             await this.SaveShipmentAsync(shipment);
+            this.eventHandler.UpdateProjection(yieldedEvents);
         }
 
         /// <inheritdoc />
@@ -167,49 +158,92 @@ namespace Naos.MessageBus.Persistence
             var shipment = await this.FetchShipmentAsync(trackingCode.ParcelId);
 
             var command = new Abort { TrackingCode = trackingCode, Reason = reason };
-            shipment.EnactCommand(command);
+            var yieldedEvents = shipment.EnactCommand(command);
 
             await this.SaveShipmentAsync(shipment);
+            this.eventHandler.UpdateProjection(yieldedEvents);
         }
 
         private async Task<Shipment> FetchShipmentAsync(Guid parcelId)
         {
-            var shipment = await this.RunWithRetryAsync(() => this.configuration.Repository<Shipment>().GetLatest(parcelId));
+            var shipment =
+                await
+                    Using.LinearBackOff(TimeSpan.FromSeconds(5))
+                        .WithReporter(
+                            _ =>
+                                Log.Write(
+                                    new
+                                        {
+                                            Message = Invariant($"Retried a failure in updating MessageBusPersistence from {nameof(IParcelTrackingSystem)} ({nameof(FetchShipmentAsync)}): {_.Message}"),
+                                            Exception = _
+                                        }))
+                        .WithMaxRetries(this.retryCount)
+                        .Run(() => this.configuration.Repository<Shipment>().GetLatest(parcelId))
+                        .Now();
+
             return shipment;
         }
 
         private async Task SaveShipmentAsync(Shipment shipment)
         {
-            await this.RunWithRetryAsync(() => this.configuration.Repository<Shipment>().Save(shipment));
+            await
+                Using.LinearBackOff(TimeSpan.FromSeconds(5))
+                    .WithReporter(
+                        _ =>
+                            Log.Write(
+                                new
+                                    {
+                                        Message = Invariant($"Retried a failure in updating MessageBusPersistence from {nameof(IParcelTrackingSystem)} ({nameof(SaveShipmentAsync)}): {_.Message}"),
+                                        Exception = _
+                                    }))
+                    .WithMaxRetries(this.retryCount)
+                    .Run(() => this.configuration.Repository<Shipment>().Save(shipment))
+                    .Now();
         }
 
         /// <inheritdoc />
         public async Task<IReadOnlyCollection<ParcelTrackingReport>> GetTrackingReportAsync(IReadOnlyCollection<TrackingCode> trackingCodes)
         {
-            return await this.RunWithRetryAsync(
-                () =>
-                {
-                    using (var db = new TrackedShipmentDbContext(this.readModelPersistenceConnectionConfiguration.ToSqlServerConnectionString()))
-                    {
-                        var parcelIds = trackingCodes.Select(_ => _.ParcelId).Distinct().ToList();
-                        var matchingShipments = db.Shipments.Where(_ => parcelIds.Contains(_.ParcelId)).ToList();
-                        var results =
-                            matchingShipments.Select(
-                                _ =>
-                                new ParcelTrackingReport
+            var ret =
+                await
+                    Using.LinearBackOff(TimeSpan.FromSeconds(5))
+                        .WithReporter(
+                            _ =>
+                                Log.Write(
+                                    new
+                                        {
+                                            Message =
+                                            Invariant(
+                                                $"Retried a failure in updating MessageBusPersistence from {nameof(IParcelTrackingSystem)} ({nameof(GetTrackingReportAsync)}): {_.Message}"),
+                                            Exception = _
+                                        }))
+                        .WithMaxRetries(this.retryCount)
+                        .Run(
+                            () =>
                                 {
-                                    ParcelId = _.ParcelId,
-                                    CurrentTrackingCode =
-                                            string.IsNullOrEmpty(_.CurrentCrateLocatorJson)
-                                                ? null
-                                                : _.CurrentCrateLocatorJson.FromJson<CrateLocator>().TrackingCode,
-                                    Status = _.Status,
-                                    LastUpdatedUtc = _.LastUpdatedUtc
-                                }).ToList();
+                                    using (var db = new TrackedShipmentDbContext(this.readModelPersistenceConnectionConfiguration.ToSqlServerConnectionString()))
+                                    {
+                                        var parcelIds = trackingCodes.Select(_ => _.ParcelId).Distinct().ToList();
+                                        var matchingShipments = db.Shipments.Where(_ => parcelIds.Contains(_.ParcelId)).ToList();
+                                        var results =
+                                            matchingShipments.Select(
+                                                _ =>
+                                                    new ParcelTrackingReport
+                                                        {
+                                                            ParcelId = _.ParcelId,
+                                                            CurrentTrackingCode =
+                                                                string.IsNullOrEmpty(_.CurrentCrateLocatorJson)
+                                                                    ? null
+                                                                    : _.CurrentCrateLocatorJson.FromJson<CrateLocator>().TrackingCode,
+                                                            Status = _.Status,
+                                                            LastUpdatedUtc = _.LastUpdatedUtc
+                                                        }).ToList();
 
-                        return Task.FromResult(results);
-                    }
-                });
+                                        return Task.FromResult(results);
+                                    }
+                                }).Now();           
+
+            return ret;
         }
 
         /// <inheritdoc />
@@ -220,104 +254,102 @@ namespace Naos.MessageBus.Persistence
                 throw new ArgumentException("Unsupported Notice Status Filter: " + statusFilter);
             }
 
-            return await this.RunWithRetryAsync(
-                () =>
-                {
-                    using (var db = new TrackedShipmentDbContext(this.readModelPersistenceConnectionConfiguration.ToSqlServerConnectionString()))
-                    {
-                        var mostRecentNotice =
-                            db.Notices.Where(_ => _.ImpactingTopicName == topic.Name)
-                                .Where(_ => statusFilter == TopicStatus.None || _.Status == statusFilter)
-                                .OrderBy(_ => _.LastUpdatedUtc)
-                                .ToList()
-                                .LastOrDefault();
-
-                        if (mostRecentNotice == null)
-                        {
-                            if (statusFilter != TopicStatus.None)
-                            {
-                                return Task.FromResult<TopicStatusReport>(null);
-                            }
-                            else
-                            {
-                                return
-                                    Task.FromResult(
-                                        new TopicStatusReport
+            var ret =
+                await
+                    Using.LinearBackOff(TimeSpan.FromSeconds(5))
+                        .WithReporter(
+                            _ =>
+                                Log.Write(
+                                    new
                                         {
-                                            Topic = new AffectedTopic(topic.Name),
-                                            Status = TopicStatus.Unknown,
-                                            AffectedItems = new AffectedItem[0],
-                                            DependencyTopicNoticesAtStart = new TopicStatusReport[0]
-                                        });
-                            }
-                        }
-                        else
-                        {
-                            AffectedItem[] items;
-                            TopicStatusReport[] dependencyNotices;
-
-                            if (mostRecentNotice.TopicWasAffectedEnvelopeJson == null)
-                            {
-                                if (mostRecentNotice.TopicBeingAffectedEnvelopeJson != null)
+                                            Message =
+                                            Invariant(
+                                                $"Retried a failure in updating MessageBusPersistence from {nameof(IParcelTrackingSystem)} ({nameof(GetLatestTopicStatusReportAsync)}): {_.Message}"),
+                                            Exception = _
+                                        }))
+                        .WithMaxRetries(this.retryCount)
+                        .Run(
+                            () =>
                                 {
-                                    var beingAffectedEnvelope = mostRecentNotice.TopicBeingAffectedEnvelopeJson.FromJson<Envelope>();
-                                    var beingAffectedMessage = beingAffectedEnvelope.MessageAsJson.FromJson<TopicBeingAffectedMessage>();
-                                    items = beingAffectedMessage.AffectedItems;
-
-                                    // filter out our own status report...
-                                    dependencyNotices =
-                                        (beingAffectedMessage.TopicStatusReports ?? new TopicStatusReport[0]).Where(_ => !topic.Equals(_.Topic)).ToArray();
-                                }
-                                else
-                                {
-                                    items = new AffectedItem[0];
-                                    dependencyNotices = new TopicStatusReport[0];
-                                }
-                            }
-                            else
-                            {
-                                var wasAffectedEnvelope = mostRecentNotice.TopicWasAffectedEnvelopeJson.FromJson<Envelope>();
-                                var wasAffectedMessage = wasAffectedEnvelope.MessageAsJson.FromJson<TopicWasAffectedMessage>();
-                                items = wasAffectedMessage.AffectedItems;
-
-                                // filter out our own status report...
-                                dependencyNotices =
-                                    (wasAffectedMessage.TopicStatusReports ?? new TopicStatusReport[0]).Where(_ => !topic.Equals(_.Topic)).ToArray();
-                            }
-
-                            return
-                                Task.FromResult(
-                                    new TopicStatusReport
+                                    using (var db = new TrackedShipmentDbContext(this.readModelPersistenceConnectionConfiguration.ToSqlServerConnectionString()))
                                     {
-                                        Topic = new AffectedTopic(topic.Name),
-                                        AffectsCompletedDateTimeUtc = mostRecentNotice.AffectsCompletedDateTimeUtc,
-                                        AffectedItems = items ?? new AffectedItem[0],
-                                        Status = mostRecentNotice.Status,
-                                        DependencyTopicNoticesAtStart = dependencyNotices
-                                    });
-                        }
-                    }
-                });
-        }
+                                        var mostRecentNotice =
+                                            db.Notices.Where(_ => _.ImpactingTopicName == topic.Name)
+                                                .Where(_ => statusFilter == TopicStatus.None || _.Status == statusFilter)
+                                                .OrderBy(_ => _.LastUpdatedUtc)
+                                                .ToList()
+                                                .LastOrDefault();
 
-        private async Task<T> RunWithRetryAsync<T>(Func<Task<T>> func)
-        {
-            if (this.eventBusErrors.Any())
-            {
-                throw new AggregateException("Errors on the EventBus prevent further use of tracking system.", this.eventBusErrors.Select(_ => _.Exception ?? new ApplicationException(_.ToString())));
-            }
+                                        if (mostRecentNotice == null)
+                                        {
+                                            if (statusFilter != TopicStatus.None)
+                                            {
+                                                return Task.FromResult<TopicStatusReport>(null);
+                                            }
+                                            else
+                                            {
+                                                return
+                                                    Task.FromResult(
+                                                        new TopicStatusReport
+                                                            {
+                                                                Topic = new AffectedTopic(topic.Name),
+                                                                Status = TopicStatus.Unknown,
+                                                                AffectedItems = new AffectedItem[0],
+                                                                DependencyTopicNoticesAtStart = new TopicStatusReport[0]
+                                                            });
+                                            }
+                                        }
+                                        else
+                                        {
+                                            AffectedItem[] items;
+                                            TopicStatusReport[] dependencyNotices;
 
-            return await Policy.Handle<Exception>().WaitAndRetryAsync(this.retryCount, attempt => TimeSpan.FromSeconds(attempt * 5)).ExecuteAsync(func);
-        }
+                                            if (mostRecentNotice.TopicWasAffectedEnvelopeJson == null)
+                                            {
+                                                if (mostRecentNotice.TopicBeingAffectedEnvelopeJson != null)
+                                                {
+                                                    var beingAffectedEnvelope = mostRecentNotice.TopicBeingAffectedEnvelopeJson.FromJson<Envelope>();
+                                                    var beingAffectedMessage = beingAffectedEnvelope.MessageAsJson.FromJson<TopicBeingAffectedMessage>();
+                                                    items = beingAffectedMessage.AffectedItems;
 
-        private async Task RunWithRetryAsync(Func<Task> func)
-        {
-            if (this.eventBusErrors.Any())
-            {
-                throw new AggregateException("Errors on the EventBus prevent further use of tracking system.", this.eventBusErrors.Select(_ => _.Exception ?? new ApplicationException(_.ToString())));
-            }
+                                                    // filter out our own status report...
+                                                    dependencyNotices =
+                                                        (beingAffectedMessage.TopicStatusReports ?? new TopicStatusReport[0]).Where(_ => !topic.Equals(_.Topic))
+                                                            .ToArray();
+                                                }
+                                                else
+                                                {
+                                                    items = new AffectedItem[0];
+                                                    dependencyNotices = new TopicStatusReport[0];
+                                                }
+                                            }
+                                            else
+                                            {
+                                                var wasAffectedEnvelope = mostRecentNotice.TopicWasAffectedEnvelopeJson.FromJson<Envelope>();
+                                                var wasAffectedMessage = wasAffectedEnvelope.MessageAsJson.FromJson<TopicWasAffectedMessage>();
+                                                items = wasAffectedMessage.AffectedItems;
 
-            await Policy.Handle<Exception>().WaitAndRetryAsync(this.retryCount, attempt => TimeSpan.FromSeconds(attempt * 5)).ExecuteAsync(func);
+                                                // filter out our own status report...
+                                                dependencyNotices =
+                                                    (wasAffectedMessage.TopicStatusReports ?? new TopicStatusReport[0]).Where(_ => !topic.Equals(_.Topic))
+                                                        .ToArray();
+                                            }
+
+                                            return
+                                                Task.FromResult(
+                                                    new TopicStatusReport
+                                                        {
+                                                            Topic = new AffectedTopic(topic.Name),
+                                                            AffectsCompletedDateTimeUtc = mostRecentNotice.AffectsCompletedDateTimeUtc,
+                                                            AffectedItems = items ?? new AffectedItem[0],
+                                                            Status = mostRecentNotice.Status,
+                                                            DependencyTopicNoticesAtStart = dependencyNotices
+                                                        });
+                                        }
+                                    }
+                                }).Now();
+
+            return ret;
         }
     }
 }

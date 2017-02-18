@@ -8,7 +8,7 @@ namespace Naos.MessageBus.Domain
 {
     using System.Collections.Generic;
 
-    using OBeautifulCode.Reflection;
+    using OBeautifulCode.TypeRepresentation;
 
     /// <summary>
     /// Model class to hold a set of properties and type description for a specific IShare implementation.

@@ -8,6 +8,7 @@ namespace Naos.MessageBus.Hangfire.Sender
 {
     using System;
     using System.Collections.Generic;
+    using static System.FormattableString;
     using System.Linq;
     using System.Linq.Expressions;
     using System.Text.RegularExpressions;
@@ -15,12 +16,14 @@ namespace Naos.MessageBus.Hangfire.Sender
     using global::Hangfire;
     using global::Hangfire.States;
 
+    using Its.Log.Instrumentation;
+
     using Naos.Cron;
     using Naos.MessageBus.Domain;
 
-    using OBeautifulCode.Reflection;
+    using OBeautifulCode.TypeRepresentation;
 
-    using Polly;
+    using Spritely.Redo;
 
     /// <inheritdoc />
     public class HangfireCourier : ICourier
@@ -55,8 +58,11 @@ namespace Naos.MessageBus.Hangfire.Sender
         public string Send(Crate crate)
         {
             // run this with retries because it will sometimes fail due to high load/high connection count
-            this.RunWithRetry(
-                () => GlobalConfiguration.Configuration.UseSqlServerStorage(this.courierPersistenceConnectionConfiguration.ToSqlServerConnectionString()));
+            Using.LinearBackOff(TimeSpan.FromSeconds(5))
+                .WithReporter(_ => Log.Write(new { Message = Invariant($"Retried a failure in connecting to Hangfire Persistence: {_.Message}"), Exception = _ }))
+                .WithMaxRetries(3)
+                .Run(() => GlobalConfiguration.Configuration.UseSqlServerStorage(this.courierPersistenceConnectionConfiguration.ToSqlServerConnectionString()))
+                .Now();
 
             var client = new BackgroundJobClient();
 
@@ -167,16 +173,6 @@ namespace Naos.MessageBus.Hangfire.Sender
                     "Channel name must be lowercase alphanumeric with underscores ONLY.  The supplied channel name: "
                     + simpleChannel.Name);
             }
-        }
-
-        private void RunWithRetry(Action action)
-        {
-            Policy.Handle<Exception>().WaitAndRetry(this.retryCount, attempt => TimeSpan.FromSeconds(attempt * 5)).Execute(action);
-        }
-
-        private T RunWithRetry<T>(Func<T> func)
-        {
-            return Policy.Handle<Exception>().WaitAndRetry(this.retryCount, attempt => TimeSpan.FromSeconds(attempt * 5)).Execute(func);
         }
     }
 }

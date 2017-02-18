@@ -12,7 +12,7 @@ namespace Naos.MessageBus.Domain
 
     using Naos.Cron;
 
-    using OBeautifulCode.Reflection;
+    using OBeautifulCode.TypeRepresentation;
 
     /// <inheritdoc />
     public class PostOffice : IPostOffice

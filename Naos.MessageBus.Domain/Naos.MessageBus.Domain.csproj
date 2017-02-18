@@ -50,8 +50,8 @@
       <HintPath>..\packages\Newtonsoft.Json.9.0.1\lib\net45\Newtonsoft.Json.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="OBeautifulCode.Reflection, Version=1.0.14.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\OBeautifulCode.Reflection.1.0.14\lib\net45\OBeautifulCode.Reflection.dll</HintPath>
+    <Reference Include="OBeautifulCode.TypeRepresentation, Version=1.0.2.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\OBeautifulCode.TypeRepresentation.1.0.2\lib\net45\OBeautifulCode.TypeRepresentation.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="System" />
@@ -134,9 +134,7 @@
     <Compile Include="Sharing\SharedProperty.cs" />
     <Compile Include="Sharing\ShareTrackingCodesMessage.cs" />
     <Compile Include="Tracking\TrackingCode.cs" />
-    <Compile Include="TypeComparer.cs" />
     <Compile Include="TypeMap.cs" />
-    <Compile Include="TypeMatchStrategy.cs" />
     <Compile Include="Messages\AbortIfNoDependencyTopicsAffectedMessage.cs" />
     <Compile Include="Messages\WaitForTrackingCodesToBeInStatusMessage.cs" />
     <Compile Include="Messages\WaitMessage.cs" />

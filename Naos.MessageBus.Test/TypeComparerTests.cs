@@ -13,7 +13,7 @@ namespace Naos.MessageBus.Test
     using Naos.MessageBus.Core;
     using Naos.MessageBus.Domain;
 
-    using OBeautifulCode.Reflection;
+    using OBeautifulCode.TypeRepresentation;
 
     using Xunit;
 

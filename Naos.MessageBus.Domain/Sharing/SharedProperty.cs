@@ -6,7 +6,7 @@
 
 namespace Naos.MessageBus.Domain
 {
-    using OBeautifulCode.Reflection;
+    using OBeautifulCode.TypeRepresentation;
 
     /// <summary>
     /// Model class to hold a single property to be shared.

@@ -42,7 +42,7 @@ namespace Naos.MessageBus.Domain.Exceptions
         public AbortParcelDeliveryException(SerializationInfo info, StreamingContext context)
             : base(info, context)
         {
-            this.Reschedule = info.GetBoolean(nameof(Reschedule));
+            this.Reschedule = info.GetBoolean(nameof(this.Reschedule));
         }
 
         /// <summary>
@@ -59,7 +59,7 @@ namespace Naos.MessageBus.Domain.Exceptions
         public override void GetObjectData(SerializationInfo info, StreamingContext context)
         {
             base.GetObjectData(info, context);
-            info.AddValue(nameof(Reschedule), this.Reschedule);
+            info.AddValue(nameof(this.Reschedule), this.Reschedule);
         }
     }
 }

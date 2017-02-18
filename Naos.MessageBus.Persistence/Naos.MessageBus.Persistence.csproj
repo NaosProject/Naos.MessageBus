@@ -66,12 +66,8 @@
       <HintPath>..\packages\Newtonsoft.Json.9.0.1\lib\net45\Newtonsoft.Json.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="OBeautifulCode.Reflection, Version=1.0.14.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\OBeautifulCode.Reflection.1.0.14\lib\net45\OBeautifulCode.Reflection.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="Polly, Version=4.3.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Polly.4.3.0\lib\net45\Polly.dll</HintPath>
+    <Reference Include="OBeautifulCode.TypeRepresentation, Version=1.0.2.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\OBeautifulCode.TypeRepresentation.1.0.2\lib\net45\OBeautifulCode.TypeRepresentation.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="System" />
@@ -102,6 +98,12 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include=".Naos.Recipes\Authorization.cs" />
+    <Compile Include=".Spritely.Recipes\Redo\BackOffStrategy.cs" />
+    <Compile Include=".Spritely.Recipes\Redo\RetriableAction.cs" />
+    <Compile Include=".Spritely.Recipes\Redo\RetriableActionAsync.cs" />
+    <Compile Include=".Spritely.Recipes\Redo\RetriableFunction.cs" />
+    <Compile Include=".Spritely.Recipes\Redo\RetriableFunctionAsync.cs" />
+    <Compile Include=".Spritely.Recipes\Redo\Using.cs" />
     <Compile Include="Commands\RequestResend.cs" />
     <Compile Include="Events\IUsePayload.cs" />
     <Compile Include="Events\Shipment.EnvelopeResendRequested.cs" />

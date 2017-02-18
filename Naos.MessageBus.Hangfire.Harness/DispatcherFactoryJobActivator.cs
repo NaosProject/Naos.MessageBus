@@ -15,6 +15,8 @@ namespace Naos.MessageBus.Hangfire.Harness
     using Naos.MessageBus.Domain.Exceptions;
     using Naos.MessageBus.Hangfire.Sender;
 
+    using OBeautifulCode.TypeRepresentation;
+
     /// <summary>
     /// Hangfire job activator that will lookup the correct implementation of the Hangfire job via SimpleInjector DI container.
     /// </summary>

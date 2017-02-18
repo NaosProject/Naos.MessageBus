@@ -15,7 +15,7 @@ namespace Naos.MessageBus.Test
     using Naos.MessageBus.Domain;
     using Naos.MessageBus.Hangfire.Sender;
 
-    using OBeautifulCode.Reflection;
+    using OBeautifulCode.TypeRepresentation;
 
     using Xunit;
 

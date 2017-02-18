@@ -14,7 +14,7 @@ namespace Naos.MessageBus.Core
 
     using Naos.MessageBus.Domain;
 
-    using OBeautifulCode.Reflection;
+    using OBeautifulCode.TypeRepresentation;
 
     /// <inheritdoc />
     public class ThrowsExceptionMessageHandler : IHandleMessages<ThrowsExceptionMessage>

@@ -43,6 +43,10 @@
       <HintPath>..\packages\Hangfire.SqlServer.1.5.9\lib\net45\Hangfire.SqlServer.dll</HintPath>
       <Private>True</Private>
     </Reference>
+    <Reference Include="Its.Log, Version=2.7.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Its.Log.2.9.14\lib\net451\Its.Log.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="Naos.Cron, Version=1.0.15.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\Naos.Cron.1.0.15\lib\net45\Naos.Cron.dll</HintPath>
       <Private>True</Private>
@@ -51,16 +55,12 @@
       <HintPath>..\packages\Newtonsoft.Json.9.0.1\lib\net45\Newtonsoft.Json.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="OBeautifulCode.Reflection, Version=1.0.14.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\OBeautifulCode.Reflection.1.0.14\lib\net45\OBeautifulCode.Reflection.dll</HintPath>
+    <Reference Include="OBeautifulCode.TypeRepresentation, Version=1.0.2.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\OBeautifulCode.TypeRepresentation.1.0.2\lib\net45\OBeautifulCode.TypeRepresentation.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="Owin">
       <HintPath>..\packages\Owin.1.0\lib\net40\Owin.dll</HintPath>
-    </Reference>
-    <Reference Include="Polly, Version=4.3.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Polly.4.3.0\lib\net45\Polly.dll</HintPath>
-      <Private>True</Private>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -72,6 +72,12 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include=".Spritely.Recipes\Redo\BackOffStrategy.cs" />
+    <Compile Include=".Spritely.Recipes\Redo\RetriableAction.cs" />
+    <Compile Include=".Spritely.Recipes\Redo\RetriableActionAsync.cs" />
+    <Compile Include=".Spritely.Recipes\Redo\RetriableFunction.cs" />
+    <Compile Include=".Spritely.Recipes\Redo\RetriableFunctionAsync.cs" />
+    <Compile Include=".Spritely.Recipes\Redo\Using.cs" />
     <Compile Include="HangfireDispatcher.cs" />
     <Compile Include="HangfireCourier.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

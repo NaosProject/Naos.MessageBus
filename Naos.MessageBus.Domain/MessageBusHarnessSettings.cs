@@ -10,6 +10,8 @@ namespace Naos.MessageBus.Domain
     using System.Collections.Generic;
     using System.ComponentModel;
 
+    using OBeautifulCode.TypeRepresentation;
+
     /// <summary>
     /// Base class of the settings for the different roles of a message bus harness.
     /// </summary>

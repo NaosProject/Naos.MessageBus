@@ -9,6 +9,7 @@ namespace Naos.MessageBus.Core
     using System;
     using System.Collections.Concurrent;
     using System.Collections.Generic;
+    using static System.FormattableString;
     using System.IO;
     using System.Linq;
     using System.Reflection;
@@ -17,6 +18,8 @@ namespace Naos.MessageBus.Core
 
     using Naos.Diagnostics.Domain;
     using Naos.MessageBus.Domain;
+
+    using OBeautifulCode.TypeRepresentation;
 
     using SimpleInjector;
 
@@ -112,7 +115,8 @@ namespace Naos.MessageBus.Core
                     var fullDllPath = files.FirstOrDefault(_ => _.EndsWith(dllName));
                     if (fullDllPath == null)
                     {
-                        throw new TypeInitializationException(args.Name, null);
+                        var message = Invariant($"Assembly not found Name: {args.Name}, Requesting Assembly FullName: {args.RequestingAssembly.FullName}");
+                        throw new TypeInitializationException(message, null);
                     }
 
                     // Can't use Assembly.Load() here because it fails when you have different versions of N-level dependencies...I have no idea why Assembly.LoadFrom works.

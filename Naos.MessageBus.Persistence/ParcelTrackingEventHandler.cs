@@ -7,16 +7,23 @@
 namespace Naos.MessageBus.Persistence
 {
     using System;
+    using System.Collections.Generic;
     using System.Data;
     using System.Data.SqlClient;
+    using static System.FormattableString;
     using System.Linq;
+    using System.Reflection;
+
+    using Its.Log.Instrumentation;
 
     using Microsoft.Its.Domain;
 
     using Naos.Cron;
     using Naos.MessageBus.Domain;
 
-    using Polly;
+    using OBeautifulCode.TypeRepresentation;
+
+    using Spritely.Redo;
 
     /// <summary>
     /// Handler to keep TrackedShipment read model updated as events come in.
@@ -31,6 +38,12 @@ namespace Naos.MessageBus.Persistence
                                          IUpdateProjectionWhen<Shipment.TopicBeingAffected>,
                                          IUpdateProjectionWhen<Shipment.TopicWasAffected>
     {
+        private static readonly Dictionary<TypeDescription, MethodInfo> EventTypeDescriptionToUpdateProjectionMethodInfoMap =
+            typeof(ParcelTrackingEventHandler).GetMethods()
+                .Where(_ => _.Name == nameof(IUpdateProjectionWhen<Event>.UpdateProjection))
+                .ToList()
+                .ToDictionary(k => k.GetParameters().Single().ParameterType.ToTypeDescription(), v => v);
+
         private readonly ICourier courier;
 
         private readonly ReadModelPersistenceConnectionConfiguration readModelPersistenceConnectionConfiguration;
@@ -48,6 +61,24 @@ namespace Naos.MessageBus.Persistence
             this.courier = courier;
             this.readModelPersistenceConnectionConfiguration = readModelPersistenceConnectionConfiguration;
             this.retryCount = retryCount;
+        }
+
+        /// <summary>
+        /// Updates the project for a set of events.
+        /// </summary>
+        /// <param name="yieldedEvents">Event yielded that need to be updated.</param>
+        public void UpdateProjection(IReadOnlyCollection<Event> yieldedEvents)
+        {
+            foreach (var yieldedEvent in yieldedEvents)
+            {
+                var eventType = yieldedEvent.GetType().ToTypeDescription();
+                MethodInfo eventMethod;
+                var foundEventMethod = EventTypeDescriptionToUpdateProjectionMethodInfoMap.TryGetValue(eventType, out eventMethod);
+                if (foundEventMethod)
+                {
+                    eventMethod.Invoke(this, new object[] { yieldedEvent });
+                }
+            }
         }
 
         /// <inheritdoc />
@@ -86,17 +117,29 @@ namespace Naos.MessageBus.Persistence
         public void UpdateProjection(Shipment.EnvelopeResendRequested @event)
         {
             CrateLocator crateLocator = null;
-            this.RunWithRetry(
-                () =>
-                {
-                    using (var db = new TrackedShipmentDbContext(this.readModelPersistenceConnectionConfiguration.ToSqlServerConnectionString()))
-                    {
-                        var shipmentEntry = db.Shipments.Single(_ => _.ParcelId == @event.AggregateId);
-                        crateLocator = string.IsNullOrEmpty(shipmentEntry.CurrentCrateLocatorJson)
-                                           ? null
-                                           : shipmentEntry.CurrentCrateLocatorJson.FromJson<CrateLocator>();
-                    }
-                });
+            Using.LinearBackOff(TimeSpan.FromSeconds(5))
+                .WithReporter(
+                    _ =>
+                        Log.Write(
+                            new
+                                {
+                                    Message =
+                                    Invariant(
+                                        $"Retried a failure in updating MessageBusPersistence from EventHandler ({nameof(Shipment.EnvelopeResendRequested)}): {_.Message}"),
+                                    Exception = _
+                                }))
+                .WithMaxRetries(this.retryCount)
+                .Run(
+                    () =>
+                        {
+                            using (var db = new TrackedShipmentDbContext(this.readModelPersistenceConnectionConfiguration.ToSqlServerConnectionString()))
+                            {
+                                var shipmentEntry = db.Shipments.Single(_ => _.ParcelId == @event.AggregateId);
+                                crateLocator = string.IsNullOrEmpty(shipmentEntry.CurrentCrateLocatorJson)
+                                                   ? null
+                                                   : shipmentEntry.CurrentCrateLocatorJson.FromJson<CrateLocator>();
+                            }
+                        }).Now();
 
             if (crateLocator == null)
             {
@@ -116,27 +159,41 @@ namespace Naos.MessageBus.Persistence
             var sqlServerConnectionString = this.readModelPersistenceConnectionConfiguration.ToSqlServerConnectionString();
             if (parcel.Envelopes.First().Id == trackingCode.EnvelopeId)
             {
-                this.RunWithRetry(
-                    () =>
-                    {
-                        SqlConnection conn = null;
-                        try
-                        {
-                            conn = new SqlConnection(sqlServerConnectionString);
-                            conn.Open();
-                            var sql = "select recurringschedulejson from shipmentfordatabases where parcelid = @id";
-                            var command = new SqlCommand(sql, conn);
-                            var a = new SqlParameter("@id", SqlDbType.UniqueIdentifier) { Value = @event.AggregateId };
-                            command.Parameters.Add(a);
-                            var scheduleJson = command.ExecuteScalar();
-                            schedule = string.IsNullOrEmpty(scheduleJson?.ToString()) ? new NullSchedule() : scheduleJson.ToString().FromJson<ScheduleBase>();
-                            conn.Close();
-                        }
-                        finally
-                        {
-                            conn?.Dispose();
-                        }
-                    });
+                Using.LinearBackOff(TimeSpan.FromSeconds(5))
+                    .WithReporter(
+                        _ =>
+                            Log.Write(
+                                new
+                                    {
+                                        Message =
+                                        Invariant(
+                                            $"Retried a failure in updating MessageBusPersistence from EventHandler ({nameof(Shipment.EnvelopeSent)}:CheckForRecurringSchedule): {_.Message}"),
+                                        Exception = _
+                                    }))
+                    .WithMaxRetries(this.retryCount)
+                    .Run(
+                        () =>
+                            {
+                                SqlConnection conn = null;
+                                try
+                                {
+                                    conn = new SqlConnection(sqlServerConnectionString);
+                                    conn.Open();
+                                    var sql = "select recurringschedulejson from shipmentfordatabases where parcelid = @id";
+                                    var command = new SqlCommand(sql, conn);
+                                    var a = new SqlParameter("@id", SqlDbType.UniqueIdentifier) { Value = @event.AggregateId };
+                                    command.Parameters.Add(a);
+                                    var scheduleJson = command.ExecuteScalar();
+                                    schedule = string.IsNullOrEmpty(scheduleJson?.ToString())
+                                                   ? new NullSchedule()
+                                                   : scheduleJson.ToString().FromJson<ScheduleBase>();
+                                    conn.Close();
+                                }
+                                finally
+                                {
+                                    conn?.Dispose();
+                                }
+                            }).Now();
             }
 
             var label = !string.IsNullOrWhiteSpace(parcel.Name) ? parcel.Name : "Sequence " + parcel.Id + " - " + parcel.Envelopes.First().Description;
@@ -145,200 +202,276 @@ namespace Naos.MessageBus.Persistence
             var crateLocator = new CrateLocator { TrackingCode = trackingCode, CourierTrackingCode = courierTrackingCode };
 
             // save the crate locator for furture reference
-            this.RunWithRetry(
-                () =>
-                {
-                    using (var conn = new SqlConnection(sqlServerConnectionString))
-                    {
-                        conn.Open();
-                        var sql = "update shipmentfordatabases set Status = @newStatus, CurrentCrateLocatorJson = @crateLocatorJson, LastUpdatedUtc = @utcNow  where parcelid = @id";
-                        var command = new SqlCommand(sql, conn);
-                        var paramNewStatus = new SqlParameter("@newStatus", SqlDbType.Int) { Value = eventPayload.NewStatus };
-                        command.Parameters.Add(paramNewStatus);
-                        var paramCrateLocatorJson = new SqlParameter("@crateLocatorJson", SqlDbType.NVarChar) { Value = crateLocator.ToJson() };
-                        command.Parameters.Add(paramCrateLocatorJson);
-                        var paramUtcNow = new SqlParameter("@utcNow", SqlDbType.DateTime) { Value = DateTime.UtcNow };
-                        command.Parameters.Add(paramUtcNow);
-                        var paramId = new SqlParameter("@id", SqlDbType.UniqueIdentifier) { Value = @event.AggregateId };
-                        command.Parameters.Add(paramId);
-                        command.ExecuteNonQuery();
-                        conn.Close();
-                    }
-                });
+            Using.LinearBackOff(TimeSpan.FromSeconds(5))
+                .WithReporter(
+                    _ =>
+                        Log.Write(
+                            new
+                                {
+                                    Message =
+                                    Invariant(
+                                        $"Retried a failure in updating MessageBusPersistence from EventHandler ({nameof(Shipment.EnvelopeSent)}:Save): {_.Message}"),
+                                    Exception = _
+                                }))
+                .WithMaxRetries(this.retryCount)
+                .Run(
+                    () =>
+                        {
+                            using (var conn = new SqlConnection(sqlServerConnectionString))
+                            {
+                                conn.Open();
+                                var sql =
+                                    "update shipmentfordatabases set Status = @newStatus, CurrentCrateLocatorJson = @crateLocatorJson, LastUpdatedUtc = @utcNow  where parcelid = @id";
+                                var command = new SqlCommand(sql, conn);
+                                var paramNewStatus = new SqlParameter("@newStatus", SqlDbType.Int) { Value = eventPayload.NewStatus };
+                                command.Parameters.Add(paramNewStatus);
+                                var paramCrateLocatorJson = new SqlParameter("@crateLocatorJson", SqlDbType.NVarChar) { Value = crateLocator.ToJson() };
+                                command.Parameters.Add(paramCrateLocatorJson);
+                                var paramUtcNow = new SqlParameter("@utcNow", SqlDbType.DateTime) { Value = DateTime.UtcNow };
+                                command.Parameters.Add(paramUtcNow);
+                                var paramId = new SqlParameter("@id", SqlDbType.UniqueIdentifier) { Value = @event.AggregateId };
+                                command.Parameters.Add(paramId);
+                                command.ExecuteNonQuery();
+                                conn.Close();
+                            }
+                        }).Now();
         }
 
         /// <inheritdoc />
         public void UpdateProjection(Shipment.EnvelopeDeliveryAborted @event)
         {
-            this.RunWithRetry(
-                () =>
-                {
-                    using (var db = new TrackedShipmentDbContext(this.readModelPersistenceConnectionConfiguration.ToSqlServerConnectionString()))
-                    {
-                        var shipmentEntry = db.Shipments.Single(_ => _.ParcelId == @event.AggregateId);
-                        shipmentEntry.Status = @event.ExtractPayload().NewStatus;
-                        shipmentEntry.LastUpdatedUtc = DateTime.UtcNow;
-                        db.SaveChanges();
-                    }
-                });
+            Using.LinearBackOff(TimeSpan.FromSeconds(5))
+                .WithReporter(
+                    _ =>
+                        Log.Write(
+                            new
+                                {
+                                    Message =
+                                    Invariant(
+                                        $"Retried a failure in updating MessageBusPersistence from EventHandler ({nameof(Shipment.EnvelopeDeliveryAborted)}): {_.Message}"),
+                                    Exception = _
+                                }))
+                .WithMaxRetries(this.retryCount)
+                .Run(
+                    () =>
+                        {
+                            using (var db = new TrackedShipmentDbContext(this.readModelPersistenceConnectionConfiguration.ToSqlServerConnectionString()))
+                            {
+                                var shipmentEntry = db.Shipments.Single(_ => _.ParcelId == @event.AggregateId);
+                                shipmentEntry.Status = @event.ExtractPayload().NewStatus;
+                                shipmentEntry.LastUpdatedUtc = DateTime.UtcNow;
+                                db.SaveChanges();
+                            }
+                        }).Now();
         }
 
         /// <inheritdoc />
         public void UpdateProjection(Shipment.EnvelopeDeliveryRejected @event)
         {
-            this.RunWithRetry(
-                () =>
-                {
-                    using (var db = new TrackedShipmentDbContext(this.readModelPersistenceConnectionConfiguration.ToSqlServerConnectionString()))
-                    {
-                        // any failure will stop the rest of the parcel
-                        var shipmentEntry = db.Shipments.Single(_ => _.ParcelId == @event.AggregateId);
-                        shipmentEntry.Status = @event.ExtractPayload().NewStatus;
-                        shipmentEntry.LastUpdatedUtc = DateTime.UtcNow;
-
-                        var noticeEntry = db.Notices.SingleOrDefault(_ => _.ParcelId == @event.AggregateId);
-                        if (noticeEntry != null)
+            Using.LinearBackOff(TimeSpan.FromSeconds(5))
+                .WithReporter(
+                    _ =>
+                        Log.Write(
+                            new
+                                {
+                                    Message =
+                                    Invariant(
+                                        $"Retried a failure in updating MessageBusPersistence from EventHandler ({nameof(Shipment.EnvelopeDeliveryRejected)}): {_.Message}"),
+                                    Exception = _
+                                }))
+                .WithMaxRetries(this.retryCount)
+                .Run(
+                    () =>
                         {
-                            noticeEntry.Status = TopicStatus.Failed;
-                        }
+                            using (var db = new TrackedShipmentDbContext(this.readModelPersistenceConnectionConfiguration.ToSqlServerConnectionString()))
+                            {
+                                // any failure will stop the rest of the parcel
+                                var shipmentEntry = db.Shipments.Single(_ => _.ParcelId == @event.AggregateId);
+                                shipmentEntry.Status = @event.ExtractPayload().NewStatus;
+                                shipmentEntry.LastUpdatedUtc = DateTime.UtcNow;
 
-                        db.SaveChanges();
-                    }
-                });
+                                var noticeEntry = db.Notices.SingleOrDefault(_ => _.ParcelId == @event.AggregateId);
+                                if (noticeEntry != null)
+                                {
+                                    noticeEntry.Status = TopicStatus.Failed;
+                                }
+
+                                db.SaveChanges();
+                            }
+                        }).Now();
         }
 
         /// <inheritdoc />
         public void UpdateProjection(Shipment.EnvelopeDelivered @event)
         {
-            this.RunWithRetry(
-                () =>
-                {
-                    using (var db = new TrackedShipmentDbContext(this.readModelPersistenceConnectionConfiguration.ToSqlServerConnectionString()))
-                    {
-                        var shipmentEntry = db.Shipments.Single(_ => _.ParcelId == @event.AggregateId);
-                        shipmentEntry.Status = @event.ExtractPayload().NewStatus;
-                        shipmentEntry.LastUpdatedUtc = DateTime.UtcNow;
-                        db.SaveChanges();
-                    }
-                });
+            Using.LinearBackOff(TimeSpan.FromSeconds(5))
+                .WithReporter(
+                    _ =>
+                        Log.Write(
+                            new
+                                {
+                                    Message =
+                                    Invariant(
+                                        $"Retried a failure in updating MessageBusPersistence from EventHandler ({nameof(Shipment.EnvelopeDelivered)}): {_.Message}"),
+                                    Exception = _
+                                }))
+                .WithMaxRetries(this.retryCount)
+                .Run(
+                    () =>
+                        {
+                            using (var db = new TrackedShipmentDbContext(this.readModelPersistenceConnectionConfiguration.ToSqlServerConnectionString()))
+                            {
+                                var shipmentEntry = db.Shipments.Single(_ => _.ParcelId == @event.AggregateId);
+                                shipmentEntry.Status = @event.ExtractPayload().NewStatus;
+                                shipmentEntry.LastUpdatedUtc = DateTime.UtcNow;
+                                db.SaveChanges();
+                            }
+                        }).Now();
         }
 
         /// <inheritdoc />
         public void UpdateProjection(Shipment.ParcelDelivered @event)
         {
-            this.RunWithRetry(
-                () =>
-                {
-                    using (var db = new TrackedShipmentDbContext(this.readModelPersistenceConnectionConfiguration.ToSqlServerConnectionString()))
-                    {
-                        var shipmentEntry = db.Shipments.Single(_ => _.ParcelId == @event.AggregateId);
-                        shipmentEntry.Status = @event.ExtractPayload().NewStatus;
-                        shipmentEntry.LastUpdatedUtc = DateTime.UtcNow;
-                        db.SaveChanges();
-                    }
-                });
+            Using.LinearBackOff(TimeSpan.FromSeconds(5))
+                .WithReporter(
+                    _ =>
+                        Log.Write(
+                            new
+                                {
+                                    Message =
+                                    Invariant(
+                                        $"Retried a failure in updating MessageBusPersistence from EventHandler ({nameof(Shipment.ParcelDelivered)}): {_.Message}"),
+                                    Exception = _
+                                }))
+                .WithMaxRetries(this.retryCount)
+                .Run(
+                    () =>
+                        {
+                            using (var db = new TrackedShipmentDbContext(this.readModelPersistenceConnectionConfiguration.ToSqlServerConnectionString()))
+                            {
+                                var shipmentEntry = db.Shipments.Single(_ => _.ParcelId == @event.AggregateId);
+                                shipmentEntry.Status = @event.ExtractPayload().NewStatus;
+                                shipmentEntry.LastUpdatedUtc = DateTime.UtcNow;
+                                db.SaveChanges();
+                            }
+                        }).Now();
         }
 
         /// <inheritdoc />
         public void UpdateProjection(Shipment.TopicBeingAffected @event)
         {
-            this.RunWithRetry(
-                () =>
-                {
-                    using (var db = new TrackedShipmentDbContext(this.readModelPersistenceConnectionConfiguration.ToSqlServerConnectionString()))
-                    {
-                        var existingEntries = db.Notices.Where(_ => _.ParcelId == @event.ParcelId).ToList();
-                        if (existingEntries.Count > 1)
+            Using.LinearBackOff(TimeSpan.FromSeconds(5))
+                .WithReporter(
+                    _ =>
+                        Log.Write(
+                            new
+                                {
+                                    Message =
+                                    Invariant(
+                                        $"Retried a failure in updating MessageBusPersistence from EventHandler ({nameof(Shipment.TopicBeingAffected)}): {_.Message}"),
+                                    Exception = _
+                                }))
+                .WithMaxRetries(this.retryCount)
+                .Run(
+                    () =>
                         {
-                            var ids = existingEntries.Select(_ => _.Id).ToList();
-                            throw new ArgumentException(
-                                "Found existing entries for the specified parcel id while trying to write a record about a topic being affected; IDs: "
-                                + string.Join(",", ids));
-                        }
-                        else if (existingEntries.Count == 1)
-                        {
-                            var entry = existingEntries.Single();
-                            entry.ImpactingTopicName = @event.ExtractPayload().Topic.Name;
-                            entry.AffectsStartedDateTimeUtc = @event.Timestamp.UtcDateTime;
-                            entry.Status = TopicStatus.BeingAffected;
-                            entry.ParcelId = @event.ExtractPayload().TrackingCode.ParcelId;
-                            entry.TopicBeingAffectedEnvelopeJson = @event.ExtractPayload().Envelope.ToJson();
-                            entry.LastUpdatedUtc = DateTime.UtcNow;
-                        }
-                        else if (existingEntries.Count == 0)
-                        {
-                            var entry = new NoticeForDatabase
+                            using (var db = new TrackedShipmentDbContext(this.readModelPersistenceConnectionConfiguration.ToSqlServerConnectionString()))
                             {
-                                Id = Guid.NewGuid(),
-                                ImpactingTopicName = @event.ExtractPayload().Topic.Name,
-                                AffectsStartedDateTimeUtc = @event.Timestamp.UtcDateTime,
-                                Status = TopicStatus.BeingAffected,
-                                ParcelId = @event.ExtractPayload().TrackingCode.ParcelId,
-                                TopicBeingAffectedEnvelopeJson = @event.ExtractPayload().Envelope.ToJson(),
-                                LastUpdatedUtc = DateTime.UtcNow
-                            };
+                                var existingEntries = db.Notices.Where(_ => _.ParcelId == @event.ParcelId).ToList();
+                                if (existingEntries.Count > 1)
+                                {
+                                    var ids = existingEntries.Select(_ => _.Id).ToList();
+                                    throw new ArgumentException(
+                                              "Found existing entries for the specified parcel id while trying to write a record about a topic being affected; IDs: "
+                                              + string.Join(",", ids));
+                                }
+                                else if (existingEntries.Count == 1)
+                                {
+                                    var entry = existingEntries.Single();
+                                    entry.ImpactingTopicName = @event.ExtractPayload().Topic.Name;
+                                    entry.AffectsStartedDateTimeUtc = @event.Timestamp.UtcDateTime;
+                                    entry.Status = TopicStatus.BeingAffected;
+                                    entry.ParcelId = @event.ExtractPayload().TrackingCode.ParcelId;
+                                    entry.TopicBeingAffectedEnvelopeJson = @event.ExtractPayload().Envelope.ToJson();
+                                    entry.LastUpdatedUtc = DateTime.UtcNow;
+                                }
+                                else if (existingEntries.Count == 0)
+                                {
+                                    var entry = new NoticeForDatabase
+                                                    {
+                                                        Id = Guid.NewGuid(),
+                                                        ImpactingTopicName = @event.ExtractPayload().Topic.Name,
+                                                        AffectsStartedDateTimeUtc = @event.Timestamp.UtcDateTime,
+                                                        Status = TopicStatus.BeingAffected,
+                                                        ParcelId = @event.ExtractPayload().TrackingCode.ParcelId,
+                                                        TopicBeingAffectedEnvelopeJson = @event.ExtractPayload().Envelope.ToJson(),
+                                                        LastUpdatedUtc = DateTime.UtcNow
+                                                    };
 
-                            db.Notices.Add(entry);
-                        }
-                        else
-                        {
-                            throw new NotSupportedException("Should not have reached this area, existing entry count should be greater than 1, 1, or 0...");
-                        }
+                                    db.Notices.Add(entry);
+                                }
+                                else
+                                {
+                                    throw new NotSupportedException(
+                                              "Should not have reached this area, existing entry count should be greater than 1, 1, or 0...");
+                                }
 
-                        db.SaveChanges();
-                    }
-                });
+                                db.SaveChanges();
+                            }
+                        }).Now();
         }
 
         /// <inheritdoc />
         public void UpdateProjection(Shipment.TopicWasAffected @event)
         {
-            this.RunWithRetry(
-                () =>
-                {
-                    using (var db = new TrackedShipmentDbContext(this.readModelPersistenceConnectionConfiguration.ToSqlServerConnectionString()))
-                    {
-                        var existingEntries = db.Notices.Where(_ => _.ParcelId == @event.ParcelId).ToList();
-                        if (existingEntries.Count > 1)
+            Using.LinearBackOff(TimeSpan.FromSeconds(5))
+                .WithReporter(
+                    _ =>
+                        Log.Write(
+                            new
+                                {
+                                    Message =
+                                    Invariant(
+                                        $"Retried a failure in updating MessageBusPersistence from EventHandler ({nameof(Shipment.TopicWasAffected)}): {_.Message}"),
+                                    Exception = _
+                                }))
+                .WithMaxRetries(this.retryCount)
+                .Run(
+                    () =>
                         {
-                            var ids = existingEntries.Select(_ => _.Id).ToList();
-                            throw new ArgumentException(
-                                "Found more than one existing entries for the specified parcel id while trying to write a record of topic was affected; IDs: "
-                                + string.Join(",", ids));
-                        }
-
-                        var entry = existingEntries.SingleOrDefault();
-                        if (entry == null)
-                        {
-                            entry = new NoticeForDatabase
+                            using (var db = new TrackedShipmentDbContext(this.readModelPersistenceConnectionConfiguration.ToSqlServerConnectionString()))
                             {
-                                Id = Guid.NewGuid(),
-                                ImpactingTopicName = @event.ExtractPayload().Topic.Name,
-                                Status = TopicStatus.BeingAffected,
-                                ParcelId = @event.ExtractPayload().TrackingCode.ParcelId,
-                                LastUpdatedUtc = DateTime.UtcNow
-                            };
+                                var existingEntries = db.Notices.Where(_ => _.ParcelId == @event.ParcelId).ToList();
+                                if (existingEntries.Count > 1)
+                                {
+                                    var ids = existingEntries.Select(_ => _.Id).ToList();
+                                    throw new ArgumentException(
+                                              "Found more than one existing entries for the specified parcel id while trying to write a record of topic was affected; IDs: "
+                                              + string.Join(",", ids));
+                                }
 
-                            db.Notices.Add(entry);
-                        }
+                                var entry = existingEntries.SingleOrDefault();
+                                if (entry == null)
+                                {
+                                    entry = new NoticeForDatabase
+                                                {
+                                                    Id = Guid.NewGuid(),
+                                                    ImpactingTopicName = @event.ExtractPayload().Topic.Name,
+                                                    Status = TopicStatus.BeingAffected,
+                                                    ParcelId = @event.ExtractPayload().TrackingCode.ParcelId,
+                                                    LastUpdatedUtc = DateTime.UtcNow
+                                                };
 
-                        entry.Status = TopicStatus.WasAffected;
-                        entry.AffectsCompletedDateTimeUtc = @event.Timestamp.UtcDateTime;
-                        entry.TopicWasAffectedEnvelopeJson = @event.ExtractPayload().Envelope.ToJson();
+                                    db.Notices.Add(entry);
+                                }
 
-                        db.SaveChanges();
-                    }
-                });
-        }
+                                entry.Status = TopicStatus.WasAffected;
+                                entry.AffectsCompletedDateTimeUtc = @event.Timestamp.UtcDateTime;
+                                entry.TopicWasAffectedEnvelopeJson = @event.ExtractPayload().Envelope.ToJson();
 
-        private void RunWithRetry(Action action)
-        {
-            Policy.Handle<Exception>().WaitAndRetry(this.retryCount, attempt => TimeSpan.FromSeconds(attempt * 5)).Execute(action);
-        }
-
-        private T RunWithRetry<T>(Func<T> func)
-        {
-            return Policy.Handle<Exception>().WaitAndRetry(this.retryCount, attempt => TimeSpan.FromSeconds(attempt * 5)).Execute(func);
+                                db.SaveChanges();
+                            }
+                        }).Now();
         }
     }
 }

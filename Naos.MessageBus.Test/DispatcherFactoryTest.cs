@@ -14,6 +14,8 @@ namespace Naos.MessageBus.Test
     using Naos.MessageBus.Core;
     using Naos.MessageBus.Domain;
 
+    using OBeautifulCode.TypeRepresentation;
+
     using Xunit;
 
     public class DispatcherFactoryTest
