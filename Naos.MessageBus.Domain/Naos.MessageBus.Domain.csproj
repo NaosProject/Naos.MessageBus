@@ -50,8 +50,8 @@
       <HintPath>..\packages\Newtonsoft.Json.9.0.1\lib\net45\Newtonsoft.Json.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="OBeautifulCode.TypeRepresentation, Version=1.0.2.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\OBeautifulCode.TypeRepresentation.1.0.2\lib\net45\OBeautifulCode.TypeRepresentation.dll</HintPath>
+    <Reference Include="OBeautifulCode.TypeRepresentation, Version=1.0.3.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\OBeautifulCode.TypeRepresentation.1.0.3\lib\net45\OBeautifulCode.TypeRepresentation.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="System" />
@@ -73,6 +73,10 @@
     <Compile Include=".Spritely.Recipes\SecureStringJsonConverter\SecureStringJsonConverter.cs" />
     <Compile Include=".Spritely.Recipes\SecureString\SecureString.cs" />
     <Compile Include="ChannelRouter.cs" />
+    <Compile Include="UnitOfWork\IShareUnitOfWorkResults.cs" />
+    <Compile Include="UnitOfWork\UnitOfWorkOutcome.cs" />
+    <Compile Include="UnitOfWork\UnitOfWorkResult.cs" />
+    <Compile Include="UnitOfWork\IShareUnitOfWorkResult.cs" />
     <Compile Include="IRouteUnaddressedMail.cs" />
     <Compile Include="Messages\FetchAndShareLatestTopicStatusReportsMessage.cs" />
     <Compile Include="Messages\AbortIfTopicsHaveSpecificStatusesMessage.cs" />

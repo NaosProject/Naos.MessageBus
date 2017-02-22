@@ -115,7 +115,7 @@ namespace Naos.MessageBus.Core
                     var fullDllPath = files.FirstOrDefault(_ => _.EndsWith(dllName));
                     if (fullDllPath == null)
                     {
-                        var message = Invariant($"Assembly not found Name: {args.Name}, Requesting Assembly FullName: {args.RequestingAssembly.FullName}");
+                        var message = Invariant($"Assembly not found Name: {args.Name}, Requesting Assembly FullName: {args.RequestingAssembly?.FullName}");
                         throw new TypeInitializationException(message, null);
                     }
 
