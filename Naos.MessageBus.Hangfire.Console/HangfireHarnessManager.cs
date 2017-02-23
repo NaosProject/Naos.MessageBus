@@ -70,7 +70,7 @@ namespace Naos.MessageBus.Hangfire.Console
                     messageBusHandlerSettings.ConnectionConfiguration.EventPersistenceConnectionConfiguration,
                     messageBusHandlerSettings.ConnectionConfiguration.ReadModelPersistenceConnectionConfiguration);
 
-                var postOffice = new PostOffice(parcelTrackingSystem, courier.DefaultChannelRouter);
+                var postOffice = new PostOffice(parcelTrackingSystem, HangfireCourier.DefaultChannelRouter);
 
                 HandlerToolShed.InitializePostOffice(() => postOffice);
                 HandlerToolShed.InitializeParcelTracking(() => parcelTrackingSystem);
@@ -109,6 +109,8 @@ namespace Naos.MessageBus.Hangfire.Console
                 }
 
                 var timeout = DateTime.UtcNow.Add(timeToLive);
+
+                // ReSharper disable once UnusedVariable - good reminder that the server object comes back and that's what is disposed in the end...
                 using (var server = new BackgroundJobServer(executorOptions))
                 {
                     Console.WriteLine("Hangfire Server started. Will terminate when there are no active jobs after: " + timeout);

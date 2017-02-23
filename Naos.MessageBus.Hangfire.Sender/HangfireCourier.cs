@@ -36,7 +36,7 @@ namespace Naos.MessageBus.Hangfire.Sender
 
         private readonly int retryCount;
 
-        private readonly SimpleChannel defaultChannel = new SimpleChannel("default");
+        private static readonly SimpleChannel DefaultChannel = new SimpleChannel("default");
 
         /// <summary>
         /// Initializes a new instance of the <see cref="HangfireCourier"/> class.
@@ -52,7 +52,7 @@ namespace Naos.MessageBus.Hangfire.Sender
         /// <summary>
         /// Gets the default channel for Hangfire.
         /// </summary>
-        public IRouteUnaddressedMail DefaultChannelRouter => new ChannelRouter(this.defaultChannel);
+        public static IRouteUnaddressedMail DefaultChannelRouter => new ChannelRouter(DefaultChannel);
 
         /// <inheritdoc />
         public string Send(Crate crate)
@@ -60,14 +60,14 @@ namespace Naos.MessageBus.Hangfire.Sender
             // run this with retries because it will sometimes fail due to high load/high connection count
             Using.LinearBackOff(TimeSpan.FromSeconds(5))
                 .WithReporter(_ => Log.Write(new { Message = Invariant($"Retried a failure in connecting to Hangfire Persistence: {_.Message}"), Exception = _ }))
-                .WithMaxRetries(3)
+                .WithMaxRetries(this.retryCount)
                 .Run(() => GlobalConfiguration.Configuration.UseSqlServerStorage(this.courierPersistenceConnectionConfiguration.ToSqlServerConnectionString()))
                 .Now();
 
             var client = new BackgroundJobClient();
 
             var channel = crate.Address;
-            var parcel = UncrateParcel(crate, this.defaultChannel, ref channel);
+            var parcel = UncrateParcel(crate, DefaultChannel, ref channel);
 
             ThrowIfInvalidChannel(channel);
 
@@ -82,7 +82,7 @@ namespace Naos.MessageBus.Hangfire.Sender
             Expression<Action<HangfireDispatcher>> methodCall =
                 _ => _.HangfireDispatch(crate.Label, crate.TrackingCode.ToJson(), parcel.ToJson(), channel.ToJson());
 
-            var hangfireId = client.Create<HangfireDispatcher>(methodCall, state);
+            var hangfireId = client.Create(methodCall, state);
 
             if (crate.RecurringSchedule.GetType() != typeof(NullSchedule))
             {

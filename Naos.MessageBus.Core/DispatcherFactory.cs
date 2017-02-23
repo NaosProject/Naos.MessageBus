@@ -81,7 +81,7 @@ namespace Naos.MessageBus.Core
             this.activeMessageTracker = activeMessageTracker;
             this.postOffice = postOffice;
 
-            var currentlyLoadedAssemblies = AppDomain.CurrentDomain.GetAssemblies().Where(a => !a.IsDynamic).ToList();
+            var currentlyLoadedAssemblies = GetLoadedAssemblies();
 
             var handlerTypeMap = new List<TypeMap>();
             LoadHandlerTypeMapFromAssemblies(handlerTypeMap, currentlyLoadedAssemblies);
@@ -121,7 +121,13 @@ namespace Naos.MessageBus.Core
 
                     // Can't use Assembly.Load() here because it fails when you have different versions of N-level dependencies...I have no idea why Assembly.LoadFrom works.
                     Log.Write(() => "Loaded Assembly (in AppDomain.CurrentDomain.AssemblyResolve): " + dllNameWithoutExtension + " From: " + fullDllPath);
-                    return Assembly.LoadFrom(fullDllPath);
+
+                    // since the assembly might have been already loaded as a depdendency of another assembly...
+                    var alreadyLoaded = TryResolveAssemblyFromLoaded(fullDllPath);
+
+                    var ret = alreadyLoaded ?? Assembly.LoadFrom(fullDllPath);
+
+                    return ret;
                 };
 
             var assembliesFromFiles = files.Select(
@@ -132,8 +138,11 @@ namespace Naos.MessageBus.Core
                             var fullDllPath = filePathToPotentialHandlerAssembly;
                             var dllNameWithoutExtension = (Path.GetFileName(filePathToPotentialHandlerAssembly) ?? string.Empty).Replace(".dll", string.Empty);
 
+                            // since the assembly might have been already loaded as a depdendency of another assembly...
+                            var alreadyLoaded = TryResolveAssemblyFromLoaded(fullDllPath);
+
                             // Can't use Assembly.LoadFrom() here because it fails for some reason.
-                            var assembly = LoadAssemblyFromDisk(dllNameWithoutExtension, pdbFiles, fullDllPath);
+                            var assembly = alreadyLoaded ?? LoadAssemblyFromDisk(dllNameWithoutExtension, pdbFiles, fullDllPath);
                             return assembly;
                         }
                         catch (ReflectionTypeLoadException reflectionTypeLoadException)
@@ -147,6 +156,11 @@ namespace Naos.MessageBus.Core
 
             LoadHandlerTypeMapFromAssemblies(handlerTypeMap, assembliesFromFiles);
             this.LoadContainerFromHandlerTypeMap(handlerTypeMap);
+        }
+
+        private static List<Assembly> GetLoadedAssemblies()
+        {
+            return AppDomain.CurrentDomain.GetAssemblies().Where(a => !a.IsDynamic).ToList();
         }
 
         private static AssemblyDetails SafeFetchAssemblyDetails(string assemblyFilePath)
@@ -169,7 +183,20 @@ namespace Naos.MessageBus.Core
         {
             foreach (var assembly in assemblies)
             {
-                var typesInFile = assembly.GetTypes();
+                Type[] typesInFile;
+                try
+                {
+                    typesInFile = assembly.GetTypes();
+                }
+                catch (ReflectionTypeLoadException ex)
+                {
+                    Log.Write(() => new LogEntry("Failed to get types from loaded assembly: " + assembly.FullName, ex));
+                    ex.LoaderExceptions.ToList()
+                        .ForEach(_ => Log.Write(() => new LogEntry("Failed to get types from loaded assembly (LoaderException): " + assembly.FullName, _)));
+
+                    throw;
+                }
+
                 var mapsInFile = typesInFile.GetTypeMapsOfImplementersOfGenericType(typeof(IHandleMessages<>));
                 handlerTypeMap.AddRange(mapsInFile);
             }
@@ -211,19 +238,36 @@ namespace Naos.MessageBus.Core
             var pdbName = dllNameWithoutExtension + ".pdb";
             var fullPdbPath = pdbFiles.FirstOrDefault(_ => _.EndsWith(pdbName));
 
-            if (fullPdbPath == null)
+            // since the assembly might have been already loaded as a depdendency of another assembly...
+            var alreadyLoaded = TryResolveAssemblyFromLoaded(fullDllPath);
+
+            Assembly ret;
+            if (alreadyLoaded != null)
+            {
+                ret = alreadyLoaded;
+            }
+            else if (fullPdbPath == null)
             {
                 var dllBytes = File.ReadAllBytes(fullDllPath);
                 Log.Write(() => "Loaded Assembly (in GetAssembly): " + dllNameWithoutExtension + " From: " + fullDllPath + " Without Symbols.");
-                return Assembly.Load(dllBytes);
+                ret = Assembly.Load(dllBytes);
             }
             else
             {
                 var dllBytes = File.ReadAllBytes(fullDllPath);
                 var pdbBytes = File.ReadAllBytes(fullPdbPath);
                 Log.Write(() => "Loaded Assembly (in GetAssembly): " + dllNameWithoutExtension + " From: " + fullDllPath + " With Symbols: " + fullPdbPath);
-                return Assembly.Load(dllBytes, pdbBytes);
+                ret = Assembly.Load(dllBytes, pdbBytes);
             }
+
+            return ret;
+        }
+
+        private static Assembly TryResolveAssemblyFromLoaded(string fullDllPath)
+        {
+            var pathAsUri = new Uri(fullDllPath).ToString();
+            var assembly = GetLoadedAssemblies().SingleOrDefault(_ => _.CodeBase == pathAsUri || _.Location == pathAsUri);
+            return assembly;
         }
 
         /// <inheritdoc />
