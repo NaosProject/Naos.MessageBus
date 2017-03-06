@@ -22,15 +22,13 @@ namespace Naos.MessageBus.Core
 
     using OBeautifulCode.TypeRepresentation;
 
-    using SimpleInjector;
-
     /// <inheritdoc />
     public class MessageDispatcher : IDispatchMessages
     {
         // Make this permissive since it's the underlying logic and shouldn't be coupled to whether handlers are matched in strict mode...
         private readonly TypeComparer internalTypeComparer = new TypeComparer(TypeMatchStrategy.NamespaceAndName);
 
-        private readonly Container simpleInjectorContainer;
+        private readonly IReadOnlyDictionary<Type, Type> handlerInterfaceToImplementationTypeMap;
 
         private readonly ConcurrentDictionary<Type, object> handlerSharedStateMap;
 
@@ -51,7 +49,7 @@ namespace Naos.MessageBus.Core
         /// <summary>
         /// Initializes a new instance of the <see cref="MessageDispatcher"/> class.
         /// </summary>
-        /// <param name="simpleInjectorContainer">DI container to use for looking up handlers.</param>
+        /// <param name="handlerInterfaceToImplementationTypeMap">DI container to use for looking up handlers.</param>
         /// <param name="handlerSharedStateMap">Initial state dictionary for handlers the require state to be seeded.</param>
         /// <param name="servicedChannels">Channels being services by this dispatcher.</param>
         /// <param name="messageHandlerChoosingTypeMatchStrategy">Message type match strategy for use when selecting a handler.</param>
@@ -60,9 +58,9 @@ namespace Naos.MessageBus.Core
         /// <param name="parcelTrackingSystem">Courier to track parcel events.</param>
         /// <param name="activeMessageTracker">Interface to track active messages to know if handler harness can shutdown.</param>
         /// <param name="postOffice">Interface to send parcels.</param>
-        public MessageDispatcher(Container simpleInjectorContainer, ConcurrentDictionary<Type, object> handlerSharedStateMap, ICollection<IChannel> servicedChannels, TypeMatchStrategy messageHandlerChoosingTypeMatchStrategy, TimeSpan messageDispatcherWaitThreadSleepTime, HarnessStaticDetails harnessStaticDetails, IParcelTrackingSystem parcelTrackingSystem, ITrackActiveMessages activeMessageTracker, IPostOffice postOffice)
+        public MessageDispatcher(IReadOnlyDictionary<Type, Type> handlerInterfaceToImplementationTypeMap, ConcurrentDictionary<Type, object> handlerSharedStateMap, ICollection<IChannel> servicedChannels, TypeMatchStrategy messageHandlerChoosingTypeMatchStrategy, TimeSpan messageDispatcherWaitThreadSleepTime, HarnessStaticDetails harnessStaticDetails, IParcelTrackingSystem parcelTrackingSystem, ITrackActiveMessages activeMessageTracker, IPostOffice postOffice)
         {
-            this.simpleInjectorContainer = simpleInjectorContainer;
+            this.handlerInterfaceToImplementationTypeMap = handlerInterfaceToImplementationTypeMap;
             this.handlerSharedStateMap = handlerSharedStateMap;
             this.servicedChannels = servicedChannels;
             this.messageHandlerChoosingTypeMatchStrategy = messageHandlerChoosingTypeMatchStrategy;
@@ -166,13 +164,10 @@ namespace Naos.MessageBus.Core
 
             Log.Write(() => $"Attempting to get handler; {trackingCode}, Type: {handlerType.FullName}");
             object handler;
-            var matchingRegistration =
-                this.simpleInjectorContainer.GetCurrentRegistrations()
-                    .SingleOrDefault(_ => _.ServiceType.FullName == handlerType.FullName);
-            if (matchingRegistration != null)
+            if (this.handlerInterfaceToImplementationTypeMap.ContainsKey(handlerType))
             {
-                // DON'T use "handler = matchingRegistration.GetInstance();" as it will suppress the Fusion Log error when there is a contract version mismatch...
-                handler = Activator.CreateInstance(matchingRegistration.Registration.ImplementationType);
+                var typeToActivate = this.handlerInterfaceToImplementationTypeMap[handlerType];
+                handler = Activator.CreateInstance(typeToActivate);
             }
             else
             {
@@ -421,11 +416,7 @@ namespace Naos.MessageBus.Core
 
         private Type ResolveMessageTypeUsingRegisteredHandlers(TypeDescription typeDescription)
         {
-            var registeredHandlers =
-                this.simpleInjectorContainer.GetCurrentRegistrations()
-                    .Select(_ => _.Registration.ImplementationType)
-                    .ToList()
-                    .GetTypeMapsOfImplementersOfGenericType(typeof(IHandleMessages<>));
+            var registeredHandlers = this.handlerInterfaceToImplementationTypeMap.Values.ToList().GetTypeMapsOfImplementersOfGenericType(typeof(IHandleMessages<>));
 
             var typeComparer = new TypeComparer(this.messageHandlerChoosingTypeMatchStrategy);
             foreach (var registeredHandler in registeredHandlers)

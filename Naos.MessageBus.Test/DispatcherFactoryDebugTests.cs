@@ -21,7 +21,7 @@ namespace Naos.MessageBus.Test
         [Fact(Skip = "Debug test designed to run while connected through VPN.")]
         public void Test___Reflection___Load()
         {
-            var assemblyPath = @"D:\Temp\Testing\MoreCraziness\Package";
+            var assemblyPath = @"D:\Temp\other\";
             var dispatcherFactory = new DispatcherFactory(
                                         assemblyPath,
                                         new[] { new SimpleChannel("simple") },
@@ -30,12 +30,6 @@ namespace Naos.MessageBus.Test
                                         new NullParcelTrackingSystem(),
                                         new InMemoryActiveMessageTracker(),
                                         new PostOffice(new NullParcelTrackingSystem(), new ChannelRouter(new SimpleChannel("default"))));
-
-            var types =
-                AppDomain.CurrentDomain.GetAssemblies()
-                    .SelectMany(_ => _.GetTypes())
-                    .Where(_ => _.Name == "CoScoreReportDatabase")
-                    .ToList();
         }
     }
 }

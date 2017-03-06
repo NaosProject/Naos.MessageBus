@@ -9,6 +9,7 @@ namespace Naos.MessageBus.Test
     using System;
     using System.Collections.Concurrent;
     using System.Collections.Generic;
+    using System.ComponentModel;
     using System.Linq;
     using System.Threading;
     using System.Threading.Tasks;
@@ -23,8 +24,6 @@ namespace Naos.MessageBus.Test
 
     using OBeautifulCode.TypeRepresentation;
 
-    using SimpleInjector;
-
     using Xunit;
 
     public class MessageDispatcherTest
@@ -33,17 +32,19 @@ namespace Naos.MessageBus.Test
         public static void Dispatch_ParcelWithSharesThatMatchEnum_FullTrip()
         {
             // arrange
-            var container = new Container();
             var trackingSends = new List<Parcel>();
             var senderConstructor = Factory.GetInMemorySender(trackingSends);
 
             var channel = new SimpleChannel("el-channel");
 
-            container.Register<IHandleMessages<FirstEnumMessage>, FirstEnumHandler>();
-            container.Register<IHandleMessages<SecondEnumMessage>, SecondEnumHandler>();
+            var handlerInterfaceToImplementationTypeMap = new Dictionary<Type, Type>
+                                                              {
+                                                                      { typeof(IHandleMessages<FirstEnumMessage>), typeof(FirstEnumHandler) },
+                                                                      { typeof(IHandleMessages<SecondEnumMessage>), typeof(SecondEnumHandler) }
+                                                              };
 
             var dispatcher = new MessageDispatcher(
-                container,
+                handlerInterfaceToImplementationTypeMap,
                 new ConcurrentDictionary<Type, object>(),
                 new[] { channel },
                 TypeMatchStrategy.NamespaceAndName,
@@ -117,13 +118,16 @@ namespace Naos.MessageBus.Test
         {
             // arrange
             var channel = new SimpleChannel("el-channel");
-            var container = new Container();
 
-            container.Register<IHandleMessages<FirstEnumMessage>, FirstEnumHandler>();
-            container.Register<IHandleMessages<SecondEnumMessage>, SecondEnumHandler>();
+            var handlerInterfaceToImplementationTypeMap = new Dictionary<Type, Type>
+                                                              {
+                                                                      { typeof(IHandleMessages<FirstEnumMessage>), typeof(FirstEnumHandler) },
+                                                                      { typeof(IHandleMessages<SecondEnumMessage>), typeof(SecondEnumHandler) }
+                                                              };
+
             var trackingSends = new List<Parcel>();
 
-            var dispatcher = GetMessageDispatcher(trackingSends, container, channel);
+            var dispatcher = GetMessageDispatcher(trackingSends, handlerInterfaceToImplementationTypeMap, channel);
 
             var firstMessage = new FirstEnumMessage() { Description = "RunMe 1", SeedValue = MyEnum.OtherValue };
 
@@ -164,13 +168,16 @@ namespace Naos.MessageBus.Test
 
             // arrange
             var channel = new SimpleChannel("el-channel");
-            var container = new Container();
-            container.Register<IHandleMessages<MessageOne>, MessageOneHandler>();
-            container.Register<IHandleMessages<MessageTwo>, MessageTwoHandler>();
+
+            var handlerInterfaceToImplementationTypeMap = new Dictionary<Type, Type>
+                                                              {
+                                                                      { typeof(IHandleMessages<MessageOne>), typeof(MessageOneHandler) },
+                                                                      { typeof(IHandleMessages<MessageTwo>), typeof(MessageTwoHandler) }
+                                                              };
 
             var trackingSends = new List<Parcel>();
 
-            var dispatcher = GetMessageDispatcher(trackingSends, container, channel);
+            var dispatcher = GetMessageDispatcher(trackingSends, handlerInterfaceToImplementationTypeMap, channel);
 
             var firstMessage = new MessageOne() { Description = "RunMe 1" };
             var secondMessage = new MessageTwo() { Description = "RunMe 2" };
@@ -203,13 +210,16 @@ namespace Naos.MessageBus.Test
 
             // arrange
             var channel = new SimpleChannel("el-channel");
-            var container = new Container();
-            container.Register<IHandleMessages<MessageOneShare>, MessageOneShareHandler>();
-            container.Register<IHandleMessages<MessageTwoShare>, MessageTwoShareHandler>();
+
+            var handlerInterfaceToImplementationTypeMap = new Dictionary<Type, Type>
+                                                              {
+                                                                      { typeof(IHandleMessages<MessageOneShare>), typeof(MessageOneShareHandler) },
+                                                                      { typeof(IHandleMessages<MessageTwoShare>), typeof(MessageTwoShareHandler) }
+                                                              };
 
             var trackingSends = new List<Parcel>();
 
-            var dispatcher = GetMessageDispatcher(trackingSends, container, channel);
+            var dispatcher = GetMessageDispatcher(trackingSends, handlerInterfaceToImplementationTypeMap, channel);
 
             var firstMessage = new MessageOneShare() { Description = "RunMe 1" };
             var secondMessage = new MessageTwoShare() { Description = "RunMe 2" };
@@ -231,7 +241,7 @@ namespace Naos.MessageBus.Test
             // by virtue of not throwing we succeeded because the messages didn't throw...
         }
 
-        private static MessageDispatcher GetMessageDispatcher(List<Parcel> trackingSends, Container container, IChannel channel)
+        private static MessageDispatcher GetMessageDispatcher(List<Parcel> trackingSends, IReadOnlyDictionary<Type, Type> container, IChannel channel)
         {
             var senderConstructor = Factory.GetInMemorySender(trackingSends);
 
@@ -255,10 +265,9 @@ namespace Naos.MessageBus.Test
         {
             var activeMessageTracker = new InMemoryActiveMessageTracker();
             var channel = new SimpleChannel("el-channel");
-            var container = new Container();
-            container.Register<IHandleMessages<WaitMessage>, WaitMessageHandler>();
+            var handlerInterfaceToImplementationTypeMap = new Dictionary<Type, Type> { { typeof(IHandleMessages<WaitMessage>), typeof(WaitMessageHandler) } };
             var dispatcher = new MessageDispatcher(
-                container,
+                handlerInterfaceToImplementationTypeMap,
                 new ConcurrentDictionary<Type, object>(),
                 new[] { channel },
                 TypeMatchStrategy.NamespaceAndName,
@@ -282,15 +291,14 @@ namespace Naos.MessageBus.Test
         [Fact]
         public static void Dispatch_DispatchingMethodToWrongChannelNamespaceNameMatch_ReSends()
         {
-            var container = new Container();
-            container.Register<IHandleMessages<NullMessage>, NullMessageHandler>();
+            var handlerInterfaceToImplementationTypeMap = new Dictionary<Type, Type> { { typeof(IHandleMessages<NullMessage>), typeof(NullMessageHandler) } };
 
             var trackingSends = new List<Parcel>();
             var senderConstructor = Factory.GetInMemorySender(trackingSends);
 
             var monitoredChannel = new SimpleChannel("ChannelName");
             var dispatcher = new MessageDispatcher(
-                container,
+                handlerInterfaceToImplementationTypeMap,
                 new ConcurrentDictionary<Type, object>(),
                 new[] { monitoredChannel },
                 TypeMatchStrategy.NamespaceAndName,
@@ -320,8 +328,7 @@ namespace Naos.MessageBus.Test
                 return;
             }
 
-            var container = new Container();
-            container.Register<IHandleMessages<ThrowsExceptionMessage>, ThrowsExceptionMessageHandler>();
+            var handlerInterfaceToImplementationTypeMap = new Dictionary<Type, Type> { { typeof(IHandleMessages<ThrowsExceptionMessage>), typeof(ThrowsExceptionMessageHandler) } };
 
             var trackingCalls = new List<string>();
             var trackingSends = new List<Parcel>();
@@ -331,7 +338,7 @@ namespace Naos.MessageBus.Test
 
             var monitoredChannel = new SimpleChannel("ChannelName");
             var dispatcher = new MessageDispatcher(
-                container,
+                handlerInterfaceToImplementationTypeMap,
                 new ConcurrentDictionary<Type, object>(),
                 new[] { monitoredChannel },
                 TypeMatchStrategy.NamespaceAndName,
@@ -371,8 +378,7 @@ namespace Naos.MessageBus.Test
                 return;
             }
 
-            var container = new Container();
-            container.Register<IHandleMessages<ThrowsExceptionMessage>, ThrowsExceptionMessageHandler>();
+            var handlerInterfaceToImplementationTypeMap = new Dictionary<Type, Type> { { typeof(IHandleMessages<ThrowsExceptionMessage>), typeof(ThrowsExceptionMessageHandler) } };
 
             var trackingCalls = new List<string>();
             var trackingSendsFromTracker = new List<Parcel>();
@@ -383,7 +389,7 @@ namespace Naos.MessageBus.Test
 
             var monitoredChannel = new SimpleChannel("ChannelName");
             var dispatcher = new MessageDispatcher(
-                container,
+                handlerInterfaceToImplementationTypeMap,
                 new ConcurrentDictionary<Type, object>(),
                 new[] { monitoredChannel },
                 TypeMatchStrategy.NamespaceAndName,
@@ -423,8 +429,7 @@ namespace Naos.MessageBus.Test
                 return;
             }
 
-            var container = new Container();
-            container.Register<IHandleMessages<ThrowsExceptionMessage>, ThrowsExceptionMessageHandler>();
+            var handlerInterfaceToImplementationTypeMap = new Dictionary<Type, Type> { { typeof(IHandleMessages<ThrowsExceptionMessage>), typeof(ThrowsExceptionMessageHandler) } };
 
             var trackingCalls = new List<string>();
             var trackingSendsFromTracker = new List<Parcel>();
@@ -435,7 +440,7 @@ namespace Naos.MessageBus.Test
 
             var monitoredChannel = new SimpleChannel("ChannelName");
             var dispatcher = new MessageDispatcher(
-                container,
+                handlerInterfaceToImplementationTypeMap,
                 new ConcurrentDictionary<Type, object>(),
                 new[] { monitoredChannel },
                 TypeMatchStrategy.NamespaceAndName,
@@ -471,8 +476,7 @@ namespace Naos.MessageBus.Test
         [Fact]
         public static void Dispatch_DispatchingMethodWithSuccess_TracksAddressedThenDelivered()
         {
-            var container = new Container();
-            container.Register<IHandleMessages<NullMessage>, NullMessageHandler>();
+            var handlerInterfaceToImplementationTypeMap = new Dictionary<Type, Type> { { typeof(IHandleMessages<NullMessage>), typeof(NullMessageHandler) } };
 
             var trackingCalls = new List<string>();
             var trackingSendsFromTracker = new List<Parcel>();
@@ -483,7 +487,7 @@ namespace Naos.MessageBus.Test
 
             var monitoredChannel = new SimpleChannel("ChannelName");
             var dispatcher = new MessageDispatcher(
-                container,
+                handlerInterfaceToImplementationTypeMap,
                 new ConcurrentDictionary<Type, object>(),
                 new[] { monitoredChannel },
                 TypeMatchStrategy.NamespaceAndName,
@@ -504,8 +508,7 @@ namespace Naos.MessageBus.Test
         [Fact]
         public static void Dispatch_DispatchingMethodWithRecurringHeaderMessage_ReSendsWithoutTracking()
         {
-            var container = new Container();
-            container.Register<IHandleMessages<NullMessage>, NullMessageHandler>();
+            var handlerInterfaceToImplementationTypeMap = new Dictionary<Type, Type> { { typeof(IHandleMessages<NullMessage>), typeof(NullMessageHandler) } };
 
             var trackingCalls = new List<string>();
             var trackingSendsFromTracker = new List<Parcel>();
@@ -516,7 +519,7 @@ namespace Naos.MessageBus.Test
 
             var monitoredChannel = new SimpleChannel("ChannelName");
             var dispatcher = new MessageDispatcher(
-                container,
+                handlerInterfaceToImplementationTypeMap,
                 new ConcurrentDictionary<Type, object>(),
                 new[] { monitoredChannel },
                 TypeMatchStrategy.NamespaceAndName,
@@ -544,14 +547,13 @@ namespace Naos.MessageBus.Test
         [Fact]
         public static void Dispatch_DispatchingMethodToWrongChannelAssemblyQualifiedMatch_ReSends()
         {
-            var container = new Container();
-            container.Register<IHandleMessages<NullMessage>, NullMessageHandler>();
+            var handlerInterfaceToImplementationTypeMap = new Dictionary<Type, Type> { { typeof(IHandleMessages<NullMessage>), typeof(NullMessageHandler) } };
 
             var trackingSends = new List<Parcel>();
 
             var monitoredChannel = new SimpleChannel("ChannelName");
             var dispatcher = new MessageDispatcher(
-                container,
+                handlerInterfaceToImplementationTypeMap,
                 new ConcurrentDictionary<Type, object>(),
                 new[] { monitoredChannel },
                 TypeMatchStrategy.AssemblyQualifiedName,
@@ -710,12 +712,11 @@ namespace Naos.MessageBus.Test
         [Fact]
         public static void Dispatch_EnvelopeProducingNullMessage_Throws()
         {
-            var container = new Container();
-            container.Register<IHandleMessages<NullMessage>, NullMessageHandler>();
+            var handlerInterfaceToImplementationTypeMap = new Dictionary<Type, Type> { { typeof(IHandleMessages<NullMessage>), typeof(NullMessageHandler) } };
             Action testCode = () =>
                 {
                     var channel = new SimpleChannel("Channel");
-                    GetMessageDispatcher(new[] { channel }, container)
+                    GetMessageDispatcher(new[] { channel }, handlerInterfaceToImplementationTypeMap)
                         .Dispatch(
                             "Name",
                             new TrackingCode(),
@@ -765,13 +766,12 @@ namespace Naos.MessageBus.Test
         public static void Dispatch_InitialStateRequirement_GetsGenerated()
         {
             StateHandler.StateHistory.Clear();
-            var simpleInjectorContainer = new Container();
-            simpleInjectorContainer.Register(typeof(IHandleMessages<InitialStateMessage>), typeof(StateHandler));
+            var handlerInterfaceToImplementationTypeMap = new Dictionary<Type, Type> { { typeof(IHandleMessages<InitialStateMessage>), typeof(StateHandler) } };
             var message = new InitialStateMessage();
             var messageJson = message.ToJson();
 
             var channel = new SimpleChannel("fakeChannel");
-            var messageDispatcher = new MessageDispatcher(simpleInjectorContainer, new ConcurrentDictionary<Type, object>(), new[] { channel }, TypeMatchStrategy.NamespaceAndName, TimeSpan.FromSeconds(.5), new HarnessStaticDetails(), new NullParcelTrackingSystem(), new InMemoryActiveMessageTracker(), new PostOffice(new NullParcelTrackingSystem(), new ChannelRouter(new NullChannel())));
+            var messageDispatcher = new MessageDispatcher(handlerInterfaceToImplementationTypeMap, new ConcurrentDictionary<Type, object>(), new[] { channel }, TypeMatchStrategy.NamespaceAndName, TimeSpan.FromSeconds(.5), new HarnessStaticDetails(), new NullParcelTrackingSystem(), new InMemoryActiveMessageTracker(), new PostOffice(new NullParcelTrackingSystem(), new ChannelRouter(new NullChannel())));
             var parcel = new Parcel
                              {
                                  Id = Guid.NewGuid(),
@@ -792,13 +792,12 @@ namespace Naos.MessageBus.Test
         public static void Dispatch_InitialStateRequirementRunTwice_SecondCallUsesPreviousState()
         {
             StateHandler.StateHistory.Clear();
-            var simpleInjectorContainer = new Container();
-            simpleInjectorContainer.Register(typeof(IHandleMessages<InitialStateMessage>), typeof(StateHandler));
+            var handlerInterfaceToImplementationTypeMap = new Dictionary<Type, Type> { { typeof(IHandleMessages<InitialStateMessage>), typeof(StateHandler) } };
             var message = new InitialStateMessage();
             var messageJson = message.ToJson();
 
             var channel = new SimpleChannel("fakeChannel");
-            var messageDispatcher = new MessageDispatcher(simpleInjectorContainer, new ConcurrentDictionary<Type, object>(), new[] { channel }, TypeMatchStrategy.NamespaceAndName, TimeSpan.FromSeconds(.5), new HarnessStaticDetails(), new NullParcelTrackingSystem(), new InMemoryActiveMessageTracker(), new PostOffice(new NullParcelTrackingSystem(), new ChannelRouter(new NullChannel())));
+            var messageDispatcher = new MessageDispatcher(handlerInterfaceToImplementationTypeMap, new ConcurrentDictionary<Type, object>(), new[] { channel }, TypeMatchStrategy.NamespaceAndName, TimeSpan.FromSeconds(.5), new HarnessStaticDetails(), new NullParcelTrackingSystem(), new InMemoryActiveMessageTracker(), new PostOffice(new NullParcelTrackingSystem(), new ChannelRouter(new NullChannel())));
             var parcel = new Parcel
                              {
                                  Id = Guid.NewGuid(),
@@ -828,13 +827,12 @@ namespace Naos.MessageBus.Test
         public static void Dispatch_InitialStateRequirementRunTwice_InvalidSecondCallGeneratesNewState()
         {
             StateHandler.StateHistory.Clear();
-            var simpleInjectorContainer = new Container();
-            simpleInjectorContainer.Register(typeof(IHandleMessages<InitialStateMessage>), typeof(StateHandler));
+            var handlerInterfaceToImplementationTypeMap = new Dictionary<Type, Type> { { typeof(IHandleMessages<InitialStateMessage>), typeof(StateHandler) } };
             var message = new InitialStateMessage();
             var messageJson = message.ToJson();
 
             var channel = new SimpleChannel("fakeChannel");
-            var messageDispatcher = GetMessageDispatcher(new[] { channel }, simpleInjectorContainer);
+            var messageDispatcher = GetMessageDispatcher(new[] { channel }, handlerInterfaceToImplementationTypeMap);
 
             var parcel = new Parcel
                              {
@@ -866,20 +864,20 @@ namespace Naos.MessageBus.Test
                 StateHandler.StateHistory["SeedInitialState"]);
         }
 
-        private static MessageDispatcher GetMessageDispatcher(IList<IChannel> channels = null, Container container = null)
+        private static MessageDispatcher GetMessageDispatcher(IList<IChannel> channels = null, Dictionary<Type, Type> handlerInterfaceToImplementationTypeMap = null)
         {
             if (channels == null)
             {
                 channels = new List<IChannel>();
             }
 
-            if (container == null)
+            if (handlerInterfaceToImplementationTypeMap == null)
             {
-                container = new Container();
+                handlerInterfaceToImplementationTypeMap = new Dictionary<Type, Type>();
             }
 
             return new MessageDispatcher(
-                container,
+                handlerInterfaceToImplementationTypeMap,
                 new ConcurrentDictionary<Type, object>(),
                 channels,
                 TypeMatchStrategy.NamespaceAndName,

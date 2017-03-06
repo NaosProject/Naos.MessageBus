@@ -21,8 +21,6 @@ namespace Naos.MessageBus.Core
 
     using OBeautifulCode.TypeRepresentation;
 
-    using SimpleInjector;
-
     /// <summary>
     /// Class to manage creating a functional instance of IDispatchMessages.
     /// </summary>
@@ -32,8 +30,6 @@ namespace Naos.MessageBus.Core
         private readonly ConcurrentDictionary<Type, object> sharedStateMap = new ConcurrentDictionary<Type, object>();
 
         private readonly ICollection<IChannel> servicedChannels;
-
-        private readonly Container simpleInjectorContainer = new Container();
 
         private readonly TypeMatchStrategy typeMatchStrategy;
 
@@ -46,6 +42,10 @@ namespace Naos.MessageBus.Core
         private readonly ITrackActiveMessages activeMessageTracker;
 
         private readonly IPostOffice postOffice;
+
+        private readonly Dictionary<Type, Type> handlerInterfaceToImplementationTypeMap = new Dictionary<Type, Type>();
+
+        private Func<IDispatchMessages> messageDispatcherBuilder;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="DispatcherFactory"/> class.
@@ -204,17 +204,47 @@ namespace Naos.MessageBus.Core
 
         private void LoadContainerFromHandlerTypeMap(ICollection<TypeMap> handlerTypeMap)
         {
+            var strictTypeComparer = new TypeComparer(TypeMatchStrategy.AssemblyQualifiedName);
+            var looseTypeComparer = new TypeComparer(TypeMatchStrategy.NamespaceAndName);
             foreach (var handlerTypeMapEntry in handlerTypeMap)
             {
-                this.simpleInjectorContainer.Register(handlerTypeMapEntry.InterfaceType, handlerTypeMapEntry.ConcreteType);
+                var existingRegistration = this.handlerInterfaceToImplementationTypeMap.SingleOrDefault(
+                    _ =>
+                        {
+                            var existingMessageType = _.Key.GetGenericArguments().Single();
+                            var newMessageType = handlerTypeMapEntry.InterfaceType.GetGenericArguments().Single();
+                            return looseTypeComparer.Equals(existingMessageType, newMessageType);
+                        });
+
+                if (existingRegistration.Key != null || existingRegistration.Value != null)
+                {
+                    if (!strictTypeComparer.Equals(existingRegistration.Key, handlerTypeMapEntry.InterfaceType) || !strictTypeComparer.Equals(existingRegistration.Value, handlerTypeMapEntry.ConcreteType))
+                    {
+                        throw new InvalidOperationException($"Cannot register the same handler with two different versions; 1: {existingRegistration.Key?.FullName}->{existingRegistration.Value.FullName}, 2: {handlerTypeMapEntry.InterfaceType.FullName}->{handlerTypeMapEntry.ConcreteType.FullName}");
+                    }
+                    else
+                    {
+                        Log.Write(
+                            () => $"Skipping second registration of existing type: {handlerTypeMapEntry.InterfaceType}->{handlerTypeMapEntry.ConcreteType}");
+                    }
+                }
+                else
+                {
+                    this.handlerInterfaceToImplementationTypeMap.Add(handlerTypeMapEntry.InterfaceType, handlerTypeMapEntry.ConcreteType);
+                }
+            }
+
+            foreach (var entry in this.handlerInterfaceToImplementationTypeMap)
+            {
+                Log.Write(() => $"Registered Handler Type: {entry.Key}->{entry.Value}");
             }
 
             // register the dispatcher so that hangfire can use it when a message is getting processed
             // if we weren't in hangfire we'd just persist the dispatcher and keep these two fields inside of it...
-            this.simpleInjectorContainer.Register<IDispatchMessages>(
+            this.messageDispatcherBuilder = 
                 () =>
                 new MessageDispatcher(
-                    this.simpleInjectorContainer,
+                    this.handlerInterfaceToImplementationTypeMap,
                     this.sharedStateMap,
                     this.servicedChannels,
                     this.typeMatchStrategy,
@@ -222,15 +252,7 @@ namespace Naos.MessageBus.Core
                     this.harnessStaticDetails,
                     this.parcelTrackingSystem,
                     this.activeMessageTracker,
-                    this.postOffice));
-
-            foreach (var registration in this.simpleInjectorContainer.GetCurrentRegistrations())
-            {
-                var localScopeRegistration = registration;
-                Log.Write(
-                    () =>
-                    $"Registered Type in SimpleInjector: {localScopeRegistration.ServiceType.FullName} -> {localScopeRegistration.Registration.ImplementationType.FullName}");
-            }
+                    this.postOffice);
         }
 
         private static Assembly LoadAssemblyFromDisk(string dllNameWithoutExtension, string[] pdbFiles, string fullDllPath)
@@ -273,7 +295,7 @@ namespace Naos.MessageBus.Core
         /// <inheritdoc />
         public IDispatchMessages Create()
         {
-            var ret = this.simpleInjectorContainer.GetInstance<IDispatchMessages>();
+            var ret = this.messageDispatcherBuilder();
             return ret;
         }
     }
