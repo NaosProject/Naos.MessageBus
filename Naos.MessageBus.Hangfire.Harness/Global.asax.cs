@@ -18,6 +18,7 @@ namespace Naos.MessageBus.Hangfire.Harness
 
     using Naos.MessageBus.Core;
     using Naos.MessageBus.Domain;
+    using Naos.Recipes.Configuration.Setup;
 
     /// <inheritdoc />
     public class Global : HttpApplication
@@ -25,7 +26,7 @@ namespace Naos.MessageBus.Hangfire.Harness
         /// <inheritdoc />
         protected void Application_Start(object sender, EventArgs e)
         {
-            Settings.Deserialize = (type, serialized) => serialized.FromJson(type);
+            Config.SetupSerialization();
             var messageBusHandlerSettings = Settings.Get<MessageBusHarnessSettings>();
             Logging.Setup(messageBusHandlerSettings);
             LogProvider.SetCurrentLogProvider(new ItsLogPassThroughProvider());

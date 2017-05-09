@@ -25,6 +25,7 @@ namespace Naos.MessageBus.Hangfire.Console
     using Naos.MessageBus.Domain.Exceptions;
     using Naos.MessageBus.Hangfire.Sender;
     using Naos.MessageBus.Persistence;
+    using Naos.Recipes.Configuration.Setup;
 
     /// <summary>
     /// Main entry point of the application.
@@ -47,7 +48,7 @@ namespace Naos.MessageBus.Hangfire.Console
                 Debugger.Launch();
             }
 
-            Settings.Deserialize = (type, serialized) => serialized.FromJson(type);
+            Config.SetupSerialization();
             var messageBusHandlerSettings = Settings.Get<MessageBusHarnessSettings>();
             Logging.Setup(messageBusHandlerSettings);
             LogProvider.SetCurrentLogProvider(new ItsLogPassThroughProvider());

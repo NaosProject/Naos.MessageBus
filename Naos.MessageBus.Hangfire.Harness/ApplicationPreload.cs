@@ -19,6 +19,7 @@ namespace Naos.MessageBus.Hangfire.Harness
 
     using Naos.MessageBus.Core;
     using Naos.MessageBus.Domain;
+    using Naos.Recipes.Configuration.Setup;
 
     /// <inheritdoc />
     public class ApplicationPreload : IProcessHostPreloadClient
@@ -32,7 +33,7 @@ namespace Naos.MessageBus.Hangfire.Harness
             {
                 try
                 {
-                    Settings.Deserialize = (type, serialized) => serialized.FromJson(type);
+                    Config.SetupSerialization();
                     var messageBusHandlerSettings = Settings.Get<MessageBusHarnessSettings>();
                     Logging.Setup(messageBusHandlerSettings);
                     LogProvider.SetCurrentLogProvider(new ItsLogPassThroughProvider());

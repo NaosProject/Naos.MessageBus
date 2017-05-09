@@ -12,6 +12,7 @@ namespace Naos.MessageBus.Test
     using Its.Configuration;
 
     using Naos.MessageBus.Domain;
+    using Naos.Recipes.Configuration.Setup;
 
     using Spritely.Recipes;
 
@@ -69,12 +70,10 @@ namespace Naos.MessageBus.Test
             Assert.Equal(TimeSpan.FromMinutes(10), executorSettings.HarnessProcessTimeToLive);
         }
 
-        private static MessageBusHarnessSettings SetupItsConfigAndGetSettingsByPrecedence(string precedence)
+        private static MessageBusHarnessSettings SetupItsConfigAndGetSettingsByPrecedence(string environment)
         {
-            Settings.Reset();
-            Settings.SettingsDirectory = Settings.SettingsDirectory.Replace("\\bin\\Debug", string.Empty);
-            Settings.Precedence = new[] { precedence };
-            Settings.Deserialize = (type, serialized) => serialized.FromJson(type);
+            Config.SetupForUnitTest(environment);
+
             return Settings.Get<MessageBusHarnessSettings>();
         }
     }

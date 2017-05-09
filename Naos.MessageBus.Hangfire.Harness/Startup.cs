@@ -22,6 +22,7 @@ namespace Naos.MessageBus.Hangfire.Harness
 
     using Naos.MessageBus.Core;
     using Naos.MessageBus.Domain;
+    using Naos.Recipes.Configuration.Setup;
 
     using Owin;
 
@@ -36,7 +37,7 @@ namespace Naos.MessageBus.Hangfire.Harness
         /// <param name="app">App builder to chain on.</param>
         public void Configuration(IAppBuilder app)
         {
-            Settings.Deserialize = (type, serialized) => serialized.FromJson(type);
+            Config.SetupSerialization();
             var messageBusHandlerSettings = Settings.Get<MessageBusHarnessSettings>();
             Logging.Setup(messageBusHandlerSettings);
             LogProvider.SetCurrentLogProvider(new ItsLogPassThroughProvider());

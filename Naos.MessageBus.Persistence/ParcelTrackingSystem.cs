@@ -178,7 +178,7 @@ namespace Naos.MessageBus.Persistence
                                             Exception = _
                                         }))
                         .WithMaxRetries(this.retryCount)
-                        .Run(() => this.configuration.Repository<Shipment>().GetLatest(parcelId))
+                        .RunAsync(() => this.configuration.Repository<Shipment>().GetLatest(parcelId))
                         .Now();
 
             return shipment;
@@ -197,7 +197,7 @@ namespace Naos.MessageBus.Persistence
                                         Exception = _
                                     }))
                     .WithMaxRetries(this.retryCount)
-                    .Run(() => this.configuration.Repository<Shipment>().Save(shipment))
+                    .RunAsync(() => this.configuration.Repository<Shipment>().Save(shipment))
                     .Now();
         }
 
@@ -218,7 +218,7 @@ namespace Naos.MessageBus.Persistence
                                             Exception = _
                                         }))
                         .WithMaxRetries(this.retryCount)
-                        .Run(
+                        .RunAsync(
                             () =>
                                 {
                                     using (var db = new TrackedShipmentDbContext(this.readModelPersistenceConnectionConfiguration.ToSqlServerConnectionString()))
@@ -268,7 +268,7 @@ namespace Naos.MessageBus.Persistence
                                             Exception = _
                                         }))
                         .WithMaxRetries(this.retryCount)
-                        .Run(
+                        .RunAsync(
                             () =>
                                 {
                                     using (var db = new TrackedShipmentDbContext(this.readModelPersistenceConnectionConfiguration.ToSqlServerConnectionString()))
