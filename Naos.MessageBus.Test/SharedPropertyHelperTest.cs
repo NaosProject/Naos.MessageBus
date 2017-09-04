@@ -153,7 +153,7 @@ namespace Naos.MessageBus.Test
             };
 
             // act & assert
-            testCode.ShouldThrow<SharePropertyException>().WithMessage("Neither targetObject nor propertySet can be null");
+            testCode.ShouldThrow<SharePropertyException>().WithMessage("Neither interfaceState nor targetObject can be null");
         }
 
         [Fact]
@@ -166,7 +166,7 @@ namespace Naos.MessageBus.Test
             };
 
             // act & assert
-            testCode.ShouldThrow<SharePropertyException>().WithMessage("Neither targetObject nor propertySet can be null");
+            testCode.ShouldThrow<SharePropertyException>().WithMessage("Neither interfaceState nor targetObject can be null");
         }
 
         [Fact]
