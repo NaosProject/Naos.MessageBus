@@ -1,6 +1,6 @@
 // --------------------------------------------------------------------------------------------------------------------
 // <copyright file="IHandleMessages.cs" company="Naos">
-//   Copyright 2015 Naos
+//    Copyright (c) Naos 2017. All rights reserved.
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
@@ -12,7 +12,8 @@ namespace Naos.MessageBus.Domain
     /// Interface for handling messages from the bus.
     /// </summary>
     /// <typeparam name="T">Type of message that the implementer handles.</typeparam>
-    public interface IHandleMessages<in T> where T : IMessage
+    public interface IHandleMessages<in T>
+        where T : IMessage
     {
         /// <summary>
         /// Handle the message by performing any duties (including queuing more messages) that accomplish the needed work.

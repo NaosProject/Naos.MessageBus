@@ -1,6 +1,6 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
 // <copyright file="FetchAndShareLatestTopicStatusReportsMessageHandler.cs" company="Naos">
-//   Copyright 2015 Naos
+//    Copyright (c) Naos 2017. All rights reserved.
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
@@ -25,7 +25,7 @@ namespace Naos.MessageBus.Core
         /// <inheritdoc />
         public async Task HandleAsync(FetchAndShareLatestTopicStatusReportsMessage message)
         {
-            var tracker = HandlerToolShed.GetParcelTracker();
+            var tracker = HandlerToolshed.GetParcelTracker();
 
             await this.HandleAsync(message, tracker);
         }

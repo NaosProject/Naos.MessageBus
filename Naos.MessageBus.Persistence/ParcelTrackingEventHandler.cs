@@ -1,6 +1,6 @@
 // --------------------------------------------------------------------------------------------------------------------
 // <copyright file="ParcelTrackingEventHandler.cs" company="Naos">
-//   Copyright 2015 Naos
+//    Copyright (c) Naos 2017. All rights reserved.
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
@@ -10,24 +10,21 @@ namespace Naos.MessageBus.Persistence
     using System.Collections.Generic;
     using System.Data;
     using System.Data.SqlClient;
-    using static System.FormattableString;
     using System.Linq;
     using System.Reflection;
-
     using Its.Log.Instrumentation;
-
     using Microsoft.Its.Domain;
-
     using Naos.Cron;
     using Naos.MessageBus.Domain;
-
     using OBeautifulCode.TypeRepresentation;
-
     using Spritely.Redo;
+    using static System.FormattableString;
 
     /// <summary>
     /// Handler to keep TrackedShipment read model updated as events come in.
     /// </summary>
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Maintainability", "CA1506:AvoidExcessiveClassCoupling", Justification = "Keeping this way for now.")]
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1711:IdentifiersShouldNotHaveIncorrectSuffix", Justification = "Spelling/name is correct.")]
     public class ParcelTrackingEventHandler : IUpdateProjectionWhen<Shipment.Created>,
                                          IUpdateProjectionWhen<Shipment.EnvelopeSent>,
                                          IUpdateProjectionWhen<Shipment.EnvelopeResendRequested>,
@@ -82,6 +79,7 @@ namespace Naos.MessageBus.Persistence
         }
 
         /// <inheritdoc />
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2202:Do not dispose objects multiple times", Justification = "Is disposed.")]
         public void UpdateProjection(Shipment.Created @event)
         {
             var payload = @event.ExtractPayload();
@@ -95,16 +93,19 @@ namespace Naos.MessageBus.Persistence
                 conn = new SqlConnection(sqlServerConnectionString);
                 conn.Open();
                 var sql = "insert into shipmentfordatabases (ParcelId, RecurringScheduleJson, LastUpdatedUtc, Status) values (@a, @b, @c, @d)";
-                var command = new SqlCommand(sql, conn);
-                var a = new SqlParameter("@a", SqlDbType.UniqueIdentifier) { Value = payload.Parcel.Id };
-                command.Parameters.Add(a);
-                var b = new SqlParameter("@b", SqlDbType.NVarChar) { Value = scheduleJson };
-                command.Parameters.Add(b);
-                var c = new SqlParameter("@c", SqlDbType.DateTime) { Value = DateTime.UtcNow };
-                command.Parameters.Add(c);
-                var d = new SqlParameter("@d", SqlDbType.Int) { Value = ParcelStatus.Unknown };
-                command.Parameters.Add(d);
-                command.ExecuteNonQuery();
+                using (var command = new SqlCommand(sql, conn))
+                {
+                    var a = new SqlParameter("@a", SqlDbType.UniqueIdentifier) { Value = payload.Parcel.Id };
+                    command.Parameters.Add(a);
+                    var b = new SqlParameter("@b", SqlDbType.NVarChar) { Value = scheduleJson };
+                    command.Parameters.Add(b);
+                    var c = new SqlParameter("@c", SqlDbType.DateTime) { Value = DateTime.UtcNow };
+                    command.Parameters.Add(c);
+                    var d = new SqlParameter("@d", SqlDbType.Int) { Value = ParcelStatus.Unknown };
+                    command.Parameters.Add(d);
+                    command.ExecuteNonQuery();
+                }
+
                 conn.Close();
             }
             finally
@@ -114,6 +115,7 @@ namespace Naos.MessageBus.Persistence
         }
 
         /// <inheritdoc />
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Maintainability", "CA1506:AvoidExcessiveClassCoupling", Justification = "Keeping this way for now.")]
         public void UpdateProjection(Shipment.EnvelopeResendRequested @event)
         {
             CrateLocator crateLocator = null;
@@ -150,6 +152,8 @@ namespace Naos.MessageBus.Persistence
         }
 
         /// <inheritdoc />
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2202:Do not dispose objects multiple times", Justification = "Is disposed.")]
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Maintainability", "CA1506:AvoidExcessiveClassCoupling", Justification = "Keeping this way for now.")]
         public void UpdateProjection(Shipment.EnvelopeSent @event)
         {
             var eventPayload = @event.ExtractPayload();
@@ -180,13 +184,16 @@ namespace Naos.MessageBus.Persistence
                                     conn = new SqlConnection(sqlServerConnectionString);
                                     conn.Open();
                                     var sql = "select recurringschedulejson from shipmentfordatabases where parcelid = @id";
-                                    var command = new SqlCommand(sql, conn);
-                                    var a = new SqlParameter("@id", SqlDbType.UniqueIdentifier) { Value = @event.AggregateId };
-                                    command.Parameters.Add(a);
-                                    var scheduleJson = command.ExecuteScalar();
-                                    schedule = string.IsNullOrEmpty(scheduleJson?.ToString())
-                                                   ? new NullSchedule()
-                                                   : scheduleJson.ToString().FromJson<ScheduleBase>();
+                                    using (var command = new SqlCommand(sql, conn))
+                                    {
+                                        var a = new SqlParameter("@id", SqlDbType.UniqueIdentifier) { Value = @event.AggregateId };
+                                        command.Parameters.Add(a);
+                                        var scheduleJson = command.ExecuteScalar();
+                                        schedule = string.IsNullOrEmpty(scheduleJson?.ToString())
+                                                       ? new NullSchedule()
+                                                       : scheduleJson.ToString().FromJson<ScheduleBase>();
+                                    }
+
                                     conn.Close();
                                 }
                                 finally
@@ -222,22 +229,26 @@ namespace Naos.MessageBus.Persistence
                                 conn.Open();
                                 var sql =
                                     "update shipmentfordatabases set Status = @newStatus, CurrentCrateLocatorJson = @crateLocatorJson, LastUpdatedUtc = @utcNow  where parcelid = @id";
-                                var command = new SqlCommand(sql, conn);
-                                var paramNewStatus = new SqlParameter("@newStatus", SqlDbType.Int) { Value = eventPayload.NewStatus };
-                                command.Parameters.Add(paramNewStatus);
-                                var paramCrateLocatorJson = new SqlParameter("@crateLocatorJson", SqlDbType.NVarChar) { Value = crateLocator.ToJson() };
-                                command.Parameters.Add(paramCrateLocatorJson);
-                                var paramUtcNow = new SqlParameter("@utcNow", SqlDbType.DateTime) { Value = DateTime.UtcNow };
-                                command.Parameters.Add(paramUtcNow);
-                                var paramId = new SqlParameter("@id", SqlDbType.UniqueIdentifier) { Value = @event.AggregateId };
-                                command.Parameters.Add(paramId);
-                                command.ExecuteNonQuery();
+                                using (var command = new SqlCommand(sql, conn))
+                                {
+                                    var paramNewStatus = new SqlParameter("@newStatus", SqlDbType.Int) { Value = eventPayload.NewStatus };
+                                    command.Parameters.Add(paramNewStatus);
+                                    var paramCrateLocatorJson = new SqlParameter("@crateLocatorJson", SqlDbType.NVarChar) { Value = crateLocator.ToJson() };
+                                    command.Parameters.Add(paramCrateLocatorJson);
+                                    var paramUtcNow = new SqlParameter("@utcNow", SqlDbType.DateTime) { Value = DateTime.UtcNow };
+                                    command.Parameters.Add(paramUtcNow);
+                                    var paramId = new SqlParameter("@id", SqlDbType.UniqueIdentifier) { Value = @event.AggregateId };
+                                    command.Parameters.Add(paramId);
+                                    command.ExecuteNonQuery();
+                                }
+
                                 conn.Close();
                             }
                         }).Now();
         }
 
         /// <inheritdoc />
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Maintainability", "CA1506:AvoidExcessiveClassCoupling", Justification = "Keeping this way for now.")]
         public void UpdateProjection(Shipment.EnvelopeDeliveryAborted @event)
         {
             Using.LinearBackOff(TimeSpan.FromSeconds(5))
@@ -266,6 +277,7 @@ namespace Naos.MessageBus.Persistence
         }
 
         /// <inheritdoc />
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Maintainability", "CA1506:AvoidExcessiveClassCoupling", Justification = "Keeping this way for now.")]
         public void UpdateProjection(Shipment.EnvelopeDeliveryRejected @event)
         {
             Using.LinearBackOff(TimeSpan.FromSeconds(5))
@@ -302,6 +314,7 @@ namespace Naos.MessageBus.Persistence
         }
 
         /// <inheritdoc />
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Maintainability", "CA1506:AvoidExcessiveClassCoupling", Justification = "Keeping this way for now.")]
         public void UpdateProjection(Shipment.EnvelopeDelivered @event)
         {
             Using.LinearBackOff(TimeSpan.FromSeconds(5))
@@ -330,6 +343,7 @@ namespace Naos.MessageBus.Persistence
         }
 
         /// <inheritdoc />
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Maintainability", "CA1506:AvoidExcessiveClassCoupling", Justification = "Keeping this way for now.")]
         public void UpdateProjection(Shipment.ParcelDelivered @event)
         {
             Using.LinearBackOff(TimeSpan.FromSeconds(5))
@@ -358,6 +372,7 @@ namespace Naos.MessageBus.Persistence
         }
 
         /// <inheritdoc />
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Maintainability", "CA1506:AvoidExcessiveClassCoupling", Justification = "Keeping this way for now.")]
         public void UpdateProjection(Shipment.TopicBeingAffected @event)
         {
             Using.LinearBackOff(TimeSpan.FromSeconds(5))
@@ -422,6 +437,7 @@ namespace Naos.MessageBus.Persistence
         }
 
         /// <inheritdoc />
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Maintainability", "CA1506:AvoidExcessiveClassCoupling", Justification = "Keeping this way for now.")]
         public void UpdateProjection(Shipment.TopicWasAffected @event)
         {
             Using.LinearBackOff(TimeSpan.FromSeconds(5))

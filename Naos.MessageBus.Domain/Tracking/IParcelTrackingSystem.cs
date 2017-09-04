@@ -1,6 +1,6 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
 // <copyright file="IParcelTrackingSystem.cs" company="Naos">
-//   Copyright 2015 Naos
+//    Copyright (c) Naos 2017. All rights reserved.
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
@@ -15,7 +15,7 @@ namespace Naos.MessageBus.Domain
     /// <summary>
     /// Interface for tracking parcels in the bus.
     /// </summary>
-    public interface IParcelTrackingSystem : IGetTrackingReports
+    public interface IParcelTrackingSystem : IGetTrackingReports, IDisposable
     {
         /// <summary>
         /// Begins tracking a parcel.
@@ -70,7 +70,7 @@ namespace Naos.MessageBus.Domain
     /// <summary>
     /// Null implementation of <see cref="IParcelTrackingSystem"/>.
     /// </summary>
-    public class NullParcelTrackingSystem : IParcelTrackingSystem
+    public sealed class NullParcelTrackingSystem : IParcelTrackingSystem
     {
         /// <inheritdoc />
         public async Task UpdateAttemptingAsync(TrackingCode trackingCode, HarnessDetails harnessDetails)
@@ -108,13 +108,6 @@ namespace Naos.MessageBus.Domain
         }
 
         /// <inheritdoc />
-        public async Task Addressed(TrackingCode trackingCode, IChannel assignedChannel)
-        {
-            /* no-op */
-            await Task.FromResult<object>(null);
-        }
-
-        /// <inheritdoc />
         public async Task UpdateRejectedAsync(TrackingCode trackingCode, Exception exception)
         {
             /* no-op */
@@ -131,6 +124,14 @@ namespace Naos.MessageBus.Domain
         public async Task<TopicStatusReport> GetLatestTopicStatusReportAsync(ITopic topic, TopicStatus statusFilter = TopicStatus.None)
         {
             return await Task.FromResult(null as TopicStatusReport);
+        }
+
+        /// <inheritdoc cref="IDisposable" />
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1063:ImplementIDisposableCorrectly", Justification = "Not necessary.")]
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA1816:CallGCSuppressFinalizeCorrectly", Justification = "Not necessary.")]
+        public void Dispose()
+        {
+            /* No-op */
         }
     }
 }

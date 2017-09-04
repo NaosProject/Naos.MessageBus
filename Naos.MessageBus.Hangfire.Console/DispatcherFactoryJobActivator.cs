@@ -1,6 +1,6 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
 // <copyright file="DispatcherFactoryJobActivator.cs" company="Naos">
-//   Copyright 2015 Naos
+//    Copyright (c) Naos 2017. All rights reserved.
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
@@ -16,6 +16,8 @@ namespace Naos.MessageBus.Hangfire.Console
     using Naos.MessageBus.Hangfire.Sender;
 
     using OBeautifulCode.TypeRepresentation;
+
+    using static System.FormattableString;
 
     /// <summary>
     /// Hangfire job activator that will lookup the correct implementation of the Hangfire job via SimpleInjector DI container.
@@ -35,7 +37,7 @@ namespace Naos.MessageBus.Hangfire.Console
         {
             if (dispatcherFactory == null)
             {
-                throw new ArgumentNullException("dispatcherFactory");
+                throw new ArgumentNullException(nameof(dispatcherFactory));
             }
 
             this.dispatcherFactory = dispatcherFactory;
@@ -50,8 +52,7 @@ namespace Naos.MessageBus.Hangfire.Console
                 return new HangfireDispatcher(realDispatcher);
             }
 
-            throw new DispatchException(
-                "Attempted to load type other than IDispatchMessages, type: " + jobType.FullName);
+            throw new DispatchException(Invariant($"Attempted to load type other than {nameof(IDispatchMessages)}, type: {jobType.FullName}"));
         }
     }
 }

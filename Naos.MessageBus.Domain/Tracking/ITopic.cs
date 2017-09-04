@@ -1,12 +1,14 @@
 // --------------------------------------------------------------------------------------------------------------------
 // <copyright file="ITopic.cs" company="Naos">
-//   Copyright 2015 Naos
+//    Copyright (c) Naos 2017. All rights reserved.
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
 namespace Naos.MessageBus.Domain
 {
     using System;
+
+    using OBeautifulCode.Math;
 
     /// <summary>
     /// Abstract representation of a data "Topic".
@@ -42,71 +44,43 @@ namespace Naos.MessageBus.Domain
             return this.Name;
         }
 
-        #region Equality
-
-        /// <inheritdoc />
-        public static bool operator ==(TopicBase keyObject1, TopicBase keyObject2)
+        /// <summary>
+        /// Equality operator.
+        /// </summary>
+        /// <param name="first">First parameter.</param>
+        /// <param name="second">Second parameter.</param>
+        /// <returns>A value indicating whether or not equal.</returns>
+        public static bool operator ==(TopicBase first, TopicBase second)
         {
-            // If both are null, or both are same instance, return true.
-            if (ReferenceEquals(keyObject1, keyObject2))
+            if (ReferenceEquals(first, second))
             {
                 return true;
             }
 
-            // If one is null, but not both, return false.
-            if (((object)keyObject1 == null) || ((object)keyObject2 == null))
+            if (ReferenceEquals(first, null) || ReferenceEquals(second, null))
             {
                 return false;
             }
 
-            return keyObject1.Equals(keyObject2);
+            return first.Name == second.Name;
         }
+
+        /// <summary>
+        /// Inequality operator.
+        /// </summary>
+        /// <param name="first">First parameter.</param>
+        /// <param name="second">Second parameter.</param>
+        /// <returns>A value indicating whether or not inequal.</returns>
+        public static bool operator !=(TopicBase first, TopicBase second) => !(first == second);
 
         /// <inheritdoc />
-        public static bool operator !=(TopicBase keyObject1, TopicBase keyObject2)
-        {
-            return !(keyObject1 == keyObject2);
-        }
+        public bool Equals(TopicBase other) => this == other;
 
         /// <inheritdoc />
-        public bool Equals(TopicBase other)
-        {
-            if (other == null)
-            {
-                return false;
-            }
-
-            var result = this.Name == other.Name;
-
-            return result;
-        }
+        public override bool Equals(object obj) => this == (obj as TopicBase);
 
         /// <inheritdoc />
-        public override bool Equals(object obj)
-        {
-            var keyObject = obj as TopicBase;
-            if (keyObject == null)
-            {
-                return false;
-            }
-
-            return this.Equals(keyObject);
-        }
-
-        /// <inheritdoc />
-        public override int GetHashCode()
-        {
-            unchecked
-            {
-                // ReSharper disable NonReadonlyMemberInGetHashCode
-                int hash = (int)2166136261;
-                hash = hash * 16777619 ^ this.Name.GetHashCode();
-                return hash;
-                // ReSharper restore NonReadonlyMemberInGetHashCode
-            }
-        }
-
-        #endregion
+        public override int GetHashCode() => HashCodeHelper.Initialize().Hash(this.Name).Value;
     }
 
     /// <summary>

@@ -1,6 +1,6 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
 // <copyright file="ChannelTests.cs" company="Naos">
-//   Copyright 2015 Naos
+//    Copyright (c) Naos 2017. All rights reserved.
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
@@ -15,10 +15,10 @@ namespace Naos.MessageBus.Test
 
     using Xunit;
 
-    public class ChannelTests
+    public static class ChannelTests
     {
         [Fact]
-        public void DisinctOnChannelCollection_Duplicates_ReturnsActualDistinct()
+        public static void DistinctOnChannelCollection_Duplicates_ReturnsActualDistinct()
         {
             // arrange
             var duplicateName = "HelloDolly";
@@ -33,7 +33,7 @@ namespace Naos.MessageBus.Test
         }
 
         [Fact]
-        public void CompareTo_NullInput_Throws()
+        public static void CompareTo_NullInput_Throws()
         {
             // arrange
             var first = new SimpleChannel("MonkeysRock");
@@ -44,7 +44,7 @@ namespace Naos.MessageBus.Test
         }
 
         [Fact]
-        public void CompareTo_SameName_Zero()
+        public static void CompareTo_SameName_Zero()
         {
             // arrange
             var name = "MonkeysRock";
@@ -59,7 +59,7 @@ namespace Naos.MessageBus.Test
         }
 
         [Fact]
-        public void CompareTo_DifferentNameHigh_NegativeOne()
+        public static void CompareTo_DifferentNameHigh_NegativeOne()
         {
             // arrange
             var first = new SimpleChannel("b");
@@ -73,7 +73,7 @@ namespace Naos.MessageBus.Test
         }
 
         [Fact]
-        public void CompareTo_DifferentNameLow_One()
+        public static void CompareTo_DifferentNameLow_One()
         {
             // arrange
             var first = new SimpleChannel("1");
@@ -87,7 +87,7 @@ namespace Naos.MessageBus.Test
         }
 
         [Fact]
-        public void InstanceEquals_AreNotEqual_False()
+        public static void InstanceEquals_AreNotEqual_False()
         {
             // arrange
             var first = new SimpleChannel("asdf");
@@ -101,7 +101,7 @@ namespace Naos.MessageBus.Test
         }
 
         [Fact]
-        public void InstanceEquals_AreEqual_True()
+        public static void InstanceEquals_AreEqual_True()
         {
             // arrange
             var name = "asdf2";
@@ -116,7 +116,7 @@ namespace Naos.MessageBus.Test
         }
 
         [Fact]
-        public void Equal_AreEqual()
+        public static void Equal_AreEqual()
         {
             var first = new SimpleChannel("channel1");
             var second = first;
@@ -130,7 +130,7 @@ namespace Naos.MessageBus.Test
         }
 
         [Fact]
-        public void NotEqualAreNotEqual_Id()
+        public static void NotEqualAreNotEqual_Id()
         {
             IChannel first = new SimpleChannel("channel1");
             IChannel second = new SimpleChannel("channel2");

@@ -1,6 +1,6 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
 // <copyright file="SendParcelMessageHandler.cs" company="Naos">
-//   Copyright 2015 Naos
+//    Copyright (c) Naos 2017. All rights reserved.
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
@@ -22,7 +22,7 @@ namespace Naos.MessageBus.Core
                 throw new ArgumentException("No parcel provided to send.");
             }
 
-            var postOffice = HandlerToolShed.GetPostOffice();
+            var postOffice = HandlerToolshed.GetPostOffice();
             await this.HandleAsync(message, postOffice);
         }
 

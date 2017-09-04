@@ -1,6 +1,6 @@
 // --------------------------------------------------------------------------------------------------------------------
 // <copyright file="IChannel.cs" company="Naos">
-//   Copyright 2015 Naos
+//    Copyright (c) Naos 2017. All rights reserved.
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
@@ -10,9 +10,12 @@ namespace Naos.MessageBus.Domain
     using System.Collections.Generic;
     using System.ComponentModel;
 
+    using OBeautifulCode.Math;
+
     /// <summary>
     /// Abstract representation of a "Channel" to send messages to.
     /// </summary>
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1040:AvoidEmptyInterfaces", Justification = "Keeping for extension and reflection.")]
     [Bindable(BindableSupport.Default)]
     public interface IChannel : IEquatable<IChannel>
     {
@@ -68,30 +71,75 @@ namespace Naos.MessageBus.Domain
             return string.Compare(this.Name, other.Name, StringComparison.CurrentCultureIgnoreCase);
         }
 
-        #region Equality
-
-        /// <inheritdoc />
-        public static bool operator ==(SimpleChannel keyObject1, SimpleChannel keyObject2)
+        /// <summary>
+        /// Equality operator.
+        /// </summary>
+        /// <param name="first">First parameter.</param>
+        /// <param name="second">Second parameter.</param>
+        /// <returns>A value indicating whether or not equal.</returns>
+        public static bool operator ==(SimpleChannel first, SimpleChannel second)
         {
             // If both are null, or both are same instance, return true.
-            if (ReferenceEquals(keyObject1, keyObject2))
+            if (ReferenceEquals(first, second))
             {
                 return true;
             }
 
             // If one is null, but not both, return false.
-            if (((object)keyObject1 == null) || ((object)keyObject2 == null))
+            if (((object)first == null) || ((object)second == null))
             {
                 return false;
             }
 
-            return keyObject1.Equals(keyObject2);
+            return first.Equals(second);
         }
 
-        /// <inheritdoc />
-        public static bool operator !=(SimpleChannel keyObject1, SimpleChannel keyObject2)
+        /// <summary>
+        /// Inequality operator.
+        /// </summary>
+        /// <param name="first">First parameter.</param>
+        /// <param name="second">Second parameter.</param>
+        /// <returns>A value indicating whether or not inequal.</returns>
+        public static bool operator !=(SimpleChannel first, SimpleChannel second)
         {
-            return !(keyObject1 == keyObject2);
+            return !(first == second);
+        }
+
+        /// <summary>
+        /// Less than operator.
+        /// </summary>
+        /// <param name="left">Left parameter.</param>
+        /// <param name="right">Right parameter.</param>
+        /// <returns>A value indicating less than.</returns>
+        public static bool operator <(SimpleChannel left, SimpleChannel right)
+        {
+            return Compare(left, right) < 0;
+        }
+
+        /// <summary>
+        /// Greater than operator.
+        /// </summary>
+        /// <param name="left">Left parameter.</param>
+        /// <param name="right">Right parameter.</param>
+        /// <returns>A value indicating greater than.</returns>
+        public static bool operator >(SimpleChannel left, SimpleChannel right)
+        {
+            return Compare(left, right) > 0;
+        }
+
+        private static int Compare(SimpleChannel left, SimpleChannel right)
+        {
+            if (object.ReferenceEquals(left, right))
+            {
+                return 0;
+            }
+
+            if (object.ReferenceEquals(left, null))
+            {
+                return -1;
+            }
+
+            return left.CompareTo(right);
         }
 
         /// <inheritdoc />
@@ -126,17 +174,7 @@ namespace Naos.MessageBus.Domain
         }
 
         /// <inheritdoc />
-        public override int GetHashCode()
-        {
-            unchecked
-            {
-                // ReSharper disable NonReadonlyMemberInGetHashCode
-                int hash = (int)2166136261;
-                hash = hash * 16777619 ^ (this.Name ?? string.Empty).GetHashCode();
-                return hash;
-                // ReSharper restore NonReadonlyMemberInGetHashCode
-            }
-        }
+        public override int GetHashCode() => HashCodeHelper.Initialize().Hash(this?.Name).Value;
 
         /// <inheritdoc />
         public bool Equals(SimpleChannel x, SimpleChannel y)
@@ -149,7 +187,5 @@ namespace Naos.MessageBus.Domain
         {
             return obj.GetHashCode();
         }
-
-        #endregion
     }
 }

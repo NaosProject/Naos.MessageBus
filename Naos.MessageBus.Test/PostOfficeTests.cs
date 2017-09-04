@@ -1,6 +1,6 @@
 // --------------------------------------------------------------------------------------------------------------------
 // <copyright file="PostOfficeTests.cs" company="Naos">
-//   Copyright 2015 Naos
+//    Copyright (c) Naos 2017. All rights reserved.
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
@@ -19,7 +19,7 @@ namespace Naos.MessageBus.Test
 
     using Xunit;
 
-    public class PostOfficeTests
+    public static class PostOfficeTests
     {
         [Fact]
         public static void Send_Message_AddsSequenceId()
@@ -69,14 +69,14 @@ namespace Naos.MessageBus.Test
         }
 
         [Fact]
-        public static void SendRecurringParcelWithImpactedTopicAndNoDependantTopics_InjectsMessages()
+        public static void SendRecurringParcelWithImpactedTopicAndNoDependentTopics_InjectsMessages()
         {
             // arrange
             var trackingCalls = new List<string>();
             var trackingSends = new List<Parcel>();
             var postOffice = Factory.GetInMemoryParcelTrackingSystemBackedPostOffice(trackingCalls, trackingSends);
 
-            var myTopic = "me";
+            var sampleTopic = "me";
             var name = "Something";
             var schedule = new DailyScheduleInUtc();
             var channel = new SimpleChannel("something");
@@ -87,7 +87,7 @@ namespace Naos.MessageBus.Test
                 channel,
                 schedule,
                 name,
-                new AffectedTopic(myTopic),
+                new AffectedTopic(sampleTopic),
                 null,
                 TopicCheckStrategy.Any,
                 SimultaneousRunsStrategy.AbortSubsequentRunsWhenOneIsRunning);
@@ -102,17 +102,17 @@ namespace Naos.MessageBus.Test
             // abort if pending
             var indexFetch = 0;
             parcel.Envelopes.Skip(indexFetch).First().MessageType.Should().Be(typeof(FetchAndShareLatestTopicStatusReportsMessage).ToTypeDescription());
-            parcel.Envelopes.Skip(indexFetch).First().MessageAsJson.FromJson<FetchAndShareLatestTopicStatusReportsMessage>().TopicsToFetchAndShareStatusReportsFrom.Single().Name.Should().Be(myTopic);
+            parcel.Envelopes.Skip(indexFetch).First().MessageAsJson.FromJson<FetchAndShareLatestTopicStatusReportsMessage>().TopicsToFetchAndShareStatusReportsFrom.Single().Name.Should().Be(sampleTopic);
 
             // abort if pending
             var indexAbort = 1;
             parcel.Envelopes.Skip(indexAbort).First().MessageType.Should().Be(typeof(AbortIfTopicsHaveSpecificStatusesMessage).ToTypeDescription());
-            parcel.Envelopes.Skip(indexAbort).First().MessageAsJson.FromJson<AbortIfTopicsHaveSpecificStatusesMessage>().TopicsToCheck.Single().Name.Should().Be(myTopic);
+            parcel.Envelopes.Skip(indexAbort).First().MessageAsJson.FromJson<AbortIfTopicsHaveSpecificStatusesMessage>().TopicsToCheck.Single().Name.Should().Be(sampleTopic);
 
             // being affected
             var indexBeing = 2;
             parcel.Envelopes.Skip(indexBeing).First().MessageType.Should().Be(typeof(TopicBeingAffectedMessage).ToTypeDescription());
-            parcel.Envelopes.Skip(indexBeing).First().MessageAsJson.FromJson<TopicBeingAffectedMessage>().Topic.Name.Should().Be(myTopic);
+            parcel.Envelopes.Skip(indexBeing).First().MessageAsJson.FromJson<TopicBeingAffectedMessage>().Topic.Name.Should().Be(sampleTopic);
 
             // mine
             var indexMine = 3;
@@ -122,11 +122,11 @@ namespace Naos.MessageBus.Test
             // was affected
             var indexWas = 4;
             parcel.Envelopes.Skip(indexWas).First().MessageType.Should().Be(typeof(TopicWasAffectedMessage).ToTypeDescription());
-            parcel.Envelopes.Skip(indexWas).First().MessageAsJson.FromJson<TopicWasAffectedMessage>().Topic.Name.Should().Be(myTopic);
+            parcel.Envelopes.Skip(indexWas).First().MessageAsJson.FromJson<TopicWasAffectedMessage>().Topic.Name.Should().Be(sampleTopic);
         }
 
         [Fact]
-        public static void SendRerringWithChannelEqualNullGetsSetToNullChannel()
+        public static void SendRecurringWithChannelEqualNullGetsSetToNullChannel()
         {
             // arrange
             var trackingCalls = new List<string>();
@@ -152,13 +152,13 @@ namespace Naos.MessageBus.Test
         }
 
         [Fact]
-        public static void SendRecurringParcelWithImpactedTopicAndDependantTopics_InjectsMessages()
+        public static void SendRecurringParcelWithImpactedTopicAndDependentTopics_InjectsMessages()
         {
             // arrange
             var trackingCalls = new List<string>();
             var trackingSends = new List<Parcel>();
             var postOffice = Factory.GetInMemoryParcelTrackingSystemBackedPostOffice(trackingCalls, trackingSends);
-            var myTopic = "me";
+            var sampleTopic = "me";
             var name = "Something";
             var schedule = new DailyScheduleInUtc();
             var channel = new SimpleChannel("something");
@@ -170,7 +170,7 @@ namespace Naos.MessageBus.Test
                 channel,
                 schedule,
                 name,
-                new AffectedTopic(myTopic),
+                new AffectedTopic(sampleTopic),
                 dependantTopics,
                 TopicCheckStrategy.Any,
                 SimultaneousRunsStrategy.AbortSubsequentRunsWhenOneIsRunning);
@@ -187,23 +187,23 @@ namespace Naos.MessageBus.Test
             parcel.Envelopes.Skip(indexFetch).First().MessageType.Should().Be(typeof(FetchAndShareLatestTopicStatusReportsMessage).ToTypeDescription());
             parcel.Envelopes.Skip(indexFetch).First().MessageAsJson.FromJson<FetchAndShareLatestTopicStatusReportsMessage>()
                 .TopicsToFetchAndShareStatusReportsFrom.ShouldAllBeEquivalentTo(
-                    dependantTopics.Select(_ => _.ToNamedTopic()).Union(new[] { new NamedTopic(myTopic) }).ToArray());
+                    dependantTopics.Select(_ => _.ToNamedTopic()).Union(new[] { new NamedTopic(sampleTopic) }).ToArray());
 
             // abort if pending
             var indexAbort = 1;
             parcel.Envelopes.Skip(indexAbort).First().MessageType.Should().Be(typeof(AbortIfTopicsHaveSpecificStatusesMessage).ToTypeDescription());
-            parcel.Envelopes.Skip(indexAbort).First().MessageAsJson.FromJson<AbortIfTopicsHaveSpecificStatusesMessage>().TopicsToCheck.Single().Name.Should().Be(myTopic);
+            parcel.Envelopes.Skip(indexAbort).First().MessageAsJson.FromJson<AbortIfTopicsHaveSpecificStatusesMessage>().TopicsToCheck.Single().Name.Should().Be(sampleTopic);
 
             // abort if no new
             var indexNoNewAbort = 2;
             parcel.Envelopes.Skip(indexNoNewAbort).First().MessageType.Should().Be(typeof(AbortIfNoDependencyTopicsAffectedMessage).ToTypeDescription());
-            parcel.Envelopes.Skip(indexNoNewAbort).First().MessageAsJson.FromJson<AbortIfNoDependencyTopicsAffectedMessage>().Topic.Name.Should().Be(myTopic);
+            parcel.Envelopes.Skip(indexNoNewAbort).First().MessageAsJson.FromJson<AbortIfNoDependencyTopicsAffectedMessage>().Topic.Name.Should().Be(sampleTopic);
             parcel.Envelopes.Skip(indexNoNewAbort).First().MessageAsJson.FromJson<AbortIfNoDependencyTopicsAffectedMessage>().DependencyTopics.ShouldBeEquivalentTo(dependantTopics);
 
             // being affected
             var indexBeing = 3;
             parcel.Envelopes.Skip(indexBeing).First().MessageType.Should().Be(typeof(TopicBeingAffectedMessage).ToTypeDescription());
-            parcel.Envelopes.Skip(indexBeing).First().MessageAsJson.FromJson<TopicBeingAffectedMessage>().Topic.Name.Should().Be(myTopic);
+            parcel.Envelopes.Skip(indexBeing).First().MessageAsJson.FromJson<TopicBeingAffectedMessage>().Topic.Name.Should().Be(sampleTopic);
 
             // mine
             var indexMine = 4;
@@ -213,18 +213,18 @@ namespace Naos.MessageBus.Test
             // was affected
             var indexWas = 5;
             parcel.Envelopes.Skip(indexWas).First().MessageType.Should().Be(typeof(TopicWasAffectedMessage).ToTypeDescription());
-            parcel.Envelopes.Skip(indexWas).First().MessageAsJson.FromJson<TopicWasAffectedMessage>().Topic.Name.Should().Be(myTopic);
+            parcel.Envelopes.Skip(indexWas).First().MessageAsJson.FromJson<TopicWasAffectedMessage>().Topic.Name.Should().Be(sampleTopic);
         }
 
         [Fact]
-        public static void SendRecurringParcelWithImpactedTopicAndNoDependantTopicsAndAffectedMessages_InjectsMessagesButDoesntDuplicate()
+        public static void SendRecurringParcelWithImpactedTopicAndNoDependentTopicsAndAffectedMessages_InjectsMessagesButDoesNotDuplicate()
         {
             // arrange
             var trackingCalls = new List<string>();
             var trackingSends = new List<Parcel>();
             var postOffice = Factory.GetInMemoryParcelTrackingSystemBackedPostOffice(trackingCalls, trackingSends);
 
-            var myTopic = "me";
+            var sampleTopic = "me";
             var name = "Something";
             var schedule = new DailyScheduleInUtc();
             var channel = new SimpleChannel("something");
@@ -235,13 +235,13 @@ namespace Naos.MessageBus.Test
                                        Id = Guid.NewGuid(),
                                        DependencyTopics = null,
                                        Name = name,
-                                       Topic = new AffectedTopic(myTopic),
+                                       Topic = new AffectedTopic(sampleTopic),
                                        Envelopes =
                                            new[]
                                                {
-                                                   new TopicBeingAffectedMessage { Topic = new AffectedTopic(myTopic) }.ToAddressedMessage(channel).ToEnvelope(),
+                                                   new TopicBeingAffectedMessage { Topic = new AffectedTopic(sampleTopic) }.ToAddressedMessage(channel).ToEnvelope(),
                                                    new NullMessage().ToAddressedMessage(channel).ToEnvelope(),
-                                                   new TopicWasAffectedMessage() { Topic = new AffectedTopic(myTopic) }.ToAddressedMessage(channel).ToEnvelope(),
+                                                   new TopicWasAffectedMessage() { Topic = new AffectedTopic(sampleTopic) }.ToAddressedMessage(channel).ToEnvelope(),
                                                }
                                    };
 
@@ -258,17 +258,17 @@ namespace Naos.MessageBus.Test
             // abort if pending
             var indexFetch = 0;
             parcel.Envelopes.Skip(indexFetch).First().MessageType.Should().Be(typeof(FetchAndShareLatestTopicStatusReportsMessage).ToTypeDescription());
-            parcel.Envelopes.Skip(indexFetch).First().MessageAsJson.FromJson<FetchAndShareLatestTopicStatusReportsMessage>().TopicsToFetchAndShareStatusReportsFrom.Single().Name.Should().Be(myTopic);
+            parcel.Envelopes.Skip(indexFetch).First().MessageAsJson.FromJson<FetchAndShareLatestTopicStatusReportsMessage>().TopicsToFetchAndShareStatusReportsFrom.Single().Name.Should().Be(sampleTopic);
 
             // abort if pending
             var indexAbort = 1;
             parcel.Envelopes.Skip(indexAbort).First().MessageType.Should().Be(typeof(AbortIfTopicsHaveSpecificStatusesMessage).ToTypeDescription());
-            parcel.Envelopes.Skip(indexAbort).First().MessageAsJson.FromJson<AbortIfTopicsHaveSpecificStatusesMessage>().TopicsToCheck.Single().Name.Should().Be(myTopic);
+            parcel.Envelopes.Skip(indexAbort).First().MessageAsJson.FromJson<AbortIfTopicsHaveSpecificStatusesMessage>().TopicsToCheck.Single().Name.Should().Be(sampleTopic);
 
             // being affected
             var indexBeing = 2;
             parcel.Envelopes.Skip(indexBeing).First().MessageType.Should().Be(typeof(TopicBeingAffectedMessage).ToTypeDescription());
-            parcel.Envelopes.Skip(indexBeing).First().MessageAsJson.FromJson<TopicBeingAffectedMessage>().Topic.Name.Should().Be(myTopic);
+            parcel.Envelopes.Skip(indexBeing).First().MessageAsJson.FromJson<TopicBeingAffectedMessage>().Topic.Name.Should().Be(sampleTopic);
 
             // mine
             var indexMine = 3;
@@ -278,18 +278,18 @@ namespace Naos.MessageBus.Test
             // was affected
             var indexWas = 4;
             parcel.Envelopes.Skip(indexWas).First().MessageType.Should().Be(typeof(TopicWasAffectedMessage).ToTypeDescription());
-            parcel.Envelopes.Skip(indexWas).First().MessageAsJson.FromJson<TopicWasAffectedMessage>().Topic.Name.Should().Be(myTopic);
+            parcel.Envelopes.Skip(indexWas).First().MessageAsJson.FromJson<TopicWasAffectedMessage>().Topic.Name.Should().Be(sampleTopic);
         }
 
         [Fact]
-        public static void SendRecurringParcelWithImpactedTopicAndNoDependantTopicsAndAffectedMessages_InjectsMessagesButDoesntDuplicateOrChangeOrder()
+        public static void SendRecurringParcelWithImpactedTopicAndNoDependentTopicsAndAffectedMessages_InjectsMessagesButDoesNotDuplicateOrChangeOrder()
         {
             // arrange
             var trackingCalls = new List<string>();
             var trackingSends = new List<Parcel>();
             var postOffice = Factory.GetInMemoryParcelTrackingSystemBackedPostOffice(trackingCalls, trackingSends);
 
-            var myTopic = "me";
+            var sampleTopic = "me";
             var name = "Something";
             var schedule = new DailyScheduleInUtc();
             var channel = new SimpleChannel("something");
@@ -300,13 +300,13 @@ namespace Naos.MessageBus.Test
                                        Id = Guid.NewGuid(),
                                        DependencyTopics = null,
                                        Name = name,
-                                       Topic = new AffectedTopic(myTopic),
+                                       Topic = new AffectedTopic(sampleTopic),
                                        Envelopes =
                                            new[]
                                                {
                                                    new NullMessage().ToAddressedMessage(channel).ToEnvelope(),
-                                                   new TopicBeingAffectedMessage { Topic = new AffectedTopic(myTopic) }.ToAddressedMessage(channel).ToEnvelope(),
-                                                   new TopicWasAffectedMessage() { Topic = new AffectedTopic(myTopic) }.ToAddressedMessage(channel).ToEnvelope(),
+                                                   new TopicBeingAffectedMessage { Topic = new AffectedTopic(sampleTopic) }.ToAddressedMessage(channel).ToEnvelope(),
+                                                   new TopicWasAffectedMessage() { Topic = new AffectedTopic(sampleTopic) }.ToAddressedMessage(channel).ToEnvelope(),
                                                    new NullMessage().ToAddressedMessage(channel).ToEnvelope(),
                                                }
             };
@@ -324,12 +324,12 @@ namespace Naos.MessageBus.Test
             // abort if pending
             var indexFetch = 0;
             parcel.Envelopes.Skip(indexFetch).First().MessageType.Should().Be(typeof(FetchAndShareLatestTopicStatusReportsMessage).ToTypeDescription());
-            parcel.Envelopes.Skip(indexFetch).First().MessageAsJson.FromJson<FetchAndShareLatestTopicStatusReportsMessage>().TopicsToFetchAndShareStatusReportsFrom.Single().Name.Should().Be(myTopic);
+            parcel.Envelopes.Skip(indexFetch).First().MessageAsJson.FromJson<FetchAndShareLatestTopicStatusReportsMessage>().TopicsToFetchAndShareStatusReportsFrom.Single().Name.Should().Be(sampleTopic);
 
             // abort if pending
             var indexAbort = 1;
             parcel.Envelopes.Skip(indexAbort).First().MessageType.Should().Be(typeof(AbortIfTopicsHaveSpecificStatusesMessage).ToTypeDescription());
-            parcel.Envelopes.Skip(indexAbort).First().MessageAsJson.FromJson<AbortIfTopicsHaveSpecificStatusesMessage>().TopicsToCheck.Single().Name.Should().Be(myTopic);
+            parcel.Envelopes.Skip(indexAbort).First().MessageAsJson.FromJson<AbortIfTopicsHaveSpecificStatusesMessage>().TopicsToCheck.Single().Name.Should().Be(sampleTopic);
 
             // mine
             var indexMine = 2;
@@ -339,12 +339,12 @@ namespace Naos.MessageBus.Test
             // being affected
             var indexBeing = 3;
             parcel.Envelopes.Skip(indexBeing).First().MessageType.Should().Be(typeof(TopicBeingAffectedMessage).ToTypeDescription());
-            parcel.Envelopes.Skip(indexBeing).First().MessageAsJson.FromJson<TopicBeingAffectedMessage>().Topic.Name.Should().Be(myTopic);
+            parcel.Envelopes.Skip(indexBeing).First().MessageAsJson.FromJson<TopicBeingAffectedMessage>().Topic.Name.Should().Be(sampleTopic);
 
             // was affected
             var indexWas = 4;
             parcel.Envelopes.Skip(indexWas).First().MessageType.Should().Be(typeof(TopicWasAffectedMessage).ToTypeDescription());
-            parcel.Envelopes.Skip(indexWas).First().MessageAsJson.FromJson<TopicWasAffectedMessage>().Topic.Name.Should().Be(myTopic);
+            parcel.Envelopes.Skip(indexWas).First().MessageAsJson.FromJson<TopicWasAffectedMessage>().Topic.Name.Should().Be(sampleTopic);
 
             // mine
             var indexLast = 5;
@@ -360,7 +360,7 @@ namespace Naos.MessageBus.Test
             var trackingSends = new List<Parcel>();
             var postOffice = Factory.GetInMemoryParcelTrackingSystemBackedPostOffice(trackingCalls, trackingSends);
 
-            var myTopic = "me";
+            var sampleTopic = "me";
             var name = "Something";
             var schedule = new DailyScheduleInUtc();
             var channel = new SimpleChannel("something");
@@ -376,7 +376,7 @@ namespace Naos.MessageBus.Test
                                            new[]
                                                {
                                                    new NullMessage().ToAddressedMessage(channel).ToEnvelope(),
-                                                   new TopicBeingAffectedMessage { Topic = new AffectedTopic(myTopic) }.ToAddressedMessage(channel).ToEnvelope(),
+                                                   new TopicBeingAffectedMessage { Topic = new AffectedTopic(sampleTopic) }.ToAddressedMessage(channel).ToEnvelope(),
                                                    new NullMessage().ToAddressedMessage(channel).ToEnvelope(),
                                                }
                                    };
@@ -395,7 +395,7 @@ namespace Naos.MessageBus.Test
             var trackingSends = new List<Parcel>();
             var postOffice = Factory.GetInMemoryParcelTrackingSystemBackedPostOffice(trackingCalls, trackingSends);
 
-            var myTopic = "me";
+            var sampleTopic = "me";
             var name = "Something";
             var schedule = new DailyScheduleInUtc();
             var channel = new SimpleChannel("something");
@@ -411,7 +411,7 @@ namespace Naos.MessageBus.Test
                                            new[]
                                                {
                                                    new NullMessage().ToAddressedMessage(channel).ToEnvelope(),
-                                                   new TopicWasAffectedMessage() { Topic = new AffectedTopic(myTopic) }.ToAddressedMessage(channel).ToEnvelope(),
+                                                   new TopicWasAffectedMessage() { Topic = new AffectedTopic(sampleTopic) }.ToAddressedMessage(channel).ToEnvelope(),
                                                    new NullMessage().ToAddressedMessage(channel).ToEnvelope(),
                                                }
                                    };
@@ -430,7 +430,7 @@ namespace Naos.MessageBus.Test
             var trackingSends = new List<Parcel>();
             var postOffice = Factory.GetInMemoryParcelTrackingSystemBackedPostOffice(trackingCalls, trackingSends);
 
-            var myTopic = "me";
+            var sampleTopic = "me";
             var name = "Something";
             var schedule = new DailyScheduleInUtc();
             var channel = new SimpleChannel("something");
@@ -439,16 +439,16 @@ namespace Naos.MessageBus.Test
                                        DependencyTopicCheckStrategy = TopicCheckStrategy.Any,
                                        SimultaneousRunsStrategy = SimultaneousRunsStrategy.AbortSubsequentRunsWhenOneIsRunning,
                                        Id = Guid.NewGuid(),
-                                       Topic = new AffectedTopic(myTopic),
+                                       Topic = new AffectedTopic(sampleTopic),
                                        DependencyTopics = null,
                                        Name = name,
                                        Envelopes =
                                            new[]
                                                {
                                                    new NullMessage().ToAddressedMessage(channel).ToEnvelope(),
-                                                   new TopicBeingAffectedMessage { Topic = new AffectedTopic(myTopic) }.ToAddressedMessage(channel).ToEnvelope(),
-                                                   new TopicBeingAffectedMessage { Topic = new AffectedTopic(myTopic) }.ToAddressedMessage(channel).ToEnvelope(),
-                                                   new TopicWasAffectedMessage() { Topic = new AffectedTopic(myTopic) }.ToAddressedMessage(channel).ToEnvelope(),
+                                                   new TopicBeingAffectedMessage { Topic = new AffectedTopic(sampleTopic) }.ToAddressedMessage(channel).ToEnvelope(),
+                                                   new TopicBeingAffectedMessage { Topic = new AffectedTopic(sampleTopic) }.ToAddressedMessage(channel).ToEnvelope(),
+                                                   new TopicWasAffectedMessage() { Topic = new AffectedTopic(sampleTopic) }.ToAddressedMessage(channel).ToEnvelope(),
                                                    new NullMessage().ToAddressedMessage(channel).ToEnvelope(),
                                                }
                                    };
@@ -467,7 +467,7 @@ namespace Naos.MessageBus.Test
             var trackingSends = new List<Parcel>();
             var postOffice = Factory.GetInMemoryParcelTrackingSystemBackedPostOffice(trackingCalls, trackingSends);
 
-            var myTopic = "me";
+            var sampleTopic = "me";
             var name = "Something";
             var schedule = new DailyScheduleInUtc();
             var channel = new SimpleChannel("something");
@@ -476,16 +476,16 @@ namespace Naos.MessageBus.Test
                                        DependencyTopicCheckStrategy = TopicCheckStrategy.Any,
                                        SimultaneousRunsStrategy = SimultaneousRunsStrategy.AbortSubsequentRunsWhenOneIsRunning,
                                        Id = Guid.NewGuid(),
-                                       Topic = new AffectedTopic(myTopic),
+                                       Topic = new AffectedTopic(sampleTopic),
                                        DependencyTopics = null,
                                        Name = name,
                                        Envelopes =
                                            new[]
                                                {
                                                    new NullMessage().ToAddressedMessage(channel).ToEnvelope(),
-                                                   new TopicBeingAffectedMessage { Topic = new AffectedTopic(myTopic) }.ToAddressedMessage(channel).ToEnvelope(),
-                                                   new TopicWasAffectedMessage() { Topic = new AffectedTopic(myTopic) }.ToAddressedMessage(channel).ToEnvelope(),
-                                                   new TopicWasAffectedMessage() { Topic = new AffectedTopic(myTopic) }.ToAddressedMessage(channel).ToEnvelope(),
+                                                   new TopicBeingAffectedMessage { Topic = new AffectedTopic(sampleTopic) }.ToAddressedMessage(channel).ToEnvelope(),
+                                                   new TopicWasAffectedMessage() { Topic = new AffectedTopic(sampleTopic) }.ToAddressedMessage(channel).ToEnvelope(),
+                                                   new TopicWasAffectedMessage() { Topic = new AffectedTopic(sampleTopic) }.ToAddressedMessage(channel).ToEnvelope(),
                                                    new NullMessage().ToAddressedMessage(channel).ToEnvelope(),
                                                }
                                    };
@@ -504,7 +504,7 @@ namespace Naos.MessageBus.Test
             var trackingSends = new List<Parcel>();
             var postOffice = Factory.GetInMemoryParcelTrackingSystemBackedPostOffice(trackingCalls, trackingSends);
 
-            var myTopic = "me";
+            var sampleTopic = "me";
             var name = "Something";
             var schedule = new DailyScheduleInUtc();
             var channel = new SimpleChannel("something");
@@ -514,14 +514,14 @@ namespace Naos.MessageBus.Test
                                        SimultaneousRunsStrategy = SimultaneousRunsStrategy.AbortSubsequentRunsWhenOneIsRunning,
                                        Id = Guid.NewGuid(),
                                        DependencyTopics = null,
-                                       Topic = new AffectedTopic(myTopic),
+                                       Topic = new AffectedTopic(sampleTopic),
                                        Name = name,
                                        Envelopes =
                                            new[]
                                                {
                                                    new NullMessage().ToAddressedMessage(channel).ToEnvelope(),
-                                                   new TopicWasAffectedMessage() { Topic = new AffectedTopic(myTopic) }.ToAddressedMessage(channel).ToEnvelope(),
-                                                   new TopicBeingAffectedMessage { Topic = new AffectedTopic(myTopic) }.ToAddressedMessage(channel).ToEnvelope(),
+                                                   new TopicWasAffectedMessage() { Topic = new AffectedTopic(sampleTopic) }.ToAddressedMessage(channel).ToEnvelope(),
+                                                   new TopicBeingAffectedMessage { Topic = new AffectedTopic(sampleTopic) }.ToAddressedMessage(channel).ToEnvelope(),
                                                    new NullMessage().ToAddressedMessage(channel).ToEnvelope(),
                                                }
                                    };

@@ -1,6 +1,6 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
 // <copyright file="Shipment.cs" company="Naos">
-//   Copyright 2015 Naos
+//    Copyright (c) Naos 2017. All rights reserved.
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
@@ -29,7 +29,7 @@ namespace Naos.MessageBus.Persistence
         {
         }
 
-        /// <summary>   
+        /// <summary>
         /// Initializes a new instance of the <see cref="Shipment"/> class.
         /// </summary>
         /// <param name="id">The security unique identifier.</param>
@@ -42,7 +42,8 @@ namespace Naos.MessageBus.Persistence
         /// Initializes a new instance of the <see cref="Shipment"/> class.
         /// </summary>
         /// <param name="create">Constructor command to create the new shipment.</param>
-        public Shipment(Create create) : base(create)
+        public Shipment(Create create)
+            : base(create)
         {
         }
 

@@ -1,6 +1,6 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
 // <copyright file="SendParcelMessageHandlerTest.cs" company="Naos">
-//   Copyright 2015 Naos
+//    Copyright (c) Naos 2017. All rights reserved.
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
@@ -18,10 +18,10 @@ namespace Naos.MessageBus.Test
 
     using Xunit;
 
-    public class SendParcelMessageHandlerTest
+    public static class SendParcelMessageHandlerTest
     {
         [Fact]
-        public void HandleAsync__NullParcel__Throws()
+        public static void HandleAsync__NullParcel__Throws()
         {
             // arrange
             var message = new SendParcelMessage();
@@ -33,7 +33,7 @@ namespace Naos.MessageBus.Test
         }
 
         [Fact]
-        public void HandleAsync__ValidParcelProvided__ParcelIsSent()
+        public static void HandleAsync__ValidParcelProvided__ParcelIsSent()
         {
             // arrange
             var parcel = new Parcel
@@ -59,7 +59,7 @@ namespace Naos.MessageBus.Test
         }
 
         [Fact]
-        public void HandleAsync__ValidParcelProvided__TrackingCodeIsShared()
+        public static void HandleAsync__ValidParcelProvided__TrackingCodeIsShared()
         {
             // arrange
             var parcel = new Parcel

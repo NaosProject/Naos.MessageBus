@@ -1,6 +1,6 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
 // <copyright file="MessageDispatcherTest.cs" company="Naos">
-//   Copyright 2015 Naos
+//    Copyright (c) Naos 2017. All rights reserved.
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
@@ -9,12 +9,9 @@ namespace Naos.MessageBus.Test
     using System;
     using System.Collections.Concurrent;
     using System.Collections.Generic;
-    using System.ComponentModel;
     using System.Linq;
     using System.Threading;
     using System.Threading.Tasks;
-
-    using FakeItEasy;
 
     using FluentAssertions;
 
@@ -26,7 +23,9 @@ namespace Naos.MessageBus.Test
 
     using Xunit;
 
-    public class MessageDispatcherTest
+    using static System.FormattableString;
+
+    public static class MessageDispatcherTest
     {
         [Fact]
         public static void Dispatch_ParcelWithSharesThatMatchEnum_FullTrip()
@@ -289,7 +288,7 @@ namespace Naos.MessageBus.Test
         }
 
         [Fact]
-        public static void Dispatch_DispatchingMethodToWrongChannelNamespaceNameMatch_ReSends()
+        public static void Dispatch_DispatchingMethodToWrongChannelNamespaceNameMatch_Resends()
         {
             var handlerInterfaceToImplementationTypeMap = new Dictionary<Type, Type> { { typeof(IHandleMessages<NullMessage>), typeof(NullMessageHandler) } };
 
@@ -319,8 +318,9 @@ namespace Naos.MessageBus.Test
             Assert.Equal(1, trackingSends.Count);
         }
 
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1702:CompoundWordsShouldBeCasedCorrectly", MessageId = "AndRe", Justification = "Spelling/name is correct.")]
         [Fact]
-        public static void Dispatch_DispatchingMethodWithAbortAndResend_TracksAddressedThenAbortAndReSends()
+        public static void Dispatch_DispatchingMethodWithAbortAndResend_TracksAddressedThenAbortAndResends()
         {
             // skipping on appveyor because it hangs...
             if (true.ToString().Equals(Environment.GetEnvironmentVariable("APPVEYOR")))
@@ -420,6 +420,7 @@ namespace Naos.MessageBus.Test
             trackingCalls.Should().BeEquivalentTo(nameof(IParcelTrackingSystem.UpdateAttemptingAsync), nameof(IParcelTrackingSystem.UpdateAbortedAsync));
         }
 
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2201:DoNotRaiseReservedExceptionTypes", Justification = "Keeping this way for now.")]
         [Fact]
         public static void Dispatch_DispatchingMethodWithException_TracksAddressedThenRejectedAndThrows()
         {
@@ -506,7 +507,7 @@ namespace Naos.MessageBus.Test
         }
 
         [Fact]
-        public static void Dispatch_DispatchingMethodWithRecurringHeaderMessage_ReSendsWithoutTracking()
+        public static void Dispatch_DispatchingMethodWithRecurringHeaderMessage_ResendsWithoutTracking()
         {
             var handlerInterfaceToImplementationTypeMap = new Dictionary<Type, Type> { { typeof(IHandleMessages<NullMessage>), typeof(NullMessageHandler) } };
 
@@ -545,7 +546,7 @@ namespace Naos.MessageBus.Test
         }
 
         [Fact]
-        public static void Dispatch_DispatchingMethodToWrongChannelAssemblyQualifiedMatch_ReSends()
+        public static void Dispatch_DispatchingMethodToWrongChannelAssemblyQualifiedMatch_Resends()
         {
             var handlerInterfaceToImplementationTypeMap = new Dictionary<Type, Type> { { typeof(IHandleMessages<NullMessage>), typeof(NullMessageHandler) } };
 
@@ -610,7 +611,7 @@ namespace Naos.MessageBus.Test
                             .Dispatch("Name", trackingCode, new Parcel { Envelopes = new[] { new Envelope(null, null, channel, null, null) } }, channel);
                     };
 
-            testCode.ShouldThrow<DispatchException>().WithMessage($"Message type not specified in envelope; {trackingCode}");
+            testCode.ShouldThrow<DispatchException>().WithMessage(Invariant($"Message type not specified in envelope; {trackingCode}"));
         }
 
         [Fact]
@@ -642,7 +643,7 @@ namespace Naos.MessageBus.Test
                                 channel);
                     };
 
-            testCode.ShouldThrow<DispatchException>().WithMessage($"Message type not specified in envelope; {trackingCode}");
+            testCode.ShouldThrow<DispatchException>().WithMessage(Invariant($"Message type not specified in envelope; {trackingCode}"));
         }
 
         [Fact]
@@ -674,7 +675,7 @@ namespace Naos.MessageBus.Test
                                 channel);
                     };
 
-            testCode.ShouldThrow<DispatchException>().WithMessage($"Message type not specified in envelope; {trackingCode}");
+            testCode.ShouldThrow<DispatchException>().WithMessage(Invariant($"Message type not specified in envelope; {trackingCode}"));
         }
 
         [Fact]
@@ -706,7 +707,7 @@ namespace Naos.MessageBus.Test
                                 channel);
                     };
 
-            testCode.ShouldThrow<DispatchException>().WithMessage($"Message type not specified in envelope; {trackingCode}");
+            testCode.ShouldThrow<DispatchException>().WithMessage(Invariant($"Message type not specified in envelope; {trackingCode}"));
         }
 
         [Fact]
@@ -788,6 +789,7 @@ namespace Naos.MessageBus.Test
                 StateHandler.StateHistory["SeedInitialState"]);
         }
 
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1702:CompoundWordsShouldBeCasedCorrectly", MessageId = "CallUses", Justification = "Spelling/name is correct.")]
         [Fact]
         public static void Dispatch_InitialStateRequirementRunTwice_SecondCallUsesPreviousState()
         {
@@ -888,6 +890,7 @@ namespace Naos.MessageBus.Test
                 new PostOffice(new NullParcelTrackingSystem(), new ChannelRouter(new NullChannel())));
         }
 
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1034:NestedTypesShouldNotBeVisible", Justification = "Keeping this way for now.")]
         public class StateHandler : IHandleMessages<InitialStateMessage>, INeedSharedState<string>
         {
             static StateHandler()
@@ -895,6 +898,7 @@ namespace Naos.MessageBus.Test
                 StateHistory = new Dictionary<string, string>();
             }
 
+            [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly", Justification = "Keeping this way for now.")]
             public static Dictionary<string, string> StateHistory { get; set; }
 
             public static bool ShouldValidate { get; set; }
@@ -907,7 +911,7 @@ namespace Naos.MessageBus.Test
 
             public string CreateState()
             {
-                var state = Guid.NewGuid().ToString().ToUpper();
+                var state = Guid.NewGuid().ToString().ToUpperInvariant();
                 StateHistory.Add("GenerateInitialState", state);
                 return state;
             }
@@ -924,6 +928,7 @@ namespace Naos.MessageBus.Test
             }
         }
 
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1034:NestedTypesShouldNotBeVisible", Justification = "Keeping this way for now.")]
         public class InitialStateMessage : IMessage
         {
             public string Description { get; set; }
@@ -956,6 +961,7 @@ namespace Naos.MessageBus.Test
         }
     }
 
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1040:AvoidEmptyInterfaces", Justification = "Keeping for extension and reflection.")]
     public interface IShareNothing : IShare
     {
     }

@@ -1,6 +1,6 @@
 // --------------------------------------------------------------------------------------------------------------------
 // <copyright file="IShareUnitOfWorkResults.cs" company="Naos">
-//   Copyright 2015 Naos
+//    Copyright (c) Naos 2017. All rights reserved.
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
@@ -16,6 +16,7 @@ namespace Naos.MessageBus.Domain
         /// <summary>
         /// Gets or sets the results of performing some unit-of-work.
         /// </summary>
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Performance", "CA1819:PropertiesShouldNotReturnArrays", Justification = "Keeping this way for now.")]
         UnitOfWorkResult[] UnitOfWorkResults { get; set; }
     }
 
@@ -27,7 +28,10 @@ namespace Naos.MessageBus.Domain
         /// <inheritdoc />
         public string Description { get; set; }
 
-        /// <inheritdoc />
+        /// <summary>
+        /// Gets or sets the <see cref="UnitOfWorkResult"/>'s to share.
+        /// </summary>
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Performance", "CA1819:PropertiesShouldNotReturnArrays", Justification = "Keeping this way for now.")]
         public UnitOfWorkResult[] UnitOfWorkResultsToShare { get; set; }
     }
 

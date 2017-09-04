@@ -1,6 +1,6 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
 // <copyright file="MessageDispatcher.cs" company="Naos">
-//   Copyright 2015 Naos
+//    Copyright (c) Naos 2017. All rights reserved.
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
@@ -22,7 +22,10 @@ namespace Naos.MessageBus.Core
 
     using OBeautifulCode.TypeRepresentation;
 
+    using static System.FormattableString;
+
     /// <inheritdoc />
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Maintainability", "CA1506:AvoidExcessiveClassCoupling", Justification = "Keeping this way for now.")]
     public class MessageDispatcher : IDispatchMessages
     {
         // Make this permissive since it's the underlying logic and shouldn't be coupled to whether handlers are matched in strict mode...
@@ -73,6 +76,7 @@ namespace Naos.MessageBus.Core
         }
 
         /// <inheritdoc />
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Maintainability", "CA1506:AvoidExcessiveClassCoupling", Justification = "Keeping this way for now.")]
         public void Dispatch(string displayName, TrackingCode trackingCode, Parcel parcel, IChannel address)
         {
             if (parcel == null)
@@ -125,12 +129,12 @@ namespace Naos.MessageBus.Core
             }
             catch (AbortParcelDeliveryException abortParcelDeliveryException)
             {
-                Log.Write("Aborted parcel delivery; TrackingCode: " + trackingCode + ", Exception:" + abortParcelDeliveryException);
+                Log.Write(Invariant($"Aborted parcel delivery; {nameof(TrackingCode)}: {trackingCode}, Exception: {abortParcelDeliveryException}"));
                 this.parcelTrackingSystem.UpdateAbortedAsync(trackingCode, abortParcelDeliveryException.Reason).Wait();
 
                 if (abortParcelDeliveryException.Reschedule)
                 {
-                    Log.Write("Rescheduling parcel; TrackingCode: " + trackingCode);
+                    Log.Write(Invariant($"Rescheduling parcel; {nameof(TrackingCode)}: {trackingCode}"));
                     this.postOffice.Send(parcel);
                 }
             }
@@ -145,6 +149,7 @@ namespace Naos.MessageBus.Core
             }
         }
 
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Maintainability", "CA1506:AvoidExcessiveClassCoupling", Justification = "Keeping this way for now.")]
         private void InternalDispatch(Parcel parcel, IChannel address, TrackingCode trackingCode, Envelope firstEnvelope, Action attemptingCallback, Action<Envelope> deliveredCallback)
         {
             attemptingCallback();
@@ -157,12 +162,12 @@ namespace Naos.MessageBus.Core
             // WARNING: this method change the state of the objects passed in!!!
             this.PrepareMessage(trackingCode, messageToHandle, parcel.SharedInterfaceStates);
             var deliveredEnvelope = messageToHandle.ToAddressedMessage(address).ToEnvelope(firstEnvelope.Id);
-            Log.Write(() => $"Delivered Envelope Json: {deliveredEnvelope.ToJson()}");
+            Log.Write(() => Invariant($"Delivered Envelope Json: {deliveredEnvelope.ToJson()}"));
 
             var messageType = messageToHandle.GetType();
             var handlerType = typeof(IHandleMessages<>).MakeGenericType(messageType);
 
-            Log.Write(() => $"Attempting to get handler; {trackingCode}, Type: {handlerType.FullName}");
+            Log.Write(() => Invariant($"Attempting to get handler; {trackingCode}, Type: {handlerType.FullName}"));
             object handler;
             if (this.handlerInterfaceToImplementationTypeMap.ContainsKey(handlerType))
             {
@@ -171,10 +176,10 @@ namespace Naos.MessageBus.Core
             }
             else
             {
-                throw new ApplicationException($"Could not find type in container; {trackingCode}, Type: {handlerType.FullName}");
+                throw new NotSupportedException(Invariant($"Could not find a handler for the specified type; Parcel: {trackingCode}, Specified Type: {handlerType.FullName}"));
             }
 
-            Log.Write(() => $"Loaded handler; {trackingCode}, Type: {handler.GetType().FullName}");
+            Log.Write(() => Invariant($"Loaded handler; {trackingCode}, Type: {handler.GetType().FullName}"));
 
             // WARNING: this method change the state of the objects passed in!!!
             this.PrepareHandler(trackingCode, handler);
@@ -189,8 +194,7 @@ namespace Naos.MessageBus.Core
                     var task = result as Task;
                     if (task == null)
                     {
-                        throw new ArgumentException(
-                            $"Failed to get a task result from Handle method, necessary to perform the wait for async operations; {trackingCode}");
+                        throw new ArgumentException(Invariant($"Failed to get a task result from Handle method, necessary to perform the wait for async operations; {trackingCode}"));
                     }
 
                     if (task.Status == TaskStatus.Created)
@@ -206,7 +210,7 @@ namespace Naos.MessageBus.Core
 
                     if (task.Status == TaskStatus.Faulted)
                     {
-                        var exception = task.Exception ?? new AggregateException($"No exception came back from task but status was Faulted; {trackingCode}");
+                        var exception = task.Exception ?? new AggregateException(Invariant($"No exception came back from task but status was Faulted; {trackingCode}"));
                         if (this.internalTypeComparer.Equals(exception.GetType(), typeof(AggregateException)) && exception.InnerExceptions.Count == 1 && exception.InnerException != null)
                         {
                             // if this is just wrapping a single exception then no need to keep the wrapper...
@@ -218,7 +222,7 @@ namespace Naos.MessageBus.Core
                         }
                     }
 
-                    activity.Confirm(() => $"Successfully handled message. Task ended with status: {task.Status}");
+                    activity.Confirm(() => Invariant($"Successfully handled message. Task ended with status: {task.Status}"));
                 }
                 catch (Exception ex)
                 {
@@ -279,6 +283,7 @@ namespace Naos.MessageBus.Core
             }
         }
 
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Maintainability", "CA1502:AvoidExcessiveComplexity", Justification = "Keeping this way for now.")]
         private void PrepareHandler(TrackingCode trackingCode, object handler)
         {
             var handlerActualType = handler.GetType();
@@ -399,7 +404,7 @@ namespace Naos.MessageBus.Core
         {
             if (string.IsNullOrEmpty(envelope.MessageType?.AssemblyQualifiedName) || string.IsNullOrEmpty(envelope.MessageType.Namespace) || string.IsNullOrEmpty(envelope.MessageType.Name))
             {
-                throw new DispatchException($"Message type not specified in envelope; {trackingCode}");
+                throw new DispatchException(Invariant($"Message type not specified in envelope; {trackingCode}"));
             }
 
             var messageType = this.ResolveMessageTypeUsingRegisteredHandlers(envelope.MessageType);
@@ -408,7 +413,7 @@ namespace Naos.MessageBus.Core
 
             if (ret.Message == null)
             {
-                throw new DispatchException($"First message in parcel deserialized to null; {trackingCode}");
+                throw new DispatchException(Invariant($"First message in parcel deserialized to null; {trackingCode}"));
             }
 
             return ret;
@@ -433,9 +438,7 @@ namespace Naos.MessageBus.Core
                 }
             }
 
-            throw new DispatchException(
-                "Unable to find handler for message type; Namespace: " + typeDescription.Namespace + ", Name: "
-                + typeDescription.Name + ", AssemblyQualifiedName: " + typeDescription.AssemblyQualifiedName);
+            throw new DispatchException(Invariant($"Unable to find handler for message type; {nameof(typeDescription.Namespace)}: {typeDescription.Namespace}, {nameof(typeDescription.Name)}: {typeDescription.Name}, {nameof(typeDescription.AssemblyQualifiedName)}: {typeDescription.AssemblyQualifiedName}"));
         }
     }
 }

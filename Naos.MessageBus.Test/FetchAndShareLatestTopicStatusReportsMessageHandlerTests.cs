@@ -1,6 +1,6 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
 // <copyright file="FetchAndShareLatestTopicStatusReportsMessageHandlerTests.cs" company="Naos">
-//   Copyright 2015 Naos
+//    Copyright (c) Naos 2017. All rights reserved.
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
@@ -23,10 +23,10 @@ namespace Naos.MessageBus.Test
 
     using Xunit;
 
-    public class FetchAndShareLatestTopicStatusReportsMessageHandlerTests
+    public static class FetchAndShareLatestTopicStatusReportsMessageHandlerTests
     {
         [Fact]
-        public void WhenNoAbort_DependantNoticesAreSharedToHandler()
+        public static void WhenNoAbort_DependentNoticesAreSharedToHandler()
         {
             // arrange
             var topics = Some.Dummies<DependencyTopic>().ToList();

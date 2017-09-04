@@ -1,6 +1,6 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
 // <copyright file="Logging.cs" company="Naos">
-//   Copyright 2015 Naos
+//    Copyright (c) Naos 2017. All rights reserved.
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
@@ -16,6 +16,8 @@ namespace Naos.MessageBus.Core
     using Its.Log.Instrumentation;
 
     using Naos.MessageBus.Domain;
+
+    using static System.FormattableString;
 
     /// <summary>
     /// Logging setup logic manager.
@@ -50,11 +52,13 @@ namespace Naos.MessageBus.Core
             }
         }
 
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Performance", "CA1804:RemoveUnusedLocals", MessageId = "oldLogSubscription", Justification = "Keeping this way for now.")]
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Reliability", "CA2000:Dispose objects before losing scope", Justification = "Keeping this way for now.")]
         private static void SetupLogProcessor(LogProcessorSettings logProcessorSettings)
         {
             Log.InternalErrors += (sender, args) =>
                 {
-                    var logEntry = (args.LogEntry ?? new LogEntry("Null LogEntry Supplied to InternalErrors")).ToLogString();
+                    var logEntry = (args.LogEntry ?? new LogEntry(Invariant($"Null {nameof(LogEntry)} Supplied to {nameof(Log.InternalErrors)}"))).ToLogString();
 
                     var eventLog = new EventLog("Application") { Source = GetCallerFriendlyName() };
                     eventLog.WriteEntry(logEntry, EventLogEntryType.Error);
@@ -65,7 +69,7 @@ namespace Naos.MessageBus.Core
 
             EventHandler<InstrumentationEventArgs> oldLogSubscription = (sender, args) =>
             {
-                var logEntry = (args.LogEntry ?? new LogEntry("Null LogEntry Supplied to EntryPosted")).ToLogString() + Environment.NewLine;
+                var logEntry = (args.LogEntry ?? new LogEntry(Invariant($"Null {nameof(LogEntry)} Supplied to {nameof(Log.EntryPosted)}"))).ToLogString() + Environment.NewLine;
                 lock (fileLock)
                 {
                     File.AppendAllText(logProcessorSettings.LogFilePath, logEntry);
@@ -92,7 +96,7 @@ namespace Naos.MessageBus.Core
                     lock (fileLock)
                     {
                         File.AppendAllText(logProcessorSettings.LogFilePath, message + Environment.NewLine);
-                    }                    
+                    }
                 };
 
             Log.EntryPosted += logSubscription;

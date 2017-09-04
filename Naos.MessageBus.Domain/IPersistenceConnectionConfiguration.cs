@@ -1,6 +1,6 @@
 // --------------------------------------------------------------------------------------------------------------------
 // <copyright file="IPersistenceConnectionConfiguration.cs" company="Naos">
-//   Copyright 2015 Naos
+//    Copyright (c) Naos 2017. All rights reserved.
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
@@ -10,6 +10,8 @@ namespace Naos.MessageBus.Domain
     using System.Text;
 
     using Spritely.Recipes;
+
+    using static System.FormattableString;
 
     /// <summary>
     /// Interface to support connecting to persistence of some type.
@@ -123,10 +125,9 @@ namespace Naos.MessageBus.Domain
                     connectionString.Append(this.MoreOptions);
                 }
 
-                connectionString.AppendFormat("User Id={0};", this.Credentials.User);
-                connectionString.AppendFormat(
-                    "Password={0};",
-                    this.Credentials.Password == null ? string.Empty : this.Credentials.Password.ToInsecureString());
+                var password = this.Credentials.Password == null ? string.Empty : this.Credentials.Password.ToInsecureString();
+                connectionString.Append(Invariant($"User Id={this.Credentials.User};"));
+                connectionString.Append(Invariant($"Password={password};"));
 
                 return connectionString.ToString();
             }
@@ -145,17 +146,17 @@ namespace Naos.MessageBus.Domain
             var connectionString = new StringBuilder();
             if (!string.IsNullOrWhiteSpace(this.Server))
             {
-                connectionString.AppendFormat("Server={0};", this.Server);
+                connectionString.Append(Invariant($"Server={this.Server};"));
             }
 
             if (!string.IsNullOrWhiteSpace(this.Database))
             {
-                connectionString.AppendFormat("Database={0};", this.Database);
+                connectionString.Append(Invariant($"Database={this.Database};"));
             }
 
             if (this.ConnectionTimeoutInSeconds.HasValue)
             {
-                connectionString.AppendFormat("Connection Timeout={0};", this.ConnectionTimeoutInSeconds.Value);
+                connectionString.Append(Invariant($"Connection Timeout={this.ConnectionTimeoutInSeconds.Value};"));
             }
 
             return connectionString;

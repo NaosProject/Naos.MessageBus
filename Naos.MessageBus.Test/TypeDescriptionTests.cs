@@ -1,6 +1,6 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
 // <copyright file="TypeDescriptionTests.cs" company="Naos">
-//   Copyright 2015 Naos
+//    Copyright (c) Naos 2017. All rights reserved.
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
@@ -17,10 +17,10 @@ namespace Naos.MessageBus.Test
 
     using Xunit;
 
-    public class TypeDescriptionTests
+    public static class TypeDescriptionTests
     {
         [Fact]
-        public void FromType_ValidType_ValidTypeDescription()
+        public static void FromType_ValidType_ValidTypeDescription()
         {
             // arrange
             var type = typeof(string);
@@ -35,7 +35,7 @@ namespace Naos.MessageBus.Test
         }
 
         [Fact]
-        public void FromType_NullType_Throws()
+        public static void FromType_NullType_Throws()
         {
             // arrange
             Action testCode = () =>
@@ -48,7 +48,7 @@ namespace Naos.MessageBus.Test
         }
 
         [Fact]
-        public void ToTypeDescription_ValidType_ValidTypeDescription()
+        public static void ToTypeDescription_ValidType_ValidTypeDescription()
         {
             // arrange
             var type = typeof(string);

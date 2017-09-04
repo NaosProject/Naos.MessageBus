@@ -1,6 +1,6 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
 // <copyright file="EnvelopeTests.cs" company="Naos">
-//   Copyright 2015 Naos
+//    Copyright (c) Naos 2017. All rights reserved.
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
@@ -14,10 +14,10 @@ namespace Naos.MessageBus.Test
 
     using Xunit;
 
-    public class EnvelopeTests
+    public static class EnvelopeTests
     {
         [Fact]
-        public void Equal_AreEqual()
+        public static void Equal_AreEqual()
         {
             var firstId = "id1";
             var firstDescription = "description1";
@@ -45,7 +45,7 @@ namespace Naos.MessageBus.Test
         }
 
         [Fact]
-        public void EnvelopeAddressCanBeNull()
+        public static void EnvelopeAddressCanBeNull()
         {
             // arrange
             var json = @"
@@ -69,7 +69,7 @@ namespace Naos.MessageBus.Test
         }
 
         [Fact]
-        public void NotEqualAreNotEqual_Id()
+        public static void NotEqualAreNotEqual_Id()
         {
             var firstId = "id1";
             var firstDescription = "description1";
@@ -97,7 +97,7 @@ namespace Naos.MessageBus.Test
         }
 
         [Fact]
-        public void NotEqualAreNotEqual_Description()
+        public static void NotEqualAreNotEqual_Description()
         {
             var firstId = "id1";
             var firstDescription = "description1";
@@ -125,7 +125,7 @@ namespace Naos.MessageBus.Test
         }
 
         [Fact]
-        public void NotEqualAreNotEqual_Channel()
+        public static void NotEqualAreNotEqual_Channel()
         {
             var firstId = "id1";
             var firstDescription = "description1";
@@ -153,7 +153,7 @@ namespace Naos.MessageBus.Test
         }
 
         [Fact]
-        public void NotEqualAreNotEqual_MessageJson()
+        public static void NotEqualAreNotEqual_MessageJson()
         {
             var firstId = "id1";
             var firstDescription = "description1";
@@ -182,7 +182,7 @@ namespace Naos.MessageBus.Test
         }
 
         [Fact]
-        public void NotEqualAreNotEqual_MessageType()
+        public static void NotEqualAreNotEqual_MessageType()
         {
             var firstId = "id1";
             var firstDescription = "description1";

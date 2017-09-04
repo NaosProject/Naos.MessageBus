@@ -1,6 +1,6 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
 // <copyright file="SharingHandlerTests.cs" company="Naos">
-//   Copyright 2015 Naos
+//    Copyright (c) Naos 2017. All rights reserved.
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
@@ -20,10 +20,10 @@ namespace Naos.MessageBus.Test
 
     using Xunit;
 
-    public class SharingHandlerTests
+    public static class SharingHandlerTests
     {
         [Fact]
-        public void ShareNowPlusTimeAsExpirationMessageHandler_SharesNowPlusProvidedTime()
+        public static void ShareNowPlusTimeAsExpirationMessageHandler_SharesNowPlusProvidedTime()
         {
             // arrange
             var epsilonMilliseconds = 2000;
@@ -40,7 +40,7 @@ namespace Naos.MessageBus.Test
         }
 
         [Fact]
-        public void ShareTrackingCodesMessageHandler_SharesProvidedTrackingCodes()
+        public static void ShareTrackingCodesMessageHandler_SharesProvidedTrackingCodes()
         {
             // arrange
             var handler = new ShareTrackingCodesMessageHandler();

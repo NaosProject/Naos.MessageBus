@@ -1,12 +1,16 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
 // <copyright file="TrackingCode.cs" company="Naos">
-//   Copyright 2015 Naos
+//    Copyright (c) Naos 2017. All rights reserved.
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
 namespace Naos.MessageBus.Domain
 {
     using System;
+
+    using OBeautifulCode.Math;
+
+    using static System.FormattableString;
 
     /// <summary>
     /// Result of sending a message with information to lookup status.
@@ -28,73 +32,45 @@ namespace Naos.MessageBus.Domain
         {
             var envelopeId = this.EnvelopeId ?? "[null]";
 
-            return $"Parcel ID: {this.ParcelId}, Envelope ID: {envelopeId}";
+            return Invariant($"Parcel ID: {this.ParcelId}, Envelope ID: {envelopeId}");
         }
 
-        #region Equality
-
-        /// <inheritdoc />
-        public static bool operator ==(TrackingCode keyObject1, TrackingCode keyObject2)
+        /// <summary>
+        /// Equality operator.
+        /// </summary>
+        /// <param name="first">First parameter.</param>
+        /// <param name="second">Second parameter.</param>
+        /// <returns>A value indicating whether or not equal.</returns>
+        public static bool operator ==(TrackingCode first, TrackingCode second)
         {
-            // If both are null, or both are same instance, return true.
-            if (ReferenceEquals(keyObject1, keyObject2))
+            if (ReferenceEquals(first, second))
             {
                 return true;
             }
 
-            // If one is null, but not both, return false.
-            if (((object)keyObject1 == null) || ((object)keyObject2 == null))
+            if (ReferenceEquals(first, null) || ReferenceEquals(second, null))
             {
                 return false;
             }
 
-            return keyObject1.Equals(keyObject2);
+            return (first.ParcelId == second.ParcelId) && (first.EnvelopeId == second.EnvelopeId);
         }
+
+        /// <summary>
+        /// Inequality operator.
+        /// </summary>
+        /// <param name="first">First parameter.</param>
+        /// <param name="second">Second parameter.</param>
+        /// <returns>A value indicating whether or not inequal.</returns>
+        public static bool operator !=(TrackingCode first, TrackingCode second) => !(first == second);
 
         /// <inheritdoc />
-        public static bool operator !=(TrackingCode keyObject1, TrackingCode keyObject2)
-        {
-            return !(keyObject1 == keyObject2);
-        }
+        public bool Equals(TrackingCode other) => this == other;
 
         /// <inheritdoc />
-        public bool Equals(TrackingCode other)
-        {
-            if (other == null)
-            {
-                return false;
-            }
-
-            var result = (this.ParcelId == other.ParcelId) && (this.EnvelopeId == other.EnvelopeId);
-            return result;
-        }
+        public override bool Equals(object obj) => this == (obj as TrackingCode);
 
         /// <inheritdoc />
-        public override bool Equals(object obj)
-        {
-            var keyObject = obj as TrackingCode;
-            if (keyObject == null)
-            {
-                return false;
-            }
-
-            return this.Equals(keyObject);
-        }
-
-        /// <inheritdoc />
-        public override int GetHashCode()
-        {
-            unchecked
-            {
-                // ReSharper disable NonReadonlyMemberInGetHashCode
-                int hash = (int)2166136261;
-                hash = hash * 16777619 ^ this.ParcelId.GetHashCode();
-                hash = hash * 16777619 ^ this.EnvelopeId.GetHashCode();
-                return hash;
-                // ReSharper restore NonReadonlyMemberInGetHashCode
-            }
-        }
-
-        #endregion
+        public override int GetHashCode() => HashCodeHelper.Initialize().Hash(this.ParcelId).Hash(this.EnvelopeId).Value;
     }
 }

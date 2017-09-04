@@ -1,6 +1,6 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
 // <copyright file="MessageSenderTest.cs" company="Naos">
-//   Copyright 2015 Naos
+//    Copyright (c) Naos 2017. All rights reserved.
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
@@ -14,13 +14,13 @@ namespace Naos.MessageBus.Test
 
     using Xunit;
 
-    public class MessageSenderTest
+    public static class MessageSenderTest
     {
         [Fact]
         public static void SenderFactoryGetPostOffice_Uninitialized_Throws()
         {
             // arrange
-            Action testCode = () => HandlerToolShed.GetPostOffice();
+            Action testCode = () => HandlerToolshed.GetPostOffice();
 
             // act & assert
             testCode.ShouldThrow<ArgumentException>().WithMessage("Factory not initialized for IPostOffice.");
@@ -36,7 +36,7 @@ namespace Naos.MessageBus.Test
             }
 
             // arrange
-            Action testCode = () => HandlerToolShed.GetParcelTracker();
+            Action testCode = () => HandlerToolshed.GetParcelTracker();
 
             // act & assert
             testCode.ShouldThrow<ArgumentException>().WithMessage("Factory not initialized for ITrackParcels.");

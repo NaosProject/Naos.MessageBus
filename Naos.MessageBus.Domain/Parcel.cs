@@ -1,6 +1,6 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
 // <copyright file="Parcel.cs" company="Naos">
-//   Copyright 2015 Naos
+//    Copyright (c) Naos 2017. All rights reserved.
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
@@ -27,11 +27,13 @@ namespace Naos.MessageBus.Domain
         /// <summary>
         /// Gets or sets a collection of envelopes to run in order.
         /// </summary>
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly", Justification = "Keeping this way for now.")]
         public ICollection<Envelope> Envelopes { get; set; }
 
         /// <summary>
         /// Gets or sets a list of shared interface states to apply to messages as they dispatched (can accumulate more throughout execution when shares are found on handlers).
         /// </summary>
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly", Justification = "Keeping this way for now.")]
         public IList<SharedInterfaceState> SharedInterfaceStates { get; set; }
 
         /// <summary>

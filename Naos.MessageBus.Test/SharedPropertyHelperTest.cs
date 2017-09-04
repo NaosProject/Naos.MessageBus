@@ -1,6 +1,6 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
 // <copyright file="SharedPropertyHelperTest.cs" company="Naos">
-//   Copyright 2015 Naos
+//    Copyright (c) Naos 2017. All rights reserved.
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
@@ -22,7 +22,7 @@ namespace Naos.MessageBus.Test
 
     using Xunit;
 
-    public class SharedPropertyHelperTest
+    public static class SharedPropertyHelperTest
     {
         [Fact]
         public static void GetAndApplySharedPropertySet_ShareContractOfComplexType_CanBeExtractedAndApplied()
@@ -293,6 +293,7 @@ namespace Naos.MessageBus.Test
         public MyEnum EnumValueToShare { get; set; }
     }
 
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1711:IdentifiersShouldNotHaveIncorrectSuffix", Justification = "Spelling/name is correct.")]
     public enum MyEnum
     {
         /// <summary>
@@ -311,6 +312,7 @@ namespace Naos.MessageBus.Test
         OtherOtherValue
     }
 
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1711:IdentifiersShouldNotHaveIncorrectSuffix", Justification = "Spelling/name is correct.")]
     public interface IShareEnum : IShare
     {
         MyEnum EnumValueToShare { get; set; }

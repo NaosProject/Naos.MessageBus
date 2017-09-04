@@ -1,6 +1,6 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
 // <copyright file="Global.asax.cs" company="Naos">
-//   Copyright 2015 Naos
+//    Copyright (c) Naos 2017. All rights reserved.
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
@@ -23,7 +23,11 @@ namespace Naos.MessageBus.Hangfire.Harness
     /// <inheritdoc />
     public class Global : HttpApplication
     {
-        /// <inheritdoc />
+        /// <summary>
+        /// Application start event.
+        /// </summary>
+        /// <param name="sender">Object calling event.</param>
+        /// <param name="e">Event arguments.</param>
         protected void Application_Start(object sender, EventArgs e)
         {
             Config.SetupSerialization();
@@ -42,10 +46,15 @@ namespace Naos.MessageBus.Hangfire.Harness
             }
         }
 
-        /// <inheritdoc />
+        /// <summary>
+        /// Application end event.
+        /// </summary>
+        /// <param name="sender">Object calling event.</param>
+        /// <param name="e">Event arguments.</param>
         protected void Application_End(object sender, EventArgs e)
         {
             HangfireBootstrapper.Instance.Stop();
+            HangfireBootstrapper.Instance.Dispose();
         }
     }
 }

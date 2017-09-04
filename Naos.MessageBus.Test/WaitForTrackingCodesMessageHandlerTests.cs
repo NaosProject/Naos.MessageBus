@@ -1,6 +1,6 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
 // <copyright file="WaitForTrackingCodesMessageHandlerTests.cs" company="Naos">
-//   Copyright 2015 Naos
+//    Copyright (c) Naos 2017. All rights reserved.
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
@@ -23,10 +23,10 @@ namespace Naos.MessageBus.Test
 
     using Xunit;
 
-    public class WaitForTrackingCodesMessageHandlerTests
+    public static class WaitForTrackingCodesMessageHandlerTests
     {
         [Fact]
-        public void StatusUpdatesAndExists()
+        public static void StatusUpdatesAndExists()
         {
             // arrange
             var trackingCode = new TrackingCode { ParcelId = Guid.NewGuid(), EnvelopeId = Guid.NewGuid().ToString() };
@@ -54,7 +54,7 @@ namespace Naos.MessageBus.Test
         }
 
         [Fact]
-        public void EmptyTrackingCodes___Exits()
+        public static void EmptyTrackingCodes___Exits()
         {
             // arrange
             var parcelStatusToBreakOn = ParcelStatus.Rejected;

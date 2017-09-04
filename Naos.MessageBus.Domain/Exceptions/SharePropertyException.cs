@@ -1,12 +1,13 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
 // <copyright file="SharePropertyException.cs" company="Naos">
-//   Copyright 2015 Naos
+//    Copyright (c) Naos 2017. All rights reserved.
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
 namespace Naos.MessageBus.Domain.Exceptions
 {
     using System;
+    using System.Runtime.Serialization;
 
     /// <summary>
     /// Custom exception for failures in sharing properties.
@@ -14,6 +15,23 @@ namespace Naos.MessageBus.Domain.Exceptions
     [Serializable]
     public class SharePropertyException : MessageBusExceptionBase
     {
+        /// <summary>
+        /// Initializes a new instance of the <see cref="SharePropertyException"/> class.
+        /// </summary>
+        public SharePropertyException()
+        {
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="SharePropertyException"/> class.
+        /// </summary>
+        /// <param name="info">Serialization info.</param>
+        /// <param name="context">Streaming context.</param>
+        protected SharePropertyException(SerializationInfo info, StreamingContext context)
+            : base(info, context)
+        {
+        }
+
         /// <summary>
         /// Initializes a new instance of the <see cref="SharePropertyException"/> class.
         /// </summary>

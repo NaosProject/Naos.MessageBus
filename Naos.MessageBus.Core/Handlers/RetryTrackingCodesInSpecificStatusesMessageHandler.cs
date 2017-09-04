@@ -1,6 +1,6 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
 // <copyright file="RetryTrackingCodesInSpecificStatusesMessageHandler.cs" company="Naos">
-//   Copyright 2015 Naos
+//    Copyright (c) Naos 2017. All rights reserved.
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
@@ -8,6 +8,7 @@ namespace Naos.MessageBus.Core
 {
     using System;
     using System.Linq;
+    using System.Runtime.Serialization;
     using System.Threading;
     using System.Threading.Tasks;
 
@@ -23,8 +24,8 @@ namespace Naos.MessageBus.Core
         /// <inheritdoc />
         public async Task HandleAsync(RetryTrackingCodesInSpecificStatusesMessage message)
         {
-            var postOffice = HandlerToolShed.GetPostOffice();
-            var parcelTracker = HandlerToolShed.GetParcelTracker();
+            var postOffice = HandlerToolshed.GetPostOffice();
+            var parcelTracker = HandlerToolshed.GetParcelTracker();
             await this.HandleAsync(message, postOffice, parcelTracker);
         }
 
@@ -93,14 +94,46 @@ namespace Naos.MessageBus.Core
     }
 
     /// <summary>
-    /// Exception for when the <see cref="RetryTrackingCodesInSpecificStatusesMessageHandler"/> has run all retries 
-    /// but still has messages in the status list to retry as specified 
+    /// Exception for when the <see cref="RetryTrackingCodesInSpecificStatusesMessageHandler"/> has run all retries
+    /// but still has messages in the status list to retry as specified
     /// in the provided <see cref="RetryTrackingCodesInSpecificStatusesMessage"/>.
     /// </summary>
+    [Serializable]
     public class RetryFailedToProcessOutOfRetryStatusException : Exception
     {
-        /// <inheritdoc />
-        public RetryFailedToProcessOutOfRetryStatusException(string message) : base(message)
+        /// <summary>
+        /// Initializes a new instance of the <see cref="RetryFailedToProcessOutOfRetryStatusException"/> class.
+        /// </summary>
+        public RetryFailedToProcessOutOfRetryStatusException()
+        {
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="RetryFailedToProcessOutOfRetryStatusException"/> class.
+        /// </summary>
+        /// <param name="info">Serialization info.</param>
+        /// <param name="context">Streaming context.</param>
+        protected RetryFailedToProcessOutOfRetryStatusException(SerializationInfo info, StreamingContext context)
+            : base(info, context)
+        {
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="RetryFailedToProcessOutOfRetryStatusException"/> class.
+        /// </summary>
+        /// <param name="message">Message of exception.</param>
+        public RetryFailedToProcessOutOfRetryStatusException(string message)
+            : base(message)
+        {
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="RetryFailedToProcessOutOfRetryStatusException"/> class.
+        /// </summary>
+        /// <param name="message">Exception message.</param>
+        /// <param name="innerException">Inner exception.</param>
+        public RetryFailedToProcessOutOfRetryStatusException(string message, Exception innerException)
+            : base(message, innerException)
         {
         }
     }

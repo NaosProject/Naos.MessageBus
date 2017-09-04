@@ -1,6 +1,6 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
 // <copyright file="TestItsConfigMessageBusHandlerSettings.cs" company="Naos">
-//   Copyright 2015 Naos
+//    Copyright (c) Naos 2017. All rights reserved.
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
@@ -18,7 +18,7 @@ namespace Naos.MessageBus.Test
 
     using Xunit;
 
-    public class TestItsConfigMessageBusHandlerSettings
+    public static class TestItsConfigMessageBusHandlerSettings
     {
         [Fact]
         public static void ItsConfigGetSettings_MessageBusHarnessSettingsHost_ComeOutCorrectly()

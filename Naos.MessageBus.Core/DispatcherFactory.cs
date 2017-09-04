@@ -1,6 +1,6 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
 // <copyright file="DispatcherFactory.cs" company="Naos">
-//   Copyright 2015 Naos
+//    Copyright (c) Naos 2017. All rights reserved.
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
@@ -9,17 +9,16 @@ namespace Naos.MessageBus.Core
     using System;
     using System.Collections.Concurrent;
     using System.Collections.Generic;
-    using static System.FormattableString;
     using System.IO;
     using System.Linq;
     using System.Reflection;
-
     using Its.Log.Instrumentation;
-
     using Naos.Diagnostics.Domain;
     using Naos.MessageBus.Domain;
+    using Naos.MessageBus.Domain.Exceptions;
 
     using OBeautifulCode.TypeRepresentation;
+    using static System.FormattableString;
 
     /// <summary>
     /// Class to manage creating a functional instance of IDispatchMessages.
@@ -57,6 +56,9 @@ namespace Naos.MessageBus.Core
         /// <param name="parcelTrackingSystem">Interface for managing life of the parcels.</param>
         /// <param name="activeMessageTracker">Interface to track active messages to know if handler harness can shutdown.</param>
         /// <param name="postOffice">Interface to send parcels.</param>
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Maintainability", "CA1506:AvoidExcessiveClassCoupling", Justification = "Keeping this way for now.")]
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Globalization", "CA1308:NormalizeStringsToUppercase", Justification = "Prefer lower case here.")]
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Reliability", "CA2001:AvoidCallingProblematicMethods", MessageId = "System.Reflection.Assembly.LoadFrom", Justification = "Prefer this method right now.")]
         public DispatcherFactory(string handlerAssemblyPath, ICollection<IChannel> servicedChannels, TypeMatchStrategy typeMatchStrategy, TimeSpan messageDispatcherWaitThreadSleepTime, IParcelTrackingSystem parcelTrackingSystem, ITrackActiveMessages activeMessageTracker, IPostOffice postOffice)
         {
             if (parcelTrackingSystem == null)
@@ -112,7 +114,7 @@ namespace Naos.MessageBus.Core
                 {
                     var dllNameWithoutExtension = args.Name.Split(',')[0];
                     var dllName = dllNameWithoutExtension + ".dll";
-                    var fullDllPath = files.FirstOrDefault(_ => _.EndsWith(dllName));
+                    var fullDllPath = files.FirstOrDefault(_ => _.EndsWith(dllName, StringComparison.CurrentCultureIgnoreCase));
                     if (fullDllPath == null)
                     {
                         var message = Invariant($"Assembly not found Name: {args.Name}, Requesting Assembly FullName: {args.RequestingAssembly?.FullName}");
@@ -147,7 +149,7 @@ namespace Naos.MessageBus.Core
                         }
                         catch (ReflectionTypeLoadException reflectionTypeLoadException)
                         {
-                            throw new ApplicationException(
+                            throw new DispatchException(
                                 "Failed to load assembly: " + filePathToPotentialHandlerAssembly + ". "
                                 + string.Join(",", reflectionTypeLoadException.LoaderExceptions.Select(_ => _.ToString())),
                                 reflectionTypeLoadException);
@@ -163,6 +165,7 @@ namespace Naos.MessageBus.Core
             return AppDomain.CurrentDomain.GetAssemblies().Where(a => !a.IsDynamic).ToList();
         }
 
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1031:DoNotCatchGeneralExceptionTypes", Justification = "Catching and swallowing on purpose.")]
         private static AssemblyDetails SafeFetchAssemblyDetails(string assemblyFilePath)
         {
             var ret = new AssemblyDetails { FilePath = assemblyFilePath };
@@ -202,6 +205,7 @@ namespace Naos.MessageBus.Core
             }
         }
 
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Maintainability", "CA1506:AvoidExcessiveClassCoupling", Justification = "Keeping this way for now.")]
         private void LoadContainerFromHandlerTypeMap(ICollection<TypeMap> handlerTypeMap)
         {
             var strictTypeComparer = new TypeComparer(TypeMatchStrategy.AssemblyQualifiedName);
@@ -220,12 +224,12 @@ namespace Naos.MessageBus.Core
                 {
                     if (!strictTypeComparer.Equals(existingRegistration.Key, handlerTypeMapEntry.InterfaceType) || !strictTypeComparer.Equals(existingRegistration.Value, handlerTypeMapEntry.ConcreteType))
                     {
-                        throw new InvalidOperationException($"Cannot register the same handler with two different versions; 1: {existingRegistration.Key?.FullName}->{existingRegistration.Value.FullName}, 2: {handlerTypeMapEntry.InterfaceType.FullName}->{handlerTypeMapEntry.ConcreteType.FullName}");
+                        throw new InvalidOperationException(Invariant($"Cannot register the same handler with two different versions; 1: {existingRegistration.Key?.FullName}->{existingRegistration.Value.FullName}, 2: {handlerTypeMapEntry.InterfaceType.FullName}->{handlerTypeMapEntry.ConcreteType.FullName}"));
                     }
                     else
                     {
                         Log.Write(
-                            () => $"Skipping second registration of existing type: {handlerTypeMapEntry.InterfaceType}->{handlerTypeMapEntry.ConcreteType}");
+                            () => Invariant($"Skipping second registration of existing type: {handlerTypeMapEntry.InterfaceType}->{handlerTypeMapEntry.ConcreteType}"));
                     }
                 }
                 else
@@ -236,12 +240,12 @@ namespace Naos.MessageBus.Core
 
             foreach (var entry in this.handlerInterfaceToImplementationTypeMap)
             {
-                Log.Write(() => $"Registered Handler Type: {entry.Key}->{entry.Value}");
+                Log.Write(() => Invariant($"Registered Handler Type: {entry.Key}->{entry.Value}"));
             }
 
             // register the dispatcher so that hangfire can use it when a message is getting processed
             // if we weren't in hangfire we'd just persist the dispatcher and keep these two fields inside of it...
-            this.messageDispatcherBuilder = 
+            this.messageDispatcherBuilder =
                 () =>
                 new MessageDispatcher(
                     this.handlerInterfaceToImplementationTypeMap,
@@ -258,7 +262,7 @@ namespace Naos.MessageBus.Core
         private static Assembly LoadAssemblyFromDisk(string dllNameWithoutExtension, string[] pdbFiles, string fullDllPath)
         {
             var pdbName = dllNameWithoutExtension + ".pdb";
-            var fullPdbPath = pdbFiles.FirstOrDefault(_ => _.EndsWith(pdbName));
+            var fullPdbPath = pdbFiles.FirstOrDefault(_ => _.EndsWith(pdbName, StringComparison.CurrentCultureIgnoreCase));
 
             // since the assembly might have been already loaded as a depdendency of another assembly...
             var alreadyLoaded = TryResolveAssemblyFromLoaded(fullDllPath);

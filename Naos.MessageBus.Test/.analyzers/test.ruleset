@@ -1,0 +1,39 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<RuleSet Name="Analyzer Rules - Testing" Description="Analyzer rules for test projects." ToolsVersion="14.0">
+  <IncludeAll Action="Warning" />
+  <Rules AnalyzerId="Microsoft.Analyzers.ManagedCodeAnalysis" RuleNamespace="Microsoft.Rules.Managed">
+    <Rule Id="CA1006" Action="None" />
+    <Rule Id="CA1024" Action="None" />
+    <Rule Id="CA1030" Action="None" />
+    <Rule Id="CA1303" Action="None" />
+    <Rule Id="CA1502" Action="None" />
+    <Rule Id="CA1506" Action="None" />
+    <Rule Id="CA1707" Action="None" />
+    <Rule Id="CA1709" Action="None" />
+    <Rule Id="CA1806" Action="None" />
+    <Rule Id="CA2000" Action="None" />
+    <Rule Id="CA2202" Action="None" />
+    <Rule Id="CA2210" Action="None" />
+  </Rules>
+  <Rules AnalyzerId="StyleCop.Analyzers" RuleNamespace="StyleCop.Analyzers">
+    <Rule Id="SA0001" Action="None" />
+    <Rule Id="SA1005" Action="None" />
+    <Rule Id="SA1028" Action="None" />
+    <Rule Id="SA1118" Action="None" />
+    <Rule Id="SA1131" Action="None" />
+    <Rule Id="SA1201" Action="None" />
+    <Rule Id="SA1202" Action="None" />
+    <Rule Id="SA1204" Action="None" />
+    <Rule Id="SA1305" Action="Warning" />
+    <Rule Id="SA1402" Action="None" />
+    <Rule Id="SA1512" Action="None" />
+    <Rule Id="SA1515" Action="None" />
+    <Rule Id="SA1600" Action="None" />
+    <Rule Id="SA1601" Action="None" />
+    <Rule Id="SA1625" Action="Warning" />
+    <Rule Id="SA1627" Action="Warning" />
+    <Rule Id="SA1629" Action="Warning" />
+    <Rule Id="SA1649" Action="Warning" />
+    <Rule Id="SA1652" Action="None" />
+  </Rules>
+</RuleSet>

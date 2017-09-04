@@ -1,6 +1,6 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
 // <copyright file="TypeMapTest.cs" company="Naos">
-//   Copyright 2015 Naos
+//    Copyright (c) Naos 2017. All rights reserved.
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
@@ -13,7 +13,7 @@ namespace Naos.MessageBus.Test
 
     using Xunit;
 
-    public class TypeMapTest
+    public static class TypeMapTest
     {
         [Fact]
         public static void GetTypeMapsOfImplementersOfGenericType_MatchingTypesProvidedICollectionString_MatchingReturned()
@@ -42,7 +42,7 @@ namespace Naos.MessageBus.Test
         private static void InternalRunTest(TypeMap expectedMap)
         {
             var typesToCheck = new[] { expectedMap.ConcreteType };
-            var genericTypeToFilter = typeof(ICollection<>); // I'm specifically testing that this will work for any implementer...                
+            var genericTypeToFilter = typeof(ICollection<>); // I'm specifically testing that this will work for any implementer...
             var maps = typesToCheck.GetTypeMapsOfImplementersOfGenericType(genericTypeToFilter);
 
             Assert.NotNull(maps);

@@ -1,6 +1,6 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
 // <copyright file="Serializer.cs" company="Naos">
-//   Copyright 2015 Naos
+//    Copyright (c) Naos 2017. All rights reserved.
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
@@ -20,6 +20,7 @@ namespace Naos.MessageBus.Domain
         /// </summary>
         /// <param name="objectToSerialize">Object to serialize.</param>
         /// <returns>JSON as a string.</returns>
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1720:IdentifiersShouldNotContainTypeNames", MessageId = "object", Justification = "Spelling/name is correct.")]
         public static string ToJson(this object objectToSerialize)
         {
             return DefaultJsonSerializer.SerializeObject(objectToSerialize);
@@ -31,7 +32,8 @@ namespace Naos.MessageBus.Domain
         /// <typeparam name="T">Type to deserialize.</typeparam>
         /// <param name="jsonToDeserialize">JSON string to serialize.</param>
         /// <returns>Object deserialized from JSON.</returns>
-        public static T FromJson<T>(this string jsonToDeserialize) where T : class
+        public static T FromJson<T>(this string jsonToDeserialize)
+            where T : class
         {
             return DefaultJsonSerializer.DeserializeObject<T>(jsonToDeserialize);
         }

@@ -1,6 +1,6 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
 // <copyright file="HangfireCourierTest.cs" company="Naos">
-//   Copyright 2015 Naos
+//    Copyright (c) Naos 2017. All rights reserved.
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
@@ -19,10 +19,11 @@ namespace Naos.MessageBus.Test
 
     using Xunit;
 
-    public class HangfireCourierTest
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly", MessageId = "Hangfire", Justification = "Spelling/name is correct.")]
+    public static class HangfireCourierTest
     {
         [Fact]
-        public static void ThrowIfInvalidChannel_ValidChannelName_DoesntThrow()
+        public static void ThrowIfInvalidChannel_ValidChannelName_DoesNotThrow()
         {
             var channel = new SimpleChannel("monkeys_are_in_space");
             HangfireCourier.ThrowIfInvalidChannel(channel);
@@ -66,6 +67,7 @@ namespace Naos.MessageBus.Test
                     + " characters long.");
         }
 
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1702:CompoundWordsShouldBeCasedCorrectly", MessageId = "UpperCase", Justification = "Spelling/name is correct.")]
         [Fact]
         public static void ThrowIfInvalidChannel_UpperCaseChannelName_Throws()
         {

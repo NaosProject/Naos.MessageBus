@@ -1,6 +1,6 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
 // <copyright file="AbortIfTopicsHaveSpecificStatusMessageHandlerTests.cs" company="Naos">
-//   Copyright 2015 Naos
+//    Copyright (c) Naos 2017. All rights reserved.
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
@@ -23,7 +23,7 @@ namespace Naos.MessageBus.Test
 
     using Xunit;
 
-    public class AbortIfTopicsHaveSpecificStatusMessageHandlerTests
+    public static class AbortIfTopicsHaveSpecificStatusMessageHandlerTests
     {
         [Fact]
         public static void AnyMatch_Abort()
@@ -127,6 +127,7 @@ namespace Naos.MessageBus.Test
             // assert - by virtue of making it here it passed
         }
 
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Performance", "CA1804:RemoveUnusedLocals", MessageId = "impactingTopic", Justification = "Keeping this way for now.")]
         [Fact]
         public static void AllMatch_Abort()
         {

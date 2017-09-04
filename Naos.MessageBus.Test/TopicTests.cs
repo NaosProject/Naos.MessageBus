@@ -1,6 +1,6 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
 // <copyright file="TopicTests.cs" company="Naos">
-//   Copyright 2015 Naos
+//    Copyright (c) Naos 2017. All rights reserved.
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
@@ -10,10 +10,10 @@ namespace Naos.MessageBus.Test
 
     using Xunit;
 
-    public class TopicTests
+    public static class TopicTests
     {
         [Fact]
-        public void Impacting_Equal_AreEqual()
+        public static void Impacting_Equal_AreEqual()
         {
             var firstName = "name1";
 
@@ -32,7 +32,7 @@ namespace Naos.MessageBus.Test
         }
 
         [Fact]
-        public void Impacting_NotEqualAreNotEqual_Name()
+        public static void Impacting_NotEqualAreNotEqual_Name()
         {
             var firstName = "name1";
 
@@ -51,7 +51,7 @@ namespace Naos.MessageBus.Test
         }
 
         [Fact]
-        public void Dependant_Equal_AreEqual()
+        public static void Dependent_Equal_AreEqual()
         {
             var firstName = "name1";
 
@@ -70,7 +70,7 @@ namespace Naos.MessageBus.Test
         }
 
         [Fact]
-        public void Dependant_NotEqualAreNotEqual_Name()
+        public static void Dependent_NotEqualAreNotEqual_Name()
         {
             var firstName = "name1";
 
@@ -89,7 +89,7 @@ namespace Naos.MessageBus.Test
         }
 
         [Fact]
-        public void Dependant_And_Impacting_EqualAreEqual_Type()
+        public static void Dependent_And_Impacting_EqualAreEqual_Type()
         {
             var firstName = "name1";
 
@@ -107,7 +107,7 @@ namespace Naos.MessageBus.Test
         }
 
         [Fact]
-        public void Dependant_And_Named_EqualAreEqual_Type()
+        public static void Dependent_And_Named_EqualAreEqual_Type()
         {
             var firstName = "name1";
 
@@ -125,7 +125,7 @@ namespace Naos.MessageBus.Test
         }
 
         [Fact]
-        public void Named_And_Impacting_EqualAreEqual_Type()
+        public static void Named_And_Impacting_EqualAreEqual_Type()
         {
             var firstName = "name1";
 

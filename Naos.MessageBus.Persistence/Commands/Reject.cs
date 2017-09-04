@@ -1,6 +1,6 @@
 // --------------------------------------------------------------------------------------------------------------------
 // <copyright file="Reject.cs" company="Naos">
-//   Copyright 2015 Naos
+//    Copyright (c) Naos 2017. All rights reserved.
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
@@ -14,6 +14,8 @@ namespace Naos.MessageBus.Persistence
     using Microsoft.Its.Domain;
 
     using Naos.MessageBus.Domain;
+
+    using static System.FormattableString;
 
     /// <summary>
     /// Reject command for a <see cref="Shipment"/>.
@@ -31,7 +33,7 @@ namespace Naos.MessageBus.Persistence
         {
             get
             {
-                var trackingCodeSet = Validate.That<Reject>(cmd => cmd.TrackingCode != null).WithErrorMessage("TrackingCode must be specified.");
+                var trackingCodeSet = Validate.That<Reject>(cmd => cmd.TrackingCode != null).WithErrorMessage(Invariant($"{nameof(this.TrackingCode)} must be specified."));
                 var exceptionIsSet = Validate.That<Reject>(cmd => cmd.ExceptionMessage != null).WithErrorMessage("Exception message must be specified.");
 
                 return new ValidationPlan<Reject> { trackingCodeSet, exceptionIsSet };

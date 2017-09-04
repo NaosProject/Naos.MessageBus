@@ -1,34 +1,21 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
 // <copyright file="Program.cs" company="Naos">
-//   Copyright 2015 Naos
+//    Copyright (c) Naos 2017. All rights reserved.
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
 namespace Naos.MessageBus.Hangfire.Console
 {
     using System;
-    using System.Linq;
-    using System.Threading;
 
     using CLAP;
 
-    using global::Hangfire;
-    using global::Hangfire.Logging;
-    using global::Hangfire.SqlServer;
-
-    using Its.Configuration;
     using Its.Log.Instrumentation;
-
-    using Naos.MessageBus.Core;
-    using Naos.MessageBus.Domain;
-    using Naos.MessageBus.Domain.Exceptions;
-    using Naos.MessageBus.Hangfire.Sender;
-    using Naos.MessageBus.Persistence;
 
     /// <summary>
     /// Main entry point of the application.
     /// </summary>
-    public class Program
+    public static class Program
     {
         /// <summary>
         /// Main entry point.

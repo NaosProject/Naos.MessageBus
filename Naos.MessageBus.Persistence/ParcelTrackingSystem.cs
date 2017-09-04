@@ -1,6 +1,6 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
 // <copyright file="ParcelTrackingSystem.cs" company="Naos">
-//   Copyright 2015 Naos
+//    Copyright (c) Naos 2017. All rights reserved.
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
@@ -8,26 +8,21 @@ namespace Naos.MessageBus.Persistence
 {
     using System;
     using System.Collections.Generic;
-
-    using static System.FormattableString;
     using System.Linq;
     using System.Threading.Tasks;
-
     using Its.Log.Instrumentation;
-
     using Microsoft.Its.Domain;
     using Microsoft.Its.Domain.Sql;
-
     using Naos.Cron;
     using Naos.MessageBus.Domain;
     using Naos.MessageBus.Persistence.NaosRecipes.ItsDomain;
-
     using Spritely.Redo;
+    using static System.FormattableString;
 
     /// <summary>
     /// Implementation of the <see cref="IParcelTrackingSystem"/> using Its.CQRS.
     /// </summary>
-    public class ParcelTrackingSystem : IParcelTrackingSystem
+    public sealed class ParcelTrackingSystem : IParcelTrackingSystem
     {
         private readonly ReadModelPersistenceConnectionConfiguration readModelPersistenceConnectionConfiguration;
 
@@ -72,7 +67,8 @@ namespace Naos.MessageBus.Persistence
             Authorization<Shipment>.AuthorizeAllCommands();
 
             // setup the configuration which can be used to retrieve the repository when needed
-            this.configuration = new Configuration().UseSqlEventStore().UseDependency(t => createEventStoreDbContext());
+            this.configuration = new Configuration();
+            this.configuration.UseSqlEventStore().UseDependency(t => createEventStoreDbContext());
         }
 
         /// <inheritdoc />
@@ -174,7 +170,7 @@ namespace Naos.MessageBus.Persistence
                                 Log.Write(
                                     new
                                         {
-                                            Message = Invariant($"Retried a failure in updating MessageBusPersistence from {nameof(IParcelTrackingSystem)} ({nameof(FetchShipmentAsync)}): {_.Message}"),
+                                            Message = Invariant($"Retried a failure in updating MessageBusPersistence from {nameof(IParcelTrackingSystem)} ({nameof(this.FetchShipmentAsync)}): {_.Message}"),
                                             Exception = _
                                         }))
                         .WithMaxRetries(this.retryCount)
@@ -193,7 +189,7 @@ namespace Naos.MessageBus.Persistence
                             Log.Write(
                                 new
                                     {
-                                        Message = Invariant($"Retried a failure in updating MessageBusPersistence from {nameof(IParcelTrackingSystem)} ({nameof(SaveShipmentAsync)}): {_.Message}"),
+                                        Message = Invariant($"Retried a failure in updating MessageBusPersistence from {nameof(IParcelTrackingSystem)} ({nameof(this.SaveShipmentAsync)}): {_.Message}"),
                                         Exception = _
                                     }))
                     .WithMaxRetries(this.retryCount)
@@ -214,7 +210,7 @@ namespace Naos.MessageBus.Persistence
                                         {
                                             Message =
                                             Invariant(
-                                                $"Retried a failure in updating MessageBusPersistence from {nameof(IParcelTrackingSystem)} ({nameof(GetTrackingReportAsync)}): {_.Message}"),
+                                                $"Retried a failure in updating MessageBusPersistence from {nameof(IParcelTrackingSystem)} ({nameof(this.GetTrackingReportAsync)}): {_.Message}"),
                                             Exception = _
                                         }))
                         .WithMaxRetries(this.retryCount)
@@ -241,7 +237,7 @@ namespace Naos.MessageBus.Persistence
 
                                         return Task.FromResult(results);
                                     }
-                                }).Now();           
+                                }).Now();
 
             return ret;
         }
@@ -264,7 +260,7 @@ namespace Naos.MessageBus.Persistence
                                         {
                                             Message =
                                             Invariant(
-                                                $"Retried a failure in updating MessageBusPersistence from {nameof(IParcelTrackingSystem)} ({nameof(GetLatestTopicStatusReportAsync)}): {_.Message}"),
+                                                $"Retried a failure in updating MessageBusPersistence from {nameof(IParcelTrackingSystem)} ({nameof(this.GetLatestTopicStatusReportAsync)}): {_.Message}"),
                                             Exception = _
                                         }))
                         .WithMaxRetries(this.retryCount)
@@ -350,6 +346,15 @@ namespace Naos.MessageBus.Persistence
                                 }).Now();
 
             return ret;
+        }
+
+        /// <inheritdoc cref="IDisposable" />
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2213:DisposableFieldsShouldBeDisposed", MessageId = "configuration", Justification = "Is disposed.")]
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1063:ImplementIDisposableCorrectly", Justification = "Not necessary.")]
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA1816:CallGCSuppressFinalizeCorrectly", Justification = "Not necessary.")]
+        public void Dispose()
+        {
+            this.configuration?.Dispose();
         }
     }
 }

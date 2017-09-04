@@ -1,6 +1,6 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
 // <copyright file="TrackedShipmentDbContext.cs" company="Naos">
-//   Copyright 2015 Naos
+//    Copyright (c) Naos 2017. All rights reserved.
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
@@ -19,7 +19,8 @@ namespace Naos.MessageBus.Persistence
         /// Initializes a new instance of the <see cref="TrackedShipmentDbContext"/> class.
         /// </summary>
         /// <param name="connectionString">Connection string to the database.</param>
-        public TrackedShipmentDbContext(string connectionString) : base(connectionString)
+        public TrackedShipmentDbContext(string connectionString)
+            : base(connectionString)
         {
         }
 

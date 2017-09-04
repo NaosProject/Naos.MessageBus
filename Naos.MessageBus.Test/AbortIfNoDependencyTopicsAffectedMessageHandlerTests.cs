@@ -1,6 +1,6 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
 // <copyright file="AbortIfNoDependencyTopicsAffectedMessageHandlerTests.cs" company="Naos">
-//   Copyright 2015 Naos
+//    Copyright (c) Naos 2017. All rights reserved.
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
@@ -22,10 +22,11 @@ namespace Naos.MessageBus.Test
 
     using Xunit;
 
-    public class AbortIfNoDependencyTopicsAffectedMessageHandlerTests
+    public static class AbortIfNoDependencyTopicsAffectedMessageHandlerTests
     {
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly", MessageId = "Errored", Justification = "Spelling/name is correct.")]
         [Fact]
-        public void ErroredDependentTopic_Aborts()
+        public static void ErroredDependentTopic_Aborts()
         {
             var impactingTopic = "cmfc";
             var dependentTopics = new[] { "cme", "cmc", "cmf" };
@@ -51,7 +52,7 @@ namespace Naos.MessageBus.Test
         }
 
         [Fact]
-        public void MissingCurrentNotice_Aborts()
+        public static void MissingCurrentNotice_Aborts()
         {
             // arrange
             var impactingTopic = new AffectedTopic("mine");
@@ -99,7 +100,7 @@ namespace Naos.MessageBus.Test
         }
 
         [Fact]
-        public void CurrentNoticeUnknown_Aborts()
+        public static void CurrentNoticeUnknown_Aborts()
         {
             // arrange
             var impactingTopic = new AffectedTopic("mine");
@@ -145,8 +146,9 @@ namespace Naos.MessageBus.Test
             testCode.ShouldThrow<AbortParcelDeliveryException>().WithMessage("No new data for topics; " + string.Join(",", topics));
         }
 
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1702:CompoundWordsShouldBeCasedCorrectly", MessageId = "DateLess", Justification = "Spelling/name is correct.")]
         [Fact]
-        public void CurrentNoticeDateLessThanPreviousNoticeDateButAlwaysCheckStrategy_DoesNotAbort()
+        public static void CurrentNoticeDateLessThanPreviousNoticeDateButAlwaysCheckStrategy_DoesNotAbort()
         {
             // arrange
             var impactingTopic = new AffectedTopic("mine");
@@ -199,8 +201,9 @@ namespace Naos.MessageBus.Test
             // assert - by virtue of arriving here this will have succeeded
         }
 
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1702:CompoundWordsShouldBeCasedCorrectly", MessageId = "DateLess", Justification = "Spelling/name is correct.")]
         [Fact]
-        public void CurrentNoticeDateLessThanPreviousNoticeDate_Aborts()
+        public static void CurrentNoticeDateLessThanPreviousNoticeDate_Aborts()
         {
             // arrange
             var impactingTopic = new AffectedTopic("mine");
@@ -254,7 +257,7 @@ namespace Naos.MessageBus.Test
         }
 
         [Fact]
-        public void MissingPreviousNotice_DoesNotAbort()
+        public static void MissingPreviousNotice_DoesNotAbort()
         {
             // arrange
             var impactingTopic = new AffectedTopic("mine");
@@ -291,7 +294,7 @@ namespace Naos.MessageBus.Test
         }
 
         [Fact]
-        public void NoNewWithAnyCheck_Aborts()
+        public static void NoNewWithAnyCheck_Aborts()
         {
             // arrange
             var impactingTopic = new AffectedTopic("mine");
@@ -330,7 +333,7 @@ namespace Naos.MessageBus.Test
         }
 
         [Fact]
-        public void SomeNewWithAnyCheck_DoesNotAbort()
+        public static void SomeNewWithAnyCheck_DoesNotAbort()
         {
             // arrange
             var impactingTopic = new AffectedTopic("mine");
@@ -388,7 +391,7 @@ namespace Naos.MessageBus.Test
         }
 
         [Fact]
-        public async Task AllNewWithAllCheck_DoesNotAbort()
+        public static async Task AllNewWithAllCheck_DoesNotAbort()
         {
             // arrange
             var impactingTopic = new AffectedTopic("mine");
@@ -443,7 +446,7 @@ namespace Naos.MessageBus.Test
         }
 
         [Fact]
-        public void SomeNewWithAllCheck_Aborts()
+        public static void SomeNewWithAllCheck_Aborts()
         {
             // arrange
             var impactingTopic = new AffectedTopic("mine");

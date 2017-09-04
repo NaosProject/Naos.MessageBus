@@ -1,6 +1,6 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="HandlerToolShed.cs" company="Naos">
-//   Copyright 2015 Naos
+// <copyright file="HandlerToolshed.cs" company="Naos">
+//    Copyright (c) Naos 2017. All rights reserved.
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
@@ -11,7 +11,7 @@ namespace Naos.MessageBus.Domain
     /// <summary>
     /// Factory that can be seeded in harness for use in the handlers if needed.
     /// </summary>
-    public static class HandlerToolShed
+    public static class HandlerToolshed
     {
         private static readonly object PostOfficeBuilderSync = new object();
         private static readonly object ParcelTrackingBuilderSync = new object();
@@ -41,6 +41,7 @@ namespace Naos.MessageBus.Domain
         /// Gets an implementation of <see cref="IPostOffice"/>.
         /// </summary>
         /// <returns>An implementation of <see cref="IPostOffice"/>.</returns>
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1024:UsePropertiesWhereAppropriate", Justification = "Keeping this way for now.")]
         public static IPostOffice GetPostOffice()
         {
             lock (PostOfficeBuilderSync)
@@ -58,6 +59,7 @@ namespace Naos.MessageBus.Domain
         /// Gets an implementation of <see cref="IGetTrackingReports"/>.
         /// </summary>
         /// <returns>An implementation of <see cref="IGetTrackingReports"/>.</returns>
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1024:UsePropertiesWhereAppropriate", Justification = "Keeping this way for now.")]
         public static IGetTrackingReports GetParcelTracker()
         {
             lock (ParcelTrackingBuilderSync)

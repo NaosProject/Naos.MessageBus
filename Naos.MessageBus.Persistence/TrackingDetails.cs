@@ -1,6 +1,6 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
 // <copyright file="TrackingDetails.cs" company="Naos">
-//   Copyright 2015 Naos
+//    Copyright (c) Naos 2017. All rights reserved.
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
@@ -21,11 +21,6 @@ namespace Naos.MessageBus.Persistence
         public HarnessDetails Recipient { get; internal set; }
 
         /// <summary>
-        /// Gets the address.
-        /// </summary>
-        public IChannel Address { get; internal set; }
-
-        /// <summary>
         /// Gets or sets the message of the exception.
         /// </summary>
         public string ExceptionMessage { get; set; }
@@ -39,11 +34,6 @@ namespace Naos.MessageBus.Persistence
         /// Gets the status.
         /// </summary>
         public ParcelStatus Status { get; internal set; }
-
-        /// <summary>
-        /// Gets the notice (if any).
-        /// </summary>
-        public NoticeForDatabase Notice { get; internal set; }
 
         /// <summary>
         /// Gets the envelope.

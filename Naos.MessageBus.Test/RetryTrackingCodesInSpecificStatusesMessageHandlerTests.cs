@@ -1,6 +1,6 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
 // <copyright file="RetryTrackingCodesInSpecificStatusesMessageHandlerTests.cs" company="Naos">
-//   Copyright 2015 Naos
+//    Copyright (c) Naos 2017. All rights reserved.
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
@@ -9,25 +9,20 @@ namespace Naos.MessageBus.Test
     using System;
     using System.Collections.Generic;
     using System.Linq;
-    using System.Threading.Tasks;
-
-    using FakeItEasy;
 
     using FluentAssertions;
 
     using Naos.MessageBus.Core;
     using Naos.MessageBus.Domain;
-    using Naos.MessageBus.Domain.Exceptions;
-    using Naos.MessageBus.Persistence;
-
-    using OBeautifulCode.AutoFakeItEasy;
 
     using Xunit;
 
-    public class RetryTrackingCodesInSpecificStatusesMessageHandlerTests
+    using static System.FormattableString;
+
+    public static class RetryTrackingCodesInSpecificStatusesMessageHandlerTests
     {
         [Fact]
-        public void StatusToRetry_InTransit_Throws()
+        public static void StatusToRetry_InTransit_Throws()
         {
             // arrange
             var message = new RetryTrackingCodesInSpecificStatusesMessage
@@ -42,7 +37,7 @@ namespace Naos.MessageBus.Test
                                               new TrackingCode
                                                   {
                                                       ParcelId = Guid.NewGuid(),
-                                                      EnvelopeId = Guid.NewGuid().ToString().ToUpper()
+                                                      EnvelopeId = Guid.NewGuid().ToString().ToUpperInvariant()
                                                   }
                                           }
                               };
@@ -60,7 +55,7 @@ namespace Naos.MessageBus.Test
         }
 
         [Fact]
-        public void StatusToRetry_OutForDelivery_Throws()
+        public static void StatusToRetry_OutForDelivery_Throws()
         {
             // arrange
             var message = new RetryTrackingCodesInSpecificStatusesMessage
@@ -75,7 +70,7 @@ namespace Naos.MessageBus.Test
                                               new TrackingCode
                                                   {
                                                       ParcelId = Guid.NewGuid(),
-                                                      EnvelopeId = Guid.NewGuid().ToString().ToUpper()
+                                                      EnvelopeId = Guid.NewGuid().ToString().ToUpperInvariant()
                                                   }
                                           }
                               };
@@ -93,7 +88,7 @@ namespace Naos.MessageBus.Test
         }
 
         [Fact]
-        public void StatusToRetry_Unknown_Throws()
+        public static void StatusToRetry_Unknown_Throws()
         {
             // arrange
             var message = new RetryTrackingCodesInSpecificStatusesMessage
@@ -108,7 +103,7 @@ namespace Naos.MessageBus.Test
                                               new TrackingCode
                                                   {
                                                       ParcelId = Guid.NewGuid(),
-                                                      EnvelopeId = Guid.NewGuid().ToString().ToUpper()
+                                                      EnvelopeId = Guid.NewGuid().ToString().ToUpperInvariant()
                                                   }
                                           }
                               };
@@ -126,7 +121,7 @@ namespace Naos.MessageBus.Test
         }
 
         [Fact]
-        public void StatusUpdatesAndExists()
+        public static void StatusUpdatesAndExists()
         {
             // arrange
             var trackingCode = new TrackingCode { ParcelId = Guid.NewGuid(), EnvelopeId = Guid.NewGuid().ToString() };
@@ -162,7 +157,7 @@ namespace Naos.MessageBus.Test
         }
 
         [Fact]
-        public void StatusToRetry_Rejected__ThrowIfRetriesExceeded_False__CallsResendTheNumberOfTriesAndExits()
+        public static void StatusToRetry_Rejected__ThrowIfRetriesExceeded_False__CallsResendTheNumberOfTriesAndExits()
         {
             // arrange
             var trackingCode = new TrackingCode { ParcelId = Guid.NewGuid(), EnvelopeId = Guid.NewGuid().ToString() };
@@ -211,7 +206,7 @@ namespace Naos.MessageBus.Test
         }
 
         [Fact]
-        public void StatusToRetry_Rejected__ThrowIfRetriesExceeded_True__CallsResendTheNumberOfTriesAndThrows()
+        public static void StatusToRetry_Rejected__ThrowIfRetriesExceeded_True__CallsResendTheNumberOfTriesAndThrows()
         {
             // arrange
             var trackingCode = new TrackingCode { ParcelId = Guid.NewGuid(), EnvelopeId = Guid.NewGuid().ToString() };
@@ -253,8 +248,7 @@ namespace Naos.MessageBus.Test
             // act & assert
             Action testCode = () => handler.HandleAsync(message, postOffice, parcelTracker).Wait();
             testCode.ShouldThrow<RetryFailedToProcessOutOfRetryStatusException>()
-                .WithMessage(
-                    $"Some messages failed to get out of needing retry status but retry attempt ({retryCount}) exhausted - {trackingCode}:{parcelStatusToRetryOn}");
+                .WithMessage(Invariant($"Some messages failed to get out of needing retry status but retry attempt ({retryCount}) exhausted - {trackingCode}:{parcelStatusToRetryOn}"));
 
             // should have exhausted retries
             var resends = trackingCalls.Where(_ => _ == nameof(IParcelTrackingSystem.ResendAsync));
@@ -262,7 +256,7 @@ namespace Naos.MessageBus.Test
         }
 
         [Fact]
-        public void StatusToRetry_Matches_Eventually__Exits__CallsResend()
+        public static void StatusToRetry_Matches_Eventually__Exits__CallsResend()
         {
             // arrange
             var trackingCode = new TrackingCode { ParcelId = Guid.NewGuid(), EnvelopeId = Guid.NewGuid().ToString() };
@@ -300,7 +294,7 @@ namespace Naos.MessageBus.Test
         }
 
         [Fact]
-        public void StatusToRetry_DoesNotMatch__Exits__DoesNotCallResend()
+        public static void StatusToRetry_DoesNotMatch__Exits__DoesNotCallResend()
         {
             // arrange
             var trackingCode = new TrackingCode { ParcelId = Guid.NewGuid(), EnvelopeId = Guid.NewGuid().ToString() };
@@ -349,7 +343,7 @@ namespace Naos.MessageBus.Test
         }
 
         [Fact]
-        public void EmptyTrackingCodes___Exits()
+        public static void EmptyTrackingCodes___Exits()
         {
             // arrange
             var parcelStatusToRetryOn = ParcelStatus.Delivered;

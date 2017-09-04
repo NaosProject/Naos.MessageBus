@@ -1,6 +1,6 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
 // <copyright file="DispatcherFactoryDebugTests.cs" company="Naos">
-//   Copyright 2015 Naos
+//    Copyright (c) Naos 2017. All rights reserved.
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
@@ -16,10 +16,11 @@ namespace Naos.MessageBus.Test
 
     using Xunit;
 
-    public class DispatcherFactoryDebugTests
+    public static class DispatcherFactoryDebugTests
     {
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Performance", "CA1804:RemoveUnusedLocals", MessageId = "dispatcherFactory", Justification = "Keeping this way for now.")]
         [Fact(Skip = "Debug test designed to run while connected through VPN.")]
-        public void Test___Reflection___Load()
+        public static void Test___Reflection___Load()
         {
             var assemblyPath = @"D:\Temp\other\";
             var dispatcherFactory = new DispatcherFactory(

@@ -1,6 +1,6 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
 // <copyright file="DispatcherFactoryTest.cs" company="Naos">
-//   Copyright 2015 Naos
+//    Copyright (c) Naos 2017. All rights reserved.
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
@@ -18,10 +18,10 @@ namespace Naos.MessageBus.Test
 
     using Xunit;
 
-    public class DispatcherFactoryTest
+    public static class DispatcherFactoryTest
     {
         [Fact(Skip = "Used for debugging specific assembly sets that have issues with reflection loading.")]
-        public void IsolateReflectionIssue()
+        public static void IsolateReflectionIssue()
         {
             // arrange
             var directory = @"D:\Temp\FailedToReflect";

@@ -1,6 +1,6 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
 // <copyright file="RetryTrackingCodesInSpecificStatusesMessage.cs" company="Naos">
-//   Copyright 2015 Naos
+//    Copyright (c) Naos 2017. All rights reserved.
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
@@ -32,6 +32,7 @@ namespace Naos.MessageBus.Domain
         /// <summary>
         /// Gets or sets the statuses that should be retried.
         /// </summary>
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Performance", "CA1819:PropertiesShouldNotReturnArrays", Justification = "Keeping this way for now.")]
         public ParcelStatus[] StatusesToRetry { get; set; }
 
         /// <summary>

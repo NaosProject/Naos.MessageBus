@@ -1,6 +1,6 @@
 // --------------------------------------------------------------------------------------------------------------------
 // <copyright file="IShareUnitOfWorkResult.cs" company="Naos">
-//   Copyright 2015 Naos
+//    Copyright (c) Naos 2017. All rights reserved.
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
@@ -27,7 +27,9 @@ namespace Naos.MessageBus.Domain
         /// <inheritdoc />
         public string Description { get; set; }
 
-        /// <inheritdoc />
+        /// <summary>
+        /// Gets or sets the <see cref="UnitOfWorkResult"/> to share.
+        /// </summary>
         public UnitOfWorkResult UnitOfWorkResultToShare { get; set; }
     }
 

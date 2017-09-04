@@ -1,6 +1,6 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
 // <copyright file="HangfireCourier.cs" company="Naos">
-//   Copyright 2015 Naos
+//    Copyright (c) Naos 2017. All rights reserved.
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
@@ -8,24 +8,20 @@ namespace Naos.MessageBus.Hangfire.Sender
 {
     using System;
     using System.Collections.Generic;
-    using static System.FormattableString;
     using System.Linq;
     using System.Linq.Expressions;
     using System.Text.RegularExpressions;
-
     using global::Hangfire;
     using global::Hangfire.States;
-
     using Its.Log.Instrumentation;
-
     using Naos.Cron;
     using Naos.MessageBus.Domain;
-
     using OBeautifulCode.TypeRepresentation;
-
     using Spritely.Redo;
+    using static System.FormattableString;
 
     /// <inheritdoc />
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly", MessageId = "Hangfire", Justification = "Spelling/name is correct.")]
     public class HangfireCourier : ICourier
     {
         private const int HangfireQueueNameMaxLength = 20;
@@ -55,6 +51,7 @@ namespace Naos.MessageBus.Hangfire.Sender
         public static IRouteUnaddressedMail DefaultChannelRouter => new ChannelRouter(DefaultChannel);
 
         /// <inheritdoc />
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Maintainability", "CA1506:AvoidExcessiveClassCoupling", Justification = "Keeping this way for now.")]
         public string Send(Crate crate)
         {
             // run this with retries because it will sometimes fail due to high load/high connection count
@@ -94,6 +91,8 @@ namespace Naos.MessageBus.Hangfire.Sender
         }
 
         /// <inheritdoc />
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA2204:Literals should be spelled correctly", MessageId = "Hangfire", Justification = "Spelling/name is correct.")]
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA2204:Literals should be spelled correctly", MessageId = "requeue", Justification = "Spelling/name is correct.")]
         public void Resend(CrateLocator crateLocator)
         {
             GlobalConfiguration.Configuration.UseSqlServerStorage(this.courierPersistenceConnectionConfiguration.ToSqlServerConnectionString());
@@ -101,7 +100,7 @@ namespace Naos.MessageBus.Hangfire.Sender
             var success = client.Requeue(crateLocator.CourierTrackingCode);
             if (!success)
             {
-                throw new ApplicationException("Failed to requeue Hangfire");
+                throw new HangfireException("Failed to requeue Hangfire");
             }
         }
 
@@ -112,6 +111,7 @@ namespace Naos.MessageBus.Hangfire.Sender
         /// <param name="defaultChannel">Default channel to assign recurring jobs to.</param>
         /// <param name="channel">The <see cref="IChannel"/> by reference because in event of recurring job the channel will be stripped.</param>
         /// <returns>Parcel that was in the crate with any necessary adjustments.</returns>
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1045:DoNotPassTypesByReference", MessageId = "2#", Justification = "Keeping this design for now (channel passed by ref).")]
         public static Parcel UncrateParcel(Crate crate, IChannel defaultChannel, ref IChannel channel)
         {
             Parcel parcel;
@@ -140,6 +140,7 @@ namespace Naos.MessageBus.Hangfire.Sender
         /// Throws an exception if the channel is invalid in its structure.
         /// </summary>
         /// <param name="channelToTest">The channel to examine.</param>
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA2204:Literals should be spelled correctly", MessageId = "Hangfire", Justification = "Spelling/name is correct.")]
         internal static void ThrowIfInvalidChannel(IChannel channelToTest)
         {
             if (channelToTest == null)

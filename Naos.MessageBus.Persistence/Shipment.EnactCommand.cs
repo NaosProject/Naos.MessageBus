@@ -1,6 +1,6 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
 // <copyright file="Shipment.EnactCommand.cs" company="Naos">
-//   Copyright 2015 Naos
+//    Copyright (c) Naos 2017. All rights reserved.
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
@@ -34,7 +34,7 @@ namespace Naos.MessageBus.Persistence
             var createdEvent = new Created
                               {
                                   PayloadJson = new PayloadCreated(
-                                                    command.Parcel, 
+                                                    command.Parcel,
                                                     command.RecurringSchedule).ToJsonPayload()
                               };
 
@@ -53,7 +53,7 @@ namespace Naos.MessageBus.Persistence
             var envelopeResendRequestedEvent = new EnvelopeResendRequested
                                                    {
                                                        PayloadJson = new PayloadEnvelopeResendRequested(
-                                                           command.TrackingCode, 
+                                                           command.TrackingCode,
                                                            ParcelStatus.InTransit).ToJsonPayload()
                                                    };
 
@@ -72,9 +72,9 @@ namespace Naos.MessageBus.Persistence
             var envelopeSentEvent = new EnvelopeSent
                                         {
                                             PayloadJson = new PayloadEnvelopeSent(
-                                                command.TrackingCode, 
-                                                ParcelStatus.InTransit, 
-                                                command.Parcel, 
+                                                command.TrackingCode,
+                                                ParcelStatus.InTransit,
+                                                command.Parcel,
                                                 command.Address).ToJsonPayload()
                                         };
 
@@ -93,8 +93,8 @@ namespace Naos.MessageBus.Persistence
             var envelopeDeliveryAttemptedEvent = new EnvelopeDeliveryAttempted
                                                      {
                                                          PayloadJson = new PayloadEnvelopeDeliveryAttempted(
-                                                             command.TrackingCode, 
-                                                             ParcelStatus.OutForDelivery, 
+                                                             command.TrackingCode,
+                                                             ParcelStatus.OutForDelivery,
                                                              command.Recipient).ToJsonPayload()
                                                      };
 
@@ -114,8 +114,8 @@ namespace Naos.MessageBus.Persistence
                                                    {
                                                        PayloadJson =
                                                            new PayloadEnvelopeDeliveryAborted(
-                                                               command.TrackingCode, 
-                                                               ParcelStatus.Aborted, 
+                                                               command.TrackingCode,
+                                                               ParcelStatus.Aborted,
                                                                command.Reason).ToJsonPayload()
                                                    };
 

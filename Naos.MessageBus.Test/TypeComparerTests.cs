@@ -1,6 +1,6 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
 // <copyright file="TypeComparerTests.cs" company="Naos">
-//   Copyright 2015 Naos
+//    Copyright (c) Naos 2017. All rights reserved.
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
@@ -17,10 +17,10 @@ namespace Naos.MessageBus.Test
 
     using Xunit;
 
-    public class TypeComparerTests
+    public static class TypeComparerTests
     {
         [Fact]
-        public void Equals_Nulls_False()
+        public static void Equals_Nulls_False()
         {
             var comparer = new TypeComparer(TypeMatchStrategy.NamespaceAndName);
 
@@ -35,7 +35,7 @@ namespace Naos.MessageBus.Test
         }
 
         [Fact]
-        public void EqualsNamespaceAndName_Match_True()
+        public static void EqualsNamespaceAndName_Match_True()
         {
             var comparer = new TypeComparer(TypeMatchStrategy.NamespaceAndName);
             var x = typeof(string);
@@ -45,7 +45,7 @@ namespace Naos.MessageBus.Test
         }
 
         [Fact]
-        public void EqualsAssemblyQualifiedName_Match_True()
+        public static void EqualsAssemblyQualifiedName_Match_True()
         {
             var comparer = new TypeComparer(TypeMatchStrategy.AssemblyQualifiedName);
             var x = typeof(string);
@@ -55,7 +55,7 @@ namespace Naos.MessageBus.Test
         }
 
         [Fact]
-        public void EqualsNamespaceAndName_NoMatch_False()
+        public static void EqualsNamespaceAndName_NoMatch_False()
         {
             var comparer = new TypeComparer(TypeMatchStrategy.NamespaceAndName);
             var x = typeof(string);
@@ -65,7 +65,7 @@ namespace Naos.MessageBus.Test
         }
 
         [Fact]
-        public void EqualsAssemblyQualifiedName_NoMatch_False()
+        public static void EqualsAssemblyQualifiedName_NoMatch_False()
         {
             var comparer = new TypeComparer(TypeMatchStrategy.AssemblyQualifiedName);
             var x = typeof(string);
@@ -75,7 +75,7 @@ namespace Naos.MessageBus.Test
         }
 
         [Fact]
-        public void EqualsStringsNamespaceAndName_Match_True()
+        public static void EqualsStringsNamespaceAndName_Match_True()
         {
             var comparer = new TypeComparer(TypeMatchStrategy.NamespaceAndName);
             var x = typeof(string);
@@ -85,7 +85,7 @@ namespace Naos.MessageBus.Test
         }
 
         [Fact]
-        public void EqualsStringsAssemblyQualifiedName_Match_True()
+        public static void EqualsStringsAssemblyQualifiedName_Match_True()
         {
             var comparer = new TypeComparer(TypeMatchStrategy.AssemblyQualifiedName);
             var x = typeof(string);
@@ -95,7 +95,7 @@ namespace Naos.MessageBus.Test
         }
 
         [Fact]
-        public void EqualsStringsNamespaceAndName_NoMatch_False()
+        public static void EqualsStringsNamespaceAndName_NoMatch_False()
         {
             var comparer = new TypeComparer(TypeMatchStrategy.NamespaceAndName);
             var x = typeof(string);
@@ -105,7 +105,7 @@ namespace Naos.MessageBus.Test
         }
 
         [Fact]
-        public void EqualsStringsAssemblyQualifiedName_NoMatch_False()
+        public static void EqualsStringsAssemblyQualifiedName_NoMatch_False()
         {
             var comparer = new TypeComparer(TypeMatchStrategy.AssemblyQualifiedName);
             var x = typeof(string);
@@ -115,7 +115,7 @@ namespace Naos.MessageBus.Test
         }
 
         [Fact]
-        public void EqualsDescriptionNamespaceAndName_Match_True()
+        public static void EqualsDescriptionNamespaceAndName_Match_True()
         {
             var comparer = new TypeComparer(TypeMatchStrategy.NamespaceAndName);
             var x = typeof(string);
@@ -125,7 +125,7 @@ namespace Naos.MessageBus.Test
         }
 
         [Fact]
-        public void EqualsDescriptionAssemblyQualifiedName_Match_True()
+        public static void EqualsDescriptionAssemblyQualifiedName_Match_True()
         {
             var comparer = new TypeComparer(TypeMatchStrategy.AssemblyQualifiedName);
             var x = typeof(string);
@@ -135,7 +135,7 @@ namespace Naos.MessageBus.Test
         }
 
         [Fact]
-        public void EqualsDescriptionNamespaceAndName_NoMatch_False()
+        public static void EqualsDescriptionNamespaceAndName_NoMatch_False()
         {
             var comparer = new TypeComparer(TypeMatchStrategy.NamespaceAndName);
             var x = typeof(string);
@@ -145,7 +145,7 @@ namespace Naos.MessageBus.Test
         }
 
         [Fact]
-        public void EqualsDescriptionAssemblyQualifiedName_NoMatch_False()
+        public static void EqualsDescriptionAssemblyQualifiedName_NoMatch_False()
         {
             var comparer = new TypeComparer(TypeMatchStrategy.AssemblyQualifiedName);
             var x = typeof(string);
@@ -155,7 +155,7 @@ namespace Naos.MessageBus.Test
         }
 
         [Fact]
-        public void ListTypeIsTypeDescriptedAndDeserializedWithGenericInfo()
+        public static void ListTypeIsTypeDescriptedAndDeserializedWithGenericInfo()
         {
             var obj = new List<string>(new[] { "hello" }).ToArray();
             var json = obj.ToJson();
@@ -177,7 +177,7 @@ namespace Naos.MessageBus.Test
         }
 
         [Fact]
-        public void ResolveArraysOfKnwonResolveTypeDescriptionFromAllLoadedTypes_ArrayOfType_ResolvesIfTypeKnown()
+        public static void ResolveArraysOfKnownResolveTypeDescriptionFromAllLoadedTypes_ArrayOfType_ResolvesIfTypeKnown()
         {
             var obj = new[] { "hello" };
             var typeDescription = obj.GetType().ToTypeDescription();
@@ -189,7 +189,7 @@ namespace Naos.MessageBus.Test
         }
 
         [Fact]
-        public void ResolveTypeDescriptionFromAllLoadedTypes_NotFound_ReturnsNull()
+        public static void ResolveTypeDescriptionFromAllLoadedTypes_NotFound_ReturnsNull()
         {
             var description = new TypeDescription { AssemblyQualifiedName = "Monkeys", Name = "Are", Namespace = "Cool" };
             var ret = SharedPropertyHelper.ResolveTypeDescriptionFromAllLoadedTypes(TypeMatchStrategy.AssemblyQualifiedName, description);

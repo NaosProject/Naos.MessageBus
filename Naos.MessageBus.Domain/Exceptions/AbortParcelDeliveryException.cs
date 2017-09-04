@@ -1,6 +1,6 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
 // <copyright file="AbortParcelDeliveryException.cs" company="Naos">
-//   Copyright 2015 Naos
+//    Copyright (c) Naos 2017. All rights reserved.
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
@@ -15,6 +15,13 @@ namespace Naos.MessageBus.Domain.Exceptions
     [Serializable]
     public class AbortParcelDeliveryException : MessageBusExceptionBase
     {
+        /// <summary>
+        /// Initializes a new instance of the <see cref="AbortParcelDeliveryException"/> class.
+        /// </summary>
+        public AbortParcelDeliveryException()
+        {
+        }
+
         /// <summary>
         /// Initializes a new instance of the <see cref="AbortParcelDeliveryException"/> class.
         /// </summary>
@@ -39,7 +46,7 @@ namespace Naos.MessageBus.Domain.Exceptions
         /// </summary>
         /// <param name="info">Serialization info.</param>
         /// <param name="context">Streaming context.</param>
-        public AbortParcelDeliveryException(SerializationInfo info, StreamingContext context)
+        protected AbortParcelDeliveryException(SerializationInfo info, StreamingContext context)
             : base(info, context)
         {
             this.Reschedule = info.GetBoolean(nameof(this.Reschedule));

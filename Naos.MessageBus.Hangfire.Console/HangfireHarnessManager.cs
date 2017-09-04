@@ -1,6 +1,6 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
 // <copyright file="HangfireHarnessManager.cs" company="Naos">
-//   Copyright 2015 Naos
+//    Copyright (c) Naos 2017. All rights reserved.
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
@@ -27,16 +27,23 @@ namespace Naos.MessageBus.Hangfire.Console
     using Naos.MessageBus.Persistence;
     using Naos.Recipes.Configuration.Setup;
 
+    using static System.FormattableString;
+
     /// <summary>
     /// Main entry point of the application.
     /// </summary>
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1053:StaticHolderTypesShouldNotHaveConstructors", Justification = "Cannot be static for command line contract.")]
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly", MessageId = "Hangfire", Justification = "Spelling/name is correct.")]
     public class HangfireHarnessManager
     {
         /// <summary>
         /// Main entry point of the application.
         /// </summary>
         /// <param name="startDebugger">Indication to start the debugger from inside the application (default is false).</param>
-        [Verb(Aliases = "HangfireHarnessManager",
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Maintainability", "CA1506:AvoidExcessiveClassCoupling", Justification = "Keeping this way for now.")]
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA2204:Literals should be spelled correctly", MessageId = "Hangfire", Justification = "Spelling/name is correct.")]
+        [Verb(
+            Aliases = "HangfireHarnessManager",
             IsDefault = true,
             Description = "Runs the Hangfire Harness until it's triggered to end from in activity or fails.")]
 #pragma warning disable 1591
@@ -73,8 +80,8 @@ namespace Naos.MessageBus.Hangfire.Console
 
                 var postOffice = new PostOffice(parcelTrackingSystem, HangfireCourier.DefaultChannelRouter);
 
-                HandlerToolShed.InitializePostOffice(() => postOffice);
-                HandlerToolShed.InitializeParcelTracking(() => parcelTrackingSystem);
+                HandlerToolshed.InitializePostOffice(() => postOffice);
+                HandlerToolshed.InitializeParcelTracking(() => parcelTrackingSystem);
 
                 var dispatcherFactory = new DispatcherFactory(
                     executorRoleSettings.HandlerAssemblyPath,

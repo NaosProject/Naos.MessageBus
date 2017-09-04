@@ -1,6 +1,6 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
 // <copyright file="PostOfficeExtensions.cs" company="Naos">
-//   Copyright 2015 Naos
+//    Copyright (c) Naos 2017. All rights reserved.
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
@@ -26,7 +26,7 @@ namespace Naos.MessageBus.Domain
         {
             var envelopesFromSequence = messageSequence.AddressedMessages.Select(addressedMessage => addressedMessage.ToEnvelope()).ToList();
 
-            // if this is recurring we must inject a null message that will be handled on the default queue and immediately moved to the next one 
+            // if this is recurring we must inject a null message that will be handled on the default queue and immediately moved to the next one
             //             that will be put in the correct queue...
             var envelopes = new List<Envelope>();
             envelopes.AddRange(envelopesFromSequence);

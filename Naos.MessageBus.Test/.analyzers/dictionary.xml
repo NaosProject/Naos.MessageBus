@@ -1,0 +1,52 @@
+﻿<!-- For usage of this file, see: https://msdn.microsoft.com/en-us/library/bb514188.aspx -->
+<Dictionary>
+  <Words>
+    <Unrecognized>
+      <Word></Word>
+    </Unrecognized>
+    <Recognized>
+      <Word>Accpac</Word>
+      <Word>additivize</Word>
+      <Word>additivized</Word>
+      <Word>additivization</Word>
+      <Word>anonymized</Word>
+      <Word>AppVeyor</Word>
+      <Word>Aspose</Word>
+      <Word>Bson</Word>
+      <Word>bool</Word>
+      <Word>Coop</Word>
+      <Word>Dist</Word>
+      <Word>FY</Word>
+      <Word>json</Word>
+      <Word>Loggly</Word>
+      <Word>Naos</Word>
+      <Word>nullable</Word>
+      <Word>OBeautifulCode</Word>
+      <Word>pathed</Word>
+      <Word>pdf</Word>
+      <Word>pluralization</Word>
+      <Word>tearsheet</Word>
+      <Word>tearsheets</Word>
+      <Word>whitespace</Word>
+      <Word>Zendesk</Word>
+    </Recognized>
+    <Deprecated>
+      <Term PreferredAlternate=""></Term>
+    </Deprecated>
+    <Compound>
+      <Term CompoundAlternate="CellPhone">cellphone</Term>
+      <Term CompoundAlternate="OBeautifulCode">obeautifulcode</Term>
+      <Term CompoundAlternate="RollUp">rollup</Term>
+      <Term CompoundAlternate="YearEnd">yearend</Term>
+    </Compound>
+    <DiscreteExceptions>
+      <Term></Term>
+    </DiscreteExceptions>
+  </Words>
+  <Acronyms>
+    <CasingExceptions>
+      <Acronym>Co</Acronym>
+      <Acronym>Etl</Acronym>
+    </CasingExceptions>
+  </Acronyms>
+</Dictionary>

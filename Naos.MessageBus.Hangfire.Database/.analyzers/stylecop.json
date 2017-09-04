@@ -1,0 +1,10 @@
+﻿{
+  "settings": {
+    "documentationRules": {
+      "companyName": "Naos",
+      "copyrightText": "   Copyright (c) {companyName} 2017. All rights reserved.",
+      "variables": {
+      }
+    }
+  }
+}

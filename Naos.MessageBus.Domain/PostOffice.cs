@@ -1,6 +1,6 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
 // <copyright file="PostOffice.cs" company="Naos">
-//   Copyright 2015 Naos
+//    Copyright (c) Naos 2017. All rights reserved.
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
@@ -13,6 +13,8 @@ namespace Naos.MessageBus.Domain
     using Naos.Cron;
 
     using OBeautifulCode.TypeRepresentation;
+
+    using static System.FormattableString;
 
     /// <inheritdoc />
     public class PostOffice : IPostOffice
@@ -161,14 +163,13 @@ namespace Naos.MessageBus.Domain
 
             // must be first message to provide data to others...
             var allTopics = dependencyTopics.Cast<TopicBase>().Union(new[] { parcel.Topic }).Select(_ => _.ToNamedTopic()).ToArray();
-            var fetchAndShareTopicStatusReportMessage = new FetchAndShareLatestTopicStatusReportsMessage
-            {
-                Description =
-                                                                    $"{parcel.Name} - Fetch and Share Latest Topic Status Reports for: "
-                                                                    + string.Join<TopicBase>(",", allTopics),
-                TopicsToFetchAndShareStatusReportsFrom = allTopics,
-                Filter = TopicStatus.None
-            };
+            var fetchAndShareTopicStatusReportMessage =
+                new FetchAndShareLatestTopicStatusReportsMessage
+                    {
+                        Description = Invariant($"{parcel.Name} - Fetch and Share Latest Topic Status Reports for: {string.Join<TopicBase>(",", allTopics)}"),
+                        TopicsToFetchAndShareStatusReportsFrom = allTopics,
+                        Filter = TopicStatus.None
+                    };
 
             newEnvelopes.Add(fetchAndShareTopicStatusReportMessage.ToAddressedMessage().ToEnvelope());
 
@@ -176,7 +177,7 @@ namespace Naos.MessageBus.Domain
             {
                 var abortIfPendingMessage = new AbortIfTopicsHaveSpecificStatusesMessage
                 {
-                    Description = $"{parcel.Name} - Abort if '{parcel.Topic}' Being Affected or Failed",
+                    Description = Invariant($"{parcel.Name} - Abort if '{parcel.Topic}' Being Affected or Failed"),
                     TopicsToCheck = new[] { parcel.Topic.ToNamedTopic() },
                     TopicCheckStrategy = TopicCheckStrategy.All,
                     StatusesToAbortOn = new[] { TopicStatus.BeingAffected, TopicStatus.Failed }
@@ -189,7 +190,7 @@ namespace Naos.MessageBus.Domain
             {
                 var abortIfNoNewDataMessage = new AbortIfNoDependencyTopicsAffectedMessage
                 {
-                    Description = $"{parcel.Name} - Abort if no updates on Depdendency Topics: " + string.Join(",", dependencyTopics),
+                    Description = Invariant($"{parcel.Name} - Abort if no updates on Depdendency Topics: {string.Join(",", dependencyTopics)}"),
                     Topic = parcel.Topic,
                     DependencyTopics = dependencyTopics,
                     TopicCheckStrategy = parcel.DependencyTopicCheckStrategy
@@ -201,7 +202,7 @@ namespace Naos.MessageBus.Domain
             // add a being affected message
             var beingAffectedMessage = new TopicBeingAffectedMessage
             {
-                Description = $"{parcel.Name} - Begin affecting Topic: {parcel.Topic}",
+                Description = Invariant($"{parcel.Name} - Begin affecting Topic: {parcel.Topic}"),
                 Topic = parcel.Topic
             };
 
@@ -230,7 +231,7 @@ namespace Naos.MessageBus.Domain
             // add the final was affected message
             var wasAffectedMessage = new TopicWasAffectedMessage
             {
-                Description = $"{parcel.Name} - Finished affecting Topic: {parcel.Topic}",
+                Description = Invariant($"{parcel.Name} - Finished affecting Topic: {parcel.Topic}"),
                 Topic = parcel.Topic
             };
 

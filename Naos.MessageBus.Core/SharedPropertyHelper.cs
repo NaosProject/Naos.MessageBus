@@ -1,6 +1,6 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
 // <copyright file="SharedPropertyHelper.cs" company="Naos">
-//   Copyright 2015 Naos
+//    Copyright (c) Naos 2017. All rights reserved.
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
@@ -14,6 +14,8 @@ namespace Naos.MessageBus.Core
     using Naos.MessageBus.Domain.Exceptions;
 
     using OBeautifulCode.TypeRepresentation;
+
+    using static System.FormattableString;
 
     /// <summary>
     /// Code to handle merging IShare properties.
@@ -88,7 +90,7 @@ namespace Naos.MessageBus.Core
         {
             if (sourceObject == null)
             {
-                throw new SharePropertyException("SourceObject can not be null");
+                throw new SharePropertyException(Invariant($"{nameof(sourceObject)} can not be null"));
             }
 
             var ret = new List<SharedInterfaceState>();
@@ -144,7 +146,7 @@ namespace Naos.MessageBus.Core
         {
             if (interfaceState == null || targetObject == null)
             {
-                throw new SharePropertyException("Neither targetObject nor propertySet can be null");
+                throw new SharePropertyException(Invariant($"Neither {nameof(interfaceState)} nor {nameof(targetObject)} can be null"));
             }
 
             // get the ishare implementations to check for match

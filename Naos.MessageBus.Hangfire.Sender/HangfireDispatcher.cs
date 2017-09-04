@@ -1,6 +1,6 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
 // <copyright file="HangfireDispatcher.cs" company="Naos">
-//   Copyright 2015 Naos
+//    Copyright (c) Naos 2017. All rights reserved.
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
@@ -13,6 +13,7 @@ namespace Naos.MessageBus.Hangfire.Sender
     /// <summary>
     /// Custom wrapper of <see cref="IDispatchMessages"/> for Hangfire to allow for changing the method signature to accommodate additional needs.
     /// </summary>
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly", MessageId = "Hangfire", Justification = "Spelling/name is correct.")]
     public class HangfireDispatcher
     {
         private readonly IDispatchMessages dispatcher;
@@ -33,6 +34,7 @@ namespace Naos.MessageBus.Hangfire.Sender
         /// <param name="trackingCodeJson">Tracking code as JSON.</param>
         /// <param name="parcelJson">Parcel as JSON.</param>
         /// <param name="channelJson">Channel as JSON.</param>
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly", MessageId = "Hangfire", Justification = "Spelling/name is correct.")]
         [DisplayName("{0}")]
         public void HangfireDispatch(string displayName, string trackingCodeJson, string parcelJson, string channelJson)
         {

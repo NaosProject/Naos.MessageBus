@@ -1,6 +1,6 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
 // <copyright file="HangfireBootstrapper.cs" company="Naos">
-//   Copyright 2015 Naos
+//    Copyright (c) Naos 2017. All rights reserved.
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
@@ -8,6 +8,7 @@
 
 namespace Naos.MessageBus.Hangfire.Harness
 {
+    using System;
     using System.Linq;
     using System.Web.Hosting;
 
@@ -20,11 +21,13 @@ namespace Naos.MessageBus.Hangfire.Harness
     using Naos.MessageBus.Persistence;
 
     /// <inheritdoc />
-    public class HangfireBootstrapper : IRegisteredObject
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly", MessageId = "Hangfire", Justification = "Spelling/name is correct.")]
+    public sealed class HangfireBootstrapper : IRegisteredObject, IDisposable
     {
         /// <summary>
         /// Instance variable of the singleton
         /// </summary>
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Security", "CA2104:DoNotDeclareReadOnlyMutableReferenceTypes", Justification = "Keeping this way for now.")]
         public static readonly HangfireBootstrapper Instance = new HangfireBootstrapper();
 
         private readonly object lockObject = new object();
@@ -75,8 +78,8 @@ namespace Naos.MessageBus.Hangfire.Harness
             var postOffice = new PostOffice(parcelTrackingSystem, HangfireCourier.DefaultChannelRouter);
             var synchronizedPostOffice = new SynchronizedPostOffice(postOffice);
 
-            HandlerToolShed.InitializePostOffice(() => synchronizedPostOffice);
-            HandlerToolShed.InitializeParcelTracking(() => parcelTrackingSystem);
+            HandlerToolshed.InitializePostOffice(() => synchronizedPostOffice);
+            HandlerToolshed.InitializeParcelTracking(() => parcelTrackingSystem);
 
             this.dispatcherFactory = new DispatcherFactory(
                 executorRoleSettings.HandlerAssemblyPath,
@@ -125,10 +128,17 @@ namespace Naos.MessageBus.Hangfire.Harness
             }
         }
 
-        /// <inheritdoc />
+        /// <inheritdoc cref="IRegisteredObject" />
         void IRegisteredObject.Stop(bool immediate)
         {
             this.Stop();
+        }
+
+        /// <inheritdoc cref="IDisposable" />
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2213:DisposableFieldsShouldBeDisposed", MessageId = "backgroundJobServer", Justification = "Is disposed.")]
+        public void Dispose()
+        {
+            this.backgroundJobServer?.Dispose();
         }
     }
 }

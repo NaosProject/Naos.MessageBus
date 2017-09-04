@@ -1,6 +1,6 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
 // <copyright file="WaitMessageHandlerTests.cs" company="Naos">
-//   Copyright 2015 Naos
+//    Copyright (c) Naos 2017. All rights reserved.
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
@@ -14,10 +14,10 @@ namespace Naos.MessageBus.Test
 
     using Xunit;
 
-    public class WaitMessageHandlerTests
+    public static class WaitMessageHandlerTests
     {
         [Fact]
-        public void Handle_TenSecondTimeSpan_TenSecondWait()
+        public static void Handle_TenSecondTimeSpan_TenSecondWait()
         {
             // skipping on appveyor because it hangs...
             if (true.ToString().Equals(Environment.GetEnvironmentVariable("APPVEYOR")))

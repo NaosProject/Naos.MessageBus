@@ -1,6 +1,6 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
 // <copyright file="TrackingCodeTest.cs" company="Naos">
-//   Copyright 2015 Naos
+//    Copyright (c) Naos 2017. All rights reserved.
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
@@ -12,13 +12,13 @@ namespace Naos.MessageBus.Test
 
     using Xunit;
 
-    public class TrackingCodeTest
+    public static class TrackingCodeTest
     {
         [Fact]
-        public void Equal_AreEqual()
+        public static void Equal_AreEqual()
         {
             var firstParcelId = Guid.NewGuid();
-            var firstCode = Guid.NewGuid().ToString().ToUpper();
+            var firstCode = Guid.NewGuid().ToString().ToUpperInvariant();
 
             var first = new TrackingCode { EnvelopeId = firstCode, ParcelId = firstParcelId };
 
@@ -35,10 +35,10 @@ namespace Naos.MessageBus.Test
         }
 
         [Fact]
-        public void NotEqualAreNotEqual_ParcelId()
+        public static void NotEqualAreNotEqual_ParcelId()
         {
             var firstParcelId = Guid.NewGuid();
-            var firstCode = Guid.NewGuid().ToString().ToUpper();
+            var firstCode = Guid.NewGuid().ToString().ToUpperInvariant();
             var first = new TrackingCode { EnvelopeId = firstCode, ParcelId = firstParcelId };
 
             var secondParcelId = Guid.NewGuid();
@@ -54,14 +54,14 @@ namespace Naos.MessageBus.Test
         }
 
         [Fact]
-        public void NotEqualAreNotEqual_Code()
+        public static void NotEqualAreNotEqual_Code()
         {
             var firstParcelId = Guid.NewGuid();
-            var firstCode = Guid.NewGuid().ToString().ToUpper();
+            var firstCode = Guid.NewGuid().ToString().ToUpperInvariant();
             var first = new TrackingCode { EnvelopeId = firstCode, ParcelId = firstParcelId };
 
             var secondParcelId = firstParcelId;
-            var secondCode = Guid.NewGuid().ToString().ToUpper();
+            var secondCode = Guid.NewGuid().ToString().ToUpperInvariant();
             var second = new TrackingCode { EnvelopeId = secondCode, ParcelId = secondParcelId };
 
             Assert.False(first == second);

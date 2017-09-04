@@ -1,6 +1,6 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="MessageBusHarnessSettings.cs" company="Naos">
-//   Copyright 2015 Naos
+// <copyright file="MessageBusHarnessRoleSettingsBase.cs" company="Naos">
+//    Copyright (c) Naos 2017. All rights reserved.
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
@@ -39,6 +39,7 @@ namespace Naos.MessageBus.Domain
         /// <summary>
         /// Gets or sets the channels to monitor.
         /// </summary>
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly", Justification = "Keeping this way for now.")]
         public ICollection<IChannel> ChannelsToMonitor { get; set; }
 
         /// <summary>
@@ -90,6 +91,7 @@ namespace Naos.MessageBus.Domain
         /// <summary>
         /// Gets or sets the role settings of the harness.
         /// </summary>
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly", Justification = "Keeping this way for now.")]
         public ICollection<MessageBusHarnessRoleSettingsBase> RoleSettings { get; set; }
 
         /// <summary>

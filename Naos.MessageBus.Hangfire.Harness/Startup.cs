@@ -1,6 +1,6 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
 // <copyright file="Startup.cs" company="Naos">
-//   Copyright 2015 Naos
+//    Copyright (c) Naos 2017. All rights reserved.
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
@@ -35,6 +35,7 @@ namespace Naos.MessageBus.Hangfire.Harness
         /// Configuration methods that loads applications.
         /// </summary>
         /// <param name="app">App builder to chain on.</param>
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Performance", "CA1822:MarkMembersAsStatic", Justification = "Non-static is the contract..")]
         public void Configuration(IAppBuilder app)
         {
             Config.SetupSerialization();
@@ -59,7 +60,7 @@ namespace Naos.MessageBus.Hangfire.Harness
                                   };
 
                 app.UseHangfireServer(options);
-                
+
                 if (hostRoleSettings.RunDashboard)
                 {
                     app.UseHangfireDashboard();

@@ -1,6 +1,6 @@
 // --------------------------------------------------------------------------------------------------------------------
 // <copyright file="Send.cs" company="Naos">
-//   Copyright 2015 Naos
+//    Copyright (c) Naos 2017. All rights reserved.
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
@@ -12,6 +12,8 @@ namespace Naos.MessageBus.Persistence
     using Microsoft.Its.Domain;
 
     using Naos.MessageBus.Domain;
+
+    using static System.FormattableString;
 
     /// <summary>
     /// Send command for a <see cref="Shipment"/>.
@@ -29,7 +31,7 @@ namespace Naos.MessageBus.Persistence
         {
             get
             {
-                var trackingCodeSet = Validate.That<Send>(cmd => cmd.TrackingCode != null).WithErrorMessage("TrackingCode must be specified.");
+                var trackingCodeSet = Validate.That<Send>(cmd => cmd.TrackingCode != null).WithErrorMessage(Invariant($"{nameof(this.TrackingCode)} must be specified."));
 
                 return new ValidationPlan<Send> { trackingCodeSet };
             }

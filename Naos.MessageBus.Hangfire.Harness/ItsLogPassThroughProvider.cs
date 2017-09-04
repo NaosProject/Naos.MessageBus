@@ -1,6 +1,6 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
 // <copyright file="ItsLogPassThroughProvider.cs" company="Naos">
-//   Copyright 2015 Naos
+//    Copyright (c) Naos 2017. All rights reserved.
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
@@ -31,7 +31,7 @@ namespace Naos.MessageBus.Hangfire.Harness
         public bool Log(LogLevel logLevel, Func<string> messageFunc, Exception exception = null)
         {
             // add unique id in case both messages get logged and to differentiate
-            var guid = Guid.NewGuid().ToString().ToUpper();
+            var guid = Guid.NewGuid().ToString().ToUpperInvariant();
 
             if (messageFunc != null)
             {
