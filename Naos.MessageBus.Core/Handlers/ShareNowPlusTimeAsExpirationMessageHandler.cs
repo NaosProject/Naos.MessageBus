@@ -14,10 +14,10 @@ namespace Naos.MessageBus.Core
     /// <summary>
     /// No implementation handler to handle NullMessages.
     /// </summary>
-    public class ShareNowPlusTimeAsExpirationMessageHandler : IHandleMessages<ShareNowPlusTimeAsExpirationMessage>, IShareExpirationDate
+    public class ShareNowPlusTimeAsExpirationMessageHandler : MessageHandlerBase<ShareNowPlusTimeAsExpirationMessage>, IShareExpirationDate
     {
-        /// <inheritdoc />
-        public async Task HandleAsync(ShareNowPlusTimeAsExpirationMessage message)
+        /// <inheritdoc cref="MessageHandlerBase{T}" />
+        public override async Task HandleAsync(ShareNowPlusTimeAsExpirationMessage message)
         {
             this.ExpirationDateTimeUtc = DateTime.UtcNow.Add(message.TimeToAdd);
 

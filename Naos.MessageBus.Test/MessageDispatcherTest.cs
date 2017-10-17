@@ -15,9 +15,14 @@ namespace Naos.MessageBus.Test
 
     using FluentAssertions;
 
+    using Naos.Compression.Domain;
     using Naos.MessageBus.Core;
     using Naos.MessageBus.Domain;
     using Naos.MessageBus.Domain.Exceptions;
+    using Naos.Serialization.Domain;
+    using Naos.Serialization.Factory;
+    using Naos.Serialization.Factory.Extensions;
+    using Naos.Serialization.Json;
 
     using OBeautifulCode.TypeRepresentation;
 
@@ -31,6 +36,8 @@ namespace Naos.MessageBus.Test
         public static void Dispatch_ParcelWithSharesThatMatchEnum_FullTrip()
         {
             // arrange
+            var envelopeMachine = Factory.GetEnvelopeMachine();
+            var shareManager = Factory.GetShareManager();
             var trackingSends = new List<Parcel>();
             var senderConstructor = Factory.GetInMemorySender(trackingSends);
 
@@ -38,25 +45,27 @@ namespace Naos.MessageBus.Test
 
             var handlerInterfaceToImplementationTypeMap = new Dictionary<Type, Type>
                                                               {
-                                                                      { typeof(IHandleMessages<FirstEnumMessage>), typeof(FirstEnumHandler) },
-                                                                      { typeof(IHandleMessages<SecondEnumMessage>), typeof(SecondEnumHandler) }
+                                                                      { typeof(FirstEnumMessage), typeof(FirstEnumHandler) },
+                                                                      { typeof(SecondEnumMessage), typeof(SecondEnumHandler) }
                                                               };
 
+            var handlerBuilder = new MappedTypeHandlerBuilder(handlerInterfaceToImplementationTypeMap, TypeMatchStrategy.NamespaceAndName);
+
             var dispatcher = new MessageDispatcher(
-                handlerInterfaceToImplementationTypeMap,
+                handlerBuilder,
                 new ConcurrentDictionary<Type, object>(),
                 new[] { channel },
-                TypeMatchStrategy.NamespaceAndName,
-                TimeSpan.FromSeconds(.5),
                 new HarnessStaticDetails(),
                 new NullParcelTrackingSystem(),
                 new InMemoryActiveMessageTracker(),
-                senderConstructor());
+                senderConstructor(),
+                envelopeMachine,
+                shareManager);
 
             var firstMessage = new FirstEnumMessage() { Description = "RunMe 1", SeedValue = MyEnum.OtherValue };
             var secondMessage = new SecondEnumMessage() { Description = "RunMe 2" };
             var thirdMessage = new SecondEnumMessage() { Description = "RunMe 3" };
- 
+
             var messageSequence = new MessageSequence
                                       {
                                           AddressedMessages =
@@ -80,7 +89,7 @@ namespace Naos.MessageBus.Test
                                                   }
                                       };
 
-            var envelopesFromSequence = messageSequence.AddressedMessages.Select(addressedMessage => addressedMessage.ToEnvelope()).ToList();
+            var envelopesFromSequence = messageSequence.AddressedMessages.Select(addressedMessage => addressedMessage.ToEnvelope(envelopeMachine)).ToList();
 
             var parcel = new Parcel { Envelopes = envelopesFromSequence };
 
@@ -96,15 +105,17 @@ namespace Naos.MessageBus.Test
             var sharedPropertySet = newParcel.SharedInterfaceStates.Single();
             var typeComparer = new TypeComparer(TypeMatchStrategy.NamespaceAndName);
             Assert.True(
-                typeComparer.Equals(typeof(IShareEnum).ToTypeDescription(), sharedPropertySet.InterfaceType)); 
+                typeComparer.Equals(typeof(IShareEnum).ToTypeDescription(), sharedPropertySet.InterfaceType));
             Assert.Equal("EnumValueToShare", sharedPropertySet.Properties.Single().Name);
-            var seedValueAsJson = firstMessage.SeedValue.ToJson();
-            Assert.Equal(seedValueAsJson, sharedPropertySet.Properties.Single().ValueAsJson);
+            var jsoner = new NaosJsonSerializer();
+
+            var seedValueAsJson = jsoner.SerializeToString(firstMessage.SeedValue);
+            Assert.Equal(seedValueAsJson, sharedPropertySet.Properties.Single().SerializedValue.SerializedPayload);
 
             var secondTrackingCode = new TrackingCode { EnvelopeId = "2" };
             dispatcher.Dispatch("Second Message", secondTrackingCode, newParcel, channel);
 
-            // verify new message 
+            // verify new message
             Assert.Equal(2, trackingSends.Count);
             var newNewParcel = trackingSends.Single(_ => _.Envelopes.First().Description == thirdMessage.Description);
             Assert.Equal(2, newNewParcel.SharedInterfaceStates.Count);
@@ -116,12 +127,13 @@ namespace Naos.MessageBus.Test
         public static void Dispatch_ParcelWithRemainingEnvelopes_RemainingEnvelopesDoNotGetDeserialized()
         {
             // arrange
+            var envelopeMachine = Factory.GetEnvelopeMachine();
             var channel = new SimpleChannel("el-channel");
 
             var handlerInterfaceToImplementationTypeMap = new Dictionary<Type, Type>
                                                               {
-                                                                      { typeof(IHandleMessages<FirstEnumMessage>), typeof(FirstEnumHandler) },
-                                                                      { typeof(IHandleMessages<SecondEnumMessage>), typeof(SecondEnumHandler) }
+                                                                      { typeof(FirstEnumMessage), typeof(FirstEnumHandler) },
+                                                                      { typeof(SecondEnumMessage), typeof(SecondEnumHandler) }
                                                               };
 
             var trackingSends = new List<Parcel>();
@@ -132,18 +144,15 @@ namespace Naos.MessageBus.Test
 
             var envelopesFromSequence = new[]
                                             {
-                                                firstMessage.ToAddressedMessage(channel).ToEnvelope(),
+                                                firstMessage.ToAddressedMessage(channel).ToEnvelope(envelopeMachine),
                                                 new Envelope(
                                                     "2",
                                                     "No work",
                                                     channel,
-                                                    "WON'T WORK",
-                                                    new TypeDescription
-                                                        {
-                                                            Namespace = "Namespace",
-                                                            Name = "Name",
-                                                            AssemblyQualifiedName = "AssemblyQualifiedName"
-                                                        })
+                                                    new DescribedSerialization(
+                                                        new TypeDescription("Not Real Space", "Not Real Name", "Not Real AQN"),
+                                                        "Not Real Payload",
+                                                        PostOffice.MessageSerializationDescription))
                                             };
 
             var parcel = new Parcel { Envelopes = envelopesFromSequence };
@@ -159,6 +168,8 @@ namespace Naos.MessageBus.Test
         [Fact]
         public static void Dispatch_ParcelWithNonSharedMessages_Succeeds()
         {
+            var envelopeMachine = Factory.GetEnvelopeMachine();
+
             // skipping on appveyor because it hangs...
             if (true.ToString().Equals(Environment.GetEnvironmentVariable("APPVEYOR")))
             {
@@ -170,8 +181,8 @@ namespace Naos.MessageBus.Test
 
             var handlerInterfaceToImplementationTypeMap = new Dictionary<Type, Type>
                                                               {
-                                                                      { typeof(IHandleMessages<MessageOne>), typeof(MessageOneHandler) },
-                                                                      { typeof(IHandleMessages<MessageTwo>), typeof(MessageTwoHandler) }
+                                                                      { typeof(MessageOne), typeof(MessageOneHandler) },
+                                                                      { typeof(MessageTwo), typeof(MessageTwoHandler) }
                                                               };
 
             var trackingSends = new List<Parcel>();
@@ -181,7 +192,11 @@ namespace Naos.MessageBus.Test
             var firstMessage = new MessageOne() { Description = "RunMe 1" };
             var secondMessage = new MessageTwo() { Description = "RunMe 2" };
 
-            var envelopesFromSequence = new[] { firstMessage.ToAddressedMessage(channel).ToEnvelope(), secondMessage.ToAddressedMessage(channel).ToEnvelope() };
+            var envelopesFromSequence = new[]
+                                            {
+                                                firstMessage.ToAddressedMessage(channel).ToEnvelope(envelopeMachine),
+                                                secondMessage.ToAddressedMessage(channel).ToEnvelope(envelopeMachine)
+                                            };
 
             var parcel = new Parcel { Envelopes = envelopesFromSequence };
 
@@ -201,6 +216,8 @@ namespace Naos.MessageBus.Test
         [Fact]
         public static void Dispatch_ParcelWithShareableMessagesAndNoShares_Succeeds()
         {
+            var envelopeMachine = Factory.GetEnvelopeMachine();
+
             // skipping on appveyor because it hangs...
             if (true.ToString().Equals(Environment.GetEnvironmentVariable("APPVEYOR")))
             {
@@ -212,8 +229,8 @@ namespace Naos.MessageBus.Test
 
             var handlerInterfaceToImplementationTypeMap = new Dictionary<Type, Type>
                                                               {
-                                                                      { typeof(IHandleMessages<MessageOneShare>), typeof(MessageOneShareHandler) },
-                                                                      { typeof(IHandleMessages<MessageTwoShare>), typeof(MessageTwoShareHandler) }
+                                                                      { typeof(MessageOneShare), typeof(MessageOneShareHandler) },
+                                                                      { typeof(MessageTwoShare), typeof(MessageTwoShareHandler) }
                                                               };
 
             var trackingSends = new List<Parcel>();
@@ -223,7 +240,11 @@ namespace Naos.MessageBus.Test
             var firstMessage = new MessageOneShare() { Description = "RunMe 1" };
             var secondMessage = new MessageTwoShare() { Description = "RunMe 2" };
 
-            var envelopesFromSequence = new[] { firstMessage.ToAddressedMessage(channel).ToEnvelope(), secondMessage.ToAddressedMessage(channel).ToEnvelope() };
+            var envelopesFromSequence = new[]
+                                            {
+                                                firstMessage.ToAddressedMessage(channel).ToEnvelope(envelopeMachine),
+                                                secondMessage.ToAddressedMessage(channel).ToEnvelope(envelopeMachine)
+                                            };
 
             var parcel = new Parcel { Envelopes = envelopesFromSequence };
 
@@ -242,42 +263,48 @@ namespace Naos.MessageBus.Test
 
         private static MessageDispatcher GetMessageDispatcher(List<Parcel> trackingSends, IReadOnlyDictionary<Type, Type> container, IChannel channel)
         {
+            var envelopeMachine = Factory.GetEnvelopeMachine();
+            var shareManager = Factory.GetShareManager();
             var senderConstructor = Factory.GetInMemorySender(trackingSends);
 
             var activeMessageTracker = new InMemoryActiveMessageTracker();
 
+            var handlerBuilder = new MappedTypeHandlerBuilder(container, TypeMatchStrategy.NamespaceAndName);
             var dispatcher = new MessageDispatcher(
-                container,
+                handlerBuilder,
                 new ConcurrentDictionary<Type, object>(),
                 new[] { channel },
-                TypeMatchStrategy.NamespaceAndName,
-                TimeSpan.FromSeconds(.01),
                 new HarnessStaticDetails(),
                 new NullParcelTrackingSystem(),
                 activeMessageTracker,
-                senderConstructor());
+                senderConstructor(),
+                envelopeMachine,
+                shareManager);
             return dispatcher;
         }
 
         [Fact]
         public static void Dispatch_IncrementsAndDecrementsTracker()
         {
+            var envelopeMachine = Factory.GetEnvelopeMachine();
+            var shareManager = Factory.GetShareManager();
             var activeMessageTracker = new InMemoryActiveMessageTracker();
             var channel = new SimpleChannel("el-channel");
-            var handlerInterfaceToImplementationTypeMap = new Dictionary<Type, Type> { { typeof(IHandleMessages<WaitMessage>), typeof(WaitMessageHandler) } };
+            var handlerInterfaceToImplementationTypeMap = new Dictionary<Type, Type> { { typeof(WaitMessage), typeof(WaitMessageHandler) } };
+            var handlerBuilder = new MappedTypeHandlerBuilder(handlerInterfaceToImplementationTypeMap, TypeMatchStrategy.NamespaceAndName);
             var dispatcher = new MessageDispatcher(
-                handlerInterfaceToImplementationTypeMap,
+                handlerBuilder,
                 new ConcurrentDictionary<Type, object>(),
                 new[] { channel },
-                TypeMatchStrategy.NamespaceAndName,
-                TimeSpan.FromSeconds(.5),
                 new HarnessStaticDetails(),
                 new NullParcelTrackingSystem(),
                 activeMessageTracker,
-                new PostOffice(new NullParcelTrackingSystem(), new ChannelRouter(new NullChannel())));
+                new PostOffice(new NullParcelTrackingSystem(), new ChannelRouter(new NullChannel()), envelopeMachine),
+                envelopeMachine,
+                shareManager);
 
             var message = new WaitMessage { Description = "RunMe", TimeToWait = TimeSpan.FromSeconds(3) };
-            var envelope = message.ToAddressedMessage(channel).ToEnvelope();
+            var envelope = message.ToAddressedMessage(channel).ToEnvelope(envelopeMachine);
 
             Assert.Equal(0, activeMessageTracker.ActiveMessagesCount);
             ThreadPool.QueueUserWorkItem(state => dispatcher.Dispatch("RunMe", new TrackingCode(), new Parcel { Envelopes = new[] { envelope } }, channel));
@@ -290,27 +317,27 @@ namespace Naos.MessageBus.Test
         [Fact]
         public static void Dispatch_DispatchingMethodToWrongChannelNamespaceNameMatch_Resends()
         {
-            var handlerInterfaceToImplementationTypeMap = new Dictionary<Type, Type> { { typeof(IHandleMessages<NullMessage>), typeof(NullMessageHandler) } };
-
+            var envelopeMachine = Factory.GetEnvelopeMachine();
+            var shareManager = Factory.GetShareManager();
             var trackingSends = new List<Parcel>();
             var senderConstructor = Factory.GetInMemorySender(trackingSends);
 
             var monitoredChannel = new SimpleChannel("ChannelName");
             var dispatcher = new MessageDispatcher(
-                handlerInterfaceToImplementationTypeMap,
+                new NullHandlerBuilder(),
                 new ConcurrentDictionary<Type, object>(),
                 new[] { monitoredChannel },
-                TypeMatchStrategy.NamespaceAndName,
-                TimeSpan.FromSeconds(.5),
                 new HarnessStaticDetails(),
                 new NullParcelTrackingSystem(),
                 new InMemoryActiveMessageTracker(),
-                senderConstructor());
+                senderConstructor(),
+                envelopeMachine,
+                shareManager);
 
-            var validParcel = new Parcel { Envelopes = new[] { new NullMessage().ToAddressedMessage(monitoredChannel).ToEnvelope(), } };
+            var validParcel = new Parcel { Envelopes = new[] { new NullMessage().ToAddressedMessage(monitoredChannel).ToEnvelope(envelopeMachine), } };
 
             var notMonitoredChannel = new SimpleChannel("OtherChannel");
-            var invalidParcel = new Parcel { Envelopes = new[] { new NullMessage().ToAddressedMessage(notMonitoredChannel).ToEnvelope() } };
+            var invalidParcel = new Parcel { Envelopes = new[] { new NullMessage().ToAddressedMessage(notMonitoredChannel).ToEnvelope(envelopeMachine) } };
 
             dispatcher.Dispatch("ValidParcel", new TrackingCode(), validParcel, monitoredChannel);
             Assert.Equal(0, trackingSends.Count);
@@ -328,7 +355,10 @@ namespace Naos.MessageBus.Test
                 return;
             }
 
-            var handlerInterfaceToImplementationTypeMap = new Dictionary<Type, Type> { { typeof(IHandleMessages<ThrowsExceptionMessage>), typeof(ThrowsExceptionMessageHandler) } };
+            var envelopeMachine = Factory.GetEnvelopeMachine();
+            var shareManager = Factory.GetShareManager();
+            var handlerInterfaceToImplementationTypeMap = new Dictionary<Type, Type> { { typeof(ThrowsExceptionMessage), typeof(ThrowsExceptionMessageHandler) } };
+            var handlerBuilder = new MappedTypeHandlerBuilder(handlerInterfaceToImplementationTypeMap, TypeMatchStrategy.NamespaceAndName);
 
             var trackingCalls = new List<string>();
             var trackingSends = new List<Parcel>();
@@ -338,30 +368,27 @@ namespace Naos.MessageBus.Test
 
             var monitoredChannel = new SimpleChannel("ChannelName");
             var dispatcher = new MessageDispatcher(
-                handlerInterfaceToImplementationTypeMap,
+                handlerBuilder,
                 new ConcurrentDictionary<Type, object>(),
                 new[] { monitoredChannel },
-                TypeMatchStrategy.NamespaceAndName,
-                TimeSpan.FromSeconds(.5),
                 new HarnessStaticDetails(),
                 trackingConstructor(),
                 new InMemoryActiveMessageTracker(),
-                senderConstructor());
+                senderConstructor(),
+                envelopeMachine,
+                shareManager);
 
             var exception = new AbortParcelDeliveryException("Abort") { Reschedule = true };
             var parcel = new Parcel
                              {
-                                 Envelopes =
-                                     new[]
-                                         {
-                                             new ThrowsExceptionMessage()
+                                 Envelopes = new[]
                                                  {
-                                                     ExceptionToThrowJson = exception.ToJson(),
-                                                     ExceptionToThrowType = exception.GetType().ToTypeDescription(),
-                                                     TypeMatchStrategy = TypeMatchStrategy.NamespaceAndName
-                                                 }.ToAddressedMessage(
-                                                     monitoredChannel).ToEnvelope()
-                                         }
+                                                     new ThrowsExceptionMessage()
+                                                         {
+                                                             SerializedExceptionToThrow = exception.ToDescribedSerialization(
+                                                                 PostOffice.MessageSerializationDescription)
+                                                         }.ToAddressedMessage(monitoredChannel).ToEnvelope(envelopeMachine)
+                                                 }
                              };
 
             dispatcher.Dispatch("Parcel", new TrackingCode(), parcel, monitoredChannel);
@@ -378,7 +405,12 @@ namespace Naos.MessageBus.Test
                 return;
             }
 
-            var handlerInterfaceToImplementationTypeMap = new Dictionary<Type, Type> { { typeof(IHandleMessages<ThrowsExceptionMessage>), typeof(ThrowsExceptionMessageHandler) } };
+            var envelopeMachine = Factory.GetEnvelopeMachine();
+            var shareManager = Factory.GetShareManager();
+            HandlerToolshed.InitializeSerializerFactory(() => SerializerFactory.Instance);
+            HandlerToolshed.InitializeCompressorFactory(() => CompressorFactory.Instance);
+            var handlerInterfaceToImplementationTypeMap = new Dictionary<Type, Type> { { typeof(ThrowsExceptionMessage), typeof(ThrowsExceptionMessageHandler) } };
+            var handlerBuilder = new MappedTypeHandlerBuilder(handlerInterfaceToImplementationTypeMap, TypeMatchStrategy.NamespaceAndName);
 
             var trackingCalls = new List<string>();
             var trackingSendsFromTracker = new List<Parcel>();
@@ -389,15 +421,15 @@ namespace Naos.MessageBus.Test
 
             var monitoredChannel = new SimpleChannel("ChannelName");
             var dispatcher = new MessageDispatcher(
-                handlerInterfaceToImplementationTypeMap,
+                handlerBuilder,
                 new ConcurrentDictionary<Type, object>(),
                 new[] { monitoredChannel },
-                TypeMatchStrategy.NamespaceAndName,
-                TimeSpan.FromSeconds(.5),
                 new HarnessStaticDetails(),
                 trackingConstructor(),
                 new InMemoryActiveMessageTracker(),
-                senderConstructor());
+                senderConstructor(),
+                envelopeMachine,
+                shareManager);
 
             var exception = new AbortParcelDeliveryException("Abort") { Reschedule = false };
             var parcel = new Parcel
@@ -407,11 +439,9 @@ namespace Naos.MessageBus.Test
                                          {
                                              new ThrowsExceptionMessage()
                                                  {
-                                                     ExceptionToThrowJson = exception.ToJson(),
-                                                     ExceptionToThrowType = exception.GetType().ToTypeDescription(),
-                                                     TypeMatchStrategy = TypeMatchStrategy.NamespaceAndName
+                                                     SerializedExceptionToThrow = exception.ToDescribedSerialization(PostOffice.MessageSerializationDescription)
                                                  }.ToAddressedMessage(
-                                                     monitoredChannel).ToEnvelope()
+                                                     monitoredChannel).ToEnvelope(envelopeMachine)
                                          }
             };
 
@@ -430,7 +460,12 @@ namespace Naos.MessageBus.Test
                 return;
             }
 
-            var handlerInterfaceToImplementationTypeMap = new Dictionary<Type, Type> { { typeof(IHandleMessages<ThrowsExceptionMessage>), typeof(ThrowsExceptionMessageHandler) } };
+            var envelopeMachine = Factory.GetEnvelopeMachine();
+            var shareManager = Factory.GetShareManager();
+            HandlerToolshed.InitializeSerializerFactory(() => SerializerFactory.Instance);
+            HandlerToolshed.InitializeCompressorFactory(() => CompressorFactory.Instance);
+            var handlerInterfaceToImplementationTypeMap = new Dictionary<Type, Type> { { typeof(ThrowsExceptionMessage), typeof(ThrowsExceptionMessageHandler) } };
+            var handlerBuilder = new MappedTypeHandlerBuilder(handlerInterfaceToImplementationTypeMap, TypeMatchStrategy.NamespaceAndName);
 
             var trackingCalls = new List<string>();
             var trackingSendsFromTracker = new List<Parcel>();
@@ -441,31 +476,28 @@ namespace Naos.MessageBus.Test
 
             var monitoredChannel = new SimpleChannel("ChannelName");
             var dispatcher = new MessageDispatcher(
-                handlerInterfaceToImplementationTypeMap,
+                handlerBuilder,
                 new ConcurrentDictionary<Type, object>(),
                 new[] { monitoredChannel },
-                TypeMatchStrategy.NamespaceAndName,
-                TimeSpan.FromSeconds(.5),
                 new HarnessStaticDetails(),
                 trackingConstructor(),
                 new InMemoryActiveMessageTracker(),
-                senderConstructor());
+                senderConstructor(),
+                envelopeMachine,
+                shareManager);
 
             var exception = new NullReferenceException("Failed");
             var parcel = new Parcel
-            {
-                Envelopes =
-                                     new[]
-                                         {
-                                             new ThrowsExceptionMessage()
+                             {
+                                 Envelopes = new[]
                                                  {
-                                                     ExceptionToThrowJson = exception.ToJson(),
-                                                     ExceptionToThrowType = exception.GetType().ToTypeDescription(),
-                                                     TypeMatchStrategy = TypeMatchStrategy.NamespaceAndName
-                                                 }.ToAddressedMessage(
-                                                     monitoredChannel).ToEnvelope()
-                                         }
-            };
+                                                     new ThrowsExceptionMessage()
+                                                         {
+                                                             SerializedExceptionToThrow = exception.ToDescribedSerialization(
+                                                                 PostOffice.MessageSerializationDescription)
+                                                         }.ToAddressedMessage(monitoredChannel).ToEnvelope(envelopeMachine)
+                                                 }
+                             };
 
             Action testCode = () => dispatcher.Dispatch("Parcel", new TrackingCode(), parcel, monitoredChannel);
             testCode.ShouldThrow<NullReferenceException>().WithMessage(exception.Message);
@@ -477,8 +509,8 @@ namespace Naos.MessageBus.Test
         [Fact]
         public static void Dispatch_DispatchingMethodWithSuccess_TracksAddressedThenDelivered()
         {
-            var handlerInterfaceToImplementationTypeMap = new Dictionary<Type, Type> { { typeof(IHandleMessages<NullMessage>), typeof(NullMessageHandler) } };
-
+            var envelopeMachine = Factory.GetEnvelopeMachine();
+            var shareManager = Factory.GetShareManager();
             var trackingCalls = new List<string>();
             var trackingSendsFromTracker = new List<Parcel>();
             var trackingConstructor = Factory.GetInMemoryParcelTrackingSystem(trackingCalls, trackingSendsFromTracker);
@@ -488,17 +520,17 @@ namespace Naos.MessageBus.Test
 
             var monitoredChannel = new SimpleChannel("ChannelName");
             var dispatcher = new MessageDispatcher(
-                handlerInterfaceToImplementationTypeMap,
+                new NullHandlerBuilder(),
                 new ConcurrentDictionary<Type, object>(),
                 new[] { monitoredChannel },
-                TypeMatchStrategy.NamespaceAndName,
-                TimeSpan.FromSeconds(.5),
                 new HarnessStaticDetails(),
                 trackingConstructor(),
                 new InMemoryActiveMessageTracker(),
-                senderConstructor());
+                senderConstructor(),
+                envelopeMachine,
+                shareManager);
 
-            var parcel = new Parcel { Envelopes = new[] { new NullMessage().ToAddressedMessage(monitoredChannel).ToEnvelope() } };
+            var parcel = new Parcel { Envelopes = new[] { new NullMessage().ToAddressedMessage(monitoredChannel).ToEnvelope(envelopeMachine) } };
 
             dispatcher.Dispatch("Parcel", new TrackingCode(), parcel, monitoredChannel);
 
@@ -509,8 +541,8 @@ namespace Naos.MessageBus.Test
         [Fact]
         public static void Dispatch_DispatchingMethodWithRecurringHeaderMessage_ResendsWithoutTracking()
         {
-            var handlerInterfaceToImplementationTypeMap = new Dictionary<Type, Type> { { typeof(IHandleMessages<NullMessage>), typeof(NullMessageHandler) } };
-
+            var envelopeMachine = Factory.GetEnvelopeMachine();
+            var shareManager = Factory.GetShareManager();
             var trackingCalls = new List<string>();
             var trackingSendsFromTracker = new List<Parcel>();
             var trackingConstructor = Factory.GetInMemoryParcelTrackingSystem(trackingCalls, trackingSendsFromTracker);
@@ -520,23 +552,23 @@ namespace Naos.MessageBus.Test
 
             var monitoredChannel = new SimpleChannel("ChannelName");
             var dispatcher = new MessageDispatcher(
-                handlerInterfaceToImplementationTypeMap,
+                new NullHandlerBuilder(),
                 new ConcurrentDictionary<Type, object>(),
                 new[] { monitoredChannel },
-                TypeMatchStrategy.NamespaceAndName,
-                TimeSpan.FromSeconds(.5),
                 new HarnessStaticDetails(),
                 trackingConstructor(),
                 new InMemoryActiveMessageTracker(),
-                senderConstructor());
+                senderConstructor(),
+                envelopeMachine,
+                shareManager);
 
             var parcel = new Parcel
                              {
                                  Envelopes =
                                      new[]
                                          {
-                                             new RecurringHeaderMessage().ToAddressedMessage().ToEnvelope(),
-                                             new NullMessage().ToAddressedMessage(monitoredChannel).ToEnvelope(),
+                                             new RecurringHeaderMessage().ToAddressedMessage().ToEnvelope(envelopeMachine),
+                                             new NullMessage().ToAddressedMessage(monitoredChannel).ToEnvelope(envelopeMachine),
                                          }
                              };
 
@@ -548,26 +580,26 @@ namespace Naos.MessageBus.Test
         [Fact]
         public static void Dispatch_DispatchingMethodToWrongChannelAssemblyQualifiedMatch_Resends()
         {
-            var handlerInterfaceToImplementationTypeMap = new Dictionary<Type, Type> { { typeof(IHandleMessages<NullMessage>), typeof(NullMessageHandler) } };
-
+            var envelopeMachine = Factory.GetEnvelopeMachine();
+            var shareManager = Factory.GetShareManager();
             var trackingSends = new List<Parcel>();
 
             var monitoredChannel = new SimpleChannel("ChannelName");
             var dispatcher = new MessageDispatcher(
-                handlerInterfaceToImplementationTypeMap,
+                new NullHandlerBuilder(),
                 new ConcurrentDictionary<Type, object>(),
                 new[] { monitoredChannel },
-                TypeMatchStrategy.AssemblyQualifiedName,
-                TimeSpan.FromSeconds(.5),
                 new HarnessStaticDetails(),
                 new NullParcelTrackingSystem(),
                 new InMemoryActiveMessageTracker(),
-                Factory.GetInMemorySender(trackingSends)());
+                Factory.GetInMemorySender(trackingSends)(),
+                envelopeMachine,
+                shareManager);
 
-            var validParcel = new Parcel { Envelopes = new[] { new NullMessage().ToAddressedMessage(monitoredChannel).ToEnvelope() } };
+            var validParcel = new Parcel { Envelopes = new[] { new NullMessage().ToAddressedMessage(monitoredChannel).ToEnvelope(envelopeMachine) } };
 
             var notMonitoredChannel = new SimpleChannel("OtherChannel");
-            var invalidParcel = new Parcel { Envelopes = new[] { new NullMessage().ToAddressedMessage(notMonitoredChannel).ToEnvelope() } };
+            var invalidParcel = new Parcel { Envelopes = new[] { new NullMessage().ToAddressedMessage(notMonitoredChannel).ToEnvelope(envelopeMachine) } };
 
             dispatcher.Dispatch("ValidParcel", new TrackingCode(), validParcel, monitoredChannel);
             Assert.Equal(0, trackingSends.Count);
@@ -578,7 +610,7 @@ namespace Naos.MessageBus.Test
         [Fact]
         public static void Dispatch_NullParcel_Throws()
         {
-            Action testCode = () => 
+            Action testCode = () =>
             GetMessageDispatcher().Dispatch("Name", new TrackingCode(), null, new NullChannel());
             testCode.ShouldThrow<DispatchException>().WithMessage("Parcel cannot be null");
         }
@@ -599,186 +631,46 @@ namespace Naos.MessageBus.Test
         }
 
         [Fact]
-        public static void Dispatch_EnvelopeMissingTypeCompletely_Throws()
-        {
-            var trackingCode = new TrackingCode { ParcelId = Guid.NewGuid(), EnvelopeId = Guid.NewGuid().ToString() };
-
-            Action testCode =
-                () =>
-                    {
-                        var channel = new SimpleChannel("Channel");
-                        GetMessageDispatcher(new[] { channel })
-                            .Dispatch("Name", trackingCode, new Parcel { Envelopes = new[] { new Envelope(null, null, channel, null, null) } }, channel);
-                    };
-
-            testCode.ShouldThrow<DispatchException>().WithMessage(Invariant($"Message type not specified in envelope; {trackingCode}"));
-        }
-
-        [Fact]
-        public static void Dispatch_EnvelopeMissingTypeNamespace_Throws()
-        {
-            var trackingCode = new TrackingCode { ParcelId = Guid.NewGuid(), EnvelopeId = Guid.NewGuid().ToString() };
-
-            Action testCode =
-                () =>
-                    {
-                        var channel = new SimpleChannel("Channel");
-                        GetMessageDispatcher(new[] { channel })
-                            .Dispatch(
-                                "Name",
-                                trackingCode,
-                                new Parcel
-                                    {
-                                        Envelopes =
-                                            new[]
-                                                {
-                                                    new Envelope(
-                                                        null,
-                                                        null,
-                                                        channel,
-                                                        null,
-                                                        new TypeDescription { AssemblyQualifiedName = "Something", Name = "Something" })
-                                                }
-                                    },
-                                channel);
-                    };
-
-            testCode.ShouldThrow<DispatchException>().WithMessage(Invariant($"Message type not specified in envelope; {trackingCode}"));
-        }
-
-        [Fact]
-        public static void Dispatch_EnvelopeMissingTypeName_Throws()
-        {
-            var trackingCode = new TrackingCode { ParcelId = Guid.NewGuid(), EnvelopeId = Guid.NewGuid().ToString() };
-
-            Action testCode =
-                () =>
-                    {
-                        var channel = new SimpleChannel("Channel");
-                        GetMessageDispatcher(new[] { channel })
-                            .Dispatch(
-                                "Name",
-                                trackingCode,
-                                new Parcel
-                                    {
-                                        Envelopes =
-                                            new[]
-                                                {
-                                                    new Envelope(
-                                                        null,
-                                                        null,
-                                                        channel,
-                                                        null,
-                                                        new TypeDescription { AssemblyQualifiedName = "Something", Namespace = "Something" })
-                                                }
-                                    },
-                                channel);
-                    };
-
-            testCode.ShouldThrow<DispatchException>().WithMessage(Invariant($"Message type not specified in envelope; {trackingCode}"));
-        }
-
-        [Fact]
-        public static void Dispatch_EnvelopeMissingAssemblyQualifiedType_Throws()
-        {
-            var trackingCode = new TrackingCode { ParcelId = Guid.NewGuid(), EnvelopeId = Guid.NewGuid().ToString() };
-
-            Action testCode =
-                () =>
-                    {
-                        var channel = new SimpleChannel("Channel");
-                        GetMessageDispatcher(new[] { channel })
-                            .Dispatch(
-                                "Name",
-                                trackingCode,
-                                new Parcel
-                                    {
-                                        Envelopes =
-                                            new[]
-                                                {
-                                                    new Envelope(
-                                                        null,
-                                                        null,
-                                                        channel,
-                                                        null,
-                                                        new TypeDescription { Namespace = "Something", Name = "Something" })
-                                                }
-                                    },
-                                channel);
-                    };
-
-            testCode.ShouldThrow<DispatchException>().WithMessage(Invariant($"Message type not specified in envelope; {trackingCode}"));
-        }
-
-        [Fact]
-        public static void Dispatch_EnvelopeProducingNullMessage_Throws()
-        {
-            var handlerInterfaceToImplementationTypeMap = new Dictionary<Type, Type> { { typeof(IHandleMessages<NullMessage>), typeof(NullMessageHandler) } };
-            Action testCode = () =>
-                {
-                    var channel = new SimpleChannel("Channel");
-                    GetMessageDispatcher(new[] { channel }, handlerInterfaceToImplementationTypeMap)
-                        .Dispatch(
-                            "Name",
-                            new TrackingCode(),
-                            new Parcel
-                                {
-                                    Envelopes =
-                                        new[] { new Envelope(null, null, channel, null, typeof(NullMessage).ToTypeDescription()) }
-                                },
-                            channel);
-                };
-
-            testCode.ShouldThrow<ArgumentNullException>().WithMessage("Value cannot be null.\r\nParameter name: value");
-        }
-
-        [Fact]
         public static void Dispatch_EnvelopeWithUnregisteredType_Throws()
         {
+            var envelopeMachine = Factory.GetEnvelopeMachine();
             Action testCode = () =>
                 {
                     var channel = new SimpleChannel("Channel");
 
                     var message = new NullMessage();
-                    GetMessageDispatcher(new[] { channel })
-                        .Dispatch(
-                            "Name",
-                            new TrackingCode(),
-                            new Parcel
-                                {
-                                    Envelopes =
-                                        new[]
-                                            {
-                                                new Envelope(
-                                                    null,
-                                                    null,
-                                                    new SimpleChannel("Channel"),
-                                                    message.ToJson(),
-                                                    message.GetType().ToTypeDescription())
-                                            }
-                                },
-                            channel);
+                    GetMessageDispatcher(new[] { channel }).Dispatch(
+                        "Name",
+                        new TrackingCode(),
+                        new Parcel
+                            {
+                                Id = Guid.Empty,
+                                Envelopes = new List<Envelope>(new[] { message.ToAddressedMessage(channel).ToEnvelope(envelopeMachine) })
+                            },
+                        channel);
                 };
 
-            testCode.ShouldThrow<DispatchException>().Where(_ => _.Message.StartsWith("Unable to find handler for message type"));
+            testCode.ShouldThrow<FailedToFindHandlerException>().Where(_ => _.Message.StartsWith("Could not find a handler for the specified type; Parcel: Parcel ID: 00000000-0000-0000-0000-000000000000, Envelope ID: [null], Specified Message Type: Naos.MessageBus.Domain.NullMessage"));
         }
 
         [Fact]
         public static void Dispatch_InitialStateRequirement_GetsGenerated()
         {
             StateHandler.StateHistory.Clear();
-            var handlerInterfaceToImplementationTypeMap = new Dictionary<Type, Type> { { typeof(IHandleMessages<InitialStateMessage>), typeof(StateHandler) } };
+            var envelopeMachine = Factory.GetEnvelopeMachine();
+            var shareManager = Factory.GetShareManager();
+            var handlerInterfaceToImplementationTypeMap = new Dictionary<Type, Type> { { typeof(InitialStateMessage), typeof(StateHandler) } };
+            var handlerBuilder = new MappedTypeHandlerBuilder(handlerInterfaceToImplementationTypeMap, TypeMatchStrategy.NamespaceAndName);
             var message = new InitialStateMessage();
-            var messageJson = message.ToJson();
 
             var channel = new SimpleChannel("fakeChannel");
-            var messageDispatcher = new MessageDispatcher(handlerInterfaceToImplementationTypeMap, new ConcurrentDictionary<Type, object>(), new[] { channel }, TypeMatchStrategy.NamespaceAndName, TimeSpan.FromSeconds(.5), new HarnessStaticDetails(), new NullParcelTrackingSystem(), new InMemoryActiveMessageTracker(), new PostOffice(new NullParcelTrackingSystem(), new ChannelRouter(new NullChannel())));
+            var messageDispatcher = new MessageDispatcher(handlerBuilder, new ConcurrentDictionary<Type, object>(), new[] { channel }, new HarnessStaticDetails(), new NullParcelTrackingSystem(), new InMemoryActiveMessageTracker(), new PostOffice(new NullParcelTrackingSystem(), new ChannelRouter(new NullChannel()), envelopeMachine), envelopeMachine, shareManager);
             var parcel = new Parcel
                              {
                                  Id = Guid.NewGuid(),
                                  Envelopes =
                                      new List<Envelope>(
-                                     new[] { new Envelope("id", null, channel, messageJson, message.GetType().ToTypeDescription()) })
+                                     new[] { message.ToAddressedMessage(channel).ToEnvelope(envelopeMachine, "id") })
                              };
 
             Assert.Empty(StateHandler.StateHistory);
@@ -794,18 +686,20 @@ namespace Naos.MessageBus.Test
         public static void Dispatch_InitialStateRequirementRunTwice_SecondCallUsesPreviousState()
         {
             StateHandler.StateHistory.Clear();
-            var handlerInterfaceToImplementationTypeMap = new Dictionary<Type, Type> { { typeof(IHandleMessages<InitialStateMessage>), typeof(StateHandler) } };
+            var envelopeMachine = Factory.GetEnvelopeMachine();
+            var shareManager = Factory.GetShareManager();
+            var handlerInterfaceToImplementationTypeMap = new Dictionary<Type, Type> { { typeof(InitialStateMessage), typeof(StateHandler) } };
+            var handlerBuilder = new MappedTypeHandlerBuilder(handlerInterfaceToImplementationTypeMap, TypeMatchStrategy.NamespaceAndName);
             var message = new InitialStateMessage();
-            var messageJson = message.ToJson();
 
             var channel = new SimpleChannel("fakeChannel");
-            var messageDispatcher = new MessageDispatcher(handlerInterfaceToImplementationTypeMap, new ConcurrentDictionary<Type, object>(), new[] { channel }, TypeMatchStrategy.NamespaceAndName, TimeSpan.FromSeconds(.5), new HarnessStaticDetails(), new NullParcelTrackingSystem(), new InMemoryActiveMessageTracker(), new PostOffice(new NullParcelTrackingSystem(), new ChannelRouter(new NullChannel())));
+            var messageDispatcher = new MessageDispatcher(handlerBuilder, new ConcurrentDictionary<Type, object>(), new[] { channel }, new HarnessStaticDetails(), new NullParcelTrackingSystem(), new InMemoryActiveMessageTracker(), new PostOffice(new NullParcelTrackingSystem(), new ChannelRouter(new NullChannel()), envelopeMachine), envelopeMachine, shareManager);
             var parcel = new Parcel
                              {
                                  Id = Guid.NewGuid(),
                                  Envelopes =
                                      new List<Envelope>(
-                                     new[] { new Envelope("id", null, channel, messageJson, message.GetType().ToTypeDescription()) })
+                                         new[] { message.ToAddressedMessage(channel).ToEnvelope(envelopeMachine, "id") })
                              };
 
             Assert.Empty(StateHandler.StateHistory);
@@ -829,9 +723,9 @@ namespace Naos.MessageBus.Test
         public static void Dispatch_InitialStateRequirementRunTwice_InvalidSecondCallGeneratesNewState()
         {
             StateHandler.StateHistory.Clear();
-            var handlerInterfaceToImplementationTypeMap = new Dictionary<Type, Type> { { typeof(IHandleMessages<InitialStateMessage>), typeof(StateHandler) } };
+            var envelopeMachine = Factory.GetEnvelopeMachine();
+            var handlerInterfaceToImplementationTypeMap = new Dictionary<Type, Type> { { typeof(InitialStateMessage), typeof(StateHandler) } };
             var message = new InitialStateMessage();
-            var messageJson = message.ToJson();
 
             var channel = new SimpleChannel("fakeChannel");
             var messageDispatcher = GetMessageDispatcher(new[] { channel }, handlerInterfaceToImplementationTypeMap);
@@ -841,7 +735,7 @@ namespace Naos.MessageBus.Test
                                  Id = Guid.NewGuid(),
                                  Envelopes =
                                      new List<Envelope>(
-                                     new[] { new Envelope("id", null, channel, messageJson, message.GetType().ToTypeDescription()) })
+                                         new[] { message.ToAddressedMessage(channel).ToEnvelope(envelopeMachine, "id") })
                              };
 
             Assert.Empty(StateHandler.StateHistory);
@@ -868,6 +762,9 @@ namespace Naos.MessageBus.Test
 
         private static MessageDispatcher GetMessageDispatcher(IList<IChannel> channels = null, Dictionary<Type, Type> handlerInterfaceToImplementationTypeMap = null)
         {
+            var envelopeMachine = Factory.GetEnvelopeMachine();
+            var shareManager = Factory.GetShareManager();
+
             if (channels == null)
             {
                 channels = new List<IChannel>();
@@ -878,20 +775,22 @@ namespace Naos.MessageBus.Test
                 handlerInterfaceToImplementationTypeMap = new Dictionary<Type, Type>();
             }
 
+            var handlerBuilder = new MappedTypeHandlerBuilder(handlerInterfaceToImplementationTypeMap, TypeMatchStrategy.NamespaceAndName);
+
             return new MessageDispatcher(
-                handlerInterfaceToImplementationTypeMap,
+                handlerBuilder,
                 new ConcurrentDictionary<Type, object>(),
                 channels,
-                TypeMatchStrategy.NamespaceAndName,
-                TimeSpan.FromSeconds(.5),
                 new HarnessStaticDetails(),
                 new NullParcelTrackingSystem(),
                 new InMemoryActiveMessageTracker(),
-                new PostOffice(new NullParcelTrackingSystem(), new ChannelRouter(new NullChannel())));
+                new PostOffice(new NullParcelTrackingSystem(), new ChannelRouter(new NullChannel()), envelopeMachine),
+                envelopeMachine,
+                shareManager);
         }
 
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1034:NestedTypesShouldNotBeVisible", Justification = "Keeping this way for now.")]
-        public class StateHandler : IHandleMessages<InitialStateMessage>, INeedSharedState<string>
+        public class StateHandler : MessageHandlerBase<InitialStateMessage>, INeedSharedState<string>
         {
             static StateHandler()
             {
@@ -903,7 +802,7 @@ namespace Naos.MessageBus.Test
 
             public static bool ShouldValidate { get; set; }
 
-            public async Task HandleAsync(InitialStateMessage message)
+            public override async Task HandleAsync(InitialStateMessage message)
             {
                 /* no-op */
                 await Task.FromResult<object>(null);
@@ -940,9 +839,9 @@ namespace Naos.MessageBus.Test
         public string Description { get; set; }
     }
 
-    public class MessageOneHandler : IHandleMessages<MessageOne>
+    public class MessageOneHandler : MessageHandlerBase<MessageOne>
     {
-        public async Task HandleAsync(MessageOne message)
+        public override async Task HandleAsync(MessageOne message)
         {
             await Task.Delay(TimeSpan.FromMilliseconds(1));
         }
@@ -953,9 +852,9 @@ namespace Naos.MessageBus.Test
         public string Description { get; set; }
     }
 
-    public class MessageTwoHandler : IHandleMessages<MessageTwo>
+    public class MessageTwoHandler : MessageHandlerBase<MessageTwo>
     {
-        public async Task HandleAsync(MessageTwo message)
+        public override async Task HandleAsync(MessageTwo message)
         {
             await Task.Delay(TimeSpan.FromMilliseconds(1));
         }
@@ -971,9 +870,9 @@ namespace Naos.MessageBus.Test
         public string Description { get; set; }
     }
 
-    public class MessageOneShareHandler : IHandleMessages<MessageOneShare>, IShareNothing
+    public class MessageOneShareHandler : MessageHandlerBase<MessageOneShare>, IShareNothing
     {
-        public async Task HandleAsync(MessageOneShare message)
+        public override async Task HandleAsync(MessageOneShare message)
         {
             await Task.Delay(TimeSpan.FromMilliseconds(1));
         }
@@ -984,9 +883,9 @@ namespace Naos.MessageBus.Test
         public string Description { get; set; }
     }
 
-    public class MessageTwoShareHandler : IHandleMessages<MessageTwoShare>, IShareNothing
+    public class MessageTwoShareHandler : MessageHandlerBase<MessageTwoShare>, IShareNothing
     {
-        public async Task HandleAsync(MessageTwoShare message)
+        public override async Task HandleAsync(MessageTwoShare message)
         {
             await Task.Delay(TimeSpan.FromMilliseconds(1));
         }

@@ -15,19 +15,17 @@ namespace Naos.MessageBus.Core
     /// <summary>
     /// No implementation handler to handle NullMessages.
     /// </summary>
-    public class FetchAndShareLatestTopicStatusReportsMessageHandler : IHandleMessages<FetchAndShareLatestTopicStatusReportsMessage>, IShareTopicStatusReports
+    public class FetchAndShareLatestTopicStatusReportsMessageHandler : MessageHandlerBase<FetchAndShareLatestTopicStatusReportsMessage>, IShareTopicStatusReports
     {
         /// <summary>
         /// Gets or sets the notices as they were evaluated with processing check.
         /// </summary>
         public TopicStatusReport[] TopicStatusReports { get; set; }
 
-        /// <inheritdoc />
-        public async Task HandleAsync(FetchAndShareLatestTopicStatusReportsMessage message)
+        /// <inheritdoc cref="MessageHandlerBase{T}" />
+        public override async Task HandleAsync(FetchAndShareLatestTopicStatusReportsMessage message)
         {
-            var tracker = HandlerToolshed.GetParcelTracker();
-
-            await this.HandleAsync(message, tracker);
+            await this.HandleAsync(message, this.ParcelTracker);
         }
 
         /// <summary>

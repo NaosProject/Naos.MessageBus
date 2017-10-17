@@ -23,7 +23,7 @@ namespace Naos.MessageBus.Persistence
         public class TopicBeingAffected : Event<Shipment>, IUsePayload<PayloadTopicBeingAffected>
         {
             /// <inheritdoc />
-            public string PayloadJson { get; set; }
+            public string PayloadSerializedString { get; set; }
 
             /// <summary>
             /// Gets or sets the de-normalized parcel id.
@@ -46,14 +46,6 @@ namespace Naos.MessageBus.Persistence
         /// <summary>
         /// Initializes a new instance of the <see cref="PayloadTopicBeingAffected"/> class.
         /// </summary>
-        public PayloadTopicBeingAffected()
-        {
-            // TODO: Remove this and setters after serialization is fixed...
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="PayloadTopicBeingAffected"/> class.
-        /// </summary>
         /// <param name="trackingCode">Tracking code of the envelope.</param>
         /// <param name="topic">Topic being that was affected.</param>
         /// <param name="envelope">Envelope that finished the topic being affected.</param>
@@ -65,18 +57,18 @@ namespace Naos.MessageBus.Persistence
         }
 
         /// <summary>
-        /// Gets or sets the tracking code of the envelope.
+        /// Gets the tracking code of the envelope.
         /// </summary>
-        public TrackingCode TrackingCode { get; set; }
+        public TrackingCode TrackingCode { get; private set; }
 
         /// <summary>
-        /// Gets or sets the topic being that was affected.
+        /// Gets the topic being that was affected.
         /// </summary>
-        public AffectedTopic Topic { get; set; }
+        public AffectedTopic Topic { get; private set; }
 
         /// <summary>
-        /// Gets or sets the envelope that finished the topic being affected.
+        /// Gets the envelope that finished the topic being affected.
         /// </summary>
-        public Envelope Envelope { get; set; }
+        public Envelope Envelope { get; private set; }
     }
 }

@@ -12,18 +12,17 @@ namespace Naos.MessageBus.Core
     using Naos.MessageBus.Domain;
 
     /// <inheritdoc />
-    public class SendParcelMessageHandler : IHandleMessages<SendParcelMessage>, IShareTrackingCodes
+    public class SendParcelMessageHandler : MessageHandlerBase<SendParcelMessage>, IShareTrackingCodes
     {
-        /// <inheritdoc />
-        public async Task HandleAsync(SendParcelMessage message)
+        /// <inheritdoc cref="MessageHandlerBase{T}" />
+        public override async Task HandleAsync(SendParcelMessage message)
         {
             if (message.ParcelToSend == null)
             {
                 throw new ArgumentException("No parcel provided to send.");
             }
 
-            var postOffice = HandlerToolshed.GetPostOffice();
-            await this.HandleAsync(message, postOffice);
+            await this.HandleAsync(message, this.PostOffice);
         }
 
         /// <summary>

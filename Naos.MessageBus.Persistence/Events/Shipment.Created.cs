@@ -24,7 +24,7 @@ namespace Naos.MessageBus.Persistence
         public class Created : Event<Shipment>, IUsePayload<PayloadCreated>
         {
             /// <inheritdoc />
-            public string PayloadJson { get; set; }
+            public string PayloadSerializedString { get; set; }
 
             /// <inheritdoc />
             public override void Update(Shipment aggregate)
@@ -48,14 +48,6 @@ namespace Naos.MessageBus.Persistence
         /// <summary>
         /// Initializes a new instance of the <see cref="PayloadCreated"/> class.
         /// </summary>
-        public PayloadCreated()
-        {
-            // TODO: Remove this and setters after serialization is fixed...
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="PayloadCreated"/> class.
-        /// </summary>
         /// <param name="parcel">The parcel being shipped.</param>
         /// <param name="recurringSchedule">An optional recurring schedule of the shipment.</param>
         public PayloadCreated(Parcel parcel, ScheduleBase recurringSchedule)
@@ -65,13 +57,13 @@ namespace Naos.MessageBus.Persistence
         }
 
         /// <summary>
-        /// Gets or sets the parcel being shipped.
+        /// Gets the parcel being shipped.
         /// </summary>
-        public Parcel Parcel { get; set;  }
+        public Parcel Parcel { get; private set;  }
 
         /// <summary>
-        /// Gets or sets an optional recurring schedule of the shipment.
+        /// Gets an optional recurring schedule of the shipment.
         /// </summary>
-        public ScheduleBase RecurringSchedule { get; set; }
+        public ScheduleBase RecurringSchedule { get; private set; }
     }
 }

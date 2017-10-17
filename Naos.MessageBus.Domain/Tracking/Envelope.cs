@@ -8,8 +8,11 @@ namespace Naos.MessageBus.Domain
 {
     using System;
 
-    using OBeautifulCode.Math;
-    using OBeautifulCode.TypeRepresentation;
+    using Naos.Serialization.Domain;
+
+    using OBeautifulCode.Math.Recipes;
+
+    using Spritely.Recipes;
 
     /// <summary>
     /// Container object to use when re-hydrating a message.
@@ -19,52 +22,40 @@ namespace Naos.MessageBus.Domain
         /// <summary>
         /// Initializes a new instance of the <see cref="Envelope"/> class.
         /// </summary>
-        public Envelope()
-        {
-            // TODO: Remove this AND the public setterS once the InheritedTypeConverter is updated...
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="Envelope"/> class.
-        /// </summary>
         /// <param name="id">Id of envelope.</param>
         /// <param name="description">Description of envelope.</param>
         /// <param name="address">Channel envelope is addressed to.</param>
-        /// <param name="messageAsJson">Message in JSON.</param>
-        /// <param name="messageType">Message type description.</param>
-        public Envelope(string id, string description, IChannel address, string messageAsJson, TypeDescription messageType)
+        /// <param name="serializedMessage">Message in <see cref="DescribedSerialization" />.</param>
+        public Envelope(string id, string description, IChannel address, DescribedSerialization serializedMessage)
         {
+            new { id }.Must().NotBeNull().And().NotBeWhiteSpace().OrThrowFirstFailure();
+            new { serializedMessage }.Must().NotBeNull().OrThrowFirstFailure();
+
             this.Id = id;
             this.Description = description;
             this.Address = address;
-            this.MessageAsJson = messageAsJson;
-            this.MessageType = messageType;
+            this.SerializedMessage = serializedMessage;
         }
 
         /// <summary>
-        /// Gets or sets the ID of the envelope (must be unique in the parcel).
+        /// Gets the ID of the envelope (must be unique in the parcel).
         /// </summary>
-        public string Id { get; set; }
+        public string Id { get; private set; }
 
         /// <summary>
-        /// Gets or sets the description of the message in the envelope.
+        /// Gets the description of the message in the envelope.
         /// </summary>
-        public string Description { get; set; }
+        public string Description { get; private set; }
 
         /// <summary>
-        /// Gets or sets a description of the message type.
+        /// Gets the message as a <see cref="DescribedSerialization" />.
         /// </summary>
-        public TypeDescription MessageType { get; set; }
+        public DescribedSerialization SerializedMessage { get; private set; }
 
         /// <summary>
-        /// Gets or sets the message in JSON format.
+        /// Gets the channel the message should be broadcasted on.
         /// </summary>
-        public string MessageAsJson { get; set; }
-
-        /// <summary>
-        /// Gets or sets the channel the message should be broadcasted on.
-        /// </summary>
-        public IChannel Address { get; set; }
+        public IChannel Address { get; private set; }
 
         /// <summary>
         /// Equality operator.
@@ -84,12 +75,10 @@ namespace Naos.MessageBus.Domain
                 return false;
             }
 
-            return
-                   (first.Id == second.Id)
-                && (first.Address != null && first.Address.Equals(second.Address))
-                && (first.Description == second.Description)
-                && (first.MessageType == second.MessageType)
-                && (first.MessageAsJson == second.MessageAsJson);
+            return first.Id == second.Id
+                && first.Description == second.Description
+                && first.SerializedMessage == second.SerializedMessage
+                && first.Address.Equals(second.Address);
         }
 
         /// <summary>
@@ -107,6 +96,6 @@ namespace Naos.MessageBus.Domain
         public override bool Equals(object obj) => this == (obj as Envelope);
 
         /// <inheritdoc />
-        public override int GetHashCode() => HashCodeHelper.Initialize().Hash(this.Id).Hash(this.Address).Hash(this.Description).Hash(this.MessageType).Hash(this.MessageAsJson).Value;
+        public override int GetHashCode() => HashCodeHelper.Initialize().Hash(this.Id).Hash(this.Description).Hash(this.SerializedMessage).Hash(this.Address).Value;
     }
 }

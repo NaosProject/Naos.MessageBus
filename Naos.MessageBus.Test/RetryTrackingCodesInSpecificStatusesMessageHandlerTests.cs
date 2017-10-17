@@ -281,7 +281,8 @@ namespace Naos.MessageBus.Test
             var parcelTracker = Factory.GetRoundRobinStatusImplOfGetTrackingReportAsync(trackingCode, seedStatuses, trackingCalls);
             var trackingParcelsFromSent = new List<Parcel>();
             var parcelTrackingSystem = Factory.GetInMemoryParcelTrackingSystem(trackingCalls, trackingParcelsFromSent)();
-            var postOffice = new PostOffice(parcelTrackingSystem, new ChannelRouter(new SimpleChannel("default")));
+            var envelopeMachine = Factory.GetEnvelopeMachine();
+            var postOffice = new PostOffice(parcelTrackingSystem, new ChannelRouter(new SimpleChannel("default")), envelopeMachine);
             var handler = new RetryTrackingCodesInSpecificStatusesMessageHandler();
 
             // act

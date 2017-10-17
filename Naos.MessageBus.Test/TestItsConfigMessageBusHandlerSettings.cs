@@ -13,6 +13,8 @@ namespace Naos.MessageBus.Test
 
     using Naos.MessageBus.Domain;
     using Naos.Recipes.Configuration.Setup;
+    using Naos.Serialization.Domain;
+    using Naos.Serialization.Json;
 
     using Spritely.Recipes;
 
@@ -66,7 +68,6 @@ namespace Naos.MessageBus.Test
             Assert.Equal(4, executorSettings.WorkerCount);
             Assert.Equal("I:\\Gets\\My\\Dlls\\Here", executorSettings.HandlerAssemblyPath);
             Assert.Equal(TimeSpan.FromMinutes(1), executorSettings.PollingTimeSpan);
-            Assert.Equal(TimeSpan.FromSeconds(1), executorSettings.MessageDispatcherWaitThreadSleepTime);
             Assert.Equal(TimeSpan.FromMinutes(10), executorSettings.HarnessProcessTimeToLive);
         }
 

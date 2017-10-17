@@ -21,7 +21,7 @@ namespace Naos.MessageBus.Persistence
         public class EnvelopeDeliveryAttempted : Event<Shipment>, IUsePayload<PayloadEnvelopeDeliveryAttempted>
         {
             /// <inheritdoc />
-            public string PayloadJson { get; set; }
+            public string PayloadSerializedString { get; set; }
 
             /// <inheritdoc />
             public override void Update(Shipment aggregate)
@@ -41,14 +41,6 @@ namespace Naos.MessageBus.Persistence
         /// <summary>
         /// Initializes a new instance of the <see cref="PayloadEnvelopeDeliveryAttempted"/> class.
         /// </summary>
-        public PayloadEnvelopeDeliveryAttempted()
-        {
-            // TODO: Remove this and setters after serialization is fixed...
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="PayloadEnvelopeDeliveryAttempted"/> class.
-        /// </summary>
         /// <param name="trackingCode">Tracking code of the envelope being attempted.</param>
         /// <param name="newStatus">New status of the envelope.</param>
         /// <param name="recipient">Information about the recipient the deliver was attempted with.</param>
@@ -60,18 +52,18 @@ namespace Naos.MessageBus.Persistence
         }
 
         /// <summary>
-        /// Gets or sets the tracking code of the envelope being attempted.
+        /// Gets the tracking code of the envelope being attempted.
         /// </summary>
-        public TrackingCode TrackingCode { get; set; }
+        public TrackingCode TrackingCode { get; private set; }
 
         /// <summary>
-        /// Gets or sets the new status of the envelope.
+        /// Gets the new status of the envelope.
         /// </summary>
-        public ParcelStatus NewStatus { get; set; }
+        public ParcelStatus NewStatus { get; private set; }
 
         /// <summary>
-        /// Gets or sets the information about the recipient the deliver was attempted with.
+        /// Gets the information about the recipient the deliver was attempted with.
         /// </summary>
-        public HarnessDetails Recipient { get; set; }
+        public HarnessDetails Recipient { get; private set; }
     }
 }

@@ -23,7 +23,7 @@ namespace Naos.MessageBus.Persistence
         public class ParcelDelivered : Event<Shipment>, IUsePayload<PayloadParcelDelivered>
         {
             /// <inheritdoc />
-            public string PayloadJson { get; set; }
+            public string PayloadSerializedString { get; set; }
 
             /// <inheritdoc />
             public override void Update(Shipment aggregate)
@@ -41,14 +41,6 @@ namespace Naos.MessageBus.Persistence
         /// <summary>
         /// Initializes a new instance of the <see cref="PayloadParcelDelivered"/> class.
         /// </summary>
-        public PayloadParcelDelivered()
-        {
-            // TODO: Remove this and setters after serialization is fixed...
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="PayloadParcelDelivered"/> class.
-        /// </summary>
         /// <param name="parcelId">ID of the parcel that was delivered.</param>
         /// <param name="newStatus">Status of the parcel as a whole.</param>
         public PayloadParcelDelivered(Guid parcelId, ParcelStatus newStatus)
@@ -58,13 +50,13 @@ namespace Naos.MessageBus.Persistence
         }
 
         /// <summary>
-        /// Gets or sets the ID of the parcel that was delivered.
+        /// Gets the ID of the parcel that was delivered.
         /// </summary>
-        public Guid ParcelId { get; set; }
+        public Guid ParcelId { get; private set; }
 
         /// <summary>
-        /// Gets or sets the status of the parcel as a whole.
+        /// Gets the status of the parcel as a whole.
         /// </summary>
-        public ParcelStatus NewStatus { get; set; }
+        public ParcelStatus NewStatus { get; private set; }
     }
 }

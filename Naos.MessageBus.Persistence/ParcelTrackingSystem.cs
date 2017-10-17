@@ -16,6 +16,8 @@ namespace Naos.MessageBus.Persistence
     using Naos.Cron;
     using Naos.MessageBus.Domain;
     using Naos.MessageBus.Persistence.NaosRecipes.ItsDomain;
+
+    using Spritely.Recipes;
     using Spritely.Redo;
     using static System.FormattableString;
 
@@ -32,24 +34,29 @@ namespace Naos.MessageBus.Persistence
 
         private readonly ParcelTrackingEventHandler eventHandler;
 
+        private readonly IStuffAndOpenEnvelopes envelopeMachine;
+
         /// <summary>
         /// Initializes a new instance of the <see cref="ParcelTrackingSystem"/> class.
         /// </summary>
         /// <param name="courier">Interface for transporting parcels.</param>
+        /// <param name="envelopeMachine">Interface for stuffing and opening envelopes.</param>
         /// <param name="eventPersistenceConnectionConfiguration">Connection string to the event persistence.</param>
         /// <param name="readModelPersistenceConnectionConfiguration">Connection string to the read model persistence.</param>
         /// <param name="retryCount">Number of retries to perform if error encountered (default is 5).</param>
-        public ParcelTrackingSystem(ICourier courier, EventPersistenceConnectionConfiguration eventPersistenceConnectionConfiguration, ReadModelPersistenceConnectionConfiguration readModelPersistenceConnectionConfiguration, int retryCount = 5)
+        public ParcelTrackingSystem(ICourier courier, IStuffAndOpenEnvelopes envelopeMachine, EventPersistenceConnectionConfiguration eventPersistenceConnectionConfiguration, ReadModelPersistenceConnectionConfiguration readModelPersistenceConnectionConfiguration, int retryCount = 5)
         {
+            new { courier, envelopeMachine, eventPersistenceConnectionConfiguration, readModelPersistenceConnectionConfiguration }.Must().NotBeNull().OrThrowFirstFailure();
+
+            this.envelopeMachine = envelopeMachine;
             this.readModelPersistenceConnectionConfiguration = readModelPersistenceConnectionConfiguration;
             this.retryCount = retryCount;
 
             // create methods to get a new event and command database (used for initialization/migration and dependencies of the persistence layer)
-            Func<EventStoreDbContext> createEventStoreDbContext =
-                () => new EventStoreDbContext(eventPersistenceConnectionConfiguration.ToSqlServerConnectionString());
+            EventStoreDbContext CreateEventStoreDbContext() => new EventStoreDbContext(eventPersistenceConnectionConfiguration.ToSqlServerConnectionString());
 
             // run the migration if necessary (this will create the database if missing - DO NOT CREATE THE DATABASE FIRST, it will fail to initialize)
-            using (var context = createEventStoreDbContext())
+            using (var context = CreateEventStoreDbContext())
             {
                 new EventStoreDatabaseInitializer<EventStoreDbContext>().InitializeDatabase(context);
             }
@@ -68,7 +75,7 @@ namespace Naos.MessageBus.Persistence
 
             // setup the configuration which can be used to retrieve the repository when needed
             this.configuration = new Configuration();
-            this.configuration.UseSqlEventStore().UseDependency(t => createEventStoreDbContext());
+            this.configuration.UseSqlEventStore().UseDependency(t => CreateEventStoreDbContext());
         }
 
         /// <inheritdoc />
@@ -129,7 +136,7 @@ namespace Naos.MessageBus.Persistence
         {
             var shipment = await this.FetchShipmentAsync(trackingCode.ParcelId);
 
-            var command = new Reject { TrackingCode = trackingCode, ExceptionMessage = exception.Message, ExceptionJson = exception.ToJson() };
+            var command = new Reject { TrackingCode = trackingCode, ExceptionMessage = exception.Message, ExceptionSerializedAsString = exception.ToParcelTrackingSerializedString() };
             var yieldedEvents = shipment.EnactCommand(command);
 
             await this.SaveShipmentAsync(shipment);
@@ -142,7 +149,7 @@ namespace Naos.MessageBus.Persistence
             var shipment = await this.FetchShipmentAsync(trackingCode.ParcelId);
 
             var command = new Deliver { TrackingCode = trackingCode, DeliveredEnvelope = deliveredEnvelope };
-            var yieldedEvents = shipment.EnactCommand(command);
+            var yieldedEvents = shipment.EnactCommand(command, this.envelopeMachine);
 
             await this.SaveShipmentAsync(shipment);
             this.eventHandler.UpdateProjection(yieldedEvents);
@@ -228,9 +235,9 @@ namespace Naos.MessageBus.Persistence
                                                         {
                                                             ParcelId = _.ParcelId,
                                                             CurrentTrackingCode =
-                                                                string.IsNullOrEmpty(_.CurrentCrateLocatorJson)
+                                                                string.IsNullOrEmpty(_.CurrentCrateLocatorSerializedAsString)
                                                                     ? null
-                                                                    : _.CurrentCrateLocatorJson.FromJson<CrateLocator>().TrackingCode,
+                                                                    : _.CurrentCrateLocatorSerializedAsString.FromParcelTrackingSerializedString<CrateLocator>().TrackingCode,
                                                             Status = _.Status,
                                                             LastUpdatedUtc = _.LastUpdatedUtc
                                                         }).ToList();
@@ -300,12 +307,12 @@ namespace Naos.MessageBus.Persistence
                                             AffectedItem[] items;
                                             TopicStatusReport[] dependencyNotices;
 
-                                            if (mostRecentNotice.TopicWasAffectedEnvelopeJson == null)
+                                            if (mostRecentNotice.TopicWasAffectedEnvelopeSerializedAsString == null)
                                             {
-                                                if (mostRecentNotice.TopicBeingAffectedEnvelopeJson != null)
+                                                if (mostRecentNotice.TopicBeingAffectedEnvelopeSerializedAsString != null)
                                                 {
-                                                    var beingAffectedEnvelope = mostRecentNotice.TopicBeingAffectedEnvelopeJson.FromJson<Envelope>();
-                                                    var beingAffectedMessage = beingAffectedEnvelope.MessageAsJson.FromJson<TopicBeingAffectedMessage>();
+                                                    var beingAffectedEnvelope = mostRecentNotice.TopicBeingAffectedEnvelopeSerializedAsString.FromParcelTrackingSerializedString<Envelope>();
+                                                    var beingAffectedMessage = beingAffectedEnvelope.Open<TopicBeingAffectedMessage>(this.envelopeMachine);
                                                     items = beingAffectedMessage.AffectedItems;
 
                                                     // filter out our own status report...
@@ -321,8 +328,8 @@ namespace Naos.MessageBus.Persistence
                                             }
                                             else
                                             {
-                                                var wasAffectedEnvelope = mostRecentNotice.TopicWasAffectedEnvelopeJson.FromJson<Envelope>();
-                                                var wasAffectedMessage = wasAffectedEnvelope.MessageAsJson.FromJson<TopicWasAffectedMessage>();
+                                                var wasAffectedEnvelope = mostRecentNotice.TopicWasAffectedEnvelopeSerializedAsString.FromParcelTrackingSerializedString<Envelope>();
+                                                var wasAffectedMessage = wasAffectedEnvelope.Open<TopicWasAffectedMessage>(this.envelopeMachine);
                                                 items = wasAffectedMessage.AffectedItems;
 
                                                 // filter out our own status report...

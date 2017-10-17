@@ -46,14 +46,14 @@ namespace Naos.MessageBus.Persistence
         public DateTime? AffectsCompletedDateTimeUtc { get; set; }
 
         /// <summary>
-        /// Gets or sets the envelope of the message about the topic that was being affected.
+        /// Gets or sets the envelope of the message about the topic that was being affected, serialized using <see cref="ParcelTrackingSerializationExtensions" />.
         /// </summary>
-        public string TopicBeingAffectedEnvelopeJson { get; set; }
+        public string TopicBeingAffectedEnvelopeSerializedAsString { get; set; }
 
         /// <summary>
-        /// Gets or sets the envelope of the message about the topic that was affected.
+        /// Gets or sets the envelope of the message about the topic that was affected, serialized using <see cref="ParcelTrackingSerializationExtensions" />.
         /// </summary>
-        public string TopicWasAffectedEnvelopeJson { get; set; }
+        public string TopicWasAffectedEnvelopeSerializedAsString { get; set; }
 
         /// <summary>
         /// Gets or sets the date time (in UTC) it was last updated.

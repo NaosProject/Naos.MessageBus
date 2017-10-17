@@ -21,7 +21,7 @@ namespace Naos.MessageBus.Persistence
         public class EnvelopeDelivered : Event<Shipment>, IUsePayload<PayloadEnvelopeDelivered>
         {
             /// <inheritdoc />
-            public string PayloadJson { get; set; }
+            public string PayloadSerializedString { get; set; }
 
             /// <inheritdoc />
             public override void Update(Shipment aggregate)
@@ -40,14 +40,6 @@ namespace Naos.MessageBus.Persistence
         /// <summary>
         /// Initializes a new instance of the <see cref="PayloadEnvelopeDelivered"/> class.
         /// </summary>
-        public PayloadEnvelopeDelivered()
-        {
-            // TODO: Remove this and setters after serialization is fixed...
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="PayloadEnvelopeDelivered"/> class.
-        /// </summary>
         /// <param name="trackingCode">Tracking code of the envelope being delivered.</param>
         /// <param name="newStatus">New status of the envelope.</param>
         public PayloadEnvelopeDelivered(TrackingCode trackingCode, ParcelStatus newStatus)
@@ -57,13 +49,13 @@ namespace Naos.MessageBus.Persistence
         }
 
         /// <summary>
-        /// Gets or sets the tracking code of the envelope being delivered.
+        /// Gets the tracking code of the envelope being delivered.
         /// </summary>
-        public TrackingCode TrackingCode { get; set; }
+        public TrackingCode TrackingCode { get; private set; }
 
         /// <summary>
-        /// Gets or sets the new status of the envelope.
+        /// Gets the new status of the envelope.
         /// </summary>
-        public ParcelStatus NewStatus { get; set; }
+        public ParcelStatus NewStatus { get; private set; }
     }
 }

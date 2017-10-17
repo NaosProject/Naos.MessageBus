@@ -6,9 +6,14 @@
 
 namespace Naos.MessageBus.Test
 {
+    using FakeItEasy;
+
     using FluentAssertions;
 
+    using Naos.Compression.Domain;
     using Naos.MessageBus.Domain;
+    using Naos.Serialization.Factory;
+    using Naos.Serialization.Factory.Extensions;
 
     using OBeautifulCode.TypeRepresentation;
 
@@ -23,18 +28,16 @@ namespace Naos.MessageBus.Test
             var firstDescription = "description1";
             var firstChannel = new SimpleChannel("channel1");
             var message = new NullMessage();
-            var firstMessageAsJson = message.ToJson();
-            var firstMessageType = message.GetType().ToTypeDescription();
+            var firstMessageDescribed = message.ToDescribedSerialization(PostOffice.MessageSerializationDescription);
 
-            var first = new Envelope(firstId, firstDescription, firstChannel, firstMessageAsJson, firstMessageType);
+            var first = new Envelope(firstId, firstDescription, firstChannel, firstMessageDescribed);
 
             var secondId = firstId;
             var secondDescription = firstDescription;
             var secondChannel = firstChannel;
-            var secondMessageAsJson = firstMessageAsJson;
-            var secondMessageType = firstMessageType;
+            var secondMessageDescribed = firstMessageDescribed;
 
-            var second = new Envelope(secondId, secondDescription, secondChannel, secondMessageAsJson, secondMessageType);
+            var second = new Envelope(secondId, secondDescription, secondChannel, secondMessageDescribed);
 
             Assert.True(first == second);
             Assert.False(first != second);
@@ -48,24 +51,16 @@ namespace Naos.MessageBus.Test
         public static void EnvelopeAddressCanBeNull()
         {
             // arrange
-            var json = @"
-            {
-                ""id"": ""B0067F16-B549-467F-AC9F-683145D209A4"",
-  ""description"": ""Topic Being Affected Notice for 1A9D14E8-8219-40B9-BF50-6EF93801C184"",
-  ""messageType"": {
-                    ""namespace"": ""Naos.MessageBus.Domain"",
-    ""name"": ""TopicBeingAffectedMessage"",
-    ""assemblyQualifiedName"": ""Naos.MessageBus.Domain.TopicBeingAffectedMessage, Naos.MessageBus.Domain, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null""
-  },
-  ""messageAsJson"": ""{\r\n  \""description\"": \""Topic Being Affected Notice for 1A9D14E8-8219-40B9-BF50-6EF93801C184\"",\r\n  \""dependenciesTopicStatusReport\"": null,\r\n  \""affectedItems\"": null,\r\n  \""topic\"": {\r\n    \""name\"": \""1A9D14E8-8219-40B9-BF50-6EF93801C184\""\r\n  }\r\n}"",
-  ""address"": null
-}";
+            var message = new NullMessage();
+            var addressedMessage = message.ToAddressedMessage();
+            var envelopeMachine = new EnvelopeMachine(PostOffice.MessageSerializationDescription, SerializerFactory.Instance, CompressorFactory.Instance, TypeMatchStrategy.NamespaceAndName);
 
             // act
-            var obj = json.FromJson<Envelope>();
+            var envelope = addressedMessage.ToEnvelope(envelopeMachine, A.Dummy<string>());
+            var fromEnvelopeMessage = envelope.Open<NullMessage>(envelopeMachine);
 
             // assert
-            obj.Should().NotBeNull();
+            fromEnvelopeMessage.Should().NotBeNull();
         }
 
         [Fact]
@@ -75,18 +70,16 @@ namespace Naos.MessageBus.Test
             var firstDescription = "description1";
             var firstChannel = new SimpleChannel("channel1");
             var message = new NullMessage();
-            var firstMessageAsJson = message.ToJson();
-            var firstMessageType = message.GetType().ToTypeDescription();
+            var firstMessageDescribed = message.ToDescribedSerialization(PostOffice.MessageSerializationDescription);
 
-            var first = new Envelope(firstId, firstDescription, firstChannel, firstMessageAsJson, firstMessageType);
+            var first = new Envelope(firstId, firstDescription, firstChannel, firstMessageDescribed);
 
             var secondId = "id2";
             var secondDescription = firstDescription;
             var secondChannel = firstChannel;
-            var secondMessageAsJson = firstMessageAsJson;
-            var secondMessageType = firstMessageType;
+            var secondMessageDescribed = firstMessageDescribed;
 
-            var second = new Envelope(secondId, secondDescription, secondChannel, secondMessageAsJson, secondMessageType);
+            var second = new Envelope(secondId, secondDescription, secondChannel, secondMessageDescribed);
 
             Assert.False(first == second);
             Assert.True(first != second);
@@ -103,18 +96,16 @@ namespace Naos.MessageBus.Test
             var firstDescription = "description1";
             var firstChannel = new SimpleChannel("channel1");
             var message = new NullMessage();
-            var firstMessageAsJson = message.ToJson();
-            var firstMessageType = message.GetType().ToTypeDescription();
+            var firstMessageDescribed = message.ToDescribedSerialization(PostOffice.MessageSerializationDescription);
 
-            var first = new Envelope(firstId, firstDescription, firstChannel, firstMessageAsJson, firstMessageType);
+            var first = new Envelope(firstId, firstDescription, firstChannel, firstMessageDescribed);
 
             var secondId = firstId;
             var secondDescription = "description2";
             var secondChannel = firstChannel;
-            var secondMessageAsJson = firstMessageAsJson;
-            var secondMessageType = firstMessageType;
+            var secondMessageDescribed = firstMessageDescribed;
 
-            var second = new Envelope(secondId, secondDescription, secondChannel, secondMessageAsJson, secondMessageType);
+            var second = new Envelope(secondId, secondDescription, secondChannel, secondMessageDescribed);
 
             Assert.False(first == second);
             Assert.True(first != second);
@@ -131,18 +122,16 @@ namespace Naos.MessageBus.Test
             var firstDescription = "description1";
             var firstChannel = new SimpleChannel("channel1");
             var message = new NullMessage();
-            var firstMessageAsJson = message.ToJson();
-            var firstMessageType = message.GetType().ToTypeDescription();
+            var firstMessageDescribed = message.ToDescribedSerialization(PostOffice.MessageSerializationDescription);
 
-            var first = new Envelope(firstId, firstDescription, firstChannel, firstMessageAsJson, firstMessageType);
+            var first = new Envelope(firstId, firstDescription, firstChannel, firstMessageDescribed);
 
             var secondId = firstId;
             var secondDescription = firstDescription;
             var secondChannel = new SimpleChannel("channel2");
-            var secondMessageAsJson = firstMessageAsJson;
-            var secondMessageType = firstMessageType;
+            var secondMessageDescribed = firstMessageDescribed;
 
-            var second = new Envelope(secondId, secondDescription, secondChannel, secondMessageAsJson, secondMessageType);
+            var second = new Envelope(secondId, secondDescription, secondChannel, secondMessageDescribed);
 
             Assert.False(first == second);
             Assert.True(first != second);
@@ -159,19 +148,17 @@ namespace Naos.MessageBus.Test
             var firstDescription = "description1";
             var firstChannel = new SimpleChannel("channel1");
             var firstMessage = new NullMessage();
-            var firstMessageAsJson = firstMessage.ToJson();
-            var firstMessageType = firstMessage.GetType().ToTypeDescription();
+            var firstMessageDescribed = firstMessage.ToDescribedSerialization(PostOffice.MessageSerializationDescription);
 
-            var first = new Envelope(firstId, firstDescription, firstChannel, firstMessageAsJson, firstMessageType);
+            var first = new Envelope(firstId, firstDescription, firstChannel, firstMessageDescribed);
 
             var secondId = firstId;
             var secondDescription = firstDescription;
             var secondChannel = firstChannel;
             var secondMessage = new AbortIfNoDependencyTopicsAffectedMessage();
-            var secondMessageAsJson = secondMessage.ToJson();
-            var secondMessageType = firstMessage.GetType().ToTypeDescription();
+            var secondMessageDescribed = secondMessage.ToDescribedSerialization(PostOffice.MessageSerializationDescription);
 
-            var second = new Envelope(secondId, secondDescription, secondChannel, secondMessageAsJson, secondMessageType);
+            var second = new Envelope(secondId, secondDescription, secondChannel, secondMessageDescribed);
 
             Assert.False(first == second);
             Assert.True(first != second);
@@ -187,20 +174,18 @@ namespace Naos.MessageBus.Test
             var firstId = "id1";
             var firstDescription = "description1";
             var firstChannel = new SimpleChannel("channel1");
-            var firstMessage = new NullMessage();
-            var firstMessageAsJson = firstMessage.ToJson();
-            var firstMessageType = firstMessage.GetType().ToTypeDescription();
+            var firstMessage = new RecurringHeaderMessage();
+            var firstMessageDescribed = firstMessage.ToDescribedSerialization(PostOffice.MessageSerializationDescription);
 
-            var first = new Envelope(firstId, firstDescription, firstChannel, firstMessageAsJson, firstMessageType);
+            var first = new Envelope(firstId, firstDescription, firstChannel, firstMessageDescribed);
 
             var secondId = firstId;
             var secondDescription = firstDescription;
             var secondChannel = firstChannel;
             var secondMessage = new NullMessage();
-            var secondMessageAsJson = secondMessage.ToJson();
-            var secondMessageType = typeof(RecurringHeaderMessage).ToTypeDescription();
+            var secondMessageDescribed = secondMessage.ToDescribedSerialization(PostOffice.MessageSerializationDescription);
 
-            var second = new Envelope(secondId, secondDescription, secondChannel, secondMessageAsJson, secondMessageType);
+            var second = new Envelope(secondId, secondDescription, secondChannel, secondMessageDescribed);
 
             Assert.False(first == second);
             Assert.True(first != second);

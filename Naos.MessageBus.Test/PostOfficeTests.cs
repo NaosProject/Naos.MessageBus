@@ -72,6 +72,7 @@ namespace Naos.MessageBus.Test
         public static void SendRecurringParcelWithImpactedTopicAndNoDependentTopics_InjectsMessages()
         {
             // arrange
+            var envelopeMachine = Factory.GetEnvelopeMachine();
             var trackingCalls = new List<string>();
             var trackingSends = new List<Parcel>();
             var postOffice = Factory.GetInMemoryParcelTrackingSystemBackedPostOffice(trackingCalls, trackingSends);
@@ -101,28 +102,28 @@ namespace Naos.MessageBus.Test
 
             // abort if pending
             var indexFetch = 0;
-            parcel.Envelopes.Skip(indexFetch).First().MessageType.Should().Be(typeof(FetchAndShareLatestTopicStatusReportsMessage).ToTypeDescription());
-            parcel.Envelopes.Skip(indexFetch).First().MessageAsJson.FromJson<FetchAndShareLatestTopicStatusReportsMessage>().TopicsToFetchAndShareStatusReportsFrom.Single().Name.Should().Be(sampleTopic);
+            parcel.Envelopes.Skip(indexFetch).First().SerializedMessage.PayloadTypeDescription.Should().Be(typeof(FetchAndShareLatestTopicStatusReportsMessage).ToTypeDescription());
+            parcel.Envelopes.Skip(indexFetch).First().Open<FetchAndShareLatestTopicStatusReportsMessage>(envelopeMachine).TopicsToFetchAndShareStatusReportsFrom.Single().Name.Should().Be(sampleTopic);
 
             // abort if pending
             var indexAbort = 1;
-            parcel.Envelopes.Skip(indexAbort).First().MessageType.Should().Be(typeof(AbortIfTopicsHaveSpecificStatusesMessage).ToTypeDescription());
-            parcel.Envelopes.Skip(indexAbort).First().MessageAsJson.FromJson<AbortIfTopicsHaveSpecificStatusesMessage>().TopicsToCheck.Single().Name.Should().Be(sampleTopic);
+            parcel.Envelopes.Skip(indexAbort).First().SerializedMessage.PayloadTypeDescription.Should().Be(typeof(AbortIfTopicsHaveSpecificStatusesMessage).ToTypeDescription());
+            parcel.Envelopes.Skip(indexAbort).First().Open<AbortIfTopicsHaveSpecificStatusesMessage>(envelopeMachine).TopicsToCheck.Single().Name.Should().Be(sampleTopic);
 
             // being affected
             var indexBeing = 2;
-            parcel.Envelopes.Skip(indexBeing).First().MessageType.Should().Be(typeof(TopicBeingAffectedMessage).ToTypeDescription());
-            parcel.Envelopes.Skip(indexBeing).First().MessageAsJson.FromJson<TopicBeingAffectedMessage>().Topic.Name.Should().Be(sampleTopic);
+            parcel.Envelopes.Skip(indexBeing).First().SerializedMessage.PayloadTypeDescription.Should().Be(typeof(TopicBeingAffectedMessage).ToTypeDescription());
+            parcel.Envelopes.Skip(indexBeing).First().Open<TopicBeingAffectedMessage>(envelopeMachine).Topic.Name.Should().Be(sampleTopic);
 
             // mine
             var indexMine = 3;
-            parcel.Envelopes.Skip(indexMine).First().MessageType.Should().Be(typeof(NullMessage).ToTypeDescription());
+            parcel.Envelopes.Skip(indexMine).First().SerializedMessage.PayloadTypeDescription.Should().Be(typeof(NullMessage).ToTypeDescription());
             parcel.Envelopes.Skip(indexMine).First().Address.Should().Be(channel);
 
             // was affected
             var indexWas = 4;
-            parcel.Envelopes.Skip(indexWas).First().MessageType.Should().Be(typeof(TopicWasAffectedMessage).ToTypeDescription());
-            parcel.Envelopes.Skip(indexWas).First().MessageAsJson.FromJson<TopicWasAffectedMessage>().Topic.Name.Should().Be(sampleTopic);
+            parcel.Envelopes.Skip(indexWas).First().SerializedMessage.PayloadTypeDescription.Should().Be(typeof(TopicWasAffectedMessage).ToTypeDescription());
+            parcel.Envelopes.Skip(indexWas).First().Open<TopicWasAffectedMessage>(envelopeMachine).Topic.Name.Should().Be(sampleTopic);
         }
 
         [Fact]
@@ -155,6 +156,7 @@ namespace Naos.MessageBus.Test
         public static void SendRecurringParcelWithImpactedTopicAndDependentTopics_InjectsMessages()
         {
             // arrange
+            var envelopeMachine = Factory.GetEnvelopeMachine();
             var trackingCalls = new List<string>();
             var trackingSends = new List<Parcel>();
             var postOffice = Factory.GetInMemoryParcelTrackingSystemBackedPostOffice(trackingCalls, trackingSends);
@@ -184,42 +186,43 @@ namespace Naos.MessageBus.Test
 
             // abort if pending
             var indexFetch = 0;
-            parcel.Envelopes.Skip(indexFetch).First().MessageType.Should().Be(typeof(FetchAndShareLatestTopicStatusReportsMessage).ToTypeDescription());
-            parcel.Envelopes.Skip(indexFetch).First().MessageAsJson.FromJson<FetchAndShareLatestTopicStatusReportsMessage>()
+            parcel.Envelopes.Skip(indexFetch).First().SerializedMessage.PayloadTypeDescription.Should().Be(typeof(FetchAndShareLatestTopicStatusReportsMessage).ToTypeDescription());
+            parcel.Envelopes.Skip(indexFetch).First().Open<FetchAndShareLatestTopicStatusReportsMessage>(envelopeMachine)
                 .TopicsToFetchAndShareStatusReportsFrom.ShouldAllBeEquivalentTo(
                     dependantTopics.Select(_ => _.ToNamedTopic()).Union(new[] { new NamedTopic(sampleTopic) }).ToArray());
 
             // abort if pending
             var indexAbort = 1;
-            parcel.Envelopes.Skip(indexAbort).First().MessageType.Should().Be(typeof(AbortIfTopicsHaveSpecificStatusesMessage).ToTypeDescription());
-            parcel.Envelopes.Skip(indexAbort).First().MessageAsJson.FromJson<AbortIfTopicsHaveSpecificStatusesMessage>().TopicsToCheck.Single().Name.Should().Be(sampleTopic);
+            parcel.Envelopes.Skip(indexAbort).First().SerializedMessage.PayloadTypeDescription.Should().Be(typeof(AbortIfTopicsHaveSpecificStatusesMessage).ToTypeDescription());
+            parcel.Envelopes.Skip(indexAbort).First().Open<AbortIfTopicsHaveSpecificStatusesMessage>(envelopeMachine).TopicsToCheck.Single().Name.Should().Be(sampleTopic);
 
             // abort if no new
             var indexNoNewAbort = 2;
-            parcel.Envelopes.Skip(indexNoNewAbort).First().MessageType.Should().Be(typeof(AbortIfNoDependencyTopicsAffectedMessage).ToTypeDescription());
-            parcel.Envelopes.Skip(indexNoNewAbort).First().MessageAsJson.FromJson<AbortIfNoDependencyTopicsAffectedMessage>().Topic.Name.Should().Be(sampleTopic);
-            parcel.Envelopes.Skip(indexNoNewAbort).First().MessageAsJson.FromJson<AbortIfNoDependencyTopicsAffectedMessage>().DependencyTopics.ShouldBeEquivalentTo(dependantTopics);
+            parcel.Envelopes.Skip(indexNoNewAbort).First().SerializedMessage.PayloadTypeDescription.Should().Be(typeof(AbortIfNoDependencyTopicsAffectedMessage).ToTypeDescription());
+            parcel.Envelopes.Skip(indexNoNewAbort).First().Open<AbortIfNoDependencyTopicsAffectedMessage>(envelopeMachine).Topic.Name.Should().Be(sampleTopic);
+            parcel.Envelopes.Skip(indexNoNewAbort).First().Open<AbortIfNoDependencyTopicsAffectedMessage>(envelopeMachine).DependencyTopics.ShouldBeEquivalentTo(dependantTopics);
 
             // being affected
             var indexBeing = 3;
-            parcel.Envelopes.Skip(indexBeing).First().MessageType.Should().Be(typeof(TopicBeingAffectedMessage).ToTypeDescription());
-            parcel.Envelopes.Skip(indexBeing).First().MessageAsJson.FromJson<TopicBeingAffectedMessage>().Topic.Name.Should().Be(sampleTopic);
+            parcel.Envelopes.Skip(indexBeing).First().SerializedMessage.PayloadTypeDescription.Should().Be(typeof(TopicBeingAffectedMessage).ToTypeDescription());
+            parcel.Envelopes.Skip(indexBeing).First().Open<TopicBeingAffectedMessage>(envelopeMachine).Topic.Name.Should().Be(sampleTopic);
 
             // mine
             var indexMine = 4;
-            parcel.Envelopes.Skip(indexMine).First().MessageType.Should().Be(typeof(NullMessage).ToTypeDescription());
+            parcel.Envelopes.Skip(indexMine).First().SerializedMessage.PayloadTypeDescription.Should().Be(typeof(NullMessage).ToTypeDescription());
             parcel.Envelopes.Skip(indexMine).First().Address.Should().Be(channel);
 
             // was affected
             var indexWas = 5;
-            parcel.Envelopes.Skip(indexWas).First().MessageType.Should().Be(typeof(TopicWasAffectedMessage).ToTypeDescription());
-            parcel.Envelopes.Skip(indexWas).First().MessageAsJson.FromJson<TopicWasAffectedMessage>().Topic.Name.Should().Be(sampleTopic);
+            parcel.Envelopes.Skip(indexWas).First().SerializedMessage.PayloadTypeDescription.Should().Be(typeof(TopicWasAffectedMessage).ToTypeDescription());
+            parcel.Envelopes.Skip(indexWas).First().Open<TopicWasAffectedMessage>(envelopeMachine).Topic.Name.Should().Be(sampleTopic);
         }
 
         [Fact]
         public static void SendRecurringParcelWithImpactedTopicAndNoDependentTopicsAndAffectedMessages_InjectsMessagesButDoesNotDuplicate()
         {
             // arrange
+            var envelopeMachine = Factory.GetEnvelopeMachine();
             var trackingCalls = new List<string>();
             var trackingSends = new List<Parcel>();
             var postOffice = Factory.GetInMemoryParcelTrackingSystemBackedPostOffice(trackingCalls, trackingSends);
@@ -239,9 +242,9 @@ namespace Naos.MessageBus.Test
                                        Envelopes =
                                            new[]
                                                {
-                                                   new TopicBeingAffectedMessage { Topic = new AffectedTopic(sampleTopic) }.ToAddressedMessage(channel).ToEnvelope(),
-                                                   new NullMessage().ToAddressedMessage(channel).ToEnvelope(),
-                                                   new TopicWasAffectedMessage() { Topic = new AffectedTopic(sampleTopic) }.ToAddressedMessage(channel).ToEnvelope(),
+                                                   new TopicBeingAffectedMessage { Topic = new AffectedTopic(sampleTopic) }.ToAddressedMessage(channel).ToEnvelope(envelopeMachine),
+                                                   new NullMessage().ToAddressedMessage(channel).ToEnvelope(envelopeMachine),
+                                                   new TopicWasAffectedMessage() { Topic = new AffectedTopic(sampleTopic) }.ToAddressedMessage(channel).ToEnvelope(envelopeMachine),
                                                }
                                    };
 
@@ -257,34 +260,35 @@ namespace Naos.MessageBus.Test
 
             // abort if pending
             var indexFetch = 0;
-            parcel.Envelopes.Skip(indexFetch).First().MessageType.Should().Be(typeof(FetchAndShareLatestTopicStatusReportsMessage).ToTypeDescription());
-            parcel.Envelopes.Skip(indexFetch).First().MessageAsJson.FromJson<FetchAndShareLatestTopicStatusReportsMessage>().TopicsToFetchAndShareStatusReportsFrom.Single().Name.Should().Be(sampleTopic);
+            parcel.Envelopes.Skip(indexFetch).First().SerializedMessage.PayloadTypeDescription.Should().Be(typeof(FetchAndShareLatestTopicStatusReportsMessage).ToTypeDescription());
+            parcel.Envelopes.Skip(indexFetch).First().Open<FetchAndShareLatestTopicStatusReportsMessage>(envelopeMachine).TopicsToFetchAndShareStatusReportsFrom.Single().Name.Should().Be(sampleTopic);
 
             // abort if pending
             var indexAbort = 1;
-            parcel.Envelopes.Skip(indexAbort).First().MessageType.Should().Be(typeof(AbortIfTopicsHaveSpecificStatusesMessage).ToTypeDescription());
-            parcel.Envelopes.Skip(indexAbort).First().MessageAsJson.FromJson<AbortIfTopicsHaveSpecificStatusesMessage>().TopicsToCheck.Single().Name.Should().Be(sampleTopic);
+            parcel.Envelopes.Skip(indexAbort).First().SerializedMessage.PayloadTypeDescription.Should().Be(typeof(AbortIfTopicsHaveSpecificStatusesMessage).ToTypeDescription());
+            parcel.Envelopes.Skip(indexAbort).First().Open<AbortIfTopicsHaveSpecificStatusesMessage>(envelopeMachine).TopicsToCheck.Single().Name.Should().Be(sampleTopic);
 
             // being affected
             var indexBeing = 2;
-            parcel.Envelopes.Skip(indexBeing).First().MessageType.Should().Be(typeof(TopicBeingAffectedMessage).ToTypeDescription());
-            parcel.Envelopes.Skip(indexBeing).First().MessageAsJson.FromJson<TopicBeingAffectedMessage>().Topic.Name.Should().Be(sampleTopic);
+            parcel.Envelopes.Skip(indexBeing).First().SerializedMessage.PayloadTypeDescription.Should().Be(typeof(TopicBeingAffectedMessage).ToTypeDescription());
+            parcel.Envelopes.Skip(indexBeing).First().Open<TopicBeingAffectedMessage>(envelopeMachine).Topic.Name.Should().Be(sampleTopic);
 
             // mine
             var indexMine = 3;
-            parcel.Envelopes.Skip(indexMine).First().MessageType.Should().Be(typeof(NullMessage).ToTypeDescription());
+            parcel.Envelopes.Skip(indexMine).First().SerializedMessage.PayloadTypeDescription.Should().Be(typeof(NullMessage).ToTypeDescription());
             parcel.Envelopes.Skip(indexMine).First().Address.Should().Be(channel);
 
             // was affected
             var indexWas = 4;
-            parcel.Envelopes.Skip(indexWas).First().MessageType.Should().Be(typeof(TopicWasAffectedMessage).ToTypeDescription());
-            parcel.Envelopes.Skip(indexWas).First().MessageAsJson.FromJson<TopicWasAffectedMessage>().Topic.Name.Should().Be(sampleTopic);
+            parcel.Envelopes.Skip(indexWas).First().SerializedMessage.PayloadTypeDescription.Should().Be(typeof(TopicWasAffectedMessage).ToTypeDescription());
+            parcel.Envelopes.Skip(indexWas).First().Open<TopicWasAffectedMessage>(envelopeMachine).Topic.Name.Should().Be(sampleTopic);
         }
 
         [Fact]
         public static void SendRecurringParcelWithImpactedTopicAndNoDependentTopicsAndAffectedMessages_InjectsMessagesButDoesNotDuplicateOrChangeOrder()
         {
             // arrange
+            var envelopeMachine = Factory.GetEnvelopeMachine();
             var trackingCalls = new List<string>();
             var trackingSends = new List<Parcel>();
             var postOffice = Factory.GetInMemoryParcelTrackingSystemBackedPostOffice(trackingCalls, trackingSends);
@@ -304,10 +308,10 @@ namespace Naos.MessageBus.Test
                                        Envelopes =
                                            new[]
                                                {
-                                                   new NullMessage().ToAddressedMessage(channel).ToEnvelope(),
-                                                   new TopicBeingAffectedMessage { Topic = new AffectedTopic(sampleTopic) }.ToAddressedMessage(channel).ToEnvelope(),
-                                                   new TopicWasAffectedMessage() { Topic = new AffectedTopic(sampleTopic) }.ToAddressedMessage(channel).ToEnvelope(),
-                                                   new NullMessage().ToAddressedMessage(channel).ToEnvelope(),
+                                                   new NullMessage().ToAddressedMessage(channel).ToEnvelope(envelopeMachine),
+                                                   new TopicBeingAffectedMessage { Topic = new AffectedTopic(sampleTopic) }.ToAddressedMessage(channel).ToEnvelope(envelopeMachine),
+                                                   new TopicWasAffectedMessage() { Topic = new AffectedTopic(sampleTopic) }.ToAddressedMessage(channel).ToEnvelope(envelopeMachine),
+                                                   new NullMessage().ToAddressedMessage(channel).ToEnvelope(envelopeMachine),
                                                }
             };
 
@@ -323,32 +327,32 @@ namespace Naos.MessageBus.Test
 
             // abort if pending
             var indexFetch = 0;
-            parcel.Envelopes.Skip(indexFetch).First().MessageType.Should().Be(typeof(FetchAndShareLatestTopicStatusReportsMessage).ToTypeDescription());
-            parcel.Envelopes.Skip(indexFetch).First().MessageAsJson.FromJson<FetchAndShareLatestTopicStatusReportsMessage>().TopicsToFetchAndShareStatusReportsFrom.Single().Name.Should().Be(sampleTopic);
+            parcel.Envelopes.Skip(indexFetch).First().SerializedMessage.PayloadTypeDescription.Should().Be(typeof(FetchAndShareLatestTopicStatusReportsMessage).ToTypeDescription());
+            parcel.Envelopes.Skip(indexFetch).First().Open<FetchAndShareLatestTopicStatusReportsMessage>(envelopeMachine).TopicsToFetchAndShareStatusReportsFrom.Single().Name.Should().Be(sampleTopic);
 
             // abort if pending
             var indexAbort = 1;
-            parcel.Envelopes.Skip(indexAbort).First().MessageType.Should().Be(typeof(AbortIfTopicsHaveSpecificStatusesMessage).ToTypeDescription());
-            parcel.Envelopes.Skip(indexAbort).First().MessageAsJson.FromJson<AbortIfTopicsHaveSpecificStatusesMessage>().TopicsToCheck.Single().Name.Should().Be(sampleTopic);
+            parcel.Envelopes.Skip(indexAbort).First().SerializedMessage.PayloadTypeDescription.Should().Be(typeof(AbortIfTopicsHaveSpecificStatusesMessage).ToTypeDescription());
+            parcel.Envelopes.Skip(indexAbort).First().Open<AbortIfTopicsHaveSpecificStatusesMessage>(envelopeMachine).TopicsToCheck.Single().Name.Should().Be(sampleTopic);
 
             // mine
             var indexMine = 2;
-            parcel.Envelopes.Skip(indexMine).First().MessageType.Should().Be(typeof(NullMessage).ToTypeDescription());
+            parcel.Envelopes.Skip(indexMine).First().SerializedMessage.PayloadTypeDescription.Should().Be(typeof(NullMessage).ToTypeDescription());
             parcel.Envelopes.Skip(indexMine).First().Address.Should().Be(channel);
 
             // being affected
             var indexBeing = 3;
-            parcel.Envelopes.Skip(indexBeing).First().MessageType.Should().Be(typeof(TopicBeingAffectedMessage).ToTypeDescription());
-            parcel.Envelopes.Skip(indexBeing).First().MessageAsJson.FromJson<TopicBeingAffectedMessage>().Topic.Name.Should().Be(sampleTopic);
+            parcel.Envelopes.Skip(indexBeing).First().SerializedMessage.PayloadTypeDescription.Should().Be(typeof(TopicBeingAffectedMessage).ToTypeDescription());
+            parcel.Envelopes.Skip(indexBeing).First().Open<TopicBeingAffectedMessage>(envelopeMachine).Topic.Name.Should().Be(sampleTopic);
 
             // was affected
             var indexWas = 4;
-            parcel.Envelopes.Skip(indexWas).First().MessageType.Should().Be(typeof(TopicWasAffectedMessage).ToTypeDescription());
-            parcel.Envelopes.Skip(indexWas).First().MessageAsJson.FromJson<TopicWasAffectedMessage>().Topic.Name.Should().Be(sampleTopic);
+            parcel.Envelopes.Skip(indexWas).First().SerializedMessage.PayloadTypeDescription.Should().Be(typeof(TopicWasAffectedMessage).ToTypeDescription());
+            parcel.Envelopes.Skip(indexWas).First().Open<TopicWasAffectedMessage>(envelopeMachine).Topic.Name.Should().Be(sampleTopic);
 
             // mine
             var indexLast = 5;
-            parcel.Envelopes.Skip(indexLast).First().MessageType.Should().Be(typeof(NullMessage).ToTypeDescription());
+            parcel.Envelopes.Skip(indexLast).First().SerializedMessage.PayloadTypeDescription.Should().Be(typeof(NullMessage).ToTypeDescription());
             parcel.Envelopes.Skip(indexLast).First().Address.Should().Be(channel);
         }
 
@@ -356,6 +360,7 @@ namespace Naos.MessageBus.Test
         public static void SendRecurringParcelWithBeingAffectedMessagesAndDifferentTopic_Throws()
         {
             // arrange
+            var envelopeMachine = Factory.GetEnvelopeMachine();
             var trackingCalls = new List<string>();
             var trackingSends = new List<Parcel>();
             var postOffice = Factory.GetInMemoryParcelTrackingSystemBackedPostOffice(trackingCalls, trackingSends);
@@ -375,9 +380,9 @@ namespace Naos.MessageBus.Test
                                        Envelopes =
                                            new[]
                                                {
-                                                   new NullMessage().ToAddressedMessage(channel).ToEnvelope(),
-                                                   new TopicBeingAffectedMessage { Topic = new AffectedTopic(sampleTopic) }.ToAddressedMessage(channel).ToEnvelope(),
-                                                   new NullMessage().ToAddressedMessage(channel).ToEnvelope(),
+                                                   new NullMessage().ToAddressedMessage(channel).ToEnvelope(envelopeMachine),
+                                                   new TopicBeingAffectedMessage { Topic = new AffectedTopic(sampleTopic) }.ToAddressedMessage(channel).ToEnvelope(envelopeMachine),
+                                                   new NullMessage().ToAddressedMessage(channel).ToEnvelope(envelopeMachine),
                                                }
                                    };
 
@@ -391,6 +396,7 @@ namespace Naos.MessageBus.Test
         public static void SendRecurringParcelWithWasAffectedMessagesAndDifferentTopic_Throws()
         {
             // arrange
+            var envelopeMachine = Factory.GetEnvelopeMachine();
             var trackingCalls = new List<string>();
             var trackingSends = new List<Parcel>();
             var postOffice = Factory.GetInMemoryParcelTrackingSystemBackedPostOffice(trackingCalls, trackingSends);
@@ -410,9 +416,9 @@ namespace Naos.MessageBus.Test
                                        Envelopes =
                                            new[]
                                                {
-                                                   new NullMessage().ToAddressedMessage(channel).ToEnvelope(),
-                                                   new TopicWasAffectedMessage() { Topic = new AffectedTopic(sampleTopic) }.ToAddressedMessage(channel).ToEnvelope(),
-                                                   new NullMessage().ToAddressedMessage(channel).ToEnvelope(),
+                                                   new NullMessage().ToAddressedMessage(channel).ToEnvelope(envelopeMachine),
+                                                   new TopicWasAffectedMessage() { Topic = new AffectedTopic(sampleTopic) }.ToAddressedMessage(channel).ToEnvelope(envelopeMachine),
+                                                   new NullMessage().ToAddressedMessage(channel).ToEnvelope(envelopeMachine),
                                                }
                                    };
 
@@ -426,6 +432,7 @@ namespace Naos.MessageBus.Test
         public static void SendRecurringParcelWithAffectedMessagesAndMultipleBeingAffected_Throws()
         {
             // arrange
+            var envelopeMachine = Factory.GetEnvelopeMachine();
             var trackingCalls = new List<string>();
             var trackingSends = new List<Parcel>();
             var postOffice = Factory.GetInMemoryParcelTrackingSystemBackedPostOffice(trackingCalls, trackingSends);
@@ -445,11 +452,11 @@ namespace Naos.MessageBus.Test
                                        Envelopes =
                                            new[]
                                                {
-                                                   new NullMessage().ToAddressedMessage(channel).ToEnvelope(),
-                                                   new TopicBeingAffectedMessage { Topic = new AffectedTopic(sampleTopic) }.ToAddressedMessage(channel).ToEnvelope(),
-                                                   new TopicBeingAffectedMessage { Topic = new AffectedTopic(sampleTopic) }.ToAddressedMessage(channel).ToEnvelope(),
-                                                   new TopicWasAffectedMessage() { Topic = new AffectedTopic(sampleTopic) }.ToAddressedMessage(channel).ToEnvelope(),
-                                                   new NullMessage().ToAddressedMessage(channel).ToEnvelope(),
+                                                   new NullMessage().ToAddressedMessage(channel).ToEnvelope(envelopeMachine),
+                                                   new TopicBeingAffectedMessage { Topic = new AffectedTopic(sampleTopic) }.ToAddressedMessage(channel).ToEnvelope(envelopeMachine),
+                                                   new TopicBeingAffectedMessage { Topic = new AffectedTopic(sampleTopic) }.ToAddressedMessage(channel).ToEnvelope(envelopeMachine),
+                                                   new TopicWasAffectedMessage() { Topic = new AffectedTopic(sampleTopic) }.ToAddressedMessage(channel).ToEnvelope(envelopeMachine),
+                                                   new NullMessage().ToAddressedMessage(channel).ToEnvelope(envelopeMachine),
                                                }
                                    };
 
@@ -463,6 +470,7 @@ namespace Naos.MessageBus.Test
         public static void SendRecurringParcelWithAffectedMessagesAndMultipleWasAffected_Throws()
         {
             // arrange
+            var envelopeMachine = Factory.GetEnvelopeMachine();
             var trackingCalls = new List<string>();
             var trackingSends = new List<Parcel>();
             var postOffice = Factory.GetInMemoryParcelTrackingSystemBackedPostOffice(trackingCalls, trackingSends);
@@ -482,11 +490,11 @@ namespace Naos.MessageBus.Test
                                        Envelopes =
                                            new[]
                                                {
-                                                   new NullMessage().ToAddressedMessage(channel).ToEnvelope(),
-                                                   new TopicBeingAffectedMessage { Topic = new AffectedTopic(sampleTopic) }.ToAddressedMessage(channel).ToEnvelope(),
-                                                   new TopicWasAffectedMessage() { Topic = new AffectedTopic(sampleTopic) }.ToAddressedMessage(channel).ToEnvelope(),
-                                                   new TopicWasAffectedMessage() { Topic = new AffectedTopic(sampleTopic) }.ToAddressedMessage(channel).ToEnvelope(),
-                                                   new NullMessage().ToAddressedMessage(channel).ToEnvelope(),
+                                                   new NullMessage().ToAddressedMessage(channel).ToEnvelope(envelopeMachine),
+                                                   new TopicBeingAffectedMessage { Topic = new AffectedTopic(sampleTopic) }.ToAddressedMessage(channel).ToEnvelope(envelopeMachine),
+                                                   new TopicWasAffectedMessage() { Topic = new AffectedTopic(sampleTopic) }.ToAddressedMessage(channel).ToEnvelope(envelopeMachine),
+                                                   new TopicWasAffectedMessage() { Topic = new AffectedTopic(sampleTopic) }.ToAddressedMessage(channel).ToEnvelope(envelopeMachine),
+                                                   new NullMessage().ToAddressedMessage(channel).ToEnvelope(envelopeMachine),
                                                }
                                    };
 
@@ -500,6 +508,7 @@ namespace Naos.MessageBus.Test
         public static void SendRecurringParcelWithAffectedMessagesOutOfOrder_Throws()
         {
             // arrange
+            var envelopeMachine = Factory.GetEnvelopeMachine();
             var trackingCalls = new List<string>();
             var trackingSends = new List<Parcel>();
             var postOffice = Factory.GetInMemoryParcelTrackingSystemBackedPostOffice(trackingCalls, trackingSends);
@@ -519,10 +528,10 @@ namespace Naos.MessageBus.Test
                                        Envelopes =
                                            new[]
                                                {
-                                                   new NullMessage().ToAddressedMessage(channel).ToEnvelope(),
-                                                   new TopicWasAffectedMessage() { Topic = new AffectedTopic(sampleTopic) }.ToAddressedMessage(channel).ToEnvelope(),
-                                                   new TopicBeingAffectedMessage { Topic = new AffectedTopic(sampleTopic) }.ToAddressedMessage(channel).ToEnvelope(),
-                                                   new NullMessage().ToAddressedMessage(channel).ToEnvelope(),
+                                                   new NullMessage().ToAddressedMessage(channel).ToEnvelope(envelopeMachine),
+                                                   new TopicWasAffectedMessage() { Topic = new AffectedTopic(sampleTopic) }.ToAddressedMessage(channel).ToEnvelope(envelopeMachine),
+                                                   new TopicBeingAffectedMessage { Topic = new AffectedTopic(sampleTopic) }.ToAddressedMessage(channel).ToEnvelope(envelopeMachine),
+                                                   new NullMessage().ToAddressedMessage(channel).ToEnvelope(envelopeMachine),
                                                }
                                    };
 

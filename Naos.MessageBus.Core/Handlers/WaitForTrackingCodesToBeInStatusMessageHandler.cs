@@ -15,14 +15,12 @@ namespace Naos.MessageBus.Core
     /// <summary>
     /// No implementation handler to handle NullMessages.
     /// </summary>
-    public class WaitForTrackingCodesToBeInStatusMessageHandler : IHandleMessages<WaitForTrackingCodesToBeInStatusMessage>
+    public class WaitForTrackingCodesToBeInStatusMessageHandler : MessageHandlerBase<WaitForTrackingCodesToBeInStatusMessage>
     {
-        /// <inheritdoc />
-        public async Task HandleAsync(WaitForTrackingCodesToBeInStatusMessage message)
+        /// <inheritdoc cref="MessageHandlerBase{T}" />
+        public override async Task HandleAsync(WaitForTrackingCodesToBeInStatusMessage message)
         {
-            var parcelTracker = HandlerToolshed.GetParcelTracker();
-
-            await this.HandleAsync(message, parcelTracker);
+            await this.HandleAsync(message, this.ParcelTracker);
         }
 
         /// <summary>

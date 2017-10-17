@@ -13,7 +13,11 @@ namespace Naos.MessageBus.Test
 
     using FakeItEasy;
 
+    using Naos.Compression.Domain;
     using Naos.MessageBus.Domain;
+    using Naos.Serialization.Factory;
+
+    using OBeautifulCode.TypeRepresentation;
 
     internal class Factory
     {
@@ -103,10 +107,28 @@ namespace Naos.MessageBus.Test
             */
         }
 
+        public static IStuffAndOpenEnvelopes GetEnvelopeMachine()
+        {
+            return new EnvelopeMachine(
+                PostOffice.MessageSerializationDescription,
+                SerializerFactory.Instance,
+                CompressorFactory.Instance,
+                TypeMatchStrategy.NamespaceAndName);
+        }
+
+        public static IManageShares GetShareManager()
+        {
+            return new ShareManager(TypeMatchStrategy.NamespaceAndName, SerializerFactory.Instance, CompressorFactory.Instance);
+        }
+
         public static IPostOffice GetInMemoryParcelTrackingSystemBackedPostOffice(List<string> trackingCalls, List<Parcel> trackingSends)
         {
             var parcelTrackingSystemBuilder = Factory.GetInMemoryParcelTrackingSystem(trackingCalls, trackingSends);
-            var ret = new PostOffice(parcelTrackingSystemBuilder(), new ChannelRouter(new NullChannel()));
+            var envelopeMachine = Factory.GetEnvelopeMachine();
+            var ret = new PostOffice(
+                parcelTrackingSystemBuilder(),
+                new ChannelRouter(new NullChannel()),
+                envelopeMachine);
             return ret;
         }
 

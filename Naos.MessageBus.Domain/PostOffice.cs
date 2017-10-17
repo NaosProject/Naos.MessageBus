@@ -11,30 +11,44 @@ namespace Naos.MessageBus.Domain
     using System.Linq;
 
     using Naos.Cron;
+    using Naos.Serialization.Domain;
 
     using OBeautifulCode.TypeRepresentation;
+
+    using Spritely.Recipes;
 
     using static System.FormattableString;
 
     /// <inheritdoc />
     public class PostOffice : IPostOffice
     {
-        // Make this permissive since it's the underlying logic and shouldn't be coupled to whether handlers are matched in strict mode...
-        private static readonly TypeComparer TypeComparer = new TypeComparer(TypeMatchStrategy.NamespaceAndName);
+        /// <summary>
+        /// Gets the <see cref="SerializationDescription" /> to use for serializing messages.
+        /// </summary>
+        public static SerializationDescription MessageSerializationDescription => new SerializationDescription(SerializationFormat.Json, SerializationRepresentation.String);
+
+        // Make this permissive since it's the underlying logic and shouldn't be coupled to whether others are matched in a stricter mode assigned in constructor.
+        private static readonly TypeComparer NullChannelAndTopicAffectedMessageTypeComparer = new TypeComparer(TypeMatchStrategy.NamespaceAndName);
 
         private readonly IParcelTrackingSystem parcelTrackingSystem;
 
         private readonly IRouteUnaddressedMail unaddressedMailRouter;
+
+        private readonly IStuffAndOpenEnvelopes envelopeMachine;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="PostOffice"/> class.
         /// </summary>
         /// <param name="parcelTrackingSystem">System to track parcels.</param>
         /// <param name="unaddressedMailRouter">Channel that items without an address should be sent to.</param>
-        public PostOffice(IParcelTrackingSystem parcelTrackingSystem, IRouteUnaddressedMail unaddressedMailRouter)
+        /// <param name="envelopeMachine">Implementation of <see cref="IStuffAndOpenEnvelopes" /> to stuffing and opening envelopes.</param>
+        public PostOffice(IParcelTrackingSystem parcelTrackingSystem, IRouteUnaddressedMail unaddressedMailRouter, IStuffAndOpenEnvelopes envelopeMachine)
         {
+            new { parcelTrackingSystem, unaddressedMailRouter, envelopeMachine }.Must().NotBeNull().OrThrowFirstFailure();
+
             this.parcelTrackingSystem = parcelTrackingSystem;
             this.unaddressedMailRouter = unaddressedMailRouter;
+            this.envelopeMachine = envelopeMachine;
         }
 
         /// <inheritdoc />
@@ -90,7 +104,23 @@ namespace Naos.MessageBus.Domain
                 throw new ArgumentException("Must set the Id of the MessageSequence");
             }
 
-            var parcel = messageSequence.ToParcel();
+            var envelopesFromSequence = messageSequence.AddressedMessages.Select(addressedMessage => addressedMessage.ToEnvelope(this.envelopeMachine)).ToList();
+
+            // if this is recurring we must inject a null message that will be handled on the default queue and immediately moved to the next one
+            //             that will be put in the correct queue...
+            var envelopes = new List<Envelope>();
+            envelopes.AddRange(envelopesFromSequence);
+
+            var parcel = new Parcel
+                             {
+                                 Id = messageSequence.Id,
+                                 Name = messageSequence.Name,
+                                 Envelopes = envelopes,
+                                 Topic = messageSequence.Topic,
+                                 DependencyTopics = messageSequence.DependencyTopics,
+                                 DependencyTopicCheckStrategy = messageSequence.DependencyTopicCheckStrategy,
+                                 SimultaneousRunsStrategy = messageSequence.SimultaneousRunsStrategy
+                             };
 
             return this.SendRecurring(parcel, recurringSchedule);
         }
@@ -122,7 +152,7 @@ namespace Naos.MessageBus.Domain
                     throw new ArgumentException("Must specify DependencyTopicCheckStrategy if declaring DependencyTopics.");
                 }
 
-                parcel = InjectTopicNoticeMessagesIntoNewParcel(parcel);
+                parcel = this.InjectTopicNoticeMessagesIntoNewParcel(parcel);
             }
 
             if (parcel.Id == default(Guid))
@@ -145,14 +175,15 @@ namespace Naos.MessageBus.Domain
             var trackingCode = new TrackingCode { ParcelId = parcel.Id, EnvelopeId = firstEnvelope.Id };
 
             // update to send unaddressed mail to the sorting channel
-            var address = firstEnvelope.Address == null || TypeComparer.Equals(firstEnvelope.Address.GetType(), typeof(NullChannel))
+            var address = firstEnvelope.Address == null || NullChannelAndTopicAffectedMessageTypeComparer.Equals(firstEnvelope.Address.GetType(), typeof(NullChannel))
                               ? this.unaddressedMailRouter.FindAddress(parcel)
                               : firstEnvelope.Address;
             this.parcelTrackingSystem.UpdateSentAsync(trackingCode, parcel, address, recurringSchedule).Wait();
             return trackingCode;
         }
 
-        private static Parcel InjectTopicNoticeMessagesIntoNewParcel(Parcel parcel)
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Maintainability", "CA1506:AvoidExcessiveClassCoupling", Justification = "Keeping this way, it's isolated and tested...")]
+        private Parcel InjectTopicNoticeMessagesIntoNewParcel(Parcel parcel)
         {
             var dependencyTopics = parcel.DependencyTopics ?? new DependencyTopic[0];
 
@@ -171,7 +202,7 @@ namespace Naos.MessageBus.Domain
                         Filter = TopicStatus.None
                     };
 
-            newEnvelopes.Add(fetchAndShareTopicStatusReportMessage.ToAddressedMessage().ToEnvelope());
+            newEnvelopes.Add(fetchAndShareTopicStatusReportMessage.ToAddressedMessage().ToEnvelope(this.envelopeMachine));
 
             if (parcel.SimultaneousRunsStrategy == SimultaneousRunsStrategy.AbortSubsequentRunsWhenOneIsRunning)
             {
@@ -183,7 +214,7 @@ namespace Naos.MessageBus.Domain
                     StatusesToAbortOn = new[] { TopicStatus.BeingAffected, TopicStatus.Failed }
                 };
 
-                newEnvelopes.Add(abortIfPendingMessage.ToAddressedMessage().ToEnvelope());
+                newEnvelopes.Add(abortIfPendingMessage.ToAddressedMessage().ToEnvelope(this.envelopeMachine));
             }
 
             if (dependencyTopics.Count > 0)
@@ -196,7 +227,7 @@ namespace Naos.MessageBus.Domain
                     TopicCheckStrategy = parcel.DependencyTopicCheckStrategy
                 };
 
-                newEnvelopes.Add(abortIfNoNewDataMessage.ToAddressedMessage().ToEnvelope());
+                newEnvelopes.Add(abortIfNoNewDataMessage.ToAddressedMessage().ToEnvelope(this.envelopeMachine));
             }
 
             // add a being affected message
@@ -206,7 +237,7 @@ namespace Naos.MessageBus.Domain
                 Topic = parcel.Topic
             };
 
-            var beingAffectedEnvelopes = envelopes.Where(_ => TypeComparer.Equals(_.MessageType, beingAffectedMessage.GetType().ToTypeDescription())).ToList();
+            var beingAffectedEnvelopes = envelopes.Where(_ => NullChannelAndTopicAffectedMessageTypeComparer.Equals(_.SerializedMessage.PayloadTypeDescription, beingAffectedMessage.GetType().ToTypeDescription())).ToList();
             if (beingAffectedEnvelopes.Count > 0)
             {
                 if (beingAffectedEnvelopes.Count > 1)
@@ -215,14 +246,14 @@ namespace Naos.MessageBus.Domain
                 }
 
                 if (beingAffectedEnvelopes.Count == 1
-                    && !beingAffectedEnvelopes.Single().MessageAsJson.FromJson<TopicBeingAffectedMessage>().Topic.Equals(parcel.Topic))
+                    && !beingAffectedEnvelopes.Single().Open<TopicBeingAffectedMessage>(this.envelopeMachine).Topic.Equals(parcel.Topic))
                 {
                     throw new ArgumentException("Cannot have a TopicBeingAffectedMessage with a different topic than the parcel.");
                 }
             }
             else
             {
-                newEnvelopes.Add(beingAffectedMessage.ToAddressedMessage().ToEnvelope());
+                newEnvelopes.Add(beingAffectedMessage.ToAddressedMessage().ToEnvelope(this.envelopeMachine));
             }
 
             // add the envelopes passed in
@@ -235,7 +266,7 @@ namespace Naos.MessageBus.Domain
                 Topic = parcel.Topic
             };
 
-            var wasAffectedEnvelopes = envelopes.Where(_ => TypeComparer.Equals(_.MessageType, wasAffectedMessage.GetType().ToTypeDescription())).ToList();
+            var wasAffectedEnvelopes = envelopes.Where(_ => NullChannelAndTopicAffectedMessageTypeComparer.Equals(_.SerializedMessage.PayloadTypeDescription, wasAffectedMessage.GetType().ToTypeDescription())).ToList();
             if (wasAffectedEnvelopes.Count > 0)
             {
                 if (wasAffectedEnvelopes.Count > 1)
@@ -244,14 +275,14 @@ namespace Naos.MessageBus.Domain
                 }
 
                 if (wasAffectedEnvelopes.Count == 1
-                    && !wasAffectedEnvelopes.Single().MessageAsJson.FromJson<TopicWasAffectedMessage>().Topic.Equals(parcel.Topic))
+                    && !wasAffectedEnvelopes.Single().Open<TopicWasAffectedMessage>(this.envelopeMachine).Topic.Equals(parcel.Topic))
                 {
                     throw new ArgumentException("Cannot have a TopicWasAffectedMessage with a different topic than the parcel.");
                 }
             }
             else
             {
-                newEnvelopes.Add(wasAffectedMessage.ToAddressedMessage().ToEnvelope());
+                newEnvelopes.Add(wasAffectedMessage.ToAddressedMessage().ToEnvelope(this.envelopeMachine));
             }
 
             if (beingAffectedEnvelopes.Count == 1 && wasAffectedEnvelopes.Count == 1

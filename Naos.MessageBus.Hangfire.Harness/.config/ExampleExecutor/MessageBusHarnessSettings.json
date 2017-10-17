@@ -7,11 +7,10 @@
             "handlerAssemblyPath": "D:\\DllsPath\\",
             "pollingTimeSpan": "00:01:00",
             "typeMatchStrategy":  "namespaceAndName",
-            "messageDispatcherWaitThreadSleepTime":  "00:00:00.5000000",
             "retryCount": 0
         }
     ],
-    "logProcessorSettings": { 
+    "logProcessorSettings": {
         "logFilePath": "D:\\Logs\\LogFile.txt"
     }
 }

@@ -44,8 +44,9 @@ namespace Naos.MessageBus.Test
 
             var trackingSends = new List<Crate>();
             var courier = Factory.GetInMemoryCourier(trackingSends);
-            var parcelTrackingSystem = new ParcelTrackingSystem(courier(), eventConnectionConfiguration, readModelConnectionConfiguration);
-            var postOffice = new PostOffice(parcelTrackingSystem, new ChannelRouter(new NullChannel()));
+            var envelopeMachine = Factory.GetEnvelopeMachine();
+            var parcelTrackingSystem = new ParcelTrackingSystem(courier(), envelopeMachine, eventConnectionConfiguration, readModelConnectionConfiguration);
+            var postOffice = new PostOffice(parcelTrackingSystem, new ChannelRouter(new NullChannel()), envelopeMachine);
 
             var topic = new AffectedTopic(Guid.NewGuid().ToString().ToUpperInvariant());
 
@@ -111,13 +112,13 @@ namespace Naos.MessageBus.Test
                 await ConfirmNoticeState(parcelTrackingSystem, topic, expectedTopicStatus);
 
                 await parcelTrackingSystem.UpdateDeliveredAsync(trackingCode, envelope);
-                if (envelope.MessageType == typeof(TopicBeingAffectedMessage).ToTypeDescription())
+                if (envelope.SerializedMessage.PayloadTypeDescription == typeof(TopicBeingAffectedMessage).ToTypeDescription())
                 {
                     expectedTopicStatus = TopicStatus.BeingAffected;
                 }
 
                 // should be last message and will assert differently
-                if (envelope.MessageType != typeof(TopicWasAffectedMessage).ToTypeDescription())
+                if (envelope.SerializedMessage.PayloadTypeDescription != typeof(TopicWasAffectedMessage).ToTypeDescription())
                 {
                     (await parcelTrackingSystem.GetTrackingReportAsync(new[] { trackingCode })).Single().Status.Should().Be(ParcelStatus.Rejected);
                     await ConfirmNoticeState(parcelTrackingSystem, topic, expectedTopicStatus);

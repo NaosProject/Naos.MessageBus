@@ -7,8 +7,10 @@
 namespace Naos.MessageBus.Hangfire.Console
 {
     using System;
+    using System.Collections.Concurrent;
     using System.Diagnostics;
     using System.Linq;
+    using System.Reflection;
     using System.Threading;
 
     using CLAP;
@@ -20,14 +22,19 @@ namespace Naos.MessageBus.Hangfire.Console
     using Its.Configuration;
     using Its.Log.Instrumentation;
 
+    using Naos.Compression.Domain;
+    using Naos.Diagnostics.Domain;
     using Naos.MessageBus.Core;
     using Naos.MessageBus.Domain;
     using Naos.MessageBus.Domain.Exceptions;
     using Naos.MessageBus.Hangfire.Sender;
     using Naos.MessageBus.Persistence;
     using Naos.Recipes.Configuration.Setup;
+    using Naos.Serialization.Factory;
 
-    using static System.FormattableString;
+    using OBeautifulCode.TypeRepresentation;
+
+    using Spritely.Recipes;
 
     /// <summary>
     /// Main entry point of the application.
@@ -72,68 +79,112 @@ namespace Naos.MessageBus.Hangfire.Console
             {
                 var activeMessageTracker = new InMemoryActiveMessageTracker();
 
-                var courier = new HangfireCourier(messageBusHandlerSettings.ConnectionConfiguration.CourierPersistenceConnectionConfiguration);
+                var typeMatchStrategyForMessageResolution = TypeMatchStrategy.NamespaceAndName;
+                var envelopeMachine = new EnvelopeMachine(PostOffice.MessageSerializationDescription, SerializerFactory.Instance, CompressorFactory.Instance, typeMatchStrategyForMessageResolution);
+
+                var courier = new HangfireCourier(messageBusHandlerSettings.ConnectionConfiguration.CourierPersistenceConnectionConfiguration, envelopeMachine);
                 var parcelTrackingSystem = new ParcelTrackingSystem(
                     courier,
+                    envelopeMachine,
                     messageBusHandlerSettings.ConnectionConfiguration.EventPersistenceConnectionConfiguration,
                     messageBusHandlerSettings.ConnectionConfiguration.ReadModelPersistenceConnectionConfiguration);
 
-                var postOffice = new PostOffice(parcelTrackingSystem, HangfireCourier.DefaultChannelRouter);
+                var postOffice = new PostOffice(
+                    parcelTrackingSystem,
+                    HangfireCourier.DefaultChannelRouter,
+                    envelopeMachine);
 
                 HandlerToolshed.InitializePostOffice(() => postOffice);
                 HandlerToolshed.InitializeParcelTracking(() => parcelTrackingSystem);
+                HandlerToolshed.InitializeSerializerFactory(() => SerializerFactory.Instance);
+                HandlerToolshed.InitializeCompressorFactory(() => CompressorFactory.Instance);
 
-                var dispatcherFactory = new DispatcherFactory(
-                    executorRoleSettings.HandlerAssemblyPath,
-                    executorRoleSettings.ChannelsToMonitor,
-                    executorRoleSettings.TypeMatchStrategy,
-                    executorRoleSettings.MessageDispatcherWaitThreadSleepTime,
-                    parcelTrackingSystem,
-                    activeMessageTracker,
-                    postOffice);
+                var shareManager = new ShareManager(executorRoleSettings.TypeMatchStrategy, SerializerFactory.Instance, CompressorFactory.Instance);
 
-                // configure hangfire to use the DispatcherFactory for getting IDispatchMessages calls
-                GlobalConfiguration.Configuration.UseActivator(new DispatcherFactoryJobActivator(dispatcherFactory));
-                GlobalJobFilters.Filters.Add(new AutomaticRetryAttribute { Attempts = executorRoleSettings.RetryCount });
-
-                var executorOptions = new BackgroundJobServerOptions
-                                          {
-                                              Queues =
-                                                  executorRoleSettings.ChannelsToMonitor.OfType<SimpleChannel>()
-                                                  .Select(_ => _.Name)
-                                                  .ToArray(),
-                                              SchedulePollingInterval = executorRoleSettings.PollingTimeSpan,
-                                              WorkerCount = executorRoleSettings.WorkerCount,
-                                          };
-
-                GlobalConfiguration.Configuration.UseSqlServerStorage(
-                    messageBusHandlerSettings.ConnectionConfiguration.CourierPersistenceConnectionConfiguration.ToSqlServerConnectionString(),
-                    new SqlServerStorageOptions());
-
-                var timeToLive = executorRoleSettings.HarnessProcessTimeToLive;
-                if (timeToLive == default(TimeSpan))
+                using (var handlerBuilder = new ReflectionHandlerBuilder(executorRoleSettings.HandlerAssemblyPath, executorRoleSettings.TypeMatchStrategy))
                 {
-                    timeToLive = TimeSpan.MaxValue;
-                }
+                    var assemblyDetails = handlerBuilder.FilePathToAssemblyMap.Values.Select(SafeFetchAssemblyDetails).ToList();
+                    var machineDetails = MachineDetails.Create();
+                    var harnessStaticDetails = new HarnessStaticDetails
+                                                   {
+                                                       MachineDetails = machineDetails,
+                                                       ExecutingUser = Environment.UserDomainName + "\\" + Environment.UserName,
+                                                       Assemblies = assemblyDetails
+                                                   };
 
-                var timeout = DateTime.UtcNow.Add(timeToLive);
+                    var handlerSharedStateMap = new ConcurrentDictionary<Type, object>();
 
-                // ReSharper disable once UnusedVariable - good reminder that the server object comes back and that's what is disposed in the end...
-                using (var server = new BackgroundJobServer(executorOptions))
-                {
-                    Console.WriteLine("Hangfire Server started. Will terminate when there are no active jobs after: " + timeout);
-                    Log.Write(() => new { LogMessage = "Hangfire Server launched. Will terminate when there are no active jobs after: " + timeout });
+                    var dispatcher = new MessageDispatcher(
+                        handlerBuilder,
+                        handlerSharedStateMap,
+                        executorRoleSettings.ChannelsToMonitor,
+                        harnessStaticDetails,
+                        parcelTrackingSystem,
+                        activeMessageTracker,
+                        postOffice,
+                        envelopeMachine,
+                        shareManager);
 
-                    // once the timeout has been achieved with no active jobs the process will exit (this assumes that a scheduled task will restart the process)
-                    //    the main impetus for this was the fact that Hangfire won't reconnect correctly so we must periodically initiate an entire reconnect.
-                    while (activeMessageTracker.ActiveMessagesCount != 0 || (DateTime.UtcNow < timeout))
+                    // configure hangfire to use the DispatcherFactory for getting IDispatchMessages calls
+                    GlobalConfiguration.Configuration.UseActivator(new DispatcherFactoryJobActivator(dispatcher));
+                    GlobalJobFilters.Filters.Add(new AutomaticRetryAttribute { Attempts = executorRoleSettings.RetryCount });
+
+                    var executorOptions = new BackgroundJobServerOptions
+                                              {
+                                                  Queues = executorRoleSettings.ChannelsToMonitor.OfType<SimpleChannel>().Select(_ => _.Name).ToArray(),
+                                                  SchedulePollingInterval = executorRoleSettings.PollingTimeSpan,
+                                                  WorkerCount = executorRoleSettings.WorkerCount,
+                                              };
+
+                    GlobalConfiguration.Configuration.UseSqlServerStorage(
+                        messageBusHandlerSettings.ConnectionConfiguration.CourierPersistenceConnectionConfiguration.ToSqlServerConnectionString(),
+                        new SqlServerStorageOptions());
+
+                    var timeToLive = executorRoleSettings.HarnessProcessTimeToLive;
+                    if (timeToLive == default(TimeSpan))
                     {
-                        Thread.Sleep(executorRoleSettings.PollingTimeSpan);
+                        timeToLive = TimeSpan.MaxValue;
                     }
 
-                    Log.Write(() => new { ex = "Hangfire Server terminating. There are no active jobs and current time if beyond the timeout: " + timeout });
+                    var timeout = DateTime.UtcNow.Add(timeToLive);
+
+                    // ReSharper disable once UnusedVariable - good reminder that the server object comes back and that's what is disposed in the end...
+                    using (var server = new BackgroundJobServer(executorOptions))
+                    {
+                        Console.WriteLine("Hangfire Server started. Will terminate when there are no active jobs after: " + timeout);
+                        Log.Write(() => new { LogMessage = "Hangfire Server launched. Will terminate when there are no active jobs after: " + timeout });
+
+                        // once the timeout has been achieved with no active jobs the process will exit (this assumes that a scheduled task will restart the process)
+                        //    the main impetus for this was the fact that Hangfire won't reconnect correctly so we must periodically initiate an entire reconnect.
+                        while (activeMessageTracker.ActiveMessagesCount != 0 || (DateTime.UtcNow < timeout))
+                        {
+                            Thread.Sleep(executorRoleSettings.PollingTimeSpan);
+                        }
+
+                        Log.Write(() => new { ex = "Hangfire Server terminating. There are no active jobs and current time if beyond the timeout: " + timeout });
+                    }
                 }
             }
+        }
+
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1031:DoNotCatchGeneralExceptionTypes", Justification = "Catching and swallowing on purpose.")]
+        private static AssemblyDetails SafeFetchAssemblyDetails(Assembly assembly)
+        {
+            new { assembly }.Must().NotBeNull().OrThrowFirstFailure();
+
+            // get a default
+            var ret = new AssemblyDetails { FilePath = assembly.Location };
+
+            try
+            {
+                ret = AssemblyDetails.CreateFromAssembly(assembly);
+            }
+            catch (Exception)
+            {
+                /* no-op - swallow this because we will just get what we get... */
+            }
+
+            return ret;
         }
     }
 }

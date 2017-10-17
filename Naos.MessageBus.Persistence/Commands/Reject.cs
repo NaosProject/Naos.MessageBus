@@ -51,8 +51,8 @@ namespace Naos.MessageBus.Persistence
         public string ExceptionMessage { get; set; }
 
         /// <summary>
-        /// Gets or sets the exception serialized as JSON (not guaranteed that is can round trip).
+        /// Gets or sets the exception serialized using <see cref="ParcelTrackingSerializationExtensions" /> (not guaranteed that is can deserialize).
         /// </summary>
-        public string ExceptionJson { get; set; }
+        public string ExceptionSerializedAsString { get; set; }
     }
 }

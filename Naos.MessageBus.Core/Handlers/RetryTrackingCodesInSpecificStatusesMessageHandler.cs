@@ -19,14 +19,12 @@ namespace Naos.MessageBus.Core
     /// <summary>
     /// No implementation handler to handle NullMessages.
     /// </summary>
-    public class RetryTrackingCodesInSpecificStatusesMessageHandler : IHandleMessages<RetryTrackingCodesInSpecificStatusesMessage>
+    public class RetryTrackingCodesInSpecificStatusesMessageHandler : MessageHandlerBase<RetryTrackingCodesInSpecificStatusesMessage>
     {
-        /// <inheritdoc />
-        public async Task HandleAsync(RetryTrackingCodesInSpecificStatusesMessage message)
+        /// <inheritdoc cref="MessageHandlerBase{T}" />
+        public override async Task HandleAsync(RetryTrackingCodesInSpecificStatusesMessage message)
         {
-            var postOffice = HandlerToolshed.GetPostOffice();
-            var parcelTracker = HandlerToolshed.GetParcelTracker();
-            await this.HandleAsync(message, postOffice, parcelTracker);
+            await this.HandleAsync(message, this.PostOffice, this.ParcelTracker);
         }
 
         /// <summary>

@@ -8,7 +8,7 @@ namespace Naos.MessageBus.Domain
 {
     using System;
 
-    using OBeautifulCode.Math;
+    using OBeautifulCode.Math.Recipes;
 
     using static System.FormattableString;
 

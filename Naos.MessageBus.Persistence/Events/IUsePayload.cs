@@ -6,7 +6,8 @@
 
 namespace Naos.MessageBus.Persistence
 {
-    using Naos.MessageBus.Domain;
+    using Naos.Serialization.Domain;
+    using Naos.Serialization.Json;
 
     /// <summary>
     /// Interface to support common extraction logic.
@@ -18,7 +19,7 @@ namespace Naos.MessageBus.Persistence
         /// <summary>
         /// Gets or sets the payload of the event.
         /// </summary>
-        string PayloadJson { get; set; }
+        string PayloadSerializedString { get; set; }
     }
 
     /// <summary>
@@ -30,10 +31,12 @@ namespace Naos.MessageBus.Persistence
     }
 
     /// <summary>
-    /// Common extraction methods for payload objects.
+    /// Serialization extension methods for serializing items for use in <see cref="IPayload" />.
     /// </summary>
-    public static class ConversionExtensions
+    public static class PayloadSerializationExtensions
     {
+        private static readonly ISerializeAndDeserialize PayloadSerializer = new NaosJsonSerializer();
+
         /// <summary>
         /// Serializes a payload to JSON.
         /// </summary>
@@ -43,7 +46,7 @@ namespace Naos.MessageBus.Persistence
         public static string ToJsonPayload<T>(this T objectToPayload)
             where T : IPayload
         {
-            return objectToPayload.ToJson();
+            return PayloadSerializer.SerializeToString(objectToPayload);
         }
 
         /// <summary>
@@ -56,7 +59,7 @@ namespace Naos.MessageBus.Persistence
         public static T ExtractPayload<T>(this IUsePayload<T> payloadedObject)
             where T : class, IPayload
         {
-            return payloadedObject.PayloadJson.FromJson<T>();
+            return PayloadSerializer.Deserialize<T>(payloadedObject.PayloadSerializedString);
         }
     }
 }

@@ -37,9 +37,15 @@
     <DocumentationFile>bin\Release\Naos.MessageBus.Core.XML</DocumentationFile>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="AsyncBridge, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\AsynchronousBridge.1.2.2\lib\Net45\AsyncBridge.dll</HintPath>
+    </Reference>
     <Reference Include="Its.Log, Version=2.7.0.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\Its.Log.2.9.14\lib\net451\Its.Log.dll</HintPath>
       <Private>True</Private>
+    </Reference>
+    <Reference Include="Naos.Compression.Domain, Version=1.0.3.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Naos.Compression.Domain.1.0.3\lib\net461\Naos.Compression.Domain.dll</HintPath>
     </Reference>
     <Reference Include="Naos.Cron, Version=1.0.15.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\Naos.Cron.1.0.15\lib\net45\Naos.Cron.dll</HintPath>
@@ -49,13 +55,15 @@
       <HintPath>..\packages\Naos.Diagnostics.Domain.1.0.8\lib\net45\Naos.Diagnostics.Domain.dll</HintPath>
       <Private>True</Private>
     </Reference>
+    <Reference Include="Naos.Serialization.Domain, Version=1.0.35.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Naos.Serialization.Domain.1.0.35\lib\net461\Naos.Serialization.Domain.dll</HintPath>
+    </Reference>
     <Reference Include="Newtonsoft.Json, Version=9.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
       <HintPath>..\packages\Newtonsoft.Json.9.0.1\lib\net45\Newtonsoft.Json.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="OBeautifulCode.TypeRepresentation, Version=1.0.3.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\OBeautifulCode.TypeRepresentation.1.0.3\lib\net45\OBeautifulCode.TypeRepresentation.dll</HintPath>
-      <Private>True</Private>
+    <Reference Include="OBeautifulCode.TypeRepresentation, Version=1.0.8.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\OBeautifulCode.TypeRepresentation.1.0.8\lib\net45\OBeautifulCode.TypeRepresentation.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -84,6 +92,18 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include=".recipes\OBeautifulCode.Enum\EnumExtensions.cs" />
+    <Compile Include=".recipes\OBeautifulCode.Reflection\AssemblyLoader.cs" />
+    <Compile Include=".recipes\OBeautifulCode.Reflection\ReflectionHelper.Attribute.cs" />
+    <Compile Include=".recipes\OBeautifulCode.Reflection\ReflectionHelper.cs" />
+    <Compile Include=".recipes\OBeautifulCode.Reflection\ReflectionHelper.Enum.cs" />
+    <Compile Include=".recipes\OBeautifulCode.Reflection\ReflectionHelper.Field.cs" />
+    <Compile Include=".recipes\OBeautifulCode.Reflection\ReflectionHelper.Property.cs" />
+    <Compile Include=".recipes\Spritely.MustValidation\MakeRule.cs" />
+    <Compile Include=".recipes\Spritely.MustValidation\MustExtensions.cs" />
+    <Compile Include=".recipes\Spritely.MustValidation\RuleExtensions.cs" />
+    <Compile Include=".recipes\Spritely.MustValidation\Rules.cs" />
+    <Compile Include=".recipes\Spritely.MustValidation\ValidatedNotNullAttribute.cs" />
     <Compile Include="Handlers\AbortIfNoDependencyTopicsAffectedMessageHandler.cs" />
     <Compile Include="Handlers\AbortIfTopicsHaveSpecificStatusesMessageHandler.cs" />
     <Compile Include="Handlers\SendParcelMessageHandler.cs" />
@@ -94,17 +114,14 @@
     <Compile Include="Handlers\ShareTrackingCodesMessageHandler.cs" />
     <Compile Include="Handlers\WaitForTrackingCodesToBeInStatusMessageHandler.cs" />
     <Compile Include="Handlers\FetchAndShareLatestTopicStatusReportsMessageHandler.cs" />
-    <Compile Include="DispatcherFactory.cs" />
-    <Compile Include="ITrackActiveMessages.cs" />
     <Compile Include="Logging.cs" />
     <Compile Include="MessageDispatcher.cs" />
     <Compile Include="Handlers\TopicWasAffectedMessageHandler.cs" />
     <Compile Include="Handlers\ThrowsExceptionMessageHandler.cs" />
     <Compile Include="Handlers\WaitMessageHandler.cs" />
-    <Compile Include="Handlers\NullMessageHandler.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="SynchronizedPostOffice.cs" />
-    <Compile Include="SharedPropertyHelper.cs" />
+    <Compile Include="MappedTypeHandlerBuilder.cs" />
+    <Compile Include="ReflectionHandlerBuilder.cs" />
   </ItemGroup>
   <ItemGroup>
     <AdditionalFiles Include=".analyzers\stylecop.json" />

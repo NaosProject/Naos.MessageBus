@@ -36,10 +36,11 @@ namespace Naos.MessageBus.Test
         public static void HandleAsync__ValidParcelProvided__ParcelIsSent()
         {
             // arrange
+            var envelopeMachine = Factory.GetEnvelopeMachine();
             var parcel = new Parcel
                              {
                                  Id = Guid.NewGuid(),
-                                 Envelopes = new[] { new WaitMessage().ToAddressedMessage(new SimpleChannel("channel")).ToEnvelope() }
+                                 Envelopes = new[] { new WaitMessage().ToAddressedMessage(new SimpleChannel("channel")).ToEnvelope(envelopeMachine) }
                              };
 
             var message = new SendParcelMessage { ParcelToSend = parcel };
@@ -48,7 +49,8 @@ namespace Naos.MessageBus.Test
             var trackingParcelsFromSent = new List<Parcel>();
             var postOffice = new PostOffice(
                                  Factory.GetInMemoryParcelTrackingSystem(trackingCalls, trackingParcelsFromSent)(),
-                                 new ChannelRouter(new NullChannel()));
+                                 new ChannelRouter(new NullChannel()),
+                                 envelopeMachine);
             var handler = new SendParcelMessageHandler();
 
             // act
@@ -62,10 +64,11 @@ namespace Naos.MessageBus.Test
         public static void HandleAsync__ValidParcelProvided__TrackingCodeIsShared()
         {
             // arrange
+            var envelopeMachine = Factory.GetEnvelopeMachine();
             var parcel = new Parcel
                              {
                                  Id = Guid.NewGuid(),
-                                 Envelopes = new[] { new WaitMessage().ToAddressedMessage(new SimpleChannel("channel")).ToEnvelope() }
+                                 Envelopes = new[] { new WaitMessage().ToAddressedMessage(new SimpleChannel("channel")).ToEnvelope(envelopeMachine) }
                              };
 
             var message = new SendParcelMessage { ParcelToSend = parcel };
@@ -74,7 +77,8 @@ namespace Naos.MessageBus.Test
             var trackingParcelsFromSent = new List<Parcel>();
             var postOffice = new PostOffice(
                                  Factory.GetInMemoryParcelTrackingSystem(trackingCalls, trackingParcelsFromSent)(),
-                                 new ChannelRouter(new NullChannel()));
+                                 new ChannelRouter(new NullChannel()),
+                                 envelopeMachine);
             var handler = new SendParcelMessageHandler { TrackingCodes = null };
 
             // act

@@ -17,6 +17,8 @@ namespace Naos.MessageBus.Hangfire.Sender
     using Naos.Cron;
     using Naos.MessageBus.Domain;
     using OBeautifulCode.TypeRepresentation;
+
+    using Spritely.Recipes;
     using Spritely.Redo;
     using static System.FormattableString;
 
@@ -30,6 +32,8 @@ namespace Naos.MessageBus.Hangfire.Sender
 
         private readonly CourierPersistenceConnectionConfiguration courierPersistenceConnectionConfiguration;
 
+        private readonly IStuffAndOpenEnvelopes envelopeMachine;
+
         private readonly int retryCount;
 
         private static readonly SimpleChannel DefaultChannel = new SimpleChannel("default");
@@ -38,10 +42,14 @@ namespace Naos.MessageBus.Hangfire.Sender
         /// Initializes a new instance of the <see cref="HangfireCourier"/> class.
         /// </summary>
         /// <param name="courierPersistenceConnectionConfiguration">Hangfire persistence connection string.</param>
+        /// <param name="envelopeMachine">Envelope factory for adding envelopes as necessary.</param>
         /// <param name="retryCount">Number of retries to attempt if error encountered (default if 5).</param>
-        public HangfireCourier(CourierPersistenceConnectionConfiguration courierPersistenceConnectionConfiguration, int retryCount = 5)
+        public HangfireCourier(CourierPersistenceConnectionConfiguration courierPersistenceConnectionConfiguration, IStuffAndOpenEnvelopes envelopeMachine, int retryCount = 5)
         {
+            new { courierPersistenceConnectionConfiguration, envelopeMachine }.Must().NotBeNull().OrThrowFirstFailure();
+
             this.courierPersistenceConnectionConfiguration = courierPersistenceConnectionConfiguration;
+            this.envelopeMachine = envelopeMachine;
             this.retryCount = retryCount;
         }
 
@@ -64,7 +72,7 @@ namespace Naos.MessageBus.Hangfire.Sender
             var client = new BackgroundJobClient();
 
             var channel = crate.Address;
-            var parcel = UncrateParcel(crate, DefaultChannel, ref channel);
+            var parcel = this.UncrateParcel(crate, DefaultChannel, ref channel);
 
             ThrowIfInvalidChannel(channel);
 
@@ -77,7 +85,7 @@ namespace Naos.MessageBus.Hangfire.Sender
             var state = new EnqueuedState { Queue = simpleChannel.Name, };
 
             Expression<Action<HangfireDispatcher>> methodCall =
-                _ => _.HangfireDispatch(crate.Label, crate.TrackingCode.ToJson(), parcel.ToJson(), channel.ToJson());
+                _ => _.HangfireDispatch(crate.Label, crate.TrackingCode.ToHangfireSerializedString(), parcel.ToHangfireSerializedString(), channel.ToHangfireSerializedString());
 
             var hangfireId = client.Create(methodCall, state);
 
@@ -112,15 +120,14 @@ namespace Naos.MessageBus.Hangfire.Sender
         /// <param name="channel">The <see cref="IChannel"/> by reference because in event of recurring job the channel will be stripped.</param>
         /// <returns>Parcel that was in the crate with any necessary adjustments.</returns>
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1045:DoNotPassTypesByReference", MessageId = "2#", Justification = "Keeping this design for now (channel passed by ref).")]
-        public static Parcel UncrateParcel(Crate crate, IChannel defaultChannel, ref IChannel channel)
+        public Parcel UncrateParcel(Crate crate, IChannel defaultChannel, ref IChannel channel)
         {
             Parcel parcel;
 
             if (crate.RecurringSchedule != null && crate.RecurringSchedule.GetType().ToTypeDescription() != typeof(NullSchedule).ToTypeDescription())
             {
                 // need to inject a recurring message to make it work (must be the default channel because it will go there anyway)...
-                var newEnvelopes =
-                    new List<Envelope>(new[] { new RecurringHeaderMessage { Description = crate.Label }.ToAddressedMessage().ToEnvelope() });
+                var newEnvelopes = new List<Envelope>(new[] { new RecurringHeaderMessage { Description = crate.Label }.ToAddressedMessage().ToEnvelope(this.envelopeMachine) });
                 newEnvelopes.AddRange(crate.Parcel.Envelopes.Select(_ => _));
                 var newParcel = new Parcel { Id = crate.Parcel.Id, SharedInterfaceStates = crate.Parcel.SharedInterfaceStates, Envelopes = newEnvelopes };
                 parcel = newParcel;
@@ -141,7 +148,7 @@ namespace Naos.MessageBus.Hangfire.Sender
         /// </summary>
         /// <param name="channelToTest">The channel to examine.</param>
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA2204:Literals should be spelled correctly", MessageId = "Hangfire", Justification = "Spelling/name is correct.")]
-        internal static void ThrowIfInvalidChannel(IChannel channelToTest)
+        public static void ThrowIfInvalidChannel(IChannel channelToTest)
         {
             if (channelToTest == null)
             {
@@ -157,7 +164,7 @@ namespace Naos.MessageBus.Hangfire.Sender
 
             if (string.IsNullOrEmpty(simpleChannel.Name))
             {
-                throw new ArgumentException("Cannot use null channel name.");
+                throw new ArgumentException("Cannot use null or whitespace channel name.");
             }
 
             if (simpleChannel.Name.Length > HangfireQueueNameMaxLength)

@@ -31,16 +31,17 @@ namespace Naos.MessageBus.Hangfire.Sender
         /// Dispatch method to be invoked by the Hangfire JobActivator.
         /// </summary>
         /// <param name="displayName">Display name of job.</param>
-        /// <param name="trackingCodeJson">Tracking code as JSON.</param>
-        /// <param name="parcelJson">Parcel as JSON.</param>
-        /// <param name="channelJson">Channel as JSON.</param>
+        /// <param name="trackingCodeSerializedString">Tracking code as JSON.</param>
+        /// <param name="parcelSerializedString">Parcel as JSON.</param>
+        /// <param name="channelSerializedString">Channel as JSON.</param>
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1720:IdentifiersShouldNotContainTypeNames", MessageId = "string", Justification = "Spelling/name is correct.")]
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly", MessageId = "Hangfire", Justification = "Spelling/name is correct.")]
         [DisplayName("{0}")]
-        public void HangfireDispatch(string displayName, string trackingCodeJson, string parcelJson, string channelJson)
+        public void HangfireDispatch(string displayName, string trackingCodeSerializedString, string parcelSerializedString, string channelSerializedString)
         {
-            var trackingCode = trackingCodeJson.FromJson<TrackingCode>();
-            var parcel = parcelJson.FromJson<Parcel>();
-            var channel = channelJson.FromJson<IChannel>();
+            var trackingCode = trackingCodeSerializedString.FromHangfireSerializedString<TrackingCode>();
+            var parcel = parcelSerializedString.FromHangfireSerializedString<Parcel>();
+            var channel = channelSerializedString.FromHangfireSerializedString<IChannel>();
             this.dispatcher.Dispatch(displayName, trackingCode, parcel, channel);
         }
     }

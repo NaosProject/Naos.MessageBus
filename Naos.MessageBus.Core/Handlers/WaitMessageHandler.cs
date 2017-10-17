@@ -15,10 +15,10 @@ namespace Naos.MessageBus.Core
     /// <summary>
     /// No implementation handler to handle WaitMessages.
     /// </summary>
-    public class WaitMessageHandler : IHandleMessages<WaitMessage>
+    public class WaitMessageHandler : MessageHandlerBase<WaitMessage>
     {
-        /// <inheritdoc />
-        public async Task HandleAsync(WaitMessage message)
+        /// <inheritdoc cref="MessageHandlerBase{T}" />
+        public override async Task HandleAsync(WaitMessage message)
         {
             using (var activity = Log.Enter(() => new { Message = message, TimeToWait = message.TimeToWait }))
             {

@@ -10,7 +10,6 @@ namespace Naos.MessageBus.Hangfire.Harness
 
     using global::Hangfire;
 
-    using Naos.MessageBus.Core;
     using Naos.MessageBus.Domain;
     using Naos.MessageBus.Domain.Exceptions;
     using Naos.MessageBus.Hangfire.Sender;
@@ -27,20 +26,15 @@ namespace Naos.MessageBus.Hangfire.Harness
         // Make this permissive since it's the underlying logic and shouldn't be coupled to whether handlers are matched in strict mode...
         private readonly TypeComparer typeComparer = new TypeComparer(TypeMatchStrategy.NamespaceAndName);
 
-        private readonly DispatcherFactory dispatcherFactory;
+        private readonly IDispatchMessages messageDispatcher;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="DispatcherFactoryJobActivator"/> class.
         /// </summary>
-        /// <param name="dispatcherFactory">Dispatcher manager to .</param>
-        public DispatcherFactoryJobActivator(DispatcherFactory dispatcherFactory)
+        /// <param name="messageDispatcher">Dispatcher manager to .</param>
+        public DispatcherFactoryJobActivator(IDispatchMessages messageDispatcher)
         {
-            if (dispatcherFactory == null)
-            {
-                throw new ArgumentNullException("dispatcherFactory");
-            }
-
-            this.dispatcherFactory = dispatcherFactory;
+            this.messageDispatcher = messageDispatcher ?? throw new ArgumentNullException(nameof(messageDispatcher));
         }
 
         /// <inheritdoc />
@@ -48,8 +42,7 @@ namespace Naos.MessageBus.Hangfire.Harness
         {
             if (this.typeComparer.Equals(jobType, typeof(HangfireDispatcher)))
             {
-                var realDispatcher = this.dispatcherFactory.Create();
-                return new HangfireDispatcher(realDispatcher);
+                return new HangfireDispatcher(this.messageDispatcher);
             }
 
             throw new DispatchException(Invariant($"Attempted to load type other than {nameof(IDispatchMessages)}, type: {jobType.FullName}"));

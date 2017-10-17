@@ -2,6 +2,7 @@
     "connectionConfiguration": {
         "courierPersistenceConnectionConfiguration": {
             "server": "server1",
+            "database": "db",
             "credentials": {
                 "user": "user",
                 "password": "password"
@@ -9,6 +10,7 @@
         },
         "eventPersistenceConnectionConfiguration": {
             "server": "server2",
+            "database": "db",
             "credentials": {
                 "user": "user",
                 "password": "password"
@@ -16,6 +18,7 @@
         },
         "readModelPersistenceConnectionConfiguration": {
             "server": "server3",
+            "database": "db",
             "credentials": {
                 "user": "user",
                 "password": "password"

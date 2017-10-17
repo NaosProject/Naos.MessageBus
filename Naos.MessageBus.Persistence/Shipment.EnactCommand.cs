@@ -6,7 +6,6 @@
 
 namespace Naos.MessageBus.Persistence
 {
-    using System;
     using System.Collections.Generic;
     using System.Linq;
 
@@ -21,8 +20,8 @@ namespace Naos.MessageBus.Persistence
     /// </summary>
     public partial class Shipment
     {
-        // Make this permissive since it's the underlying logic and shouldn't be coupled to whether handlers are matched in strict mode...
-        private readonly TypeComparer typeComparer = new TypeComparer(TypeMatchStrategy.NamespaceAndName);
+        // Make this permissive since it's the underlying logic and shouldn't be coupled to whether others are matched in a stricter mode assigned in constructor.
+        private static readonly TypeComparer TopicAffectedMessageTypeComparer = new TypeComparer(TypeMatchStrategy.NamespaceAndName);
 
         /// <summary>
         /// Enact the <see cref="Create"/> command.
@@ -33,7 +32,7 @@ namespace Naos.MessageBus.Persistence
         {
             var createdEvent = new Created
                               {
-                                  PayloadJson = new PayloadCreated(
+                                  PayloadSerializedString = new PayloadCreated(
                                                     command.Parcel,
                                                     command.RecurringSchedule).ToJsonPayload()
                               };
@@ -52,7 +51,7 @@ namespace Naos.MessageBus.Persistence
         {
             var envelopeResendRequestedEvent = new EnvelopeResendRequested
                                                    {
-                                                       PayloadJson = new PayloadEnvelopeResendRequested(
+                                                       PayloadSerializedString = new PayloadEnvelopeResendRequested(
                                                            command.TrackingCode,
                                                            ParcelStatus.InTransit).ToJsonPayload()
                                                    };
@@ -71,7 +70,7 @@ namespace Naos.MessageBus.Persistence
         {
             var envelopeSentEvent = new EnvelopeSent
                                         {
-                                            PayloadJson = new PayloadEnvelopeSent(
+                                            PayloadSerializedString = new PayloadEnvelopeSent(
                                                 command.TrackingCode,
                                                 ParcelStatus.InTransit,
                                                 command.Parcel,
@@ -92,7 +91,7 @@ namespace Naos.MessageBus.Persistence
         {
             var envelopeDeliveryAttemptedEvent = new EnvelopeDeliveryAttempted
                                                      {
-                                                         PayloadJson = new PayloadEnvelopeDeliveryAttempted(
+                                                         PayloadSerializedString = new PayloadEnvelopeDeliveryAttempted(
                                                              command.TrackingCode,
                                                              ParcelStatus.OutForDelivery,
                                                              command.Recipient).ToJsonPayload()
@@ -112,7 +111,7 @@ namespace Naos.MessageBus.Persistence
         {
             var envelopeDeliveryAbortedEvent = new EnvelopeDeliveryAborted
                                                    {
-                                                       PayloadJson =
+                                                       PayloadSerializedString =
                                                            new PayloadEnvelopeDeliveryAborted(
                                                                command.TrackingCode,
                                                                ParcelStatus.Aborted,
@@ -133,12 +132,12 @@ namespace Naos.MessageBus.Persistence
         {
             var envelopeDeliveryRejectedEvent = new EnvelopeDeliveryRejected
                                                     {
-                                                        PayloadJson =
+                                                        PayloadSerializedString =
                                                             new PayloadEnvelopeDeliveryRejected(
                                                                 command.TrackingCode,
                                                                 ParcelStatus.Rejected,
                                                                 command.ExceptionMessage,
-                                                                command.ExceptionJson).ToJsonPayload()
+                                                                command.ExceptionSerializedAsString).ToJsonPayload()
                                                     };
 
             this.RecordEvent(envelopeDeliveryRejectedEvent);
@@ -150,47 +149,48 @@ namespace Naos.MessageBus.Persistence
         /// Enact the <see cref="Deliver"/> command.
         /// </summary>
         /// <param name="command">Command to enact on aggregate.</param>
+        /// <param name="envelopeMachine">Envelope machine to open envelopes if necessary.</param>
         /// <returns>Collection of events that were recorded.</returns>
-        public IReadOnlyCollection<Event> EnactCommand(Deliver command)
+        public IReadOnlyCollection<Event> EnactCommand(Deliver command, IStuffAndOpenEnvelopes envelopeMachine)
         {
             var events = new List<Event<Shipment>>();
 
             var envelopeDeliveredEvent = new EnvelopeDelivered
                                              {
-                                                 PayloadJson = new PayloadEnvelopeDelivered(command.TrackingCode, ParcelStatus.Delivered).ToJsonPayload()
+                                                 PayloadSerializedString = new PayloadEnvelopeDelivered(command.TrackingCode, ParcelStatus.Delivered).ToJsonPayload()
                                              };
 
             events.Add(envelopeDeliveredEvent);
 
             if (this.Parcel.Envelopes.Last().Id == command.TrackingCode.EnvelopeId)
             {
-                var parcelDeliveredEvent = new ParcelDelivered { PayloadJson = new PayloadParcelDelivered(command.TrackingCode.ParcelId, ParcelStatus.Delivered).ToJsonPayload() };
+                var parcelDeliveredEvent = new ParcelDelivered { PayloadSerializedString = new PayloadParcelDelivered(command.TrackingCode.ParcelId, ParcelStatus.Delivered).ToJsonPayload() };
                 events.Add(parcelDeliveredEvent);
             }
 
             var deliveredEnvelope = command.DeliveredEnvelope;
 
-            var beingAffected = this.typeComparer.Equals(deliveredEnvelope.MessageType, typeof(TopicBeingAffectedMessage).ToTypeDescription());
+            var beingAffected = TopicAffectedMessageTypeComparer.Equals(deliveredEnvelope.SerializedMessage.PayloadTypeDescription, typeof(TopicBeingAffectedMessage).ToTypeDescription());
             if (beingAffected)
             {
-                var message = deliveredEnvelope.MessageAsJson.FromJson<TopicBeingAffectedMessage>();
+                var message = deliveredEnvelope.Open<TopicBeingAffectedMessage>(envelopeMachine);
                 var topicBeingAffectedEvent = new TopicBeingAffected
                                                   {
                                                       ParcelId = command.TrackingCode.ParcelId,
-                                                      PayloadJson = new PayloadTopicBeingAffected(command.TrackingCode, message.Topic, deliveredEnvelope).ToJsonPayload()
+                                                      PayloadSerializedString = new PayloadTopicBeingAffected(command.TrackingCode, message.Topic, deliveredEnvelope).ToJsonPayload()
                                                   };
 
                 events.Add(topicBeingAffectedEvent);
             }
 
-            var wasAffected = this.typeComparer.Equals(deliveredEnvelope.MessageType, typeof(TopicWasAffectedMessage).ToTypeDescription());
+            var wasAffected = TopicAffectedMessageTypeComparer.Equals(deliveredEnvelope.SerializedMessage.PayloadTypeDescription, typeof(TopicWasAffectedMessage).ToTypeDescription());
             if (wasAffected)
             {
-                var message = deliveredEnvelope.MessageAsJson.FromJson<TopicWasAffectedMessage>();
+                var message = deliveredEnvelope.Open<TopicWasAffectedMessage>(envelopeMachine);
                 var topicWasAffectedEvent = new TopicWasAffected
                                                 {
                                                     ParcelId = command.TrackingCode.ParcelId,
-                                                    PayloadJson = new PayloadTopicWasAffected(command.TrackingCode, message.Topic, deliveredEnvelope).ToJsonPayload()
+                                                    PayloadSerializedString = new PayloadTopicWasAffected(command.TrackingCode, message.Topic, deliveredEnvelope).ToJsonPayload()
                                                 };
 
                 events.Add(topicWasAffectedEvent);

@@ -7,10 +7,11 @@
 namespace Naos.MessageBus.Domain
 {
     using System;
-    using System.Collections.Generic;
     using System.ComponentModel;
 
-    using OBeautifulCode.Math;
+    using OBeautifulCode.Math.Recipes;
+
+    using Spritely.Recipes;
 
     /// <summary>
     /// Abstract representation of a "Channel" to send messages to.
@@ -36,29 +37,29 @@ namespace Naos.MessageBus.Domain
     /// <summary>
     /// Simple implementation of <see cref="IChannel"/>.
     /// </summary>
-    public class SimpleChannel : IChannel, IComparable<SimpleChannel>, IEquatable<SimpleChannel>, IEquatable<IChannel>, IEqualityComparer<SimpleChannel>
+    public class SimpleChannel : IChannel, IComparable<SimpleChannel>, IEquatable<SimpleChannel>
     {
-        /// <summary>
-        /// Initializes a new instance of the <see cref="SimpleChannel"/> class.
-        /// </summary>
-        public SimpleChannel()
-        {
-            // TODO: Remove this AND the public setter on Name once the InheritedTypeConverter is updated...
-        }
-
         /// <summary>
         /// Initializes a new instance of the <see cref="SimpleChannel"/> class.
         /// </summary>
         /// <param name="name">Name of the channel.</param>
         public SimpleChannel(string name)
         {
+            new { name }.Must().NotBeNull().And().NotBeWhiteSpace().OrThrowFirstFailure();
+
             this.Name = name;
         }
 
         /// <summary>
-        /// Gets or sets the name of the channel.
+        /// Gets the name of the channel.
         /// </summary>
-        public string Name { get; set;  }
+        public string Name { get; private set;  }
+
+        /// <inheritdoc />
+        public override string ToString()
+        {
+            return this.Name;
+        }
 
         /// <inheritdoc />
         public int CompareTo(SimpleChannel other)
@@ -174,18 +175,6 @@ namespace Naos.MessageBus.Domain
         }
 
         /// <inheritdoc />
-        public override int GetHashCode() => HashCodeHelper.Initialize().Hash(this?.Name).Value;
-
-        /// <inheritdoc />
-        public bool Equals(SimpleChannel x, SimpleChannel y)
-        {
-            return x == y;
-        }
-
-        /// <inheritdoc />
-        public int GetHashCode(SimpleChannel obj)
-        {
-            return obj.GetHashCode();
-        }
+        public override int GetHashCode() => HashCodeHelper.Initialize().Hash(this.Name).Value;
     }
 }

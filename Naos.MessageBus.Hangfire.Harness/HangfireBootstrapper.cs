@@ -9,16 +9,23 @@
 namespace Naos.MessageBus.Hangfire.Harness
 {
     using System;
+    using System.Collections.Concurrent;
     using System.Linq;
+    using System.Reflection;
     using System.Web.Hosting;
 
     using global::Hangfire;
     using global::Hangfire.SqlServer;
 
+    using Naos.Compression.Domain;
+    using Naos.Diagnostics.Domain;
     using Naos.MessageBus.Core;
     using Naos.MessageBus.Domain;
     using Naos.MessageBus.Hangfire.Sender;
     using Naos.MessageBus.Persistence;
+    using Naos.Serialization.Factory;
+
+    using Spritely.Recipes;
 
     /// <inheritdoc />
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly", MessageId = "Hangfire", Justification = "Spelling/name is correct.")]
@@ -36,7 +43,11 @@ namespace Naos.MessageBus.Hangfire.Harness
 
         private BackgroundJobServer backgroundJobServer;
 
-        private DispatcherFactory dispatcherFactory;
+        private ConcurrentDictionary<Type, object> handlerSharedStateMap;
+
+        private ReflectionHandlerBuilder handlerBuilder;
+
+        private HarnessStaticDetails harnessStaticDetails;
 
         private HangfireBootstrapper()
         {
@@ -67,31 +78,61 @@ namespace Naos.MessageBus.Hangfire.Harness
             }
         }
 
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Maintainability", "CA1506:AvoidExcessiveClassCoupling", Justification = "Keeping for now this project will eventually be removed completely to not use IIS.")]
         private void LaunchHangfire(
             MessageBusConnectionConfiguration connectionConfig,
             MessageBusHarnessRoleSettingsExecutor executorRoleSettings)
         {
             var activeMessageTracker = new InMemoryActiveMessageTracker();
 
-            var courier = new HangfireCourier(connectionConfig.CourierPersistenceConnectionConfiguration);
-            var parcelTrackingSystem = new ParcelTrackingSystem(courier, connectionConfig.EventPersistenceConnectionConfiguration, connectionConfig.ReadModelPersistenceConnectionConfiguration);
-            var postOffice = new PostOffice(parcelTrackingSystem, HangfireCourier.DefaultChannelRouter);
+            var envelopeMachine = new EnvelopeMachine(PostOffice.MessageSerializationDescription, SerializerFactory.Instance, CompressorFactory.Instance, executorRoleSettings.TypeMatchStrategy);
+
+            var courier = new HangfireCourier(connectionConfig.CourierPersistenceConnectionConfiguration, envelopeMachine);
+            var parcelTrackingSystem = new ParcelTrackingSystem(
+                courier,
+                envelopeMachine,
+                connectionConfig.EventPersistenceConnectionConfiguration,
+                connectionConfig.ReadModelPersistenceConnectionConfiguration);
+
+            var postOffice = new PostOffice(
+                parcelTrackingSystem,
+                HangfireCourier.DefaultChannelRouter,
+                envelopeMachine);
+
             var synchronizedPostOffice = new SynchronizedPostOffice(postOffice);
 
             HandlerToolshed.InitializePostOffice(() => synchronizedPostOffice);
             HandlerToolshed.InitializeParcelTracking(() => parcelTrackingSystem);
+            HandlerToolshed.InitializeSerializerFactory(() => SerializerFactory.Instance);
+            HandlerToolshed.InitializeCompressorFactory(() => CompressorFactory.Instance);
 
-            this.dispatcherFactory = new DispatcherFactory(
-                executorRoleSettings.HandlerAssemblyPath,
+            var shareManager = new ShareManager(executorRoleSettings.TypeMatchStrategy, SerializerFactory.Instance, CompressorFactory.Instance);
+            this.handlerBuilder = new ReflectionHandlerBuilder(executorRoleSettings.HandlerAssemblyPath, executorRoleSettings.TypeMatchStrategy);
+
+            var assemblyDetails = this.handlerBuilder.FilePathToAssemblyMap.Values.Select(SafeFetchAssemblyDetails).ToList();
+            var machineDetails = MachineDetails.Create();
+            this.harnessStaticDetails = new HarnessStaticDetails
+                                           {
+                                               MachineDetails = machineDetails,
+                                               ExecutingUser = Environment.UserDomainName + "\\" + Environment.UserName,
+                                               Assemblies = assemblyDetails
+                                           };
+
+            this.handlerSharedStateMap = new ConcurrentDictionary<Type, object>();
+
+            var dispatcher = new MessageDispatcher(
+                this.handlerBuilder,
+                this.handlerSharedStateMap,
                 executorRoleSettings.ChannelsToMonitor,
-                executorRoleSettings.TypeMatchStrategy,
-                executorRoleSettings.MessageDispatcherWaitThreadSleepTime,
+                this.harnessStaticDetails,
                 parcelTrackingSystem,
                 activeMessageTracker,
-                postOffice);
+                postOffice,
+                envelopeMachine,
+                shareManager);
 
             // configure hangfire to use the DispatcherFactory for getting IDispatchMessages calls
-            GlobalConfiguration.Configuration.UseActivator(new DispatcherFactoryJobActivator(this.dispatcherFactory));
+            GlobalConfiguration.Configuration.UseActivator(new DispatcherFactoryJobActivator(dispatcher));
             GlobalJobFilters.Filters.Add(new AutomaticRetryAttribute { Attempts = executorRoleSettings.RetryCount });
 
             var options = new BackgroundJobServerOptions
@@ -106,6 +147,26 @@ namespace Naos.MessageBus.Hangfire.Harness
                 new SqlServerStorageOptions());
 
             this.backgroundJobServer = new BackgroundJobServer(options);
+        }
+
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1031:DoNotCatchGeneralExceptionTypes", Justification = "Catching and swallowing on purpose.")]
+        private static AssemblyDetails SafeFetchAssemblyDetails(Assembly assembly)
+        {
+            new { assembly }.Must().NotBeNull().OrThrowFirstFailure();
+
+            // get a default
+            var ret = new AssemblyDetails { FilePath = assembly.Location };
+
+            try
+            {
+                ret = AssemblyDetails.CreateFromAssembly(assembly);
+            }
+            catch (Exception)
+            {
+                /* no-op - swallow this because we will just get what we get... */
+            }
+
+            return ret;
         }
 
         /// <summary>
@@ -135,9 +196,11 @@ namespace Naos.MessageBus.Hangfire.Harness
         }
 
         /// <inheritdoc cref="IDisposable" />
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2213:DisposableFieldsShouldBeDisposed", MessageId = "handlerBuilder", Justification = "Is disposed.")]
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2213:DisposableFieldsShouldBeDisposed", MessageId = "backgroundJobServer", Justification = "Is disposed.")]
         public void Dispose()
         {
+            this.handlerBuilder?.Dispose();
             this.backgroundJobServer?.Dispose();
         }
     }

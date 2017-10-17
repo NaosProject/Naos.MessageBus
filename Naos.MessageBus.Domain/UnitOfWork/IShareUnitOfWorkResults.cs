@@ -38,10 +38,10 @@ namespace Naos.MessageBus.Domain
     /// <summary>
     /// Handles a <see cref="ShareUnitOfWorkResultsMessage"/>.
     /// </summary>
-    public class ShareUnitOfWorkResultsMessageHandler : IHandleMessages<ShareUnitOfWorkResultsMessage>, IShareUnitOfWorkResults
+    public class ShareUnitOfWorkResultsMessageHandler : MessageHandlerBase<ShareUnitOfWorkResultsMessage>, IShareUnitOfWorkResults
     {
-        /// <inheritdoc />
-        public async Task HandleAsync(ShareUnitOfWorkResultsMessage message)
+        /// <inheritdoc cref="MessageHandlerBase{T}" />
+        public override async Task HandleAsync(ShareUnitOfWorkResultsMessage message)
         {
             this.UnitOfWorkResults = await Task.FromResult(message.UnitOfWorkResultsToShare);
         }

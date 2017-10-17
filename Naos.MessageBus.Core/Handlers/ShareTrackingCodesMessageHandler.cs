@@ -13,10 +13,10 @@ namespace Naos.MessageBus.Core
     /// <summary>
     /// Handler for <see cref="ShareTrackingCodesMessage"/>.
     /// </summary>
-    public class ShareTrackingCodesMessageHandler : IHandleMessages<ShareTrackingCodesMessage>, IShareTrackingCodes
+    public class ShareTrackingCodesMessageHandler : MessageHandlerBase<ShareTrackingCodesMessage>, IShareTrackingCodes
     {
-        /// <inheritdoc />
-        public async Task HandleAsync(ShareTrackingCodesMessage message)
+        /// <inheritdoc cref="MessageHandlerBase{T}" />
+        public override async Task HandleAsync(ShareTrackingCodesMessage message)
         {
             this.TrackingCodes = message.TrackingCodesToShare;
 

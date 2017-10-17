@@ -13,10 +13,10 @@ namespace Naos.MessageBus.Core
     /// <summary>
     /// Handler to handle <see cref="TopicBeingAffectedMessage"/>.
     /// </summary>
-    public class TopicBeingAffectedMessageHandler : IHandleMessages<TopicBeingAffectedMessage>
+    public class TopicBeingAffectedMessageHandler : MessageHandlerBase<TopicBeingAffectedMessage>
     {
-        /// <inheritdoc />
-        public async Task HandleAsync(TopicBeingAffectedMessage message)
+        /// <inheritdoc cref="MessageHandlerBase{T}" />
+        public override async Task HandleAsync(TopicBeingAffectedMessage message)
         {
             /* no-op */
             await Task.FromResult<object>(null);

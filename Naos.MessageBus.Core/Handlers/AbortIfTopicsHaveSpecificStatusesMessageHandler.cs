@@ -16,10 +16,10 @@ namespace Naos.MessageBus.Core
     /// <summary>
     /// No implementation handler to handle NullMessages.
     /// </summary>
-    public class AbortIfTopicsHaveSpecificStatusesMessageHandler : IHandleMessages<AbortIfTopicsHaveSpecificStatusesMessage>
+    public class AbortIfTopicsHaveSpecificStatusesMessageHandler : MessageHandlerBase<AbortIfTopicsHaveSpecificStatusesMessage>
     {
-        /// <inheritdoc />
-        public async Task HandleAsync(AbortIfTopicsHaveSpecificStatusesMessage message)
+        /// <inheritdoc cref="MessageHandlerBase{T}" />
+        public override async Task HandleAsync(AbortIfTopicsHaveSpecificStatusesMessage message)
         {
             if (message == null)
             {

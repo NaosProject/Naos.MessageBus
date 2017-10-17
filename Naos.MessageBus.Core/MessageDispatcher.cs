@@ -11,8 +11,8 @@ namespace Naos.MessageBus.Core
     using System.Collections.Generic;
     using System.Linq;
     using System.Runtime.ExceptionServices;
-    using System.Threading;
-    using System.Threading.Tasks;
+
+    using AsyncBridge;
 
     using Its.Log.Instrumentation;
 
@@ -22,6 +22,8 @@ namespace Naos.MessageBus.Core
 
     using OBeautifulCode.TypeRepresentation;
 
+    using Spritely.Recipes;
+
     using static System.FormattableString;
 
     /// <inheritdoc />
@@ -29,17 +31,13 @@ namespace Naos.MessageBus.Core
     public class MessageDispatcher : IDispatchMessages
     {
         // Make this permissive since it's the underlying logic and shouldn't be coupled to whether handlers are matched in strict mode...
-        private readonly TypeComparer internalTypeComparer = new TypeComparer(TypeMatchStrategy.NamespaceAndName);
+        private readonly TypeComparer internalTypeComparerForRecurringMessageCheck = new TypeComparer(TypeMatchStrategy.NamespaceAndName);
 
-        private readonly IReadOnlyDictionary<Type, Type> handlerInterfaceToImplementationTypeMap;
+        private readonly IHandlerFactory handlerBuilder;
 
         private readonly ConcurrentDictionary<Type, object> handlerSharedStateMap;
 
         private readonly ICollection<IChannel> servicedChannels;
-
-        private readonly TypeMatchStrategy messageHandlerChoosingTypeMatchStrategy;
-
-        private readonly TimeSpan messageDispatcherWaitThreadSleepTime;
 
         private readonly HarnessStaticDetails harnessStaticDetails;
 
@@ -49,30 +47,56 @@ namespace Naos.MessageBus.Core
 
         private readonly IPostOffice postOffice;
 
+        private readonly IStuffAndOpenEnvelopes envelopeMachine;
+
+        private readonly IManageShares shareManager;
+
         /// <summary>
         /// Initializes a new instance of the <see cref="MessageDispatcher"/> class.
         /// </summary>
-        /// <param name="handlerInterfaceToImplementationTypeMap">DI container to use for looking up handlers.</param>
+        /// <param name="handlerBuilder">Interface for looking up handlers.</param>
         /// <param name="handlerSharedStateMap">Initial state dictionary for handlers the require state to be seeded.</param>
         /// <param name="servicedChannels">Channels being services by this dispatcher.</param>
-        /// <param name="messageHandlerChoosingTypeMatchStrategy">Message type match strategy for use when selecting a handler.</param>
-        /// <param name="messageDispatcherWaitThreadSleepTime">Amount of time to sleep while waiting on messages to be handled.</param>
         /// <param name="harnessStaticDetails">Details about the harness.</param>
         /// <param name="parcelTrackingSystem">Courier to track parcel events.</param>
         /// <param name="activeMessageTracker">Interface to track active messages to know if handler harness can shutdown.</param>
         /// <param name="postOffice">Interface to send parcels.</param>
-        public MessageDispatcher(IReadOnlyDictionary<Type, Type> handlerInterfaceToImplementationTypeMap, ConcurrentDictionary<Type, object> handlerSharedStateMap, ICollection<IChannel> servicedChannels, TypeMatchStrategy messageHandlerChoosingTypeMatchStrategy, TimeSpan messageDispatcherWaitThreadSleepTime, HarnessStaticDetails harnessStaticDetails, IParcelTrackingSystem parcelTrackingSystem, ITrackActiveMessages activeMessageTracker, IPostOffice postOffice)
+        /// <param name="envelopeMachine">Interface to stuff and open envelopes.</param>
+        /// <param name="shareManager">Interface to manage sharing.</param>
+        public MessageDispatcher(
+            IHandlerFactory handlerBuilder,
+            ConcurrentDictionary<Type, object> handlerSharedStateMap,
+            ICollection<IChannel> servicedChannels,
+            HarnessStaticDetails harnessStaticDetails,
+            IParcelTrackingSystem parcelTrackingSystem,
+            ITrackActiveMessages activeMessageTracker,
+            IPostOffice postOffice,
+            IStuffAndOpenEnvelopes envelopeMachine,
+            IManageShares shareManager)
         {
-            this.handlerInterfaceToImplementationTypeMap = handlerInterfaceToImplementationTypeMap;
+            new
+                {
+                    handlerBuilder,
+                    handlerSharedStateMap,
+                    servicedChannels,
+                    harnessStaticDetails,
+                    parcelTrackingSystem,
+                    activeMessageTracker,
+                    postOffice,
+                    envelopeMachine,
+                    shareManager
+                }.Must().NotBeNull().OrThrowFirstFailure();
+
+            this.handlerBuilder = handlerBuilder;
             this.handlerSharedStateMap = handlerSharedStateMap;
             this.servicedChannels = servicedChannels;
-            this.messageHandlerChoosingTypeMatchStrategy = messageHandlerChoosingTypeMatchStrategy;
-            this.messageDispatcherWaitThreadSleepTime = messageDispatcherWaitThreadSleepTime;
 
             this.harnessStaticDetails = harnessStaticDetails;
             this.parcelTrackingSystem = parcelTrackingSystem;
             this.activeMessageTracker = activeMessageTracker;
             this.postOffice = postOffice;
+            this.envelopeMachine = envelopeMachine;
+            this.shareManager = shareManager;
         }
 
         /// <inheritdoc />
@@ -104,7 +128,7 @@ namespace Naos.MessageBus.Core
 
                 // this is a very special case and must be checked before marking any status changes to the parcel (otherwise it should be in InternalDispatch...)
                 var firstEnvelope = parcel.Envelopes.First();
-                if (this.internalTypeComparer.Equals(firstEnvelope.MessageType, typeof(RecurringHeaderMessage).ToTypeDescription()))
+                if (this.internalTypeComparerForRecurringMessageCheck.Equals(firstEnvelope.SerializedMessage.PayloadTypeDescription, typeof(RecurringHeaderMessage).ToTypeDescription()))
                 {
                     throw new RecurringParcelEncounteredException(firstEnvelope.Description);
                 }
@@ -112,12 +136,11 @@ namespace Naos.MessageBus.Core
                 var dynamicDetails = new HarnessDynamicDetails { AvailablePhysicalMemoryInGb = MachineDetails.GetAvailablePhysicalMemoryInGb() };
                 var harnessDetails = new HarnessDetails { StaticDetails = this.harnessStaticDetails, DynamicDetails = dynamicDetails };
 
-                Action attemptingCallback =
-                    () => this.parcelTrackingSystem.UpdateAttemptingAsync(trackingCode, harnessDetails).Wait();
+                void AttemptingCallback() => this.parcelTrackingSystem.UpdateAttemptingAsync(trackingCode, harnessDetails).Wait();
 
-                Action<Envelope> deliveredCallback = deliveredEnvelope => this.parcelTrackingSystem.UpdateDeliveredAsync(trackingCode, deliveredEnvelope).Wait();
+                void DeliveredCallback(Envelope deliveredEnvelope) => this.parcelTrackingSystem.UpdateDeliveredAsync(trackingCode, deliveredEnvelope).Wait();
 
-                this.InternalDispatch(parcel, address, trackingCode, firstEnvelope, attemptingCallback, deliveredCallback);
+                this.InternalDispatch(parcel, address, trackingCode, firstEnvelope, AttemptingCallback, DeliveredCallback);
             }
             catch (RecurringParcelEncounteredException recurringParcelEncounteredException)
             {
@@ -161,22 +184,16 @@ namespace Naos.MessageBus.Core
 
             // WARNING: this method change the state of the objects passed in!!!
             this.PrepareMessage(trackingCode, messageToHandle, parcel.SharedInterfaceStates);
-            var deliveredEnvelope = messageToHandle.ToAddressedMessage(address).ToEnvelope(firstEnvelope.Id);
-            Log.Write(() => Invariant($"Delivered Envelope Json: {deliveredEnvelope.ToJson()}"));
+            var deliveredEnvelope = messageToHandle.ToAddressedMessage(address).ToEnvelope(this.envelopeMachine, firstEnvelope.Id);
+            Log.Write(() => Invariant($"Delivered Envelope Channel: {deliveredEnvelope.Address}, Type: {deliveredEnvelope.SerializedMessage.PayloadTypeDescription}, Payload: {deliveredEnvelope.SerializedMessage.SerializedPayload}"));
 
             var messageType = messageToHandle.GetType();
-            var handlerType = typeof(IHandleMessages<>).MakeGenericType(messageType);
 
-            Log.Write(() => Invariant($"Attempting to get handler; {trackingCode}, Type: {handlerType.FullName}"));
-            object handler;
-            if (this.handlerInterfaceToImplementationTypeMap.ContainsKey(handlerType))
+            Log.Write(() => Invariant($"Attempting to get handler; {trackingCode}, Message Type: {messageType.FullName}"));
+            var handler = this.handlerBuilder.BuildHandlerForMessageType(messageType);
+            if (handler == null)
             {
-                var typeToActivate = this.handlerInterfaceToImplementationTypeMap[handlerType];
-                handler = Activator.CreateInstance(typeToActivate);
-            }
-            else
-            {
-                throw new NotSupportedException(Invariant($"Could not find a handler for the specified type; Parcel: {trackingCode}, Specified Type: {handlerType.FullName}"));
+                throw new FailedToFindHandlerException(Invariant($"Could not find a handler for the specified type; Parcel: {trackingCode}, Specified Message Type: {messageType.FullName}"));
             }
 
             Log.Write(() => Invariant($"Loaded handler; {trackingCode}, Type: {handler.GetType().FullName}"));
@@ -184,45 +201,29 @@ namespace Naos.MessageBus.Core
             // WARNING: this method change the state of the objects passed in!!!
             this.PrepareHandler(trackingCode, handler);
 
-            using (var activity = Log.Enter(() => new { TrackingCode = trackingCode, MessageDescription = messageToHandle.Description, HandlerType = handlerType }))
+            using (var activity = Log.Enter(() => new { TrackingCode = trackingCode, MessageDescription = messageToHandle.Description, HandlerType = handler.GetType() }))
             {
                 try
                 {
                     activity.Trace(() => "Handling message (calling Handle on selected Handler).");
-                    var methodInfo = handlerType.GetMethod(nameof(IHandleMessages<IMessage>.HandleAsync));
-                    var result = methodInfo.Invoke(handler, new object[] { messageToHandle });
-                    var task = result as Task;
-                    if (task == null)
+
+                    using (var asyncBridge = AsyncHelper.Wait)
                     {
-                        throw new ArgumentException(Invariant($"Failed to get a task result from Handle method, necessary to perform the wait for async operations; {trackingCode}"));
+                        asyncBridge.Run(handler.HandleAsync(messageToHandle));
                     }
 
-                    if (task.Status == TaskStatus.Created)
+                    activity.Confirm(() => Invariant($"Successfully handled message."));
+                }
+                catch (AggregateException aex)
+                {
+                    if (aex.Source == nameof(AsyncBridge) && aex.InnerExceptions.Count == 1)
                     {
-                        task.Start();
+                        ExceptionDispatchInfo.Capture(aex.InnerExceptions.Single()).Throw();
                     }
-
-                    // running this way because i want to interrogate afterwards to throw if faulted...
-                    while (!task.IsCompleted && !task.IsCanceled && !task.IsFaulted)
+                    else
                     {
-                        Thread.Sleep(this.messageDispatcherWaitThreadSleepTime);
+                        throw;
                     }
-
-                    if (task.Status == TaskStatus.Faulted)
-                    {
-                        var exception = task.Exception ?? new AggregateException(Invariant($"No exception came back from task but status was Faulted; {trackingCode}"));
-                        if (this.internalTypeComparer.Equals(exception.GetType(), typeof(AggregateException)) && exception.InnerExceptions.Count == 1 && exception.InnerException != null)
-                        {
-                            // if this is just wrapping a single exception then no need to keep the wrapper...
-                            ExceptionDispatchInfo.Capture(exception.InnerException).Throw();
-                        }
-                        else
-                        {
-                            ExceptionDispatchInfo.Capture(exception).Throw();
-                        }
-                    }
-
-                    activity.Confirm(() => Invariant($"Successfully handled message. Task ended with status: {task.Status}"));
                 }
                 catch (Exception ex)
                 {
@@ -257,7 +258,7 @@ namespace Naos.MessageBus.Core
                     if (handlerAsShare != null)
                     {
                         activity.Trace(() => "Handler is IShare, loading shared properties into parcel for future messages.");
-                        var newShareSets = SharedPropertyHelper.GetSharedInterfaceStates(handlerAsShare);
+                        var newShareSets = this.shareManager.GetSharedInterfaceStates(handlerAsShare);
                         shareSets.AddRange(newShareSets);
                     }
 
@@ -288,7 +289,7 @@ namespace Naos.MessageBus.Core
         {
             var handlerActualType = handler.GetType();
             var handlerInterfaces = handlerActualType.GetInterfaces();
-            if (handlerInterfaces.Any(_ => _.IsGenericType && this.internalTypeComparer.Equals(_.GetGenericTypeDefinition(), typeof(INeedSharedState<>))))
+            if (handlerInterfaces.Any(_ => _.IsGenericType && this.internalTypeComparerForRecurringMessageCheck.Equals(_.GetGenericTypeDefinition(), typeof(INeedSharedState<>))))
             {
                 using (var activity = Log.Enter(() => new { TrackingCode = trackingCode, HandlerType = handlerActualType }))
                 {
@@ -383,10 +384,7 @@ namespace Naos.MessageBus.Core
 
                         foreach (var sharedPropertySet in sharedProperties)
                         {
-                            SharedPropertyHelper.ApplySharedInterfaceState(
-                                this.messageHandlerChoosingTypeMatchStrategy,
-                                sharedPropertySet,
-                                messageAsShare);
+                            this.shareManager.ApplySharedInterfaceState(sharedPropertySet, messageAsShare);
                         }
 
                         activity.Confirm(() => "Finished property sharing.");
@@ -402,14 +400,11 @@ namespace Naos.MessageBus.Core
 
         private AddressedMessage DeserializeEnvelopeIntoAddressedMessage(TrackingCode trackingCode, Envelope envelope)
         {
-            if (string.IsNullOrEmpty(envelope.MessageType?.AssemblyQualifiedName) || string.IsNullOrEmpty(envelope.MessageType.Namespace) || string.IsNullOrEmpty(envelope.MessageType.Name))
-            {
-                throw new DispatchException(Invariant($"Message type not specified in envelope; {trackingCode}"));
-            }
+            new { trackingCode, envelope }.Must().NotBeNull().OrThrowFirstFailure();
 
-            var messageType = this.ResolveMessageTypeUsingRegisteredHandlers(envelope.MessageType);
+            var message = envelope.Open(this.envelopeMachine);
 
-            var ret = new AddressedMessage { Message = (IMessage)envelope.MessageAsJson.FromJson(messageType), Address = envelope.Address };
+            var ret = new AddressedMessage { Message = message, Address = envelope.Address };
 
             if (ret.Message == null)
             {
@@ -417,28 +412,6 @@ namespace Naos.MessageBus.Core
             }
 
             return ret;
-        }
-
-        private Type ResolveMessageTypeUsingRegisteredHandlers(TypeDescription typeDescription)
-        {
-            var registeredHandlers = this.handlerInterfaceToImplementationTypeMap.Values.ToList().GetTypeMapsOfImplementersOfGenericType(typeof(IHandleMessages<>));
-
-            var typeComparer = new TypeComparer(this.messageHandlerChoosingTypeMatchStrategy);
-            foreach (var registeredHandler in registeredHandlers)
-            {
-                var messageTypeFromRegistered = registeredHandler.InterfaceType.GenericTypeArguments.Single();
-
-                var handlerMessageTypeMatches = typeComparer.Equals(
-                    messageTypeFromRegistered.ToTypeDescription(),
-                    typeDescription);
-
-                if (handlerMessageTypeMatches)
-                {
-                    return messageTypeFromRegistered;
-                }
-            }
-
-            throw new DispatchException(Invariant($"Unable to find handler for message type; {nameof(typeDescription.Namespace)}: {typeDescription.Namespace}, {nameof(typeDescription.Name)}: {typeDescription.Name}, {nameof(typeDescription.AssemblyQualifiedName)}: {typeDescription.AssemblyQualifiedName}"));
         }
     }
 }

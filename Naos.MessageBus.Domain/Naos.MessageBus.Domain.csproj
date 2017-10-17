@@ -40,6 +40,9 @@
       <HintPath>..\packages\Its.Log.2.9.14\lib\net451\Its.Log.dll</HintPath>
       <Private>True</Private>
     </Reference>
+    <Reference Include="Naos.Compression.Domain, Version=1.0.3.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Naos.Compression.Domain.1.0.3\lib\net461\Naos.Compression.Domain.dll</HintPath>
+    </Reference>
     <Reference Include="Naos.Cron, Version=1.0.15.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\Naos.Cron.1.0.15\lib\net45\Naos.Cron.dll</HintPath>
       <Private>True</Private>
@@ -48,16 +51,19 @@
       <HintPath>..\packages\Naos.Diagnostics.Domain.1.0.8\lib\net45\Naos.Diagnostics.Domain.dll</HintPath>
       <Private>True</Private>
     </Reference>
+    <Reference Include="Naos.Serialization.Domain, Version=1.0.35.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Naos.Serialization.Domain.1.0.35\lib\net461\Naos.Serialization.Domain.dll</HintPath>
+    </Reference>
     <Reference Include="Newtonsoft.Json, Version=9.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
       <HintPath>..\packages\Newtonsoft.Json.9.0.1\lib\net45\Newtonsoft.Json.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="OBeautifulCode.TypeRepresentation, Version=1.0.3.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\OBeautifulCode.TypeRepresentation.1.0.3\lib\net45\OBeautifulCode.TypeRepresentation.dll</HintPath>
-      <Private>True</Private>
+    <Reference Include="OBeautifulCode.TypeRepresentation, Version=1.0.8.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\OBeautifulCode.TypeRepresentation.1.0.8\lib\net45\OBeautifulCode.TypeRepresentation.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
+    <Reference Include="System.ServiceModel" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
@@ -66,17 +72,23 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include=".OBeautifulCode.Recipes\OBeautifulCode.Math\HashCodeHelper.cs" />
-    <Compile Include=".Spritely.Recipes\CamelStrictConstructorContractResolver\CamelStrictConstructorContractResolver.cs" />
-    <Compile Include=".Spritely.Recipes\InheritedTypeJsonConverter\InheritedTypeJsonConverter.cs" />
-    <Compile Include=".Spritely.Recipes\JsonConfiguration\CompactJsonSerializer.cs" />
-    <Compile Include=".Spritely.Recipes\JsonConfiguration\DefaultJsonSerializer.cs" />
-    <Compile Include=".Spritely.Recipes\JsonConfiguration\JsonConfiguration.cs" />
-    <Compile Include=".Spritely.Recipes\JsonConfiguration\MinimalJsonSerializer.cs" />
-    <Compile Include=".Spritely.Recipes\SecureStringJsonConverter\SecureStringJsonConverter.cs" />
-    <Compile Include=".Spritely.Recipes\SecureString\SecureString.cs" />
+    <Compile Include=".recipes\OBeautifulCode.Math\HashCodeHelper.cs" />
+    <Compile Include=".recipes\Spritely.MustValidation\MakeRule.cs" />
+    <Compile Include=".recipes\Spritely.MustValidation\MustExtensions.cs" />
+    <Compile Include=".recipes\Spritely.MustValidation\RuleExtensions.cs" />
+    <Compile Include=".recipes\Spritely.MustValidation\Rules.cs" />
+    <Compile Include=".recipes\Spritely.MustValidation\ValidatedNotNullAttribute.cs" />
+    <Compile Include=".recipes\Spritely.SecureString\SecureString.cs" />
     <Compile Include="ChannelRouter.cs" />
+    <Compile Include="Exceptions\FailedToFindHandlerException.cs" />
+    <Compile Include="HandlerToolshed.cs" />
+    <Compile Include="ShareManager.cs" />
+    <Compile Include="Sharing\IManageShares.cs" />
+    <Compile Include="IHandlerFactory.cs" />
+    <Compile Include="IStuffAndOpenEnvelopes.cs" />
+    <Compile Include="ITrackActiveMessages.cs" />
     <Compile Include="MessageBusHarnessRoleSettingsBase.cs" />
+    <Compile Include="SynchronizedPostOffice.cs" />
     <Compile Include="UnitOfWork\IShareUnitOfWorkResults.cs" />
     <Compile Include="UnitOfWork\UnitOfWorkOutcome.cs" />
     <Compile Include="UnitOfWork\UnitOfWorkResult.cs" />
@@ -110,7 +122,6 @@
     <Compile Include="Exceptions\HarnessStartupException.cs" />
     <Compile Include="Exceptions\MessageBusExceptionBase.cs" />
     <Compile Include="Exceptions\SharePropertyException.cs" />
-    <Compile Include="HandlerToolshed.cs" />
     <Compile Include="Tracking\HarnessDetails.cs" />
     <Compile Include="Tracking\HarnessDynamicDetails.cs" />
     <Compile Include="Tracking\HarnessStaticDetails.cs" />
@@ -136,12 +147,10 @@
     <Compile Include="Tracking\ParcelTrackingReport.cs" />
     <Compile Include="PostOffice.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Serializer.cs" />
     <Compile Include="Sharing\SharedInterfaceState.cs" />
     <Compile Include="Sharing\SharedProperty.cs" />
     <Compile Include="Sharing\ShareTrackingCodesMessage.cs" />
     <Compile Include="Tracking\TrackingCode.cs" />
-    <Compile Include="TypeMap.cs" />
     <Compile Include="Messages\AbortIfNoDependencyTopicsAffectedMessage.cs" />
     <Compile Include="Messages\WaitForTrackingCodesToBeInStatusMessage.cs" />
     <Compile Include="Messages\WaitMessage.cs" />

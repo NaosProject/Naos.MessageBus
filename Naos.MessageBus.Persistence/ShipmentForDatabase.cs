@@ -21,9 +21,9 @@ namespace Naos.MessageBus.Persistence
         public Guid ParcelId { get; set; }
 
         /// <summary>
-        /// Gets or sets the current crate locator as JSON.
+        /// Gets or sets the current crate locator, serialized using <see cref="ParcelTrackingSerializationExtensions" />.
         /// </summary>
-        public string CurrentCrateLocatorJson { get; set; }
+        public string CurrentCrateLocatorSerializedAsString { get; set; }
 
         /// <summary>
         /// Gets or sets the status of the parcel.
@@ -31,9 +31,9 @@ namespace Naos.MessageBus.Persistence
         public ParcelStatus Status { get; set; }
 
         /// <summary>
-        /// Gets or sets the recurring schedule if any.
+        /// Gets or sets the recurring schedule if any, serialized using <see cref="ParcelTrackingSerializationExtensions" />.
         /// </summary>
-        public string RecurringScheduleJson { get; set; }
+        public string RecurringScheduleSerializedAsString { get; set; }
 
         /// <summary>
         /// Gets or sets the date time (in UTC) it was last updated.

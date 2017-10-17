@@ -6,13 +6,9 @@
 
 namespace Naos.MessageBus.Test
 {
-    using System;
-    using System.Collections.Generic;
-
     using FluentAssertions;
 
     using Naos.MessageBus.Core;
-    using Naos.MessageBus.Domain;
 
     using OBeautifulCode.TypeRepresentation;
 
@@ -25,20 +21,12 @@ namespace Naos.MessageBus.Test
         {
             // arrange
             var directory = @"D:\Temp\FailedToReflect";
-            var dispatcherFactory = new DispatcherFactory(
-                directory,
-                new List<IChannel>(),
-                TypeMatchStrategy.NamespaceAndName,
-                TimeSpan.FromSeconds(30),
-                new NullParcelTrackingSystem(),
-                new InMemoryActiveMessageTracker(),
-                new PostOffice(new NullParcelTrackingSystem(), new ChannelRouter(new NullChannel())));
 
             // act
-            var dispatcher = dispatcherFactory.Create();
+            var handlerBuilder = new ReflectionHandlerBuilder(directory, TypeMatchStrategy.NamespaceAndName);
 
             // assert
-            dispatcher.Should().NotBeNull();
+            handlerBuilder.Should().NotBeNull();
         }
     }
 }

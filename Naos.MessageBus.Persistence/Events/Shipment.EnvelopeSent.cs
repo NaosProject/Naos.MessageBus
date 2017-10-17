@@ -21,7 +21,7 @@ namespace Naos.MessageBus.Persistence
         public class EnvelopeSent : Event<Shipment>, IUsePayload<PayloadEnvelopeSent>
         {
             /// <inheritdoc />
-            public string PayloadJson { get; set; }
+            public string PayloadSerializedString { get; set; }
 
             /// <inheritdoc />
             public override void Update(Shipment aggregate)
@@ -40,14 +40,6 @@ namespace Naos.MessageBus.Persistence
         /// <summary>
         /// Initializes a new instance of the <see cref="PayloadEnvelopeSent"/> class.
         /// </summary>
-        public PayloadEnvelopeSent()
-        {
-            // TODO: Remove this and setters after serialization is fixed...
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="PayloadEnvelopeSent"/> class.
-        /// </summary>
         /// <param name="trackingCode">Tracking code of the event.</param>
         /// <param name="newStatus">New status the event produces.</param>
         /// <param name="parcel">Containing parcel of the envelope.</param>
@@ -61,23 +53,23 @@ namespace Naos.MessageBus.Persistence
         }
 
         /// <summary>
-        /// Gets or sets the tracking code of the event.
+        /// Gets the tracking code of the event.
         /// </summary>
-        public TrackingCode TrackingCode { get; set; }
+        public TrackingCode TrackingCode { get; private set; }
 
         /// <summary>
-        /// Gets or sets the new status the event produces.
+        /// Gets the new status the event produces.
         /// </summary>
-        public ParcelStatus NewStatus { get; set; }
+        public ParcelStatus NewStatus { get; private set; }
 
         /// <summary>
-        /// Gets or sets the containing parcel of the envelope.
+        /// Gets the containing parcel of the envelope.
         /// </summary>
-        public Parcel Parcel { get; set; }
+        public Parcel Parcel { get; private set; }
 
         /// <summary>
-        /// Gets or sets the address if present.
+        /// Gets the address if present.
         /// </summary>
-        public IChannel Address { get; set; }
+        public IChannel Address { get; private set; }
     }
 }

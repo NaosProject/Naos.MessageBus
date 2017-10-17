@@ -83,7 +83,7 @@ namespace Naos.MessageBus.Persistence
         public void UpdateProjection(Shipment.Created @event)
         {
             var payload = @event.ExtractPayload();
-            var scheduleJson = payload.RecurringSchedule.ToJson();
+            var scheduleJson = payload.RecurringSchedule.ToParcelTrackingSerializedString();
             var sqlServerConnectionString = this.readModelPersistenceConnectionConfiguration.ToSqlServerConnectionString();
 
             // ado style
@@ -137,9 +137,9 @@ namespace Naos.MessageBus.Persistence
                             using (var db = new TrackedShipmentDbContext(this.readModelPersistenceConnectionConfiguration.ToSqlServerConnectionString()))
                             {
                                 var shipmentEntry = db.Shipments.Single(_ => _.ParcelId == @event.AggregateId);
-                                crateLocator = string.IsNullOrEmpty(shipmentEntry.CurrentCrateLocatorJson)
+                                crateLocator = string.IsNullOrEmpty(shipmentEntry.CurrentCrateLocatorSerializedAsString)
                                                    ? null
-                                                   : shipmentEntry.CurrentCrateLocatorJson.FromJson<CrateLocator>();
+                                                   : shipmentEntry.CurrentCrateLocatorSerializedAsString.FromParcelTrackingSerializedString<CrateLocator>();
                             }
                         }).Now();
 
@@ -191,7 +191,7 @@ namespace Naos.MessageBus.Persistence
                                         var scheduleJson = command.ExecuteScalar();
                                         schedule = string.IsNullOrEmpty(scheduleJson?.ToString())
                                                        ? new NullSchedule()
-                                                       : scheduleJson.ToString().FromJson<ScheduleBase>();
+                                                       : scheduleJson.ToString().FromParcelTrackingSerializedString<ScheduleBase>();
                                     }
 
                                     conn.Close();
@@ -233,7 +233,7 @@ namespace Naos.MessageBus.Persistence
                                 {
                                     var paramNewStatus = new SqlParameter("@newStatus", SqlDbType.Int) { Value = eventPayload.NewStatus };
                                     command.Parameters.Add(paramNewStatus);
-                                    var paramCrateLocatorJson = new SqlParameter("@crateLocatorJson", SqlDbType.NVarChar) { Value = crateLocator.ToJson() };
+                                    var paramCrateLocatorJson = new SqlParameter("@crateLocatorJson", SqlDbType.NVarChar) { Value = crateLocator.ToParcelTrackingSerializedString() };
                                     command.Parameters.Add(paramCrateLocatorJson);
                                     var paramUtcNow = new SqlParameter("@utcNow", SqlDbType.DateTime) { Value = DateTime.UtcNow };
                                     command.Parameters.Add(paramUtcNow);
@@ -407,7 +407,7 @@ namespace Naos.MessageBus.Persistence
                                     entry.AffectsStartedDateTimeUtc = @event.Timestamp.UtcDateTime;
                                     entry.Status = TopicStatus.BeingAffected;
                                     entry.ParcelId = @event.ExtractPayload().TrackingCode.ParcelId;
-                                    entry.TopicBeingAffectedEnvelopeJson = @event.ExtractPayload().Envelope.ToJson();
+                                    entry.TopicBeingAffectedEnvelopeSerializedAsString = @event.ExtractPayload().Envelope.ToParcelTrackingSerializedString();
                                     entry.LastUpdatedUtc = DateTime.UtcNow;
                                 }
                                 else if (existingEntries.Count == 0)
@@ -419,7 +419,7 @@ namespace Naos.MessageBus.Persistence
                                                         AffectsStartedDateTimeUtc = @event.Timestamp.UtcDateTime,
                                                         Status = TopicStatus.BeingAffected,
                                                         ParcelId = @event.ExtractPayload().TrackingCode.ParcelId,
-                                                        TopicBeingAffectedEnvelopeJson = @event.ExtractPayload().Envelope.ToJson(),
+                                                        TopicBeingAffectedEnvelopeSerializedAsString = @event.ExtractPayload().Envelope.ToParcelTrackingSerializedString(),
                                                         LastUpdatedUtc = DateTime.UtcNow
                                                     };
 
@@ -483,7 +483,7 @@ namespace Naos.MessageBus.Persistence
 
                                 entry.Status = TopicStatus.WasAffected;
                                 entry.AffectsCompletedDateTimeUtc = @event.Timestamp.UtcDateTime;
-                                entry.TopicWasAffectedEnvelopeJson = @event.ExtractPayload().Envelope.ToJson();
+                                entry.TopicWasAffectedEnvelopeSerializedAsString = @event.ExtractPayload().Envelope.ToParcelTrackingSerializedString();
 
                                 db.SaveChanges();
                             }
