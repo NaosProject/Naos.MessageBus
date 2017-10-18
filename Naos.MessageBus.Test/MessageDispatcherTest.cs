@@ -49,7 +49,7 @@ namespace Naos.MessageBus.Test
                                                                       { typeof(SecondEnumMessage), typeof(SecondEnumHandler) }
                                                               };
 
-            var handlerBuilder = new MappedTypeHandlerBuilder(handlerInterfaceToImplementationTypeMap, TypeMatchStrategy.NamespaceAndName);
+            var handlerBuilder = new MappedTypeHandlerFactory(handlerInterfaceToImplementationTypeMap, TypeMatchStrategy.NamespaceAndName);
 
             var dispatcher = new MessageDispatcher(
                 handlerBuilder,
@@ -269,7 +269,7 @@ namespace Naos.MessageBus.Test
 
             var activeMessageTracker = new InMemoryActiveMessageTracker();
 
-            var handlerBuilder = new MappedTypeHandlerBuilder(container, TypeMatchStrategy.NamespaceAndName);
+            var handlerBuilder = new MappedTypeHandlerFactory(container, TypeMatchStrategy.NamespaceAndName);
             var dispatcher = new MessageDispatcher(
                 handlerBuilder,
                 new ConcurrentDictionary<Type, object>(),
@@ -291,7 +291,7 @@ namespace Naos.MessageBus.Test
             var activeMessageTracker = new InMemoryActiveMessageTracker();
             var channel = new SimpleChannel("el-channel");
             var handlerInterfaceToImplementationTypeMap = new Dictionary<Type, Type> { { typeof(WaitMessage), typeof(WaitMessageHandler) } };
-            var handlerBuilder = new MappedTypeHandlerBuilder(handlerInterfaceToImplementationTypeMap, TypeMatchStrategy.NamespaceAndName);
+            var handlerBuilder = new MappedTypeHandlerFactory(handlerInterfaceToImplementationTypeMap, TypeMatchStrategy.NamespaceAndName);
             var dispatcher = new MessageDispatcher(
                 handlerBuilder,
                 new ConcurrentDictionary<Type, object>(),
@@ -358,7 +358,7 @@ namespace Naos.MessageBus.Test
             var envelopeMachine = Factory.GetEnvelopeMachine();
             var shareManager = Factory.GetShareManager();
             var handlerInterfaceToImplementationTypeMap = new Dictionary<Type, Type> { { typeof(ThrowsExceptionMessage), typeof(ThrowsExceptionMessageHandler) } };
-            var handlerBuilder = new MappedTypeHandlerBuilder(handlerInterfaceToImplementationTypeMap, TypeMatchStrategy.NamespaceAndName);
+            var handlerBuilder = new MappedTypeHandlerFactory(handlerInterfaceToImplementationTypeMap, TypeMatchStrategy.NamespaceAndName);
 
             var trackingCalls = new List<string>();
             var trackingSends = new List<Parcel>();
@@ -410,7 +410,7 @@ namespace Naos.MessageBus.Test
             HandlerToolshed.InitializeSerializerFactory(() => SerializerFactory.Instance);
             HandlerToolshed.InitializeCompressorFactory(() => CompressorFactory.Instance);
             var handlerInterfaceToImplementationTypeMap = new Dictionary<Type, Type> { { typeof(ThrowsExceptionMessage), typeof(ThrowsExceptionMessageHandler) } };
-            var handlerBuilder = new MappedTypeHandlerBuilder(handlerInterfaceToImplementationTypeMap, TypeMatchStrategy.NamespaceAndName);
+            var handlerBuilder = new MappedTypeHandlerFactory(handlerInterfaceToImplementationTypeMap, TypeMatchStrategy.NamespaceAndName);
 
             var trackingCalls = new List<string>();
             var trackingSendsFromTracker = new List<Parcel>();
@@ -465,7 +465,7 @@ namespace Naos.MessageBus.Test
             HandlerToolshed.InitializeSerializerFactory(() => SerializerFactory.Instance);
             HandlerToolshed.InitializeCompressorFactory(() => CompressorFactory.Instance);
             var handlerInterfaceToImplementationTypeMap = new Dictionary<Type, Type> { { typeof(ThrowsExceptionMessage), typeof(ThrowsExceptionMessageHandler) } };
-            var handlerBuilder = new MappedTypeHandlerBuilder(handlerInterfaceToImplementationTypeMap, TypeMatchStrategy.NamespaceAndName);
+            var handlerBuilder = new MappedTypeHandlerFactory(handlerInterfaceToImplementationTypeMap, TypeMatchStrategy.NamespaceAndName);
 
             var trackingCalls = new List<string>();
             var trackingSendsFromTracker = new List<Parcel>();
@@ -660,7 +660,7 @@ namespace Naos.MessageBus.Test
             var envelopeMachine = Factory.GetEnvelopeMachine();
             var shareManager = Factory.GetShareManager();
             var handlerInterfaceToImplementationTypeMap = new Dictionary<Type, Type> { { typeof(InitialStateMessage), typeof(StateHandler) } };
-            var handlerBuilder = new MappedTypeHandlerBuilder(handlerInterfaceToImplementationTypeMap, TypeMatchStrategy.NamespaceAndName);
+            var handlerBuilder = new MappedTypeHandlerFactory(handlerInterfaceToImplementationTypeMap, TypeMatchStrategy.NamespaceAndName);
             var message = new InitialStateMessage();
 
             var channel = new SimpleChannel("fakeChannel");
@@ -689,7 +689,7 @@ namespace Naos.MessageBus.Test
             var envelopeMachine = Factory.GetEnvelopeMachine();
             var shareManager = Factory.GetShareManager();
             var handlerInterfaceToImplementationTypeMap = new Dictionary<Type, Type> { { typeof(InitialStateMessage), typeof(StateHandler) } };
-            var handlerBuilder = new MappedTypeHandlerBuilder(handlerInterfaceToImplementationTypeMap, TypeMatchStrategy.NamespaceAndName);
+            var handlerBuilder = new MappedTypeHandlerFactory(handlerInterfaceToImplementationTypeMap, TypeMatchStrategy.NamespaceAndName);
             var message = new InitialStateMessage();
 
             var channel = new SimpleChannel("fakeChannel");
@@ -775,7 +775,7 @@ namespace Naos.MessageBus.Test
                 handlerInterfaceToImplementationTypeMap = new Dictionary<Type, Type>();
             }
 
-            var handlerBuilder = new MappedTypeHandlerBuilder(handlerInterfaceToImplementationTypeMap, TypeMatchStrategy.NamespaceAndName);
+            var handlerBuilder = new MappedTypeHandlerFactory(handlerInterfaceToImplementationTypeMap, TypeMatchStrategy.NamespaceAndName);
 
             return new MessageDispatcher(
                 handlerBuilder,

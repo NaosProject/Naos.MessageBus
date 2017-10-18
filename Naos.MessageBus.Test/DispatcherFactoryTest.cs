@@ -23,7 +23,7 @@ namespace Naos.MessageBus.Test
             var directory = @"D:\Temp\FailedToReflect";
 
             // act
-            var handlerBuilder = new ReflectionHandlerBuilder(directory, TypeMatchStrategy.NamespaceAndName);
+            var handlerBuilder = new ReflectionHandlerFactory(directory, TypeMatchStrategy.NamespaceAndName);
 
             // assert
             handlerBuilder.Should().NotBeNull();

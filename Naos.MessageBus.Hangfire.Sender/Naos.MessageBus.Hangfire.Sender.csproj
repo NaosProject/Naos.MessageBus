@@ -105,7 +105,6 @@
     <None Include=".analyzers\release.ruleset" />
     <None Include="app.config" />
     <None Include="packages.config" />
-    <None Include="Settings.StyleCop" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Naos.MessageBus.Domain\Naos.MessageBus.Domain.csproj">

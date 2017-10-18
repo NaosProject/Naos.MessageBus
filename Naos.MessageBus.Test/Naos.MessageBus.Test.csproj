@@ -44,13 +44,11 @@
     <Reference Include="FakeItEasy, Version=4.0.0.0, Culture=neutral, PublicKeyToken=eff28e2146d5fd2c, processorArchitecture=MSIL">
       <HintPath>..\packages\FakeItEasy.4.1.0\lib\net45\FakeItEasy.dll</HintPath>
     </Reference>
-    <Reference Include="FluentAssertions, Version=4.19.0.0, Culture=neutral, PublicKeyToken=33f2691a05b67b6a, processorArchitecture=MSIL">
-      <HintPath>..\packages\FluentAssertions.4.19.0\lib\net45\FluentAssertions.dll</HintPath>
-      <Private>True</Private>
+    <Reference Include="FluentAssertions, Version=4.19.4.0, Culture=neutral, PublicKeyToken=33f2691a05b67b6a, processorArchitecture=MSIL">
+      <HintPath>..\packages\FluentAssertions.4.19.4\lib\net45\FluentAssertions.dll</HintPath>
     </Reference>
-    <Reference Include="FluentAssertions.Core, Version=4.19.0.0, Culture=neutral, PublicKeyToken=33f2691a05b67b6a, processorArchitecture=MSIL">
-      <HintPath>..\packages\FluentAssertions.4.19.0\lib\net45\FluentAssertions.Core.dll</HintPath>
-      <Private>True</Private>
+    <Reference Include="FluentAssertions.Core, Version=4.19.4.0, Culture=neutral, PublicKeyToken=33f2691a05b67b6a, processorArchitecture=MSIL">
+      <HintPath>..\packages\FluentAssertions.4.19.4\lib\net45\FluentAssertions.Core.dll</HintPath>
     </Reference>
     <Reference Include="Its.Configuration, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\Its.Configuration.1.0.6\lib\net40\Its.Configuration.dll</HintPath>
@@ -154,12 +152,14 @@
     <Compile Include=".recipes\Naos.Configuration.Setup\ConfigRequiredTest.cs" />
     <Compile Include=".recipes\Naos.InitializeTestProject\ExampleDummyFactory.cs" />
     <Compile Include=".recipes\OBeautifulCode.AutoFakeItEasy\AutoFakeItEasyBootstrapper.cs" />
+    <Compile Include=".recipes\OBeautifulCode.Collection\EnumerableExtensions.cs" />
     <Compile Include=".recipes\OBeautifulCode.Enum\EnumExtensions.cs" />
     <Compile Include=".recipes\OBeautifulCode.Reflection\ReflectionHelper.Attribute.cs" />
     <Compile Include=".recipes\OBeautifulCode.Reflection\ReflectionHelper.cs" />
     <Compile Include=".recipes\OBeautifulCode.Reflection\ReflectionHelper.Enum.cs" />
     <Compile Include=".recipes\OBeautifulCode.Reflection\ReflectionHelper.Field.cs" />
     <Compile Include=".recipes\OBeautifulCode.Reflection\ReflectionHelper.Property.cs" />
+    <Compile Include=".recipes\OBeautifulCode.String\StringExtensions.cs" />
     <Compile Include=".recipes\Spritely.MustValidation\MakeRule.cs" />
     <Compile Include=".recipes\Spritely.MustValidation\MustExtensions.cs" />
     <Compile Include=".recipes\Spritely.MustValidation\RuleExtensions.cs" />
@@ -199,7 +199,6 @@
     <Compile Include="TestItsConfigMessageBusHandlerSettings.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <None Include="app.config" />
-    <None Include="Settings.StyleCop" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

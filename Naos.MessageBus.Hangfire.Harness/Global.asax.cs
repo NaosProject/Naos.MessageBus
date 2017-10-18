@@ -17,8 +17,9 @@ namespace Naos.MessageBus.Hangfire.Harness
     using Its.Configuration;
 
     using Naos.MessageBus.Core;
-    using Naos.MessageBus.Domain;
     using Naos.Recipes.Configuration.Setup;
+
+    using Spritely.Recipes;
 
     /// <inheritdoc />
     public class Global : HttpApplication
@@ -30,9 +31,11 @@ namespace Naos.MessageBus.Hangfire.Harness
         /// <param name="e">Event arguments.</param>
         protected void Application_Start(object sender, EventArgs e)
         {
-            Config.SetupSerialization();
+            Config.ConfigureSerialization();
             var messageBusHandlerSettings = Settings.Get<MessageBusHarnessSettings>();
-            Logging.Setup(messageBusHandlerSettings);
+            new { messageBusHandlerSettings }.Must().NotBeNull().OrThrowFirstFailure();
+
+            Logging.Setup(messageBusHandlerSettings.LogProcessorSettings);
             LogProvider.SetCurrentLogProvider(new ItsLogPassThroughProvider());
 
             var executorRoleSettings =

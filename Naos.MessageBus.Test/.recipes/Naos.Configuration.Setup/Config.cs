@@ -9,15 +9,25 @@
 
 namespace Naos.Recipes.Configuration.Setup
 {
+    using System;
+    using System.Collections.Generic;
+    using System.IO;
+    using System.Linq;
+
     using Its.Configuration;
 
     using Naos.Serialization.Domain;
     using Naos.Serialization.Json;
 
+    using OBeautifulCode.Collection.Recipes;
+
+    using Spritely.Recipes;
+
+    using static System.FormattableString;
+
     /// <summary>
     /// Static class to hold logic to setup configuration.
     /// </summary>
-    [System.Diagnostics.DebuggerStepThrough]
     [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
     [System.CodeDom.Compiler.GeneratedCode("Naos.Recipes", "See package version number")]
     internal static class Config
@@ -30,23 +40,72 @@ namespace Naos.Recipes.Configuration.Setup
         public const string CommonPrecedence = "Common";
 
         /// <summary>
-        /// Set the precedence in Its.Configuration to the supplied environment followed by "Common".
+        /// Set up serialization logic for Newtonsoft and Its.Configuration to use when reading settings.
         /// </summary>
-        /// <param name="environment">Environment name that matches the configuration folder in ".config".</param>
-        public static void SetupForUnitTest(string environment)
+        /// <param name="announcer">Optional announcer to communicate setup state; DEFAULT is null.</param>
+        public static void ConfigureSerialization(Action<string> announcer = null)
         {
-            Settings.Reset();
+            void NullAnnouncer(string message)
+            {
+                /* no-op */
+            }
 
-            SetupSerialization();
-            Settings.Precedence = new[] { environment, CommonPrecedence };
+            var localAnnouncer = announcer ?? NullAnnouncer;
+
+            Settings.Deserialize = (type, serialized) => deserializer.Deserialize(serialized, type);
+            localAnnouncer(Invariant($"Set {nameof(Settings)}.{nameof(Settings.Deserialize)} to use {deserializer.ToString()}"));
         }
 
         /// <summary>
-        /// Set up serialization logic for Newtonsoft and Its.Configuration to use when reading settings.
+        /// Sets the precedence programatically (along with option to include <see cref="CommonPrecedence" /> to the end) and ignores the setting in the Application Config.
         /// </summary>
-        public static void SetupSerialization()
+        /// <param name="precedenceValue">Value to set.</param>
+        /// <param name="includeCommonPrecedenceAtEnd">Optional value indicating whether or not to add the <see cref="CommonPrecedence" /> to the end of the chain; DEFAULT is true.</param>
+        /// <param name="settingsDirectory">Optional settings root directory; DEFAULT is null and will look for a ".config" folder at execution location.</param>
+        /// <param name="announcer">Optional announcer to communicate setup state; DEFAULT is null.</param>
+        public static void ResetConfigureSerializationAndSetValues(string precedenceValue, bool includeCommonPrecedenceAtEnd = true, string settingsDirectory = null, Action<string> announcer = null)
         {
-            Settings.Deserialize = (type, serialized) => deserializer.Deserialize(serialized, type);
+            ResetConfigureSerializationAndSetValues(new[] { precedenceValue }, includeCommonPrecedenceAtEnd, settingsDirectory, announcer);
+        }
+
+        /// <summary>
+        /// Sets the precedence programatically (in order provided along with option to include <see cref="CommonPrecedence" /> to the end) and ignores the setting in the Application Config.
+        /// </summary>
+        /// <param name="precedenceValues">Values to set.</param>
+        /// <param name="includeCommonPrecedenceAtEnd">Optional value indicating whether or not to add the <see cref="CommonPrecedence" /> to the end of the chain; DEFAULT is true.</param>
+        /// <param name="settingsDirectory">Optional settings root directory; DEFAULT is null and will look for a ".config" folder at execution location.</param>
+        /// <param name="announcer">Optional announcer to communicate setup state; DEFAULT is null.</param>
+        public static void ResetConfigureSerializationAndSetValues(IReadOnlyList<string> precedenceValues, bool includeCommonPrecedenceAtEnd = true, string settingsDirectory = null, Action<string> announcer = null)
+        {
+            new { precedenceValues }.Must().NotBeNull().And().NotBeEmptyEnumerable<string>().OrThrowFirstFailure();
+
+            void NullAnnouncer(string message)
+            {
+                /* no-op */
+            }
+
+            var localAnnouncer = announcer ?? NullAnnouncer;
+
+            Settings.Reset();
+            localAnnouncer(Invariant($"Called {nameof(Settings)}.{nameof(Settings.Reset)}."));
+
+            ConfigureSerialization(announcer);
+
+            if (!string.IsNullOrWhiteSpace(settingsDirectory))
+            {
+                Directory.Exists(settingsDirectory).Named(Invariant($"{nameof(settingsDirectory)}-{settingsDirectory}-MustExistToUse")).Must().BeTrue().OrThrowFirstFailure();
+                Settings.SettingsDirectory = settingsDirectory;
+                localAnnouncer(Invariant($"Set {nameof(Settings)}.{nameof(Settings.SettingsDirectory)} to {settingsDirectory}"));
+            }
+
+            var localPrecedences = precedenceValues.ToList();
+            if (includeCommonPrecedenceAtEnd && !localPrecedences.Contains(CommonPrecedence))
+            {
+                localPrecedences.Add(CommonPrecedence);
+            }
+
+            Settings.Precedence = localPrecedences.ToArray();
+            localAnnouncer(Invariant($"Set {nameof(Settings)}.{nameof(Settings.Precedence)} to '{localPrecedences.ToDelimitedString(",")}'"));
         }
     }
 }

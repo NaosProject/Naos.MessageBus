@@ -118,7 +118,7 @@ namespace Naos.MessageBus.Test
 
         public static IManageShares GetShareManager()
         {
-            return new ShareManager(TypeMatchStrategy.NamespaceAndName, SerializerFactory.Instance, CompressorFactory.Instance);
+            return new ShareManager(SerializerFactory.Instance, CompressorFactory.Instance, TypeMatchStrategy.NamespaceAndName);
         }
 
         public static IPostOffice GetInMemoryParcelTrackingSystemBackedPostOffice(List<string> trackingCalls, List<Parcel> trackingSends)

@@ -17,6 +17,8 @@ namespace Naos.MessageBus.Core
 
     using Naos.MessageBus.Domain;
 
+    using Spritely.Recipes;
+
     using static System.FormattableString;
 
     /// <summary>
@@ -30,8 +32,9 @@ namespace Naos.MessageBus.Core
         /// <summary>
         /// Entry point to configure logging.
         /// </summary>
-        /// <param name="messageBusHandlerSettings">Handler settings to use when discovering log processing logic.</param>
-        public static void Setup(MessageBusHarnessSettings messageBusHandlerSettings)
+        /// <param name="logProcessorSettings">Configuration for log processing.</param>
+        /// <param name="announcer">Optional announcer to communicate setup state; DEFAULT is null.</param>
+        public static void Setup(LogProcessorSettings logProcessorSettings, Action<string> announcer = null)
         {
             if (isSetup)
             {
@@ -47,59 +50,67 @@ namespace Naos.MessageBus.Core
 
                 isSetup = true;
 
-                SetupLogProcessor(messageBusHandlerSettings.LogProcessorSettings);
-                WireUpAppDomainHandlers();
+                void NullAnnouncer(string message)
+                {
+                    /* no-op */
+                }
+
+                new { logProcessorSettings }.Must().NotBeNull().OrThrowFirstFailure();
+
+                SetupLogProcessor(logProcessorSettings, announcer ?? NullAnnouncer);
+                WireUpAppDomainHandlers(announcer ?? NullAnnouncer);
             }
         }
 
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Performance", "CA1804:RemoveUnusedLocals", MessageId = "oldLogSubscription", Justification = "Keeping this way for now.")]
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Maintainability", "CA1506:AvoidExcessiveClassCoupling", Justification = "Keeping this way for now.")]
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Reliability", "CA2000:Dispose objects before losing scope", Justification = "Keeping this way for now.")]
-        private static void SetupLogProcessor(LogProcessorSettings logProcessorSettings)
+        private static void SetupLogProcessor(LogProcessorSettings logProcessorSettings, Action<string> announcer)
         {
+            var directoryPath = Path.GetDirectoryName(logProcessorSettings.LogFilePath);
+            directoryPath.Named(Invariant($"directoryFrom-{logProcessorSettings.LogFilePath}-must-be-real-path")).Must().NotBeNull().And().NotBeWhiteSpace().OrThrowFirstFailure();
+            if (logProcessorSettings.CreateDirectoryStructureIfMissing && !Directory.Exists(directoryPath))
+            {
+                Directory.CreateDirectory(directoryPath ?? "won't get here but VS can't figure that out");
+                announcer(Invariant($"{nameof(logProcessorSettings.CreateDirectoryStructureIfMissing)} was {logProcessorSettings.CreateDirectoryStructureIfMissing} and path {directoryPath} did not exist so it was created."));
+            }
+
+            var eventLogSource = GetCallerFriendlyName();
             Log.InternalErrors += (sender, args) =>
                 {
                     var logEntry = (args.LogEntry ?? new LogEntry(Invariant($"Null {nameof(LogEntry)} Supplied to {nameof(Log.InternalErrors)}"))).ToLogString();
-
-                    var eventLog = new EventLog("Application") { Source = GetCallerFriendlyName() };
+                    var eventLog = new EventLog("Application") { Source = eventLogSource };
                     eventLog.WriteEntry(logEntry, EventLogEntryType.Error);
                 };
+            announcer(Invariant($"Wired up internal errors to the Windows Event Log with source: {eventLogSource}."));
 
             // TODO: Trace.Listeners.Add(new TextWriterTraceListener("Log_TextWriterOutput.log", "myListener"));
             var fileLock = new object();
 
-            EventHandler<InstrumentationEventArgs> oldLogSubscription = (sender, args) =>
+            void LogSubscription(object sender, InstrumentationEventArgs args)
             {
-                var logEntry = (args.LogEntry ?? new LogEntry(Invariant($"Null {nameof(LogEntry)} Supplied to {nameof(Log.EntryPosted)}"))).ToLogString() + Environment.NewLine;
-                lock (fileLock)
+                string logMessage = null;
+                if (args.LogEntry != null)
                 {
-                    File.AppendAllText(logProcessorSettings.LogFilePath, logEntry);
-                }
-            };
-
-            EventHandler<InstrumentationEventArgs> logSubscription = (sender, args) =>
-                {
-                    string logMessage = null;
-                    if (args.LogEntry != null)
+                    logMessage = args.LogEntry.Subject?.ToLogString() ?? "Null LogEntry or Subject Supplied to EntryPosted in " + nameof(Logging);
+                    if ((args.LogEntry.Params != null) && args.LogEntry.Params.Any())
                     {
-                        logMessage = args.LogEntry.Subject?.ToLogString() ?? "Null LogEntry or Subject Supplied to EntryPosted in " + nameof(Logging);
-                        if ((args.LogEntry.Params != null) && args.LogEntry.Params.Any())
+                        foreach (var param in args.LogEntry.Params)
                         {
-                            foreach (var param in args.LogEntry.Params)
-                            {
-                                logMessage = logMessage + " - " + param.ToLogString();
-                            }
+                            logMessage = logMessage + " - " + param.ToLogString();
                         }
                     }
+                }
 
-                    var message = DateTime.UtcNow.ToString("o", CultureInfo.InvariantCulture) + ": " + logMessage.ToLogString();
+                var message = DateTime.UtcNow.ToString("o", CultureInfo.InvariantCulture) + ": " + logMessage.ToLogString();
 
-                    lock (fileLock)
-                    {
-                        File.AppendAllText(logProcessorSettings.LogFilePath, message + Environment.NewLine);
-                    }
-                };
+                lock (fileLock)
+                {
+                    File.AppendAllText(logProcessorSettings.LogFilePath, message + Environment.NewLine);
+                }
+            }
 
-            Log.EntryPosted += logSubscription;
+            Log.EntryPosted += LogSubscription;
+            announcer(Invariant($"Wired up all entries to the file: {logProcessorSettings.LogFilePath}."));
         }
 
         private static string GetCallerFriendlyName()
@@ -122,7 +133,7 @@ namespace Naos.MessageBus.Core
             return HostingEnvironment.SiteName;
         }
 
-        private static void WireUpAppDomainHandlers()
+        private static void WireUpAppDomainHandlers(Action<string> announcer)
         {
             AppDomain.CurrentDomain.AssemblyLoad += (o, args) =>
             {
@@ -138,6 +149,7 @@ namespace Naos.MessageBus.Core
             {
                 Log.Write(() => args.ExceptionObject, "Unhandled exception encountered.");
             };
+            announcer(Invariant($"Wired up logging to the event: {nameof(AppDomain.CurrentDomain.UnhandledException)}."));
         }
     }
 }

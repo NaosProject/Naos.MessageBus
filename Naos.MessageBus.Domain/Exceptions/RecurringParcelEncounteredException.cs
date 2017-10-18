@@ -4,12 +4,10 @@
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
-namespace Naos.MessageBus.Core
+namespace Naos.MessageBus.Domain
 {
     using System;
     using System.Runtime.Serialization;
-
-    using Naos.MessageBus.Domain.Exceptions;
 
     /// <summary>
     /// Exception to indicate that a recurring parcel was encountered and perform any special steps before re-sending.

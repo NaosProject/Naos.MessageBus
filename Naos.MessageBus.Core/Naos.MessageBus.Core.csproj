@@ -51,9 +51,8 @@
       <HintPath>..\packages\Naos.Cron.1.0.15\lib\net45\Naos.Cron.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="Naos.Diagnostics.Domain, Version=1.0.8.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Naos.Diagnostics.Domain.1.0.8\lib\net45\Naos.Diagnostics.Domain.dll</HintPath>
-      <Private>True</Private>
+    <Reference Include="Naos.Diagnostics.Domain, Version=1.1.9.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Naos.Diagnostics.Domain.1.1.9\lib\net461\Naos.Diagnostics.Domain.dll</HintPath>
     </Reference>
     <Reference Include="Naos.Serialization.Domain, Version=1.0.35.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\Naos.Serialization.Domain.1.0.35\lib\net461\Naos.Serialization.Domain.dll</HintPath>
@@ -109,7 +108,7 @@
     <Compile Include="Handlers\SendParcelMessageHandler.cs" />
     <Compile Include="Handlers\TopicBeingAffectedMessageHandler.cs" />
     <Compile Include="Handlers\RetryTrackingCodesInSpecificStatusesMessageHandler.cs" />
-    <Compile Include="RecurringParcelEncounteredException.cs" />
+    <Compile Include="HandlerFactoryConfiguration.cs" />
     <Compile Include="Handlers\ShareNowPlusTimeAsExpirationMessageHandler.cs" />
     <Compile Include="Handlers\ShareTrackingCodesMessageHandler.cs" />
     <Compile Include="Handlers\WaitForTrackingCodesToBeInStatusMessageHandler.cs" />
@@ -120,8 +119,8 @@
     <Compile Include="Handlers\ThrowsExceptionMessageHandler.cs" />
     <Compile Include="Handlers\WaitMessageHandler.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="MappedTypeHandlerBuilder.cs" />
-    <Compile Include="ReflectionHandlerBuilder.cs" />
+    <Compile Include="MappedTypeHandlerFactory.cs" />
+    <Compile Include="ReflectionHandlerFactory.cs" />
   </ItemGroup>
   <ItemGroup>
     <AdditionalFiles Include=".analyzers\stylecop.json" />
@@ -129,7 +128,6 @@
     <None Include="app.config" />
     <None Include="packages.config" />
     <Content Include=".analyzers\dictionary.xml" />
-    <Content Include="Settings.StyleCop" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Naos.MessageBus.Domain\Naos.MessageBus.Domain.csproj">

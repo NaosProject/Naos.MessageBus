@@ -12,9 +12,8 @@ namespace Naos.MessageBus.Test
     using Its.Configuration;
 
     using Naos.MessageBus.Domain;
+    using Naos.MessageBus.Hangfire.Harness;
     using Naos.Recipes.Configuration.Setup;
-    using Naos.Serialization.Domain;
-    using Naos.Serialization.Json;
 
     using Spritely.Recipes;
 
@@ -73,7 +72,7 @@ namespace Naos.MessageBus.Test
 
         private static MessageBusHarnessSettings SetupItsConfigAndGetSettingsByPrecedence(string environment)
         {
-            Config.SetupForUnitTest(environment);
+            Config.ResetConfigureSerializationAndSetValues(environment);
 
             return Settings.Get<MessageBusHarnessSettings>();
         }

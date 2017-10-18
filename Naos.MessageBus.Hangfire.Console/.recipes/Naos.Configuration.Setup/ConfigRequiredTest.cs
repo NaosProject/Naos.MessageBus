@@ -32,13 +32,11 @@ namespace Naos.Recipes.Configuration.Setup
                 var errorMessage = "The app.config file is missing or does not specify an Its.Config precedence.  Add the following inside the <configuration> section of your app.config file: " + Environment.NewLine + Environment.NewLine;
                 errorMessage += "<appSettings>" + Environment.NewLine;
                 errorMessage += "  <add key=\"Its.Configuration.Settings.Precedence\" value=\"your-environment-name-1|your-environment-name-2|...\"/>" + Environment.NewLine;
-                errorMessage += "</appSettings>" + Environment.NewLine + Environment.NewLine;
-                errorMessage += $"Note that the '{Config.CommonPrecedence}' environment will be automatically appended to the end of your precedence settings." + Environment.NewLine;
+                errorMessage += "</appSettings>" + Environment.NewLine;
                 throw new InvalidOperationException(errorMessage);
             }
 
-            var environment = Settings.Precedence[0];
-            Config.SetupForUnitTest(environment);
+            Config.ConfigureSerialization();
         }
     }
 }

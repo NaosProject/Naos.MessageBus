@@ -21,10 +21,11 @@ namespace Naos.MessageBus.Hangfire.Harness
     using Its.Configuration;
 
     using Naos.MessageBus.Core;
-    using Naos.MessageBus.Domain;
     using Naos.Recipes.Configuration.Setup;
 
     using Owin;
+
+    using Spritely.Recipes;
 
     /// <summary>
     /// Startup class to optionally load the Hangfire server.
@@ -38,9 +39,11 @@ namespace Naos.MessageBus.Hangfire.Harness
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Performance", "CA1822:MarkMembersAsStatic", Justification = "Non-static is the contract..")]
         public void Configuration(IAppBuilder app)
         {
-            Config.SetupSerialization();
+            Config.ConfigureSerialization();
             var messageBusHandlerSettings = Settings.Get<MessageBusHarnessSettings>();
-            Logging.Setup(messageBusHandlerSettings);
+            new { messageBusHandlerSettings }.Must().NotBeNull().OrThrowFirstFailure();
+
+            Logging.Setup(messageBusHandlerSettings.LogProcessorSettings);
             LogProvider.SetCurrentLogProvider(new ItsLogPassThroughProvider());
 
             var hostRoleSettings =

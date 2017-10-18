@@ -1,5 +1,5 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="ReflectionHandlerBuilder.cs" company="Naos">
+// <copyright file="ReflectionHandlerFactory.cs" company="Naos">
 //    Copyright (c) Naos 2017. All rights reserved.
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
@@ -23,33 +23,33 @@ namespace Naos.MessageBus.Core
     /// <summary>
     /// Implementation of <see cref="IHandlerFactory" /> that will reflect over the assemblies in a directory and load the types as well as any currently loaded types.
     /// </summary>
-    public sealed class ReflectionHandlerBuilder : IHandlerFactory
+    public sealed class ReflectionHandlerFactory : IHandlerFactory
     {
         // ReSharper disable once PrivateFieldCanBeConvertedToLocalVariable - keeping in scope since it configures a lot under the covers and it cannot be disposed...
         private readonly AssemblyLoader assemblyLoader;
 
-        private readonly MappedTypeHandlerBuilder mappedTypeHandlerBuilder;
+        private readonly MappedTypeHandlerFactory mappedTypeHandlerFactory;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="ReflectionHandlerBuilder"/> class.
+        /// Initializes a new instance of the <see cref="ReflectionHandlerFactory"/> class.
         /// </summary>
         /// <param name="typeMatchStrategyForResolvingMessageTypes"><see cref="TypeMatchStrategy"/> to use when finding a handler of a specific message type.</param>
-        public ReflectionHandlerBuilder(TypeMatchStrategy typeMatchStrategyForResolvingMessageTypes)
+        public ReflectionHandlerFactory(TypeMatchStrategy typeMatchStrategyForResolvingMessageTypes)
         {
             var currentlyLoadedAssemblies = AssemblyLoader.GetLoadedAssemblies();
 
             var messageTypeToHandlerTypeMap = new Dictionary<Type, Type>();
             LoadHandlerTypeMapFromAssemblies(messageTypeToHandlerTypeMap, currentlyLoadedAssemblies);
 
-            this.mappedTypeHandlerBuilder = new MappedTypeHandlerBuilder(messageTypeToHandlerTypeMap, typeMatchStrategyForResolvingMessageTypes);
+            this.mappedTypeHandlerFactory = new MappedTypeHandlerFactory(messageTypeToHandlerTypeMap, typeMatchStrategyForResolvingMessageTypes);
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="ReflectionHandlerBuilder"/> class.
+        /// Initializes a new instance of the <see cref="ReflectionHandlerFactory"/> class.
         /// </summary>
         /// <param name="handlerAssemblyPath">Path to the assemblies being searched through to be loaded as message handlers.</param>
         /// <param name="typeMatchStrategyForResolvingMessageTypes"><see cref="TypeMatchStrategy"/> to use when finding a handler of a specific message type.</param>
-        public ReflectionHandlerBuilder(string handlerAssemblyPath, TypeMatchStrategy typeMatchStrategyForResolvingMessageTypes)
+        public ReflectionHandlerFactory(string handlerAssemblyPath, TypeMatchStrategy typeMatchStrategyForResolvingMessageTypes)
         {
             new { handlerAssemblyPath }.Must().NotBeNull().And().NotBeWhiteSpace().OrThrowFirstFailure();
 
@@ -62,7 +62,7 @@ namespace Naos.MessageBus.Core
 
             LoadHandlerTypeMapFromAssemblies(messageTypeToHandlerTypeMap, this.assemblyLoader.FilePathToAssemblyMap.Values);
 
-            this.mappedTypeHandlerBuilder = new MappedTypeHandlerBuilder(messageTypeToHandlerTypeMap, typeMatchStrategyForResolvingMessageTypes);
+            this.mappedTypeHandlerFactory = new MappedTypeHandlerFactory(messageTypeToHandlerTypeMap, typeMatchStrategyForResolvingMessageTypes);
         }
 
         private static void LoadHandlerTypeMapFromAssemblies(Dictionary<Type, Type> messageTypeToHandlerTypeMap, IEnumerable<Assembly> assemblies)
@@ -113,14 +113,14 @@ namespace Naos.MessageBus.Core
         /// <inheritdoc cref="IHandlerFactory" />
         public IHandleMessages BuildHandlerForMessageType(Type messageType)
         {
-            return this.mappedTypeHandlerBuilder.BuildHandlerForMessageType(messageType);
+            return this.mappedTypeHandlerFactory.BuildHandlerForMessageType(messageType);
         }
 
         /// <inheritdoc cref="IDisposable" />
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2213:DisposableFieldsShouldBeDisposed", MessageId = "mappedTypeHandlerBuilder", Justification = "Is disposed.")]
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2213:DisposableFieldsShouldBeDisposed", MessageId = "mappedTypeHandlerFactory", Justification = "Is disposed.")]
         public void Dispose()
         {
-            this.mappedTypeHandlerBuilder?.Dispose();
+            this.mappedTypeHandlerFactory?.Dispose();
             this.assemblyLoader?.Dispose();
         }
     }

@@ -45,7 +45,7 @@ namespace Naos.MessageBus.Hangfire.Harness
 
         private ConcurrentDictionary<Type, object> handlerSharedStateMap;
 
-        private ReflectionHandlerBuilder handlerBuilder;
+        private ReflectionHandlerFactory handlerFactory;
 
         private HarnessStaticDetails harnessStaticDetails;
 
@@ -106,10 +106,10 @@ namespace Naos.MessageBus.Hangfire.Harness
             HandlerToolshed.InitializeSerializerFactory(() => SerializerFactory.Instance);
             HandlerToolshed.InitializeCompressorFactory(() => CompressorFactory.Instance);
 
-            var shareManager = new ShareManager(executorRoleSettings.TypeMatchStrategy, SerializerFactory.Instance, CompressorFactory.Instance);
-            this.handlerBuilder = new ReflectionHandlerBuilder(executorRoleSettings.HandlerAssemblyPath, executorRoleSettings.TypeMatchStrategy);
+            var shareManager = new ShareManager(SerializerFactory.Instance, CompressorFactory.Instance, executorRoleSettings.TypeMatchStrategy);
+            this.handlerFactory = new ReflectionHandlerFactory(executorRoleSettings.HandlerAssemblyPath, executorRoleSettings.TypeMatchStrategy);
 
-            var assemblyDetails = this.handlerBuilder.FilePathToAssemblyMap.Values.Select(SafeFetchAssemblyDetails).ToList();
+            var assemblyDetails = this.handlerFactory.FilePathToAssemblyMap.Values.Select(SafeFetchAssemblyDetails).ToList();
             var machineDetails = MachineDetails.Create();
             this.harnessStaticDetails = new HarnessStaticDetails
                                            {
@@ -121,7 +121,7 @@ namespace Naos.MessageBus.Hangfire.Harness
             this.handlerSharedStateMap = new ConcurrentDictionary<Type, object>();
 
             var dispatcher = new MessageDispatcher(
-                this.handlerBuilder,
+                this.handlerFactory,
                 this.handlerSharedStateMap,
                 executorRoleSettings.ChannelsToMonitor,
                 this.harnessStaticDetails,
@@ -196,11 +196,11 @@ namespace Naos.MessageBus.Hangfire.Harness
         }
 
         /// <inheritdoc cref="IDisposable" />
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2213:DisposableFieldsShouldBeDisposed", MessageId = "handlerBuilder", Justification = "Is disposed.")]
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2213:DisposableFieldsShouldBeDisposed", MessageId = "handlerFactory", Justification = "Is disposed.")]
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2213:DisposableFieldsShouldBeDisposed", MessageId = "backgroundJobServer", Justification = "Is disposed.")]
         public void Dispose()
         {
-            this.handlerBuilder?.Dispose();
+            this.handlerFactory?.Dispose();
             this.backgroundJobServer?.Dispose();
         }
     }

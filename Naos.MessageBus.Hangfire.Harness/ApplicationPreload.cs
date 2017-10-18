@@ -18,8 +18,9 @@ namespace Naos.MessageBus.Hangfire.Harness
     using Its.Log.Instrumentation;
 
     using Naos.MessageBus.Core;
-    using Naos.MessageBus.Domain;
     using Naos.Recipes.Configuration.Setup;
+
+    using Spritely.Recipes;
 
     /// <inheritdoc />
     public class ApplicationPreload : IProcessHostPreloadClient
@@ -33,9 +34,11 @@ namespace Naos.MessageBus.Hangfire.Harness
             {
                 try
                 {
-                    Config.SetupSerialization();
+                    Config.ConfigureSerialization();
                     var messageBusHandlerSettings = Settings.Get<MessageBusHarnessSettings>();
-                    Logging.Setup(messageBusHandlerSettings);
+                    new { messageBusHandlerSettings }.Must().NotBeNull().OrThrowFirstFailure();
+
+                    Logging.Setup(messageBusHandlerSettings.LogProcessorSettings);
                     LogProvider.SetCurrentLogProvider(new ItsLogPassThroughProvider());
 
                     var executorRoleSettings =

@@ -21,8 +21,7 @@
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
     <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>
-    </DefineConstants>
+    <DefineConstants>NaosMessageBusHangfireConsole</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <DocumentationFile>bin\Debug\Naos.MessageBus.Hangfire.Console.XML</DocumentationFile>
@@ -33,8 +32,7 @@
     <DebugType>pdbonly</DebugType>
     <Optimize>false</Optimize>
     <OutputPath>bin\Release\</OutputPath>
-    <DefineConstants>
-    </DefineConstants>
+    <DefineConstants>NaosMessageBusHangfireConsole</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <DocumentationFile>bin\Release\Naos.MessageBus.Hangfire.Console.XML</DocumentationFile>
@@ -87,8 +85,8 @@
       <HintPath>..\packages\Naos.Cron.1.0.15\lib\net45\Naos.Cron.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="Naos.Diagnostics.Domain, Version=1.0.8.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Naos.Diagnostics.Domain.1.0.8\lib\net45\Naos.Diagnostics.Domain.dll</HintPath>
+    <Reference Include="Naos.Diagnostics.Domain, Version=1.1.9.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Naos.Diagnostics.Domain.1.1.9\lib\net461\Naos.Diagnostics.Domain.dll</HintPath>
     </Reference>
     <Reference Include="Naos.Serialization.Bson, Version=1.0.35.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\Naos.Serialization.Bson.1.0.35\lib\net461\Naos.Serialization.Bson.dll</HintPath>
@@ -142,6 +140,8 @@
   <ItemGroup>
     <Compile Include=".recipes\Naos.Configuration.Setup\Config.cs" />
     <Compile Include=".recipes\Naos.Configuration.Setup\ConfigRequiredTest.cs" />
+    <Compile Include=".recipes\OBeautifulCode.Collection\EnumerableExtensions.cs" />
+    <Compile Include=".recipes\OBeautifulCode.String\StringExtensions.cs" />
     <Compile Include=".recipes\Spritely.MustValidation\MakeRule.cs" />
     <Compile Include=".recipes\Spritely.MustValidation\MustExtensions.cs" />
     <Compile Include=".recipes\Spritely.MustValidation\RuleExtensions.cs" />
@@ -149,6 +149,7 @@
     <Compile Include=".recipes\Spritely.MustValidation\ValidatedNotNullAttribute.cs" />
     <Compile Include="DispatcherFactoryJobActivator.cs" />
     <Compile Include="GlobalSuppressions.cs" />
+    <Compile Include="CommandLineAbstraction.cs" />
     <Compile Include="ItsLogPassThroughProvider.cs" />
     <Compile Include="HangfireHarnessManager.cs" />
     <Compile Include="Program.cs" />
@@ -156,12 +157,19 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include=".analyzers\dictionary.xml" />
-    <Content Include=".config\ExampleExecutor\MessageBusHarnessSettings.json" />
+    <Content Include=".config\ExampleDevelopment\HandlerFactoryConfiguration.json" />
     <AdditionalFiles Include=".analyzers\stylecop.json" />
     <None Include=".analyzers\release.ruleset" />
+    <Content Include=".config\ExampleDevelopment\LaunchConfiguration.json" />
+    <Content Include=".config\ExampleDevelopment\LogProcessorSettings.json" />
+    <Content Include=".config\ExampleDevelopment\MessageBusConnectionConfiguration.json" />
+    <Content Include=".config\ExampleProduction\HandlerFactoryConfiguration.json" />
+    <Content Include=".config\ExampleProduction\LaunchConfiguration.json" />
+    <Content Include=".config\ExampleProduction\LogProcessorSettings.json" />
+    <Content Include=".config\ExampleProduction\MessageBusConnectionConfiguration.json" />
     <None Include="App.config" />
+    <None Include="Naos.MessageBus.Hangfire.Bootstrapper.recipe-nuspec" />
     <None Include="packages.config" />
-    <Content Include="Settings.StyleCop" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Naos.MessageBus.Core\Naos.MessageBus.Core.csproj">

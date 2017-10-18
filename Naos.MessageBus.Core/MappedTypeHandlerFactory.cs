@@ -1,5 +1,5 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="MappedTypeHandlerBuilder.cs" company="Naos">
+// <copyright file="MappedTypeHandlerFactory.cs" company="Naos">
 //    Copyright (c) Naos 2017. All rights reserved.
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
@@ -24,7 +24,7 @@ namespace Naos.MessageBus.Core
     /// Implementation of <see cref="IHandlerFactory" /> that will construct the handler using default constructor of provided type mapping.
     /// </summary>
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1063:ImplementIDisposableCorrectly", Justification = "No unmanaged resources.")]
-    public sealed class MappedTypeHandlerBuilder : IHandlerFactory
+    public sealed class MappedTypeHandlerFactory : IHandlerFactory
     {
         private static readonly TypeComparer InternalTypeComparer = new TypeComparer(TypeMatchStrategy.NamespaceAndName);
 
@@ -33,11 +33,11 @@ namespace Naos.MessageBus.Core
         private readonly TypeMatchStrategy typeMatchStrategyForComparingMessageTypes;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="MappedTypeHandlerBuilder"/> class.
+        /// Initializes a new instance of the <see cref="MappedTypeHandlerFactory"/> class.
         /// </summary>
         /// <param name="messageTypeToHandlerTypeMap">Map of message types to a concreate handler type to be constructed using default constructor.</param>
         /// <param name="typeMatchStrategyForComparingMessageTypes">Type match strategy to use when looking up the handler.</param>
-        public MappedTypeHandlerBuilder(IReadOnlyDictionary<Type, Type> messageTypeToHandlerTypeMap, TypeMatchStrategy typeMatchStrategyForComparingMessageTypes)
+        public MappedTypeHandlerFactory(IReadOnlyDictionary<Type, Type> messageTypeToHandlerTypeMap, TypeMatchStrategy typeMatchStrategyForComparingMessageTypes)
         {
             new { handlerTypeMap = messageTypeToHandlerTypeMap }.Must().NotBeNull().And().NotBeWhiteSpace().OrThrowFirstFailure();
 

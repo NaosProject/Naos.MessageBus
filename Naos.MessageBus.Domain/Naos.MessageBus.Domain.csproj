@@ -47,9 +47,8 @@
       <HintPath>..\packages\Naos.Cron.1.0.15\lib\net45\Naos.Cron.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="Naos.Diagnostics.Domain, Version=1.0.8.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Naos.Diagnostics.Domain.1.0.8\lib\net45\Naos.Diagnostics.Domain.dll</HintPath>
-      <Private>True</Private>
+    <Reference Include="Naos.Diagnostics.Domain, Version=1.1.9.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Naos.Diagnostics.Domain.1.1.9\lib\net461\Naos.Diagnostics.Domain.dll</HintPath>
     </Reference>
     <Reference Include="Naos.Serialization.Domain, Version=1.0.35.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\Naos.Serialization.Domain.1.0.35\lib\net461\Naos.Serialization.Domain.dll</HintPath>
@@ -81,13 +80,14 @@
     <Compile Include=".recipes\Spritely.SecureString\SecureString.cs" />
     <Compile Include="ChannelRouter.cs" />
     <Compile Include="Exceptions\FailedToFindHandlerException.cs" />
+    <Compile Include="Exceptions\RecurringParcelEncounteredException.cs" />
     <Compile Include="HandlerToolshed.cs" />
+    <Compile Include="LaunchConfiguration.cs" />
     <Compile Include="ShareManager.cs" />
     <Compile Include="Sharing\IManageShares.cs" />
     <Compile Include="IHandlerFactory.cs" />
     <Compile Include="IStuffAndOpenEnvelopes.cs" />
     <Compile Include="ITrackActiveMessages.cs" />
-    <Compile Include="MessageBusHarnessRoleSettingsBase.cs" />
     <Compile Include="SynchronizedPostOffice.cs" />
     <Compile Include="UnitOfWork\IShareUnitOfWorkResults.cs" />
     <Compile Include="UnitOfWork\UnitOfWorkOutcome.cs" />
@@ -159,7 +159,6 @@
     <AdditionalFiles Include=".analyzers\stylecop.json" />
     <None Include=".analyzers\release.ruleset" />
     <None Include="packages.config" />
-    <None Include="Settings.StyleCop" />
   </ItemGroup>
   <ItemGroup>
     <Analyzer Include="..\packages\StyleCop.Analyzers.1.0.2\analyzers\dotnet\cs\StyleCop.Analyzers.CodeFixes.dll" />
