@@ -20,6 +20,6 @@
     <file src="HangfireHarnessManager.cs" target="content\net45\.recipes\Naos.MessageBus\HangfireHarnessManager.cs" />
     <file src="ItsLogPassThroughProvider.cs" target="content\net45\.recipes\Naos.MessageBus\ItsLogPassThroughProvider.cs" />
     <file src="App.config" target="content\net45\Example.App.config" />
-    <file src=".config" />
+    <file src=".config\**" target="content\net45\" />
   </files>
 </package>
