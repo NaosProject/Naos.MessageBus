@@ -16,7 +16,6 @@
   <files>
     <file src="Program.cs" target="content\net45\Program.cs.pp" />
     <file src="CommandLineAbstraction.cs" target="content\net45\CommandLineAbstractionExample.cs.pp" />
-    <file src="Logging.cs" target="content\net45\.recipes\Naos.MessageBus\Logging.cs" />
     <file src="DispatcherFactoryJobActivator.cs" target="content\net45\.recipes\Naos.MessageBus\DispatcherFactoryJobActivator.cs" />
     <file src="HangfireHarnessManager.cs" target="content\net45\.recipes\Naos.MessageBus\HangfireHarnessManager.cs" />
     <file src="ItsLogPassThroughProvider.cs" target="content\net45\.recipes\Naos.MessageBus\ItsLogPassThroughProvider.cs" />
