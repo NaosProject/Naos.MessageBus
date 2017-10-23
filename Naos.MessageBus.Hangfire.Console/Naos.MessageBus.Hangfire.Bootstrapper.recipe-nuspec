@@ -16,8 +16,8 @@
     </dependencies>
   </metadata>
   <files>
-    <file src="Program.cs" target="content\net45\Example.Program.cs.pp" />
-    <file src="CommandLineAbstraction.cs" target="content\net45\Example.CommandLineAbstraction.cs.pp" />
+    <file src="Program.cs.pp" target="content\net45\Example.Program.cs.pp" />
+    <file src="CommandLineAbstraction.cs.pp" target="content\net45\Example.CommandLineAbstraction.cs.pp" />
     <file src="App.config" target="content\net45\Example.App.config" />
     <file src=".config\**" target="content\net45\.config\" />
     <file src="DispatcherFactoryJobActivator.cs" target="content\net45\.recipes\Naos.MessageBus\DispatcherFactoryJobActivator.cs" />
