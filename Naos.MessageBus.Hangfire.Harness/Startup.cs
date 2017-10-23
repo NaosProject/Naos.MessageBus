@@ -20,6 +20,7 @@ namespace Naos.MessageBus.Hangfire.Harness
 
     using Its.Configuration;
 
+    using Naos.Logging.Domain;
     using Naos.MessageBus.Core;
     using Naos.Recipes.Configuration.Setup;
 
@@ -43,7 +44,7 @@ namespace Naos.MessageBus.Hangfire.Harness
             var messageBusHandlerSettings = Settings.Get<MessageBusHarnessSettings>();
             new { messageBusHandlerSettings }.Must().NotBeNull().OrThrowFirstFailure();
 
-            Logging.Setup(messageBusHandlerSettings.LogProcessorSettings);
+            LogProcessing.Instance.Setup(messageBusHandlerSettings.LogProcessorSettings);
             LogProvider.SetCurrentLogProvider(new ItsLogPassThroughProvider());
 
             var hostRoleSettings =

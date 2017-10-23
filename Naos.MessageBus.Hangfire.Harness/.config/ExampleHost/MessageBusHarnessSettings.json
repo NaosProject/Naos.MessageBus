@@ -5,7 +5,13 @@
             "serverName": "MyHangfireServer"
         }
     ],
-    "logProcessorSettings": { 
-        "logFilePath": "D:\\Logs\\LogFile.txt"
+    "logProcessorSettings": {
+        "configurations": [
+            {
+                "logFilePath": "D:\\Logs\\LogFile.txt",
+                "createDirectoryStructureIfMissing": true
+            }
+        ]
     }
+
 }

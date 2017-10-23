@@ -20,8 +20,14 @@ namespace $rootnamespace$
     using Its.Log.Instrumentation;
 
     using Naos.Diagnostics.Domain;
+    using Naos.Logging.Domain;
     using Naos.MessageBus.Core;
     using Naos.MessageBus.Domain;
+
+#if !NaosMessageBusHangfireConsole
+    using Naos.MessageBus.Hangfire.Bootstrapper;
+#endif
+
     using Naos.Recipes.Configuration.Setup;
 
     using OBeautifulCode.Collection.Recipes;
@@ -176,7 +182,7 @@ namespace $rootnamespace$
              * work if there is already one in place.                                    *
              *---------------------------------------------------------------------------*/
             var logProcessorSettings = Settings.Get<LogProcessorSettings>();
-            Logging.Setup(logProcessorSettings, Console.WriteLine);
+            LogProcessing.Instance.Setup(logProcessorSettings, Console.WriteLine);
         }
 
         /// <summary>

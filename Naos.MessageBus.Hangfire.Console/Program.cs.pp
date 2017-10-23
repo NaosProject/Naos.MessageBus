@@ -19,7 +19,11 @@ namespace $rootnamespace$
     /// <summary>
     /// Main entry point of the application.
     /// </summary>
+#if NaosMessageBusHangfireConsole
     public static class Program
+#else
+    public static class ExampleProgram
+#endif
     {
         /// <summary>
         /// Main entry point.

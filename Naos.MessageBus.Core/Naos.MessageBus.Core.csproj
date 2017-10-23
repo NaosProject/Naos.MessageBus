@@ -113,7 +113,6 @@
     <Compile Include="Handlers\ShareTrackingCodesMessageHandler.cs" />
     <Compile Include="Handlers\WaitForTrackingCodesToBeInStatusMessageHandler.cs" />
     <Compile Include="Handlers\FetchAndShareLatestTopicStatusReportsMessageHandler.cs" />
-    <Compile Include="Logging.cs" />
     <Compile Include="MessageDispatcher.cs" />
     <Compile Include="Handlers\TopicWasAffectedMessageHandler.cs" />
     <Compile Include="Handlers\ThrowsExceptionMessageHandler.cs" />

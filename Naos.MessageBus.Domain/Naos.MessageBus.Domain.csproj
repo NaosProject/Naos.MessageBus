@@ -138,7 +138,6 @@
     <Compile Include="Sharing\IShare.cs" />
     <Compile Include="Sharing\IShareTrackingCodes.cs" />
     <Compile Include="Tracking\IGetTrackingReports.cs" />
-    <Compile Include="LogProcessorSettings.cs" />
     <Compile Include="MessageSequence.cs" />
     <Compile Include="Tracking\AffectedItem.cs" />
     <Compile Include="Messages\NullMessage.cs" />

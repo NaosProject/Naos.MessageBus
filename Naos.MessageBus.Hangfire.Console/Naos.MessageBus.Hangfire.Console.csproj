@@ -88,6 +88,9 @@
     <Reference Include="Naos.Diagnostics.Domain, Version=1.1.9.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\Naos.Diagnostics.Domain.1.1.9\lib\net461\Naos.Diagnostics.Domain.dll</HintPath>
     </Reference>
+    <Reference Include="Naos.Logging.Domain, Version=1.0.1.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Naos.Logging.Domain.1.0.1\lib\net461\Naos.Logging.Domain.dll</HintPath>
+    </Reference>
     <Reference Include="Naos.Serialization.Bson, Version=1.0.35.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\Naos.Serialization.Bson.1.0.35\lib\net461\Naos.Serialization.Bson.dll</HintPath>
     </Reference>

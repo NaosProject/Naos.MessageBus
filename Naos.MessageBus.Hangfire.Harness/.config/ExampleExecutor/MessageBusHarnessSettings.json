@@ -11,6 +11,12 @@
         }
     ],
     "logProcessorSettings": {
-        "logFilePath": "D:\\Logs\\LogFile.txt"
+        "configurations": [
+            {
+                "logFilePath": "D:\\Logs\\LogFile.txt",
+                "createDirectoryStructureIfMissing": true
+            }
+        ]
     }
+
 }

@@ -1,4 +1,8 @@
 ﻿{
-    "logFilePath": "D:\\Logs\\LogFile-Development.txt",
-    "createDirectoryStructureIfMissing": true
+    "configurations": [
+        {
+            "logFilePath": "D:\\Logs\\LogFile-Development.txt",
+            "createDirectoryStructureIfMissing": true
+        }
+    ]
 }

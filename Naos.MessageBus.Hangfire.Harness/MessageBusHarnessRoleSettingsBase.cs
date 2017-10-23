@@ -10,6 +10,7 @@ namespace Naos.MessageBus.Hangfire.Harness
     using System.Collections.Generic;
     using System.ComponentModel;
 
+    using Naos.Logging.Domain;
     using Naos.MessageBus.Domain;
 
     using OBeautifulCode.TypeRepresentation;
