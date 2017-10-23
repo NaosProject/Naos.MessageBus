@@ -6,20 +6,22 @@
     <description>Recipe that installs the basic classes and references needed to run a Hangfire MessageBus Harness.  Provides clear extension points for registering message handlers, adding logging, error handling, etc.</description>
     <dependencies>
       <dependency id="CLAP" version="[4.6,)" />
-      <dependency id="Naos.MessageBus.Core" version="[1.1.0,)" />
+      <dependency id="Naos.MessageBus.Core" version="[$version$,)" />
+      <dependency id="Naos.MessageBus.Hangfire.Sender" version="[$version$,)" />
       <dependency id="Naos.Recipes.Configuration.Setup" version="[1.0.56,)" />
       <dependency id="Naos.Serialization.Factory" version="[1.0.35,)" />
+      <dependency id="Hangfire.SqlServer" version="[1.5.9]" />
       <dependency id="OBeautifulCode.Collection.Recipes.EnumerableExtensions" version="[1.0.16,)" />
       <dependency id="Spritely.Recipes.MustValidation" version="[0.6.3,)" />
     </dependencies>
   </metadata>
   <files>
-    <file src="Program.cs" target="content\net45\Program.cs.pp" />
-    <file src="CommandLineAbstraction.cs" target="content\net45\CommandLineAbstractionExample.cs.pp" />
+    <file src="Program.cs" target="content\net45\Example.Program.cs.pp" />
+    <file src="CommandLineAbstraction.cs" target="content\net45\Example.CommandLineAbstraction.cs.pp" />
+    <file src="App.config" target="content\net45\Example.App.config" />
+    <file src=".config\**" target="content\net45\.config\" />
     <file src="DispatcherFactoryJobActivator.cs" target="content\net45\.recipes\Naos.MessageBus\DispatcherFactoryJobActivator.cs" />
     <file src="HangfireHarnessManager.cs" target="content\net45\.recipes\Naos.MessageBus\HangfireHarnessManager.cs" />
     <file src="ItsLogPassThroughProvider.cs" target="content\net45\.recipes\Naos.MessageBus\ItsLogPassThroughProvider.cs" />
-    <file src="App.config" target="content\net45\Example.App.config" />
-    <file src=".config\**" target="content\net45\" />
   </files>
 </package>

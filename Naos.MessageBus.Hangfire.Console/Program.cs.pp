@@ -1,5 +1,5 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="Program.cs" company="Naos">
+// <copyright file="Program.cs.pp" company="Naos">
 //    Copyright (c) Naos 2017. All rights reserved.
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
@@ -11,7 +11,6 @@ namespace $rootnamespace$
 #endif
 {
     using System;
-    using System.Reflection;
 
     using CLAP;
 
@@ -35,7 +34,7 @@ namespace $rootnamespace$
                  * This is just a pass through to the CLAP implementation of the harness,    *
                  * it will parse the command line arguments and provide multiple entry       *
                  * points as configured.  The recipe will install a file named               *
-                 * 'CommandLineAbstractionExample' which should be renamed to                *
+                 * 'ExampleCommandLineAbstraction' which should be renamed to                *
                  * 'CommandLineAbstraction' to compile, this will prevent future package     *
                  * updates from overwriting any custom logic.                                *
                  *---------------------------------------------------------------------------*/

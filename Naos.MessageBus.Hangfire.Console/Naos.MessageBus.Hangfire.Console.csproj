@@ -149,10 +149,9 @@
     <Compile Include=".recipes\Spritely.MustValidation\ValidatedNotNullAttribute.cs" />
     <Compile Include="DispatcherFactoryJobActivator.cs" />
     <Compile Include="GlobalSuppressions.cs" />
-    <Compile Include="CommandLineAbstraction.cs" />
     <Compile Include="ItsLogPassThroughProvider.cs" />
     <Compile Include="HangfireHarnessManager.cs" />
-    <Compile Include="Program.cs" />
+    <Compile Include="Program.cs.pp" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -168,6 +167,7 @@
     <Content Include=".config\ExampleProduction\LogProcessorSettings.json" />
     <Content Include=".config\ExampleProduction\MessageBusConnectionConfiguration.json" />
     <None Include="App.config" />
+    <Compile Include="CommandLineAbstraction.cs.pp" />
     <None Include="Naos.MessageBus.Hangfire.Bootstrapper.recipe-nuspec" />
     <None Include="packages.config" />
   </ItemGroup>

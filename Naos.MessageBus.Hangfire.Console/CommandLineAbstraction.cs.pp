@@ -1,5 +1,5 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="CommandLineAbstraction.cs" company="Naos">
+// <copyright file="CommandLineAbstraction.cs.pp" company="Naos">
 //    Copyright (c) Naos 2017. All rights reserved.
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
@@ -36,7 +36,7 @@ namespace $rootnamespace$
 #if NaosMessageBusHangfireConsole
     public class CommandLineAbstraction
 #else
-    public class CommandLineAbstractionExample
+    public class ExampleCommandLineAbstraction
 #endif
     {
         /// <summary>
