@@ -6,6 +6,7 @@
 
 namespace Naos.MessageBus.Persistence
 {
+    using System;
     using System.Collections.Generic;
 
     using Its.Validation;
@@ -21,6 +22,15 @@ namespace Naos.MessageBus.Persistence
     /// </summary>
     public class Create : ConstructorCommand<Shipment>
     {
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Create"/> class.
+        /// </summary>
+        /// <param name="id">The unique identifier.</param>
+        public Create(Guid id)
+            : base(id)
+        {
+        }
+
         /// <inheritdoc />
         public override IValidationRule<Shipment> Validator => new ValidationPlan<Shipment>();
 

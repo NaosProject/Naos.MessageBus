@@ -44,6 +44,7 @@ namespace Naos.MessageBus.Persistence
         /// <param name="eventPersistenceConnectionConfiguration">Connection string to the event persistence.</param>
         /// <param name="readModelPersistenceConnectionConfiguration">Connection string to the read model persistence.</param>
         /// <param name="retryCount">Number of retries to perform if error encountered (default is 5).</param>
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Maintainability", "CA1506:AvoidExcessiveClassCoupling", Justification = "Keeping this way.")]
         public ParcelTrackingSystem(ICourier courier, IStuffAndOpenEnvelopes envelopeMachine, EventPersistenceConnectionConfiguration eventPersistenceConnectionConfiguration, ReadModelPersistenceConnectionConfiguration readModelPersistenceConnectionConfiguration, int retryCount = 5)
         {
             new { courier, envelopeMachine, eventPersistenceConnectionConfiguration, readModelPersistenceConnectionConfiguration }.Must().NotBeNull().OrThrowFirstFailure();
@@ -73,9 +74,14 @@ namespace Naos.MessageBus.Persistence
             // CreateCommand will throw without having authorization - just opening for all in this example
             Authorization<Shipment>.AuthorizeAllCommands();
 
+            void NullSchedulerConfiguration(EventStoreConfiguration eventStoreConfiguration)
+            {
+                 /* no-op */
+            }
+
             // setup the configuration which can be used to retrieve the repository when needed
             this.configuration = new Configuration();
-            this.configuration.UseSqlEventStore().UseDependency(t => CreateEventStoreDbContext());
+            this.configuration.UseSqlEventStore(NullSchedulerConfiguration).UseDependency(t => CreateEventStoreDbContext());
         }
 
         /// <inheritdoc />
@@ -103,7 +109,7 @@ namespace Naos.MessageBus.Persistence
             var shipment = await this.FetchShipmentAsync(trackingCode.ParcelId);
             if (shipment == null)
             {
-                var commandCreate = new Create { AggregateId = parcel.Id, Parcel = parcel, RecurringSchedule = recurringSchedule };
+                var commandCreate = new Create(parcel.Id) { Parcel = parcel, RecurringSchedule = recurringSchedule };
 
                 // shipment = new Shipment(commandCreate);  // we are not using this approach because it's too slow
                 shipment = new Shipment(parcel.Id);

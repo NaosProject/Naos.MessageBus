@@ -6,6 +6,7 @@
     <description>Recipe that installs the basic classes and references needed to run a Hangfire MessageBus Harness.  Provides clear extension points for registering message handlers, adding logging, error handling, etc.</description>
     <dependencies>
       <dependency id="CLAP" version="[4.6,)" />
+      <dependency id="Naos.Logging.Domain" version="[1.0.4,)" />
       <dependency id="Naos.MessageBus.Core" version="[$version$,)" />
       <dependency id="Naos.MessageBus.Hangfire.Sender" version="[$version$,)" />
       <dependency id="Naos.MessageBus.Persistence" version="[$version$,)" />

@@ -8,6 +8,7 @@
     "logProcessorSettings": {
         "configurations": [
             {
+                "contextsToLog": "all",
                 "logFilePath": "D:\\Logs\\LogFile.txt",
                 "createDirectoryStructureIfMissing": true
             }

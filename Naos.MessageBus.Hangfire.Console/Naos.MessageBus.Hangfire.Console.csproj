@@ -71,15 +71,14 @@
       <HintPath>..\packages\Its.Validation.1.4.4\lib\net45\Its.Validation.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="Microsoft.Its.Domain, Version=0.14.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Its.Domain.0.14.25\lib\net452\Microsoft.Its.Domain.dll</HintPath>
-      <Private>True</Private>
+    <Reference Include="Microsoft.Its.Domain, Version=0.15.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Its.Domain.0.15.26\lib\net452\Microsoft.Its.Domain.dll</HintPath>
     </Reference>
     <Reference Include="MongoDB.Bson, Version=2.4.4.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\MongoDB.Bson.2.4.4\lib\net45\MongoDB.Bson.dll</HintPath>
     </Reference>
-    <Reference Include="Naos.Compression.Domain, Version=1.0.3.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Naos.Compression.Domain.1.0.3\lib\net461\Naos.Compression.Domain.dll</HintPath>
+    <Reference Include="Naos.Compression.Domain, Version=1.0.5.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Naos.Compression.Domain.1.0.5\lib\net461\Naos.Compression.Domain.dll</HintPath>
     </Reference>
     <Reference Include="Naos.Cron, Version=1.0.15.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\Naos.Cron.1.0.15\lib\net45\Naos.Cron.dll</HintPath>
@@ -88,20 +87,20 @@
     <Reference Include="Naos.Diagnostics.Domain, Version=1.1.9.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\Naos.Diagnostics.Domain.1.1.9\lib\net461\Naos.Diagnostics.Domain.dll</HintPath>
     </Reference>
-    <Reference Include="Naos.Logging.Domain, Version=1.0.1.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Naos.Logging.Domain.1.0.1\lib\net461\Naos.Logging.Domain.dll</HintPath>
+    <Reference Include="Naos.Logging.Domain, Version=1.0.4.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Naos.Logging.Domain.1.0.4\lib\net461\Naos.Logging.Domain.dll</HintPath>
     </Reference>
-    <Reference Include="Naos.Serialization.Bson, Version=1.0.35.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Naos.Serialization.Bson.1.0.35\lib\net461\Naos.Serialization.Bson.dll</HintPath>
+    <Reference Include="Naos.Serialization.Bson, Version=1.0.37.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Naos.Serialization.Bson.1.0.37\lib\net461\Naos.Serialization.Bson.dll</HintPath>
     </Reference>
-    <Reference Include="Naos.Serialization.Domain, Version=1.0.35.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Naos.Serialization.Domain.1.0.35\lib\net461\Naos.Serialization.Domain.dll</HintPath>
+    <Reference Include="Naos.Serialization.Domain, Version=1.0.37.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Naos.Serialization.Domain.1.0.37\lib\net461\Naos.Serialization.Domain.dll</HintPath>
     </Reference>
-    <Reference Include="Naos.Serialization.Factory, Version=1.0.35.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Naos.Serialization.Factory.1.0.35\lib\net461\Naos.Serialization.Factory.dll</HintPath>
+    <Reference Include="Naos.Serialization.Factory, Version=1.0.37.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Naos.Serialization.Factory.1.0.37\lib\net461\Naos.Serialization.Factory.dll</HintPath>
     </Reference>
-    <Reference Include="Naos.Serialization.Json, Version=1.0.35.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Naos.Serialization.Json.1.0.35\lib\net461\Naos.Serialization.Json.dll</HintPath>
+    <Reference Include="Naos.Serialization.Json, Version=1.0.37.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Naos.Serialization.Json.1.0.37\lib\net461\Naos.Serialization.Json.dll</HintPath>
     </Reference>
     <Reference Include="Newtonsoft.Json, Version=9.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
       <HintPath>..\packages\Newtonsoft.Json.9.0.1\lib\net45\Newtonsoft.Json.dll</HintPath>

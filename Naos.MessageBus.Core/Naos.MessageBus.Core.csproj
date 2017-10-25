@@ -44,8 +44,8 @@
       <HintPath>..\packages\Its.Log.2.9.14\lib\net451\Its.Log.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="Naos.Compression.Domain, Version=1.0.3.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Naos.Compression.Domain.1.0.3\lib\net461\Naos.Compression.Domain.dll</HintPath>
+    <Reference Include="Naos.Compression.Domain, Version=1.0.5.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Naos.Compression.Domain.1.0.5\lib\net461\Naos.Compression.Domain.dll</HintPath>
     </Reference>
     <Reference Include="Naos.Cron, Version=1.0.15.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\Naos.Cron.1.0.15\lib\net45\Naos.Cron.dll</HintPath>
@@ -54,8 +54,8 @@
     <Reference Include="Naos.Diagnostics.Domain, Version=1.1.9.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\Naos.Diagnostics.Domain.1.1.9\lib\net461\Naos.Diagnostics.Domain.dll</HintPath>
     </Reference>
-    <Reference Include="Naos.Serialization.Domain, Version=1.0.35.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Naos.Serialization.Domain.1.0.35\lib\net461\Naos.Serialization.Domain.dll</HintPath>
+    <Reference Include="Naos.Serialization.Domain, Version=1.0.37.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Naos.Serialization.Domain.1.0.37\lib\net461\Naos.Serialization.Domain.dll</HintPath>
     </Reference>
     <Reference Include="Newtonsoft.Json, Version=9.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
       <HintPath>..\packages\Newtonsoft.Json.9.0.1\lib\net45\Newtonsoft.Json.dll</HintPath>
