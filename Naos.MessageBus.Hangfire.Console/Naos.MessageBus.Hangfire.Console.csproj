@@ -142,6 +142,7 @@
   <ItemGroup>
     <Compile Include=".recipes\Naos.Configuration.Setup\Config.cs" />
     <Compile Include=".recipes\Naos.Configuration.Setup\ConfigRequiredTest.cs" />
+    <Compile Include=".recipes\Naos.Console.Bootstrapper\CommandLineAbstractionBase.cs" />
     <Compile Include=".recipes\OBeautifulCode.Collection\EnumerableExtensions.cs" />
     <Compile Include=".recipes\OBeautifulCode.String\StringExtensions.cs" />
     <Compile Include=".recipes\Spritely.MustValidation\MakeRule.cs" />
@@ -153,7 +154,7 @@
     <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="ItsLogPassThroughProvider.cs" />
     <Compile Include="HangfireHarnessManager.cs" />
-    <Compile Include="Program.cs.pp" />
+    <Compile Include="DefaultMessageBusProgram.cs.pp" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -162,14 +163,19 @@
     <AdditionalFiles Include=".analyzers\stylecop.json" />
     <None Include=".analyzers\release.ruleset" />
     <Content Include=".config\ExampleDevelopment\LaunchConfiguration.json" />
-    <Content Include=".config\ExampleDevelopment\LogProcessorSettings.json" />
     <Content Include=".config\ExampleDevelopment\MessageBusConnectionConfiguration.json" />
     <Content Include=".config\ExampleProduction\HandlerFactoryConfiguration.json" />
     <Content Include=".config\ExampleProduction\LaunchConfiguration.json" />
-    <Content Include=".config\ExampleProduction\LogProcessorSettings.json" />
     <Content Include=".config\ExampleProduction\MessageBusConnectionConfiguration.json" />
+    <Content Include=".config\ExampleDevelopment\LogProcessorSettings.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include=".config\ExampleProduction\LogProcessorSettings.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
     <None Include="App.config" />
-    <Compile Include="CommandLineAbstraction.cs.pp" />
+    <Compile Include="DefaultMessageBusCommandLineAbstraction.cs.pp" />
+    <None Include="Naos.MessageBus.Hangfire.ExampleConfig.recipe-nuspec" />
     <None Include="Naos.MessageBus.Hangfire.Bootstrapper.recipe-nuspec" />
     <None Include="packages.config" />
   </ItemGroup>

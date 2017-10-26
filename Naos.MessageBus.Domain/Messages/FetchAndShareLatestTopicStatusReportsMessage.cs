@@ -1,6 +1,6 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
 // <copyright file="FetchAndShareLatestTopicStatusReportsMessage.cs" company="Naos">
-//    Copyright (c) Naos 2017. All rights reserved.
+//    Copyright (c) Naos 2017. All Rights Reserved.
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 

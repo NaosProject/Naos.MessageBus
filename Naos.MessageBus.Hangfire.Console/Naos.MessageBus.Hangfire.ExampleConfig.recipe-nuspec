@@ -1,0 +1,15 @@
+﻿<?xml version="1.0" ?>
+
+<package>
+  <metadata>
+    <id>Naos.MessageBus.Hangfire.ExampleConfig</id>
+    <description>Recipe that installs examples of configuration for Naos.MessageBus.Hangfire.Bootstrapper.</description>
+    <dependencies>
+      <dependency id="Naos.Recipes.Console.ExampleConfig" version="[1.0.60,)" />
+    </dependencies>
+  </metadata>
+  <files>
+    <file src="App.config" target="content\net45\ExampleMessageBusApp.config" />
+    <file src=".config\**" target="content\net45\.config\" />
+  </files>
+</package>

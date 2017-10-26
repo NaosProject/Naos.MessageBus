@@ -4,6 +4,10 @@
             "contextsToLog": "all",
             "logFilePath": "D:\\Logs\\LogFile-Production.txt",
             "createDirectoryStructureIfMissing": true
-        }
+        },
+		{
+			"contextsToLogConsoleOut": "all",
+			"contextsToLogConsoleError": "allErrors"
+		}
     ]
 }
