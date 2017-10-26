@@ -26,6 +26,7 @@ namespace $rootnamespace$
 
 #if !NaosMessageBusHangfireConsole
     using Naos.MessageBus.Hangfire.Bootstrapper;
+    using Naos.MessageBus.Hangfire.Console;
 #endif
 
     using Naos.Recipes.Configuration.Setup;
