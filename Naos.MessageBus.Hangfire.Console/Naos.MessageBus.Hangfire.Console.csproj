@@ -158,7 +158,7 @@
     <Compile Include=".recipes\Spritely.MustValidation\ValidatedNotNullAttribute.cs" />
     <Compile Include="DispatcherFactoryJobActivator.cs" />
     <Compile Include="GlobalSuppressions.cs" />
-    <None Include="HandlerFactory.cs.pp" />
+    <Compile Include="HandlerFactory.cs.pp" />
     <Compile Include="ItsLogPassThroughProvider.cs" />
     <Compile Include="HangfireHarnessManager.cs" />
     <Compile Include="DefaultMessageBusProgram.cs.pp" />
