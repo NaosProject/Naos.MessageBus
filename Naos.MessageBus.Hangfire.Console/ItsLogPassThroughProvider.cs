@@ -19,8 +19,10 @@ namespace Naos.MessageBus.Hangfire.Bootstrapper
     /// </summary>
     public class ItsLogPassThroughProvider : ILogProvider
     {
+#pragma warning disable CS3002 // Return type is not CLS-compliant - needed for Hangfire
         /// <inheritdoc />
         public ILog GetLogger(string name)
+#pragma warning restore CS3002 // Return type is not CLS-compliant
         {
             return new ItsLogger();
         }
@@ -31,8 +33,10 @@ namespace Naos.MessageBus.Hangfire.Bootstrapper
     /// </summary>
     public class ItsLogger : ILog
     {
+#pragma warning disable CS3001 // Argument type is not CLS-compliant - needed for Hangfire
         /// <inheritdoc />
         public bool Log(LogLevel logLevel, Func<string> messageFunc, Exception exception = null)
+#pragma warning restore CS3001 // Argument type is not CLS-compliant
         {
             // add unique id in case both messages get logged and to differentiate
             var guid = Guid.NewGuid().ToString().ToUpperInvariant();

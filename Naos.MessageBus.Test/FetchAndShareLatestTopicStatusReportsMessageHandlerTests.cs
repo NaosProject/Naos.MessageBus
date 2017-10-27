@@ -7,9 +7,7 @@
 namespace Naos.MessageBus.Test
 {
     using System;
-    using System.Collections.Generic;
     using System.Linq;
-    using System.Threading.Tasks;
 
     using FakeItEasy;
 
@@ -17,7 +15,6 @@ namespace Naos.MessageBus.Test
 
     using Naos.MessageBus.Core;
     using Naos.MessageBus.Domain;
-    using Naos.MessageBus.Domain.Exceptions;
 
     using OBeautifulCode.AutoFakeItEasy;
 
