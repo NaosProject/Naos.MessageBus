@@ -41,7 +41,8 @@ namespace Naos.MessageBus.Domain
         /// <returns>New envelope.</returns>
         public static Envelope ToEnvelope(this AddressedMessage addressedMessage, IStuffAndOpenEnvelopes envelopeMachine, string id = null)
         {
-            new { addressedMessage, envelopeMachine }.Must().NotBeNull().OrThrowFirstFailure();
+            new { addressedMessage }.Must().NotBeNull().OrThrowFirstFailure();
+            new { envelopeMachine }.Must().NotBeNull().OrThrowFirstFailure();
 
             var envelope = envelopeMachine.StuffEnvelope(addressedMessage, id);
             return envelope;
@@ -55,7 +56,8 @@ namespace Naos.MessageBus.Domain
         /// <returns>Message within the envelope.</returns>
         public static IMessage Open(this Envelope envelope, IStuffAndOpenEnvelopes envelopeMachine)
         {
-            new { envelope, envelopeMachine }.Must().NotBeNull().OrThrowFirstFailure();
+            new { envelope }.Must().NotBeNull().OrThrowFirstFailure();
+            new { envelopeMachine }.Must().NotBeNull().OrThrowFirstFailure();
 
             var message = envelopeMachine.OpenEnvelope(envelope);
             return message;
@@ -71,7 +73,8 @@ namespace Naos.MessageBus.Domain
         public static T Open<T>(this Envelope envelope, IStuffAndOpenEnvelopes envelopeMachine)
             where T : IMessage
         {
-            new { envelope, envelopeMachine }.Must().NotBeNull().OrThrowFirstFailure();
+            new { envelope }.Must().NotBeNull().OrThrowFirstFailure();
+            new { envelopeMachine }.Must().NotBeNull().OrThrowFirstFailure();
 
             var message = envelopeMachine.OpenEnvelope<T>(envelope);
             return message;

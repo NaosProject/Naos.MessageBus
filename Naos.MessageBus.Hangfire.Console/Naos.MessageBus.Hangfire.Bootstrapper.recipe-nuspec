@@ -20,9 +20,10 @@
   <files>
     <file src="DefaultMessageBusProgram.cs.pp" target="content\net45\DefaultMessageBusProgram.cs.pp" />
     <file src="DefaultMessageBusCommandLineAbstraction.cs.pp" target="content\net45\DefaultMessageBusCommandLineAbstraction.cs.pp" />
-    <file src="HandlerFactory.cs.pp" target="content\net45\HandlerFactory.cs.pp" />
+    <file src="HandlerFactory.Example.cs.pp" target="content\net45\HandlerFactory.Example.cs.pp" />
     <file src=".recipes\Naos.Console.Bootstrapper\**" target="content\net45\.recipes\Naos.Console.Bootstrapper\" />
     <file src="DispatcherFactoryJobActivator.cs" target="content\net45\.recipes\Naos.MessageBus\DispatcherFactoryJobActivator.cs" />
+    <file src="HandlerFactory.Common.cs.pp" target="content\net45\.recipes\Naos.MessageBus\HandlerFactory.Common.cs.pp" />
     <file src="HangfireHarnessManager.cs" target="content\net45\.recipes\Naos.MessageBus\HangfireHarnessManager.cs" />
     <file src="ItsLogPassThroughProvider.cs" target="content\net45\.recipes\Naos.MessageBus\ItsLogPassThroughProvider.cs" />
   </files>

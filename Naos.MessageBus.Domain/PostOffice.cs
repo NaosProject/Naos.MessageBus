@@ -99,6 +99,9 @@ namespace Naos.MessageBus.Domain
         /// <inheritdoc />
         public TrackingCode SendRecurring(MessageSequence messageSequence, ScheduleBase recurringSchedule)
         {
+            new { messageSequence }.Must().NotBeNull().OrThrowFirstFailure();
+            new { recurringSchedule }.Must().NotBeNull().OrThrowFirstFailure();
+
             if (messageSequence.Id == default(Guid))
             {
                 throw new ArgumentException("Must set the Id of the MessageSequence");
@@ -140,6 +143,9 @@ namespace Naos.MessageBus.Domain
         /// <inheritdoc />
         public TrackingCode SendRecurring(Parcel parcel, ScheduleBase recurringSchedule)
         {
+            new { parcel }.Must().NotBeNull().OrThrowFirstFailure();
+            new { recurringSchedule }.Must().NotBeNull().OrThrowFirstFailure();
+
             if (parcel.Topic != null)
             {
                 if (parcel.SimultaneousRunsStrategy == SimultaneousRunsStrategy.Unspecified)

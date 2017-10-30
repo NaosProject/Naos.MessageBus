@@ -17,6 +17,8 @@ namespace Naos.MessageBus.Persistence
     using Naos.Cron;
     using Naos.MessageBus.Domain;
     using OBeautifulCode.TypeRepresentation;
+
+    using Spritely.Recipes;
     using Spritely.Redo;
     using static System.FormattableString;
 
@@ -66,11 +68,12 @@ namespace Naos.MessageBus.Persistence
         /// <param name="yieldedEvents">Event yielded that need to be updated.</param>
         public void UpdateProjection(IReadOnlyCollection<Event> yieldedEvents)
         {
+            new { yieldedEvents }.Must().NotBeNull().OrThrowFirstFailure();
+
             foreach (var yieldedEvent in yieldedEvents)
             {
                 var eventType = yieldedEvent.GetType().ToTypeDescription();
-                MethodInfo eventMethod;
-                var foundEventMethod = EventTypeDescriptionToUpdateProjectionMethodInfoMap.TryGetValue(eventType, out eventMethod);
+                var foundEventMethod = EventTypeDescriptionToUpdateProjectionMethodInfoMap.TryGetValue(eventType, out MethodInfo eventMethod);
                 if (foundEventMethod)
                 {
                     eventMethod.Invoke(this, new object[] { yieldedEvent });

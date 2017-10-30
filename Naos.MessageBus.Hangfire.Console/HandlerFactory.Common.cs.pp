@@ -16,10 +16,8 @@ namespace $rootnamespace$
     using System;
     using System.Collections.Generic;
     using System.Linq;
-    using System.Threading.Tasks;
 
     using Its.Configuration;
-    using Its.Log.Instrumentation;
 
     using Naos.MessageBus.Core;
     using Naos.MessageBus.Domain;
@@ -28,31 +26,11 @@ namespace $rootnamespace$
 
     using Spritely.Recipes;
 
-    using static System.FormattableString;
-
     /// <summary>
     /// Factory builder to provide logic to resolve the appropriate <see cref="IHandleMessages" /> for a dispatched <see cref="IMessage" /> implementation.
     /// </summary>
-    public static class HandlerFactory
+    public static partial class HandlerFactory
     {
-        /*----------------------------- CHANGE BELOW --------------------------------*/
-
-        /// <summary>
-        /// Map of the message type to the intended handler type.  Must have a parameterless constructor and implement <see cref="IHandleMessages" />,
-        /// however deriving from <see cref="MessageHandlerBase{T}" /> is recommended as it's more straightforward and easier to write.
-        /// </summary>
-        private static readonly IReadOnlyDictionary<Type, Type> MessageTypeToHandlerTypeMap = new Dictionary<Type, Type>
-            {
-                { typeof(ExampleMessage), typeof(ExampleMessageHandler) },
-            };
-
-        /*----------------------------- CHANGE ABOVE --------------------------------*
-         * Should ONLY modify below for very specific situations, if no types are    *
-         * in the above Dictionary (Message->Handler Types) then the reflection only *
-         * Factory will be used, if there are types specified then ONLY those and    *
-         * built in ones will be used.                                               *
-         *---------------------------------------------------------------------------*/
-
         /// <summary>
         /// Build the appropriate <see cref="IHandlerFactory" /> to use.
         /// </summary>
@@ -99,34 +77,6 @@ namespace $rootnamespace$
                           : new ReflectionHandlerFactory(configuration.TypeMatchStrategyForMessageResolution);
 
             return ret;
-        }
-    }
-
-    /// <summary>
-    /// Example of an <see cref="IMessage" />.
-    /// </summary>
-    public class ExampleMessage : IMessage
-    {
-        /// <inheritdoc cref="IMessage" />
-        public string Description { get; set; }
-
-        /// <summary>
-        /// Gets or sets an example of a group of work to process.
-        /// </summary>
-        public string GroupToProcess { get; set; }
-    }
-
-    /// <summary>
-    /// Handler for <see cref="ExampleMessage" />.
-    /// </summary>
-    public class ExampleMessageHandler : MessageHandlerBase<ExampleMessage>
-    {
-        /// <inheritdoc cref="MessageHandlerBase{T}" />
-        public override async Task HandleAsync(ExampleMessage message)
-        {
-            await Task.Run(() => { });
-
-            Log.Write(() => Invariant($"Finished processing group: {message.GroupToProcess}"));
         }
     }
 }

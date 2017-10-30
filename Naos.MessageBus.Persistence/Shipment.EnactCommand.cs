@@ -15,6 +15,8 @@ namespace Naos.MessageBus.Persistence
 
     using OBeautifulCode.TypeRepresentation;
 
+    using Spritely.Recipes;
+
     /// <summary>
     /// Aggregate for capturing shipment tracking events.
     /// </summary>
@@ -30,6 +32,8 @@ namespace Naos.MessageBus.Persistence
         /// <returns>Collection of events that were recorded.</returns>
         public IReadOnlyCollection<Event> EnactCommand(Create command)
         {
+            new { command }.Must().NotBeNull().OrThrowFirstFailure();
+
             var createdEvent = new Created
                               {
                                   PayloadSerializedString = new PayloadCreated(
@@ -49,6 +53,8 @@ namespace Naos.MessageBus.Persistence
         /// <returns>Collection of events that were recorded.</returns>
         public IReadOnlyCollection<Event> EnactCommand(RequestResend command)
         {
+            new { command }.Must().NotBeNull().OrThrowFirstFailure();
+
             var envelopeResendRequestedEvent = new EnvelopeResendRequested
                                                    {
                                                        PayloadSerializedString = new PayloadEnvelopeResendRequested(
@@ -68,6 +74,8 @@ namespace Naos.MessageBus.Persistence
         /// <returns>Collection of events that were recorded.</returns>
         public IReadOnlyCollection<Event> EnactCommand(Send command)
         {
+            new { command }.Must().NotBeNull().OrThrowFirstFailure();
+
             var envelopeSentEvent = new EnvelopeSent
                                         {
                                             PayloadSerializedString = new PayloadEnvelopeSent(
@@ -89,6 +97,8 @@ namespace Naos.MessageBus.Persistence
         /// <returns>Collection of events that were recorded.</returns>
         public IReadOnlyCollection<Event> EnactCommand(Attempt command)
         {
+            new { command }.Must().NotBeNull().OrThrowFirstFailure();
+
             var envelopeDeliveryAttemptedEvent = new EnvelopeDeliveryAttempted
                                                      {
                                                          PayloadSerializedString = new PayloadEnvelopeDeliveryAttempted(
@@ -109,6 +119,8 @@ namespace Naos.MessageBus.Persistence
         /// <returns>Collection of events that were recorded.</returns>
         public IReadOnlyCollection<Event> EnactCommand(Abort command)
         {
+            new { command }.Must().NotBeNull().OrThrowFirstFailure();
+
             var envelopeDeliveryAbortedEvent = new EnvelopeDeliveryAborted
                                                    {
                                                        PayloadSerializedString =
@@ -130,6 +142,8 @@ namespace Naos.MessageBus.Persistence
         /// <returns>Collection of events that were recorded.</returns>
         public IReadOnlyCollection<Event> EnactCommand(Reject command)
         {
+            new { command }.Must().NotBeNull().OrThrowFirstFailure();
+
             var envelopeDeliveryRejectedEvent = new EnvelopeDeliveryRejected
                                                     {
                                                         PayloadSerializedString =
@@ -151,8 +165,11 @@ namespace Naos.MessageBus.Persistence
         /// <param name="command">Command to enact on aggregate.</param>
         /// <param name="envelopeMachine">Envelope machine to open envelopes if necessary.</param>
         /// <returns>Collection of events that were recorded.</returns>
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Maintainability", "CA1506:AvoidExcessiveClassCoupling", Justification = "Keeping this way.")]
         public IReadOnlyCollection<Event> EnactCommand(Deliver command, IStuffAndOpenEnvelopes envelopeMachine)
         {
+            new { command }.Must().NotBeNull().OrThrowFirstFailure();
+
             var events = new List<Event<Shipment>>();
 
             var envelopeDeliveredEvent = new EnvelopeDelivered

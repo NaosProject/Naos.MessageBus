@@ -103,6 +103,8 @@ namespace Naos.MessageBus.Hangfire.Sender
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA2204:Literals should be spelled correctly", MessageId = "requeue", Justification = "Spelling/name is correct.")]
         public void Resend(CrateLocator crateLocator)
         {
+            new { crateLocator }.Must().NotBeNull().OrThrowFirstFailure();
+
             GlobalConfiguration.Configuration.UseSqlServerStorage(this.courierPersistenceConnectionConfiguration.ToSqlServerConnectionString());
             var client = new BackgroundJobClient();
             var success = client.Requeue(crateLocator.CourierTrackingCode);
@@ -122,6 +124,9 @@ namespace Naos.MessageBus.Hangfire.Sender
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1045:DoNotPassTypesByReference", MessageId = "2#", Justification = "Keeping this design for now (channel passed by ref).")]
         public Parcel UncrateParcel(Crate crate, IChannel defaultChannel, ref IChannel channel)
         {
+            new { crate }.Must().NotBeNull().OrThrowFirstFailure();
+            new { defaultChannel }.Must().NotBeNull().OrThrowFirstFailure();
+
             Parcel parcel;
 
             if (crate.RecurringSchedule != null && crate.RecurringSchedule.GetType().ToTypeDescription() != typeof(NullSchedule).ToTypeDescription())

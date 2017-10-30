@@ -254,8 +254,7 @@ namespace Naos.MessageBus.Core
                         shareSets.AddRange(existingSharedInterfaceStates);
                     }
 
-                    var handlerAsShare = handler as IShare;
-                    if (handlerAsShare != null)
+                    if (handler is IShare handlerAsShare)
                     {
                         activity.Trace(() => "Handler is IShare, loading shared properties into parcel for future messages.");
                         var newShareSets = this.shareManager.GetSharedInterfaceStates(handlerAsShare);
@@ -300,8 +299,7 @@ namespace Naos.MessageBus.Core
                         // this will only get set to false if there is existing state AND it is valid
                         var stateNeedsCreation = true;
 
-                        object state;
-                        var haveStateToValidateAndUse = this.handlerSharedStateMap.TryGetValue(handlerActualType, out state);
+                        var haveStateToValidateAndUse = this.handlerSharedStateMap.TryGetValue(handlerActualType, out object state);
                         if (haveStateToValidateAndUse)
                         {
                             activity.Trace(() => "Found pre-generated initial state.");
@@ -311,8 +309,7 @@ namespace Naos.MessageBus.Core
                             if (!valid)
                             {
                                 activity.Trace(() => "State was found to be invalid, not using.");
-                                object removalOutput;
-                                var removedThisTime = this.handlerSharedStateMap.TryRemove(handlerActualType, out removalOutput);
+                                var removedThisTime = this.handlerSharedStateMap.TryRemove(handlerActualType, out object removalOutput);
                                 if (removedThisTime)
                                 {
                                     // this is where you would dispose if it were disposable DO NOT DO THIS!!! this object could be in live handlers that are not finished yet...
@@ -371,8 +368,7 @@ namespace Naos.MessageBus.Core
                 sharedProperties = new List<SharedInterfaceState>();
             }
 
-            var messageAsShare = message as IShare;
-            if (messageAsShare != null && sharedProperties.Count > 0)
+            if (message is IShare messageAsShare && sharedProperties.Count > 0)
             {
                 using (var activity = Log.Enter(() => new { TrackingCode = trackingCode, MessageDescription = message.Description }))
                 {

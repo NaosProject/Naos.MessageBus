@@ -9,6 +9,8 @@ namespace Naos.MessageBus.Persistence
     using Naos.Serialization.Domain;
     using Naos.Serialization.Json;
 
+    using Spritely.Recipes;
+
     /// <summary>
     /// Interface to support common extraction logic.
     /// </summary>
@@ -59,6 +61,8 @@ namespace Naos.MessageBus.Persistence
         public static T ExtractPayload<T>(this IUsePayload<T> payloadedObject)
             where T : class, IPayload
         {
+            new { payloadedObject }.Must().NotBeNull().OrThrowFirstFailure();
+
             return PayloadSerializer.Deserialize<T>(payloadedObject.PayloadSerializedString);
         }
     }

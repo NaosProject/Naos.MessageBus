@@ -59,7 +59,7 @@ namespace Naos.MessageBus.Core
 
             this.assemblyLoader = AssemblyLoader.CreateAndLoadFromDirectory(handlerAssemblyPath);
 
-            LoadHandlerTypeMapFromAssemblies(messageTypeToHandlerTypeMap, this.assemblyLoader.FilePathToAssemblyMap.Values);
+            LoadHandlerTypeMapFromAssemblies(messageTypeToHandlerTypeMap, this.assemblyLoader.FilePathToAssemblyMap.Values.ToList());
 
             this.mappedTypeHandlerFactory = new MappedTypeHandlerFactory(messageTypeToHandlerTypeMap, typeMatchStrategyForResolvingMessageTypes);
         }
@@ -69,8 +69,11 @@ namespace Naos.MessageBus.Core
         /// </summary>
         /// <param name="messageTypeToHandlerTypeMap">Dictionary to load.</param>
         /// <param name="assemblies">Assemblies to reflect over.</param>
-        public static void LoadHandlerTypeMapFromAssemblies(Dictionary<Type, Type> messageTypeToHandlerTypeMap, IEnumerable<Assembly> assemblies)
+        public static void LoadHandlerTypeMapFromAssemblies(Dictionary<Type, Type> messageTypeToHandlerTypeMap, IReadOnlyCollection<Assembly> assemblies)
         {
+            new { messageTypeToHandlerTypeMap }.Must().NotBeNull().OrThrowFirstFailure();
+            new { assemblies }.Must().NotBeNull().OrThrowFirstFailure();
+
             foreach (var assembly in assemblies)
             {
                 Type[] typesInFile;

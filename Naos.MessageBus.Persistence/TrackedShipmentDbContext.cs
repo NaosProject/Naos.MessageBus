@@ -10,6 +10,8 @@ namespace Naos.MessageBus.Persistence
 
     using Naos.MessageBus.Domain;
 
+    using Spritely.Recipes;
+
     /// <summary>
     /// Database context for the read model tracking shipments.
     /// </summary>
@@ -37,6 +39,8 @@ namespace Naos.MessageBus.Persistence
         /// <inheritdoc />
         protected override void OnModelCreating(DbModelBuilder modelBuilder)
         {
+            new { modelBuilder }.Must().NotBeNull().OrThrowFirstFailure();
+
             modelBuilder.Entity<ShipmentForDatabase>().HasKey(s => s.ParcelId);
             modelBuilder.Entity<NoticeForDatabase>().HasKey(s => s.Id);
         }

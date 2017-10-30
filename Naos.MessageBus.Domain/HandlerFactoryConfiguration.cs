@@ -4,14 +4,12 @@
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
-namespace Naos.MessageBus.Core
+namespace Naos.MessageBus.Domain
 {
-    using Naos.MessageBus.Domain;
-
     using OBeautifulCode.TypeRepresentation;
 
     /// <summary>
-    /// Configuration for buildering a <see cref="IHandlerFactory" />.  Only supported for <see cref="ReflectionHandlerFactory" /> right now.
+    /// Configuration for buildering a <see cref="IHandlerFactory" />.
     /// </summary>
     public class HandlerFactoryConfiguration
     {

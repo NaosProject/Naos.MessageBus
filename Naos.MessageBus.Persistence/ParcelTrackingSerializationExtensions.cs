@@ -14,6 +14,8 @@ namespace Naos.MessageBus.Persistence
 
     using OBeautifulCode.TypeRepresentation;
 
+    using Spritely.Recipes;
+
     /// <summary>
     /// Serialization extension methods for serializing items for transport through ParcelTracking.
     /// </summary>
@@ -29,6 +31,8 @@ namespace Naos.MessageBus.Persistence
         /// <returns>Deserialized object.</returns>
         public static T DeserializeMessage<T>(this Envelope envelope)
         {
+            new { envelope }.Must().NotBeNull().OrThrowFirstFailure();
+
             return envelope.SerializedMessage.DeserializePayload<T>(TypeMatchStrategy.NamespaceAndName, MultipleMatchStrategy.NewestVersion);
         }
 
