@@ -22,6 +22,7 @@ namespace Naos.MessageBus.Hangfire.Harness
 
     using Naos.Logging.Domain;
     using Naos.MessageBus.Core;
+    using Naos.MessageBus.Domain;
     using Naos.Recipes.Configuration.Setup;
 
     using Owin;
@@ -41,35 +42,29 @@ namespace Naos.MessageBus.Hangfire.Harness
         public void Configuration(IAppBuilder app)
         {
             Config.ConfigureSerialization();
-            var messageBusHandlerSettings = Settings.Get<MessageBusHarnessSettings>();
-            new { messageBusHandlerSettings }.Must().NotBeNull().OrThrowFirstFailure();
 
-            LogProcessing.Instance.Setup(messageBusHandlerSettings.LogProcessorSettings);
+            var logProcessorSettings = Settings.Get<LogProcessorSettings>();
+            var connectionConfig = Settings.Get<MessageBusConnectionConfiguration>();
+
+            new { logProcessorSettings, connectionConfig }.Must().NotBeNull().OrThrow();
+
+            LogProcessing.Instance.Setup(logProcessorSettings);
             LogProvider.SetCurrentLogProvider(new ItsLogPassThroughProvider());
 
-            var hostRoleSettings =
-                messageBusHandlerSettings.RoleSettings.OfType<MessageBusHarnessRoleSettingsHost>().SingleOrDefault();
+            GlobalConfiguration.Configuration.UseSqlServerStorage(
+                connectionConfig.CourierPersistenceConnectionConfiguration.ToSqlServerConnectionString(),
+                new SqlServerStorageOptions());
 
-            if (hostRoleSettings != null)
-            {
-                GlobalConfiguration.Configuration.UseSqlServerStorage(
-                    messageBusHandlerSettings.ConnectionConfiguration.CourierPersistenceConnectionConfiguration.ToSqlServerConnectionString(),
-                    new SqlServerStorageOptions());
+            // need one worker here to run the default queue (currently only intended to process NullMessages or requeue messages...)
+            var options = new BackgroundJobServerOptions
+                                {
+                                    WorkerCount = 1,
+                                    Queues = new[] { "hangfire.host" },
+                                };
 
-                // need one worker here to run the default queue (currently only intended to process NullMessages or requeue messages...)
-                var options = new BackgroundJobServerOptions
-                                  {
-                                      WorkerCount = 1,
-                                      Queues = new[] { "hangfire.host" },
-                                  };
+            app.UseHangfireServer(options);
 
-                app.UseHangfireServer(options);
-
-                if (hostRoleSettings.RunDashboard)
-                {
-                    app.UseHangfireDashboard();
-                }
-            }
+            app.UseHangfireDashboard();
         }
     }
 }

@@ -19,6 +19,7 @@ namespace Naos.MessageBus.Hangfire.Harness
 
     using Naos.Logging.Domain;
     using Naos.MessageBus.Core;
+    using Naos.MessageBus.Domain;
     using Naos.Recipes.Configuration.Setup;
 
     using Spritely.Recipes;
@@ -36,22 +37,18 @@ namespace Naos.MessageBus.Hangfire.Harness
                 try
                 {
                     Config.ConfigureSerialization();
-                    var messageBusHandlerSettings = Settings.Get<MessageBusHarnessSettings>();
-                    new { messageBusHandlerSettings }.Must().NotBeNull().OrThrowFirstFailure();
 
-                    LogProcessing.Instance.Setup(messageBusHandlerSettings.LogProcessorSettings);
+                    var logProcessorSettings = Settings.Get<LogProcessorSettings>();
+                    var handlerFactoryConfig = Settings.Get<HandlerFactoryConfiguration>();
+                    var connectionConfig = Settings.Get<MessageBusConnectionConfiguration>();
+                    var launchConfig = Settings.Get<LaunchConfiguration>();
+
+                    new { logProcessorSettings, handlerFactoryConfig, connectionConfig, launchConfig }.Must().NotBeNull().OrThrow();
+
+                    LogProcessing.Instance.Setup(logProcessorSettings);
                     LogProvider.SetCurrentLogProvider(new ItsLogPassThroughProvider());
 
-                    var executorRoleSettings =
-                        messageBusHandlerSettings.RoleSettings.OfType<MessageBusHarnessRoleSettingsExecutor>()
-                            .SingleOrDefault();
-
-                    if (executorRoleSettings != null)
-                    {
-                        HangfireBootstrapper.Instance.Start(
-                            messageBusHandlerSettings.ConnectionConfiguration,
-                            executorRoleSettings);
-                    }
+                    HangfireBootstrapper.Instance.Start(handlerFactoryConfig, connectionConfig, launchConfig);
                 }
                 catch (Exception ex)
                 {

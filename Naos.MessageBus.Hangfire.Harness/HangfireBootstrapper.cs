@@ -57,11 +57,10 @@ namespace Naos.MessageBus.Hangfire.Harness
         /// <summary>
         /// Perform a start.
         /// </summary>
+        /// <param name="handlerFactoryConfig">Configuration for the message handlers.</param>
         /// <param name="connectionConfig">Connection information to connect to persistence.</param>
-        /// <param name="executorRoleSettings">Executor role settings.</param>
-        public void Start(
-            MessageBusConnectionConfiguration connectionConfig,
-            MessageBusHarnessRoleSettingsExecutor executorRoleSettings)
+        /// <param name="launchConfig">Configuration for how Hangfire is launched.</param>
+        public void Start(HandlerFactoryConfiguration handlerFactoryConfig, MessageBusConnectionConfiguration connectionConfig, LaunchConfiguration launchConfig)
         {
             lock (this.lockObject)
             {
@@ -74,18 +73,16 @@ namespace Naos.MessageBus.Hangfire.Harness
 
                 HostingEnvironment.RegisterObject(this);
 
-                this.LaunchHangfire(connectionConfig, executorRoleSettings);
+                this.LaunchHangfire(handlerFactoryConfig, connectionConfig, launchConfig);
             }
         }
 
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Maintainability", "CA1506:AvoidExcessiveClassCoupling", Justification = "Keeping for now this project will eventually be removed completely to not use IIS.")]
-        private void LaunchHangfire(
-            MessageBusConnectionConfiguration connectionConfig,
-            MessageBusHarnessRoleSettingsExecutor executorRoleSettings)
+        private void LaunchHangfire(HandlerFactoryConfiguration handlerFactoryConfig, MessageBusConnectionConfiguration connectionConfig, LaunchConfiguration launchConfig)
         {
             var activeMessageTracker = new InMemoryActiveMessageTracker();
 
-            var envelopeMachine = new EnvelopeMachine(PostOffice.MessageSerializationDescription, SerializerFactory.Instance, CompressorFactory.Instance, executorRoleSettings.TypeMatchStrategy);
+            var envelopeMachine = new EnvelopeMachine(PostOffice.MessageSerializationDescription, SerializerFactory.Instance, CompressorFactory.Instance, launchConfig.TypeMatchStrategyForMessageResolution);
 
             var courier = new HangfireCourier(connectionConfig.CourierPersistenceConnectionConfiguration, envelopeMachine);
             var parcelTrackingSystem = new ParcelTrackingSystem(
@@ -106,8 +103,12 @@ namespace Naos.MessageBus.Hangfire.Harness
             HandlerToolshed.InitializeSerializerFactory(() => SerializerFactory.Instance);
             HandlerToolshed.InitializeCompressorFactory(() => CompressorFactory.Instance);
 
-            var shareManager = new ShareManager(SerializerFactory.Instance, CompressorFactory.Instance, executorRoleSettings.TypeMatchStrategy);
-            this.handlerFactory = new ReflectionHandlerFactory(executorRoleSettings.HandlerAssemblyPath, executorRoleSettings.TypeMatchStrategy);
+            var shareManager = new ShareManager(SerializerFactory.Instance, CompressorFactory.Instance, launchConfig.TypeMatchStrategyForMatchingSharingInterfaces);
+            this.handlerFactory = string.IsNullOrWhiteSpace(handlerFactoryConfig.HandlerAssemblyPath)
+                                      ? new ReflectionHandlerFactory(handlerFactoryConfig.TypeMatchStrategyForMessageResolution)
+                                      : new ReflectionHandlerFactory(
+                                          handlerFactoryConfig.HandlerAssemblyPath,
+                                          handlerFactoryConfig.TypeMatchStrategyForMessageResolution);
 
             var assemblyDetails = this.handlerFactory.FilePathToAssemblyMap.Values.Select(SafeFetchAssemblyDetails).ToList();
             var machineDetails = MachineDetails.Create();
@@ -123,7 +124,7 @@ namespace Naos.MessageBus.Hangfire.Harness
             var dispatcher = new MessageDispatcher(
                 this.handlerFactory,
                 this.handlerSharedStateMap,
-                executorRoleSettings.ChannelsToMonitor,
+                launchConfig.ChannelsToMonitor,
                 this.harnessStaticDetails,
                 parcelTrackingSystem,
                 activeMessageTracker,
@@ -133,13 +134,13 @@ namespace Naos.MessageBus.Hangfire.Harness
 
             // configure hangfire to use the DispatcherFactory for getting IDispatchMessages calls
             GlobalConfiguration.Configuration.UseActivator(new DispatcherFactoryJobActivator(dispatcher));
-            GlobalJobFilters.Filters.Add(new AutomaticRetryAttribute { Attempts = executorRoleSettings.RetryCount });
+            GlobalJobFilters.Filters.Add(new AutomaticRetryAttribute { Attempts = launchConfig.MessageDeliveryRetryCount });
 
             var options = new BackgroundJobServerOptions
                               {
-                                  Queues = executorRoleSettings.ChannelsToMonitor.OfType<SimpleChannel>().Select(_ => _.Name).ToArray(),
-                                  SchedulePollingInterval = executorRoleSettings.PollingTimeSpan,
-                                  WorkerCount = executorRoleSettings.WorkerCount,
+                                  Queues = launchConfig.ChannelsToMonitor.OfType<SimpleChannel>().Select(_ => _.Name).ToArray(),
+                                  SchedulePollingInterval = launchConfig.PollingInterval,
+                                  WorkerCount = launchConfig.ConcurrentWorkerCount,
                               };
 
             GlobalConfiguration.Configuration.UseSqlServerStorage(

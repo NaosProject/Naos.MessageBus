@@ -167,10 +167,8 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include=".analyzers\dictionary.xml" />
-    <Content Include=".config\ExampleExecutor\MessageBusHarnessSettings.json" />
     <AdditionalFiles Include=".analyzers\stylecop.json" />
     <Content Include=".analyzers\release.ruleset" />
-    <None Include=".config\ExampleHost\MessageBusHarnessSettings.json" />
     <Compile Include=".recipes\Naos.Configuration.Setup\Config.cs" />
     <Compile Include=".recipes\Naos.Configuration.Setup\ConfigRequiredTest.cs" />
     <Compile Include=".recipes\OBeautifulCode.Collection\EnumerableExtensions.cs" />
@@ -187,7 +185,6 @@
     <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="HangfireBootstrapper.cs" />
     <Compile Include="ItsLogPassThroughProvider.cs" />
-    <Compile Include="MessageBusHarnessRoleSettingsBase.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="DispatcherFactoryJobActivator.cs" />
     <Compile Include="Startup.cs" />
@@ -224,6 +221,46 @@
       <Project>{79c72d99-9c0c-45fa-9bc3-f2b36f63ffb3}</Project>
       <Name>Naos.MessageBus.Persistence</Name>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include=".config\ExampleDevelopment\HandlerFactoryConfiguration.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include=".config\ExampleDevelopment\LaunchConfiguration.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include=".config\ExampleDevelopment\LogProcessorSettings.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include=".config\ExampleDevelopment\MessageBusConnectionConfiguration.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include=".config\ExampleProduction\HandlerFactoryConfiguration.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include=".config\ExampleProduction\LaunchConfiguration.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include=".config\ExampleProduction\LogProcessorSettings.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include=".config\ExampleProduction\MessageBusConnectionConfiguration.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <Import Project="$(VSToolsPath)\WebApplications\Microsoft.WebApplication.targets" Condition="'$(VSToolsPath)' != ''" />

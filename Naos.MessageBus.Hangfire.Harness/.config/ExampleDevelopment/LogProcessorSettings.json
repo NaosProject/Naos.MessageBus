@@ -1,0 +1,13 @@
+﻿{
+    "configurations": [
+        {
+            "contextsToLog": "all",
+            "logFilePath": "D:\\Logs\\LogFile-Development.txt",
+            "createDirectoryStructureIfMissing": true
+        },
+		{
+			"contextsToLogConsoleOut": "all",
+			"contextsToLogConsoleError": "allErrors"
+		}
+    ]
+}

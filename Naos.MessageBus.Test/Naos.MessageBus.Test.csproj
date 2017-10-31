@@ -186,18 +186,36 @@
     <Compile Include="WaitMessageHandlerTests.cs" />
     <AdditionalFiles Include=".analyzers\stylecop.json" />
     <None Include=".analyzers\test.ruleset" />
-    <None Include=".config\Executor\MessageBusHarnessSettings.json">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Include=".config\Host\MessageBusHarnessSettings.json">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
     <Compile Include="ChannelTests.cs" />
     <Compile Include="MessageSenderTest.cs" />
     <Compile Include="ShareManagerTest.cs" />
     <Compile Include="MessageDispatcherTest.cs" />
     <Compile Include="TestItsConfigMessageBusHandlerSettings.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Content Include=".config\ExampleDevelopment\HandlerFactoryConfiguration.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include=".config\ExampleDevelopment\LaunchConfiguration.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include=".config\ExampleDevelopment\LogProcessorSettings.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include=".config\ExampleDevelopment\MessageBusConnectionConfiguration.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include=".config\ExampleProduction\HandlerFactoryConfiguration.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include=".config\ExampleProduction\LaunchConfiguration.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include=".config\ExampleProduction\LogProcessorSettings.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include=".config\ExampleProduction\MessageBusConnectionConfiguration.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
     <None Include="app.config" />
   </ItemGroup>
   <ItemGroup>

@@ -9,11 +9,15 @@ namespace Naos.MessageBus.Test
     using System;
     using System.Linq;
 
+    using FluentAssertions;
+
     using Its.Configuration;
 
     using Naos.MessageBus.Domain;
     using Naos.MessageBus.Hangfire.Harness;
     using Naos.Recipes.Configuration.Setup;
+
+    using OBeautifulCode.TypeRepresentation;
 
     using Spritely.Recipes;
 
@@ -22,59 +26,73 @@ namespace Naos.MessageBus.Test
     public static class TestItsConfigMessageBusHandlerSettings
     {
         [Fact]
-        public static void ItsConfigGetSettings_MessageBusHarnessSettingsHost_ComeOutCorrectly()
+        public static void ItsConfigGetSettings_HandlerFactoryConfiguration_ComeOutCorrectly()
         {
-            var settings = SetupItsConfigAndGetSettingsByPrecedence("Host");
+            // Arrange
+            Config.ResetConfigureSerializationAndSetValues("ExampleDevelopment");
 
-            Assert.NotNull(settings);
-            var expectedConnectionConfiguration = new MessageBusConnectionConfiguration
-                                                      {
-                                                          CourierPersistenceConnectionConfiguration = new CourierPersistenceConnectionConfiguration { Server = "server1", Database = "db", Credentials = new Credentials { User = "user", Password = "password".ToSecureString() } },
-                                                          EventPersistenceConnectionConfiguration = new EventPersistenceConnectionConfiguration { Server = "server2", Database = "db", Credentials = new Credentials { User = "user", Password = "password".ToSecureString() } },
-                                                          ReadModelPersistenceConnectionConfiguration = new ReadModelPersistenceConnectionConfiguration { Server = "server3", Database = "db", Credentials = new Credentials { User = "user", Password = "password".ToSecureString() } }
-                                                      };
+            var expectedHandlerFactoryConfig = new HandlerFactoryConfiguration(TypeMatchStrategy.NamespaceAndName, "I:\\am\\an\\optional\\path\\to\\assemblies\\to\\load\\and\\reflect\\on\\in\\Development");
 
-            Assert.Equal(expectedConnectionConfiguration.CourierPersistenceConnectionConfiguration.Server, settings.ConnectionConfiguration.CourierPersistenceConnectionConfiguration.Server);
-            Assert.Equal(expectedConnectionConfiguration.EventPersistenceConnectionConfiguration.Server, settings.ConnectionConfiguration.EventPersistenceConnectionConfiguration.Server);
-            Assert.Equal(expectedConnectionConfiguration.ReadModelPersistenceConnectionConfiguration.Server, settings.ConnectionConfiguration.ReadModelPersistenceConnectionConfiguration.Server);
+            // Act
+            var actualHandlerFactoryConfig = Settings.Get<HandlerFactoryConfiguration>();
 
-            var hostSettings = settings.RoleSettings.OfType<MessageBusHarnessRoleSettingsHost>().SingleOrDefault();
-            Assert.NotNull(hostSettings);
-            Assert.Equal(true, hostSettings.RunDashboard);
+            // Assert
+            actualHandlerFactoryConfig.Should().NotBeNull();
+            actualHandlerFactoryConfig.HandlerAssemblyPath.Should().Be(expectedHandlerFactoryConfig.HandlerAssemblyPath);
+            actualHandlerFactoryConfig.TypeMatchStrategyForMessageResolution.Should().Be(expectedHandlerFactoryConfig.TypeMatchStrategyForMessageResolution);
         }
 
         [Fact]
-        public static void ItsConfigGetSettings_MessageBusHarnessSettingsExecutor_ComeOutCorrectly()
+        public static void ItsConfigGetSettings_MessageBusConnectionConfiguration_ComeOutCorrectly()
         {
-            var settings = SetupItsConfigAndGetSettingsByPrecedence("Executor");
+            // Arrange
+            Config.ResetConfigureSerializationAndSetValues("ExampleDevelopment");
+
             var expectedConnectionConfiguration = new MessageBusConnectionConfiguration
             {
-                CourierPersistenceConnectionConfiguration = new CourierPersistenceConnectionConfiguration { Server = "server1", Database = "db", Credentials = new Credentials { User = "user", Password = "password".ToSecureString() } },
-                EventPersistenceConnectionConfiguration = new EventPersistenceConnectionConfiguration { Server = "server2", Database = "db", Credentials = new Credentials { User = "user", Password = "password".ToSecureString() } },
-                ReadModelPersistenceConnectionConfiguration = new ReadModelPersistenceConnectionConfiguration { Server = "server3", Database = "db", Credentials = new Credentials { User = "user", Password = "password".ToSecureString() } }
-            };
+                                                          CourierPersistenceConnectionConfiguration = new CourierPersistenceConnectionConfiguration { Server = "hangfire.database.development.my-company.com", Database = "Hangfire", Credentials = new Credentials { User = "sa", Password = "a-good-password".ToSecureString() } },
+                                                          EventPersistenceConnectionConfiguration = new EventPersistenceConnectionConfiguration { Server = "hangfire.database.development.my-company.com", Database = "ParcelTrackingEvents", Credentials = new Credentials { User = "sa", Password = "a-good-password".ToSecureString() } },
+                                                          ReadModelPersistenceConnectionConfiguration = new ReadModelPersistenceConnectionConfiguration { Server = "hangfire.database.development.my-company.com", Database = "ParcelTrackingReadModel", Credentials = new Credentials { User = "sa", Password = "a-good-password".ToSecureString() } }
+                                                      };
 
-            Assert.Equal(expectedConnectionConfiguration.CourierPersistenceConnectionConfiguration.Server, settings.ConnectionConfiguration.CourierPersistenceConnectionConfiguration.Server);
-            Assert.Equal(expectedConnectionConfiguration.EventPersistenceConnectionConfiguration.Server, settings.ConnectionConfiguration.EventPersistenceConnectionConfiguration.Server);
-            Assert.Equal(expectedConnectionConfiguration.ReadModelPersistenceConnectionConfiguration.Server, settings.ConnectionConfiguration.ReadModelPersistenceConnectionConfiguration.Server);
 
-            var hostSettings = settings.RoleSettings.OfType<MessageBusHarnessRoleSettingsHost>().SingleOrDefault();
-            Assert.Null(hostSettings);
-            var executorSettings = settings.RoleSettings.OfType<MessageBusHarnessRoleSettingsExecutor>().SingleOrDefault();
-            Assert.NotNull(executorSettings);
-            Assert.Equal("monkeys", executorSettings.ChannelsToMonitor.OfType<SimpleChannel>().First().Name);
-            Assert.Equal("pandas", executorSettings.ChannelsToMonitor.OfType<SimpleChannel>().Skip(1).First().Name);
-            Assert.Equal(4, executorSettings.WorkerCount);
-            Assert.Equal("I:\\Gets\\My\\Dlls\\Here", executorSettings.HandlerAssemblyPath);
-            Assert.Equal(TimeSpan.FromMinutes(1), executorSettings.PollingTimeSpan);
-            Assert.Equal(TimeSpan.FromMinutes(10), executorSettings.HarnessProcessTimeToLive);
+            // Act
+            var actualConnectionConfiguration = Settings.Get<MessageBusConnectionConfiguration>();
+
+            // Assert
+            actualConnectionConfiguration.Should().NotBeNull();
+            actualConnectionConfiguration.CourierPersistenceConnectionConfiguration.Server.Should().Be(expectedConnectionConfiguration.CourierPersistenceConnectionConfiguration.Server);
+            actualConnectionConfiguration.EventPersistenceConnectionConfiguration.Server.Should().Be(expectedConnectionConfiguration.EventPersistenceConnectionConfiguration.Server);
+            actualConnectionConfiguration.ReadModelPersistenceConnectionConfiguration.Server.Should().Be(expectedConnectionConfiguration.ReadModelPersistenceConnectionConfiguration.Server);
         }
 
-        private static MessageBusHarnessSettings SetupItsConfigAndGetSettingsByPrecedence(string environment)
+        [Fact]
+        public static void ItsConfigGetSettings_LaunchConfiguration_ComeOutCorrectly()
         {
-            Config.ResetConfigureSerializationAndSetValues(environment);
+            // Arrange
+            Config.ResetConfigureSerializationAndSetValues("ExampleDevelopment");
 
-            return Settings.Get<MessageBusHarnessSettings>();
+            var expectedLaunchConfig = new LaunchConfiguration(
+                TimeSpan.FromMinutes(10),
+                TypeMatchStrategy.NamespaceAndName,
+                TypeMatchStrategy.NamespaceAndName,
+                0,
+                TimeSpan.FromMinutes(1),
+                1,
+                new[] { new SimpleChannel("messages_development") });
+
+            // Act
+            var actualLaunchConfig = Settings.Get<LaunchConfiguration>();
+
+            // Assert
+            actualLaunchConfig.Should().NotBeNull();
+            actualLaunchConfig.ChannelsToMonitor.Single().Should().Be(expectedLaunchConfig.ChannelsToMonitor.Single());
+            actualLaunchConfig.ConcurrentWorkerCount.Should().Be(expectedLaunchConfig.ConcurrentWorkerCount);
+            actualLaunchConfig.MessageDeliveryRetryCount.Should().Be(expectedLaunchConfig.MessageDeliveryRetryCount);
+            actualLaunchConfig.PollingInterval.Should().Be(expectedLaunchConfig.PollingInterval);
+            actualLaunchConfig.TimeToLive.Should().Be(expectedLaunchConfig.TimeToLive);
+            actualLaunchConfig.TypeMatchStrategyForMessageResolution.Should().Be(expectedLaunchConfig.TypeMatchStrategyForMessageResolution);
+            actualLaunchConfig.TypeMatchStrategyForMatchingSharingInterfaces.Should().Be(expectedLaunchConfig.TypeMatchStrategyForMatchingSharingInterfaces);
         }
     }
 }
