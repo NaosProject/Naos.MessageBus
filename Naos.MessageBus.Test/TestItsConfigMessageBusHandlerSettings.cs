@@ -72,7 +72,7 @@ namespace Naos.MessageBus.Test
             // Arrange
             Config.ResetConfigureSerializationAndSetValues("ExampleDevelopment");
 
-            var expectedLaunchConfig = new LaunchConfiguration(
+            var expectedLaunchConfig = new MessageBusLaunchConfiguration(
                 TimeSpan.FromMinutes(10),
                 TypeMatchStrategy.NamespaceAndName,
                 TypeMatchStrategy.NamespaceAndName,
@@ -82,7 +82,7 @@ namespace Naos.MessageBus.Test
                 new[] { new SimpleChannel("messages_development") });
 
             // Act
-            var actualLaunchConfig = Settings.Get<LaunchConfiguration>();
+            var actualLaunchConfig = Settings.Get<MessageBusLaunchConfiguration>();
 
             // Assert
             actualLaunchConfig.Should().NotBeNull();

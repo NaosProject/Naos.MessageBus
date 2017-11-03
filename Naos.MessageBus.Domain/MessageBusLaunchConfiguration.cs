@@ -1,5 +1,5 @@
 // --------------------------------------------------------------------------------------------------------------------
-// <copyright file="LaunchConfiguration.cs" company="Naos">
+// <copyright file="MessageBusLaunchConfiguration.cs" company="Naos">
 //    Copyright (c) Naos 2017. All Rights Reserved.
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
@@ -14,10 +14,10 @@ namespace Naos.MessageBus.Domain
     /// <summary>
     /// Model object with settings to launch a harness.
     /// </summary>
-    public class LaunchConfiguration
+    public class MessageBusLaunchConfiguration
     {
         /// <summary>
-        /// Initializes a new instance of the <see cref="LaunchConfiguration"/> class.
+        /// Initializes a new instance of the <see cref="MessageBusLaunchConfiguration"/> class.
         /// </summary>
         /// <param name="timeToLive">Time to live (will not be honored until active messages are finished processing).</param>
         /// <param name="typeMatchStrategyForMatchingSharingInterfaces">Strategy to match sharing interface types.</param>
@@ -26,7 +26,7 @@ namespace Naos.MessageBus.Domain
         /// <param name="pollingInterval">Interval to poll for completion.</param>
         /// <param name="concurrentWorkerCount">Number of concurrent messages to be processed at once.</param>
         /// <param name="channelsToMonitor">Channels to monitor.</param>
-        public LaunchConfiguration(TimeSpan timeToLive, TypeMatchStrategy typeMatchStrategyForMatchingSharingInterfaces, TypeMatchStrategy typeMatchStrategyForMessageResolution, int messageDeliveryRetryCount, TimeSpan pollingInterval, int concurrentWorkerCount, ICollection<IChannel> channelsToMonitor)
+        public MessageBusLaunchConfiguration(TimeSpan timeToLive, TypeMatchStrategy typeMatchStrategyForMatchingSharingInterfaces, TypeMatchStrategy typeMatchStrategyForMessageResolution, int messageDeliveryRetryCount, TimeSpan pollingInterval, int concurrentWorkerCount, ICollection<IChannel> channelsToMonitor)
         {
             this.TimeToLive = timeToLive;
             this.TypeMatchStrategyForMatchingSharingInterfaces = typeMatchStrategyForMatchingSharingInterfaces;

@@ -41,7 +41,7 @@ namespace Naos.MessageBus.Hangfire.Harness
                     var logProcessorSettings = Settings.Get<LogProcessorSettings>();
                     var handlerFactoryConfig = Settings.Get<HandlerFactoryConfiguration>();
                     var connectionConfig = Settings.Get<MessageBusConnectionConfiguration>();
-                    var launchConfig = Settings.Get<LaunchConfiguration>();
+                    var launchConfig = Settings.Get<MessageBusLaunchConfiguration>();
 
                     new { logProcessorSettings, handlerFactoryConfig, connectionConfig, launchConfig }.Must().NotBeNull().OrThrow();
 

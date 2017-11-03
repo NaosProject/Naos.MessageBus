@@ -85,7 +85,7 @@
     <Compile Include="Exceptions\RecurringParcelEncounteredException.cs" />
     <Compile Include="HandlerFactoryConfiguration.cs" />
     <Compile Include="HandlerToolshed.cs" />
-    <Compile Include="LaunchConfiguration.cs" />
+    <Compile Include="MessageBusLaunchConfiguration.cs" />
     <Compile Include="ShareManager.cs" />
     <Compile Include="Sharing\IManageShares.cs" />
     <Compile Include="IHandlerFactory.cs" />

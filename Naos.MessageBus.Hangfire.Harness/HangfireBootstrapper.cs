@@ -60,7 +60,7 @@ namespace Naos.MessageBus.Hangfire.Harness
         /// <param name="handlerFactoryConfig">Configuration for the message handlers.</param>
         /// <param name="connectionConfig">Connection information to connect to persistence.</param>
         /// <param name="launchConfig">Configuration for how Hangfire is launched.</param>
-        public void Start(HandlerFactoryConfiguration handlerFactoryConfig, MessageBusConnectionConfiguration connectionConfig, LaunchConfiguration launchConfig)
+        public void Start(HandlerFactoryConfiguration handlerFactoryConfig, MessageBusConnectionConfiguration connectionConfig, MessageBusLaunchConfiguration launchConfig)
         {
             lock (this.lockObject)
             {
@@ -78,7 +78,7 @@ namespace Naos.MessageBus.Hangfire.Harness
         }
 
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Maintainability", "CA1506:AvoidExcessiveClassCoupling", Justification = "Keeping for now this project will eventually be removed completely to not use IIS.")]
-        private void LaunchHangfire(HandlerFactoryConfiguration handlerFactoryConfig, MessageBusConnectionConfiguration connectionConfig, LaunchConfiguration launchConfig)
+        private void LaunchHangfire(HandlerFactoryConfiguration handlerFactoryConfig, MessageBusConnectionConfiguration connectionConfig, MessageBusLaunchConfiguration launchConfig)
         {
             var activeMessageTracker = new InMemoryActiveMessageTracker();
 
