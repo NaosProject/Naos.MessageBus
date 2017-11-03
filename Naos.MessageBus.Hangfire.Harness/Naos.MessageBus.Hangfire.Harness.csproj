@@ -228,7 +228,7 @@
     </Content>
   </ItemGroup>
   <ItemGroup>
-    <Content Include=".config\ExampleDevelopment\LaunchConfiguration.json">
+    <Content Include=".config\ExampleDevelopment\MessageBusLaunchConfiguration.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
@@ -248,7 +248,7 @@
     </Content>
   </ItemGroup>
   <ItemGroup>
-    <Content Include=".config\ExampleProduction\LaunchConfiguration.json">
+    <Content Include=".config\ExampleProduction\MessageBusLaunchConfiguration.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
   </ItemGroup>

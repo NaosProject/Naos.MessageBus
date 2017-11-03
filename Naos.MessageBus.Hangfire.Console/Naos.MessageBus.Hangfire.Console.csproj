@@ -169,10 +169,10 @@
   <ItemGroup>
     <Content Include=".analyzers\dictionary.xml" />
     <Content Include=".config\ExampleDevelopment\HandlerFactoryConfiguration.json" />
-    <Content Include=".config\ExampleDevelopment\LaunchConfiguration.json" />
+    <Content Include=".config\ExampleDevelopment\MessageBusLaunchConfiguration.json" />
     <Content Include=".config\ExampleDevelopment\MessageBusConnectionConfiguration.json" />
     <Content Include=".config\ExampleProduction\HandlerFactoryConfiguration.json" />
-    <Content Include=".config\ExampleProduction\LaunchConfiguration.json" />
+    <Content Include=".config\ExampleProduction\MessageBusLaunchConfiguration.json" />
     <Content Include=".config\ExampleProduction\MessageBusConnectionConfiguration.json" />
     <Content Include=".config\ExampleDevelopment\LogProcessorSettings.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>

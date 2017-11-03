@@ -195,7 +195,7 @@
     <Content Include=".config\ExampleDevelopment\HandlerFactoryConfiguration.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include=".config\ExampleDevelopment\LaunchConfiguration.json">
+    <Content Include=".config\ExampleDevelopment\MessageBusLaunchConfiguration.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
     <Content Include=".config\ExampleDevelopment\LogProcessorSettings.json">
@@ -207,7 +207,7 @@
     <Content Include=".config\ExampleProduction\HandlerFactoryConfiguration.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include=".config\ExampleProduction\LaunchConfiguration.json">
+    <Content Include=".config\ExampleProduction\MessageBusLaunchConfiguration.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
     <Content Include=".config\ExampleProduction\LogProcessorSettings.json">

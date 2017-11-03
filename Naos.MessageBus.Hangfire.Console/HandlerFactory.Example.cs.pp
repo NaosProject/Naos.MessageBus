@@ -26,11 +26,6 @@ namespace $rootnamespace$
     /// <summary>
     /// Factory builder to provide logic to resolve the appropriate <see cref="IHandleMessages" /> for a dispatched <see cref="IMessage" /> implementation.
     /// </summary>
-#if !NaosMessageBusHangfireConsole
-    [System.Diagnostics.DebuggerStepThrough]
-    [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
-    [System.CodeDom.Compiler.GeneratedCode("Naos.MessageBus.Hangfire.Bootstrapper", "See package version number")]
-#endif
     public static partial class HandlerFactory
     {
         /*----------------------------- CHANGE HERE ---------------------------------*
