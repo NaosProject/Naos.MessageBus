@@ -22,6 +22,11 @@ namespace $rootnamespace$
     /// <summary>
     /// Main entry point of the application.
     /// </summary>
+#if !NaosMessageBusHangfireConsole
+    [System.Diagnostics.DebuggerStepThrough]
+    [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
+    [System.CodeDom.Compiler.GeneratedCode("Naos.MessageBus.Hangfire.Bootstrapper", "See package version number")]
+#endif
     public static class DefaultMessageBusProgram
     {
         /// <summary>

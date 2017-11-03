@@ -41,6 +41,11 @@ namespace Naos.MessageBus.Hangfire.Bootstrapper
     /// Class to run Hangfire harness.
     /// </summary>
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly", MessageId = "Hangfire", Justification = "Spelling/name is correct.")]
+#if !NaosMessageBusHangfireConsole
+    [System.Diagnostics.DebuggerStepThrough]
+    [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
+    [System.CodeDom.Compiler.GeneratedCode("Naos.MessageBus.Hangfire.Bootstrapper", "See package version number")]
+#endif
     public static class HangfireHarnessManager
     {
         /// <summary>

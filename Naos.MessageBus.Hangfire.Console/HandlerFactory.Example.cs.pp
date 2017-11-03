@@ -26,23 +26,23 @@ namespace $rootnamespace$
     /// <summary>
     /// Factory builder to provide logic to resolve the appropriate <see cref="IHandleMessages" /> for a dispatched <see cref="IMessage" /> implementation.
     /// </summary>
+#if !NaosMessageBusHangfireConsole
+    [System.Diagnostics.DebuggerStepThrough]
+    [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
+    [System.CodeDom.Compiler.GeneratedCode("Naos.MessageBus.Hangfire.Bootstrapper", "See package version number")]
+#endif
     public static partial class HandlerFactory
     {
         /*----------------------------- CHANGE HERE ---------------------------------*
-         * Specify explicit mapping here, if no types are RENAME this file    *
-         * in the Dictionary (Message->Handler Types) then the reflection only *
-         * Factory will be used, if there are types specified then ONLY those and    *
-         * built in ones will be used.                                               *
+         * Can specify the map directly or instead use the example function below to *
+         * discover your handlers in 1 or many assemblies.                           *
          *---------------------------------------------------------------------------*/
 
         /// <summary>
         /// Map of the message type to the intended handler type.  Must have a parameterless constructor and implement <see cref="IHandleMessages" />,
         /// however deriving from <see cref="MessageHandlerBase{T}" /> is recommended as it's more straightforward and easier to write.
         /// </summary>
-        private static readonly IReadOnlyDictionary<Type, Type> MessageTypeToHandlerTypeMap = new Dictionary<Type, Type>
-            {
-                { typeof(ExampleMessage), typeof(ExampleMessageHandler) },
-            };
+        private static readonly IReadOnlyDictionary<Type, Type> MessageTypeToHandlerTypeMap = DiscoverHandlersInAssemblies(new[] { typeof(ExampleMessage).Assembly });
     }
 
     /// <summary>

@@ -16,6 +16,7 @@ namespace $rootnamespace$
     using System;
     using System.Collections.Generic;
     using System.Linq;
+    using System.Reflection;
 
     using Its.Configuration;
 
@@ -29,6 +30,11 @@ namespace $rootnamespace$
     /// <summary>
     /// Factory builder to provide logic to resolve the appropriate <see cref="IHandleMessages" /> for a dispatched <see cref="IMessage" /> implementation.
     /// </summary>
+#if !NaosMessageBusHangfireConsole
+    [System.Diagnostics.DebuggerStepThrough]
+    [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
+    [System.CodeDom.Compiler.GeneratedCode("Naos.MessageBus.Hangfire.Bootstrapper", "See package version number")]
+#endif
     public static partial class HandlerFactory
     {
         /// <summary>
@@ -38,9 +44,6 @@ namespace $rootnamespace$
         internal static IHandlerFactory Build()
         {
             var localDictionary = new Dictionary<Type, Type>();
-
-            // load all default handler (this can be omitted if the handler set needs to be explicitly done but be CAREFUL not to skip necessary default handlers.
-            ReflectionHandlerFactory.LoadHandlerTypeMapFromAssemblies(localDictionary, new[] { typeof(IMessage).Assembly, typeof(MessageDispatcher).Assembly });
 
             var configuredEntires = MessageTypeToHandlerTypeMap?.ToList() ?? new List<KeyValuePair<Type, Type>>();
 
@@ -64,6 +67,27 @@ namespace $rootnamespace$
             }
 
             return ret;
+        }
+
+        /// <summary>
+        /// Discover all implementations of <see cref="MessageHandlerBase{T}" /> and put them in the map with the specified message type.
+        /// </summary>
+        /// <param name="assembliesToLookIn">List of assemblies to look in.</param>
+        /// <param name="includeInternalHandlers">Optional value indicating whether to include the internal handlers; DEFAULT is true.</param>
+        /// <returns>Map of message type to handler type.</returns>
+        internal static IReadOnlyDictionary<Type, Type> DiscoverHandlersInAssemblies(IReadOnlyCollection<Assembly> assembliesToLookIn, bool includeInternalHandlers = true)
+        {
+            new { assembliesToLookIn }.Must().NotBeNull().And().NotBeEmptyEnumerable<Assembly>().OrThrowFirstFailure();
+
+            var localDictionary = new Dictionary<Type, Type>();
+
+            // Add the MessageBus.Domain assembly to get basic included handlers as well as the MessageBus.Core assembly for more specialized included handlers.
+            var internalAssembliesToAdd = includeInternalHandlers ? new[] { typeof(IMessage).Assembly, typeof(MessageDispatcher).Assembly } : new Assembly[0];
+            var assembliesToLoad = assembliesToLookIn.Concat(internalAssembliesToAdd).Distinct().ToList();
+
+            ReflectionHandlerFactory.LoadHandlerTypeMapFromAssemblies(localDictionary, assembliesToLoad);
+
+            return localDictionary;
         }
 
         private static IHandlerFactory BuildReflectionHandlerFactoryFromSettings()

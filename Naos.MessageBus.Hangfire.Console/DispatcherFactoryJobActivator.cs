@@ -32,6 +32,11 @@ namespace Naos.MessageBus.Hangfire.Bootstrapper
     /// <summary>
     /// Hangfire job activator that will dispatch the job to the <see cref="MessageDispatcher" />.
     /// </summary>
+#if !NaosMessageBusHangfireConsole
+    [System.Diagnostics.DebuggerStepThrough]
+    [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
+    [System.CodeDom.Compiler.GeneratedCode("Naos.MessageBus.Hangfire.Bootstrapper", "See package version number")]
+#endif
     public class DispatcherFactoryJobActivator : JobActivator
 #pragma warning restore CS3009 // Base type is not CLS-compliant
     {
