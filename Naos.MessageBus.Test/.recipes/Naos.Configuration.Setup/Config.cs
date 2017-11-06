@@ -32,7 +32,12 @@ namespace Naos.Recipes.Configuration.Setup
     [System.CodeDom.Compiler.GeneratedCode("Naos.Recipes", "See package version number")]
     internal static class Config
     {
-        private static readonly IStringDeserialize deserializer = new NaosJsonSerializer(SerializationKind.Default);
+        /// <summary>
+        /// <see cref="SerializationDescription" /> used to get the <see cref="IStringDeserialize" /> used for reading config files.
+        /// </summary>
+        public static readonly SerializationDescription ConfigFileSerializationDescription = new SerializationDescription(SerializationFormat.Json, SerializationRepresentation.String);
+
+        private static readonly IStringDeserialize deserializer = JsonSerializerFactory.Instance.BuildSerializer(ConfigFileSerializationDescription);
 
         /// <summary>
         /// Common precedence used after the environment specific precedence.

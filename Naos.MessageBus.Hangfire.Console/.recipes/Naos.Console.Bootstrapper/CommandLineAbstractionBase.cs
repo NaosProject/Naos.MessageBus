@@ -34,6 +34,8 @@ namespace Naos.MessageBus.Hangfire.Console
     /// Abstraction for use with <see cref="CLAP" /> to provide basic command line interaction.
     /// </summary>
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1053:StaticHolderTypesShouldNotHaveConstructors", Justification = "Cannot be static for command line contract.")]
+    [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
+    [System.CodeDom.Compiler.GeneratedCode("Naos.Recipes.Console.Bootstrapper", "See package version number")]
     public abstract class CommandLineAbstractionBase
     {
         /// <summary>
@@ -286,7 +288,7 @@ namespace Naos.MessageBus.Hangfire.Console
              * Normally this would just be done from the Its.Configuration file but the  *
              * we're overriding to only use the Console for demonstration purposes.      *
              *---------------------------------------------------------------------------*/
-            var logProcessorSettingsOverride = new LogProcessorSettings(new[] { new LogConfigurationConsole(LogContexts.All, LogContexts.AllErrors) });
+            var logProcessorSettingsOverride = new LogProcessorSettings(new[] { new ConsoleLogConfiguration(LogContexts.All, LogContexts.AllErrors) });
 
             /*---------------------------------------------------------------------------*
              * Any method should run this logic to debug, setup config & logging, etc.   *

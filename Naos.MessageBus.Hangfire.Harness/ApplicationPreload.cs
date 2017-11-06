@@ -45,7 +45,8 @@ namespace Naos.MessageBus.Hangfire.Harness
 
                     new { logProcessorSettings, handlerFactoryConfig, connectionConfig, launchConfig }.Must().NotBeNull().OrThrow();
 
-                    LogProcessing.Instance.Setup(logProcessorSettings);
+                    // May have already been setup by one of the other entry points.
+                    LogProcessing.Instance.Setup(logProcessorSettings, multipleCallsToSetupStrategy: MultipleCallsToSetupStrategy.Ignore);
                     LogProvider.SetCurrentLogProvider(new ItsLogPassThroughProvider());
 
                     HangfireBootstrapper.Instance.Start(handlerFactoryConfig, connectionConfig, launchConfig);

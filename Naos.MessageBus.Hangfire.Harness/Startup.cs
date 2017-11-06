@@ -48,7 +48,8 @@ namespace Naos.MessageBus.Hangfire.Harness
 
             new { logProcessorSettings, connectionConfig }.Must().NotBeNull().OrThrow();
 
-            LogProcessing.Instance.Setup(logProcessorSettings);
+            // May have already been setup by one of the other entry points.
+            LogProcessing.Instance.Setup(logProcessorSettings, multipleCallsToSetupStrategy: MultipleCallsToSetupStrategy.Ignore);
             LogProvider.SetCurrentLogProvider(new ItsLogPassThroughProvider());
 
             GlobalConfiguration.Configuration.UseSqlServerStorage(
