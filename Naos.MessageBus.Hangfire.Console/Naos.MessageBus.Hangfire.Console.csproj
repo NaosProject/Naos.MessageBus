@@ -144,7 +144,8 @@
   <ItemGroup>
     <Compile Include=".recipes\Naos.Configuration.Setup\Config.cs" />
     <Compile Include=".recipes\Naos.Configuration.Setup\ConfigRequiredTest.cs" />
-    <Compile Include=".recipes\Naos.Console.Bootstrapper\CommandLineAbstractionBase.cs" />
+    <Compile Include=".recipes\Naos.Console.Bootstrapper\ConsoleAbstractionBase.cs" />
+    <Compile Include=".recipes\Naos.Console.Domain\WellKnownConsoleVerb.cs" />
     <Compile Include=".recipes\OBeautifulCode.Collection\EnumerableExtensions.cs" />
     <Compile Include=".recipes\OBeautifulCode.Enum\EnumExtensions.cs" />
     <Compile Include=".recipes\OBeautifulCode.Reflection\ReflectionHelper.Attribute.cs" />
@@ -183,7 +184,7 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
     <None Include="App.config" />
-    <Compile Include="DefaultMessageBusCommandLineAbstraction.cs.pp" />
+    <Compile Include="DefaultMessageBusConsoleAbstraction.cs.pp" />
     <Compile Include="HandlerFactory.Common.cs.pp" />
     <None Include="Naos.MessageBus.Hangfire.ExampleConfig.recipe-nuspec" />
     <None Include="Naos.MessageBus.Hangfire.Bootstrapper.recipe-nuspec" />

@@ -34,7 +34,7 @@ namespace $rootnamespace$
     [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
     [System.CodeDom.Compiler.GeneratedCode("Naos.MessageBus.Hangfire.Bootstrapper", "See package version number")]
 #endif
-    public class DefaultMessageBusCommandLineAbstraction : CommandLineAbstractionBase
+    public class DefaultMessageBusConsoleAbstraction : ConsoleAbstractionBase
     {
         /// <summary>
         /// Main entry point of the application; if no exceptions are thrown then the exit code will be 0.

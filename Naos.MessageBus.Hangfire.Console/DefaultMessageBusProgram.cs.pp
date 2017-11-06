@@ -55,7 +55,7 @@ namespace $rootnamespace$
                  *---------------------------------------------------------------------------*
                  * Must update the code below to use your custom abstraction class.          *
                  *---------------------------------------------------------------------------*/
-                var exitCode = Parser.Run<DefaultMessageBusCommandLineAbstraction>(args);
+                var exitCode = Parser.Run<DefaultMessageBusConsoleAbstraction>(args);
                 return exitCode;
             }
             catch (Exception ex)

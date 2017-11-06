@@ -36,7 +36,7 @@ namespace Naos.MessageBus.Hangfire.Console
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1053:StaticHolderTypesShouldNotHaveConstructors", Justification = "Cannot be static for command line contract.")]
     [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
     [System.CodeDom.Compiler.GeneratedCode("Naos.Recipes.Console.Bootstrapper", "See package version number")]
-    public abstract class CommandLineAbstractionBase
+    public abstract class ConsoleAbstractionBase
     {
         /// <summary>
         /// Entry point to simulate a failure.
@@ -44,8 +44,8 @@ namespace Naos.MessageBus.Hangfire.Console
         /// <param name="debug">Optional indication to launch the debugger from inside the application (default is false).</param>
         /// <param name="message">Message to use when creating a SimulatedFailureException.</param>
         /// <param name="environment">Optional value to use when setting the Its.Configuration precedence to use specific settings.</param>
-        [Verb(Aliases = "", IsDefault = false, Description = "Throws an exception with provided message to simulate an error and confirm correct setup;\r\n            example usage: [Harness].exe fail /message='My Message.'\r\n                           [Harness].exe fail /message='My Message.' /debug=true\r\n                           [Harness].exe fail /message='My Message.' /environment=ExampleDevelopment\r\n                           [Harness].exe fail /message='My Message.' /environment=ExampleDevelopment /debug=true\r\n")]
-        public static void Fail(
+        [Verb(Aliases = nameof(WellKnownConsoleVerb.Fail), IsDefault = false, Description = "Throws an exception with provided message to simulate an error and confirm correct setup;\r\n            example usage: [Harness].exe fail /message='My Message.'\r\n                           [Harness].exe fail /message='My Message.' /debug=true\r\n                           [Harness].exe fail /message='My Message.' /environment=ExampleDevelopment\r\n                           [Harness].exe fail /message='My Message.' /environment=ExampleDevelopment /debug=true\r\n")]
+        public static void ThrowSimulatedFailureException(
             [Aliases("")] [Description("Launches the debugger.")] [DefaultValue(false)] bool debug,
             [Aliases("")] [Required] [Description("Message to use when creating a SimulatedFailureException.")] string message,
             [Aliases("")] [Description("Sets the Its.Configuration precedence to use specific settings.")] [DefaultValue(null)] string environment)
@@ -75,8 +75,8 @@ namespace Naos.MessageBus.Hangfire.Console
         /// <param name="debug">Optional indication to launch the debugger from inside the application (default is false).</param>
         /// <param name="message">Message to log.</param>
         /// <param name="environment">Optional value to use when setting the Its.Configuration precedence to use specific settings.</param>
-        [Verb(Aliases = "", IsDefault = false, Description = "Logs the provided message to confirm correct setup;\r\n            example usage: [Harness].exe pass /message='My Message.'\r\n                           [Harness].exe pass /message='My Message.' /debug=true\r\n                           [Harness].exe pass /message='My Message.' /environment=ExampleDevelopment\r\n                           [Harness].exe pass /message='My Message.' /environment=ExampleDevelopment /debug=true\r\n")]
-        public static void Pass(
+        [Verb(Aliases = nameof(WellKnownConsoleVerb.Pass), IsDefault = false, Description = "Logs the provided message to confirm correct setup;\r\n            example usage: [Harness].exe pass /message='My Message.'\r\n                           [Harness].exe pass /message='My Message.' /debug=true\r\n                           [Harness].exe pass /message='My Message.' /environment=ExampleDevelopment\r\n                           [Harness].exe pass /message='My Message.' /environment=ExampleDevelopment /debug=true\r\n")]
+        public static void LogAndExitGracefully(
             [Aliases("")] [Description("Launches the debugger.")] [DefaultValue(false)] bool debug,
             [Aliases("")] [Required] [Description("Message to log.")] string message,
             [Aliases("")] [Description("Sets the Its.Configuration precedence to use specific settings.")] [DefaultValue(null)] string environment)
@@ -138,8 +138,8 @@ namespace Naos.MessageBus.Hangfire.Console
         /// <param name="helpText">Generated help text to display.</param>
         [Empty]
         [Help(Aliases = "h,?,-h,-help")]
-        [Verb(IsDefault = true)]
-        public static void Help(string helpText)
+        [Verb(Aliases = nameof(WellKnownConsoleVerb.Help), IsDefault = true)]
+        public static void ShowUsage(string helpText)
         {
             new { helpText }.Must().NotBeNull().OrThrowFirstFailure();
 
@@ -197,7 +197,7 @@ namespace Naos.MessageBus.Hangfire.Console
              * swapped out to send all Its.Log messages to another logging framework if  *
              * there is already one in place.                                            *
              *---------------------------------------------------------------------------*/
-            var localLogProcessorSettings = logProcessorSettings ?? Settings.Get<LogProcessorSettings>() ?? new LogProcessorSettings();
+            var localLogProcessorSettings = logProcessorSettings ?? Settings.Get<LogProcessorSettings>();
             if (localLogProcessorSettings == null)
             {
                 localAnnouncer("No LogProcessorSettings provided or found in config; using Null Object susbstitue.");
@@ -266,11 +266,11 @@ namespace Naos.MessageBus.Hangfire.Console
 
     /// <summary>
     /// Example of how to extend the base class to add your custom functionality.  It's recommeneded that each method take
-    /// optional environment name AND debug boolean paramters and then call the <see cref="CommandLineAbstractionBase.CommonSetup" /> but not necessary.
+    /// optional environment name AND debug boolean paramters and then call the <see cref="ConsoleAbstractionBase.CommonSetup" /> but not necessary.
     /// The common setup also allows for provided the <see cref="LogProcessorSettings" /> directly instead of the default
     /// loading from <see cref="Its.Configuration" />.
     /// </summary>
-    public class ExampleCommandLineAbstraction : CommandLineAbstractionBase
+    public class ExampleConsoleAbstraction : ConsoleAbstractionBase
     {
         /// <summary>
         /// Example of a custom data processing job that might need to be run as a cron job.
