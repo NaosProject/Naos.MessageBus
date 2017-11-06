@@ -11,7 +11,7 @@
       <dependency id="Naos.MessageBus.Hangfire.Sender" version="[$version$,)" />
       <dependency id="Naos.MessageBus.Persistence" version="[$version$,)" />
       <dependency id="Naos.Recipes.Configuration.Setup" version="[1.0.78,)" />
-      <dependency id="Naos.Recipes.Console.Domain" version="[1.0.78,)" />
+      <dependency id="Naos.Recipes.Console.Bootstrapper" version="[1.0.78,)" />
       <dependency id="Naos.Serialization.Factory" version="[1.0.41,)" />
       <dependency id="Hangfire.SqlServer" version="[1.5.9]" />
       <dependency id="OBeautifulCode.Collection.Recipes.EnumerableExtensions" version="[1.0.16,)" />
@@ -22,7 +22,6 @@
     <file src="DefaultMessageBusProgram.cs.pp" target="content\net45\DefaultMessageBusProgram.cs.pp" />
     <file src="DefaultMessageBusConsoleAbstraction.cs.pp" target="content\net45\DefaultMessageBusConsoleAbstraction.cs.pp" />
     <file src="HandlerFactory.Example.cs.pp" target="content\net45\HandlerFactory.Example.cs.pp" />
-    <file src=".recipes\Naos.Console.Bootstrapper\**" target="content\net45\.recipes\Naos.Console.Bootstrapper\" />
     <file src="DispatcherFactoryJobActivator.cs" target="content\net45\.recipes\Naos.MessageBus\DispatcherFactoryJobActivator.cs" />
     <file src="HandlerFactory.Common.cs.pp" target="content\net45\.recipes\Naos.MessageBus\HandlerFactory.Common.cs.pp" />
     <file src="HangfireHarnessManager.cs" target="content\net45\.recipes\Naos.MessageBus\HangfireHarnessManager.cs" />
