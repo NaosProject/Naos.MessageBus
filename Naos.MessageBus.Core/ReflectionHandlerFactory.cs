@@ -90,20 +90,36 @@ namespace Naos.MessageBus.Core
                     throw;
                 }
 
+                IReadOnlyCollection<Type> GetBaseTypes(Type input)
+                {
+                    if (input == null)
+                    {
+                        return new Type[0];
+                    }
+                    else if (input.BaseType == null)
+                    {
+                        return new[] { input }.ToList();
+                    }
+                    else
+                    {
+                        return GetBaseTypes(input.BaseType).Concat(new[] { input }).Distinct().ToList();
+                    }
+                }
+
                 foreach (var type in typesInFile)
                 {
-                    var interfacesOfType = type.GetInterfaces();
-                    foreach (var interfaceType in interfacesOfType)
+                    var baseTypeChain = GetBaseTypes(type);
+                    foreach (var baseType in baseTypeChain)
                     {
-                        var genericTypeDefinition = interfaceType.IsGenericType
-                                                        ? interfaceType.GetGenericTypeDefinition()
+                        var genericTypeDefinition = baseType.IsGenericType
+                                                        ? baseType.GetGenericTypeDefinition()
                                                         : type; // this isn't ever going to be right so i'm really using it like a Null Object...
                         var genericTypeToMatch = typeof(MessageHandlerBase<>);
                         var genericTypeDefinitionToMatch = genericTypeToMatch.GetGenericTypeDefinition();
-                        if (interfaceType.IsGenericType
+                        if (baseType.IsGenericType
                             && genericTypeDefinition == genericTypeDefinitionToMatch)
                         {
-                            var implementedType = interfaceType.GetGenericArguments()[0];
+                            var implementedType = baseType.GetGenericArguments()[0];
 
                             messageTypeToHandlerTypeMap.Add(implementedType, type);
                         }

@@ -168,6 +168,8 @@
     <Compile Include=".recipes\Spritely.SecureString\SecureString.cs" />
     <Compile Include="AbortIfTopicsHaveSpecificStatusMessageHandlerTests.cs" />
     <Compile Include="DispatcherFactoryTest.cs" />
+    <Compile Include="ReflectionHandlerFactoryTest.cs" />
+    <Compile Include="MappedTypeHandlerFactoryTest.cs" />
     <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="SendParcelMessageHandlerTest.cs" />
     <Compile Include="WaitForTrackingCodesMessageHandlerTests.cs" />
