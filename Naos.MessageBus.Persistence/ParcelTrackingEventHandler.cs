@@ -188,7 +188,7 @@ namespace Naos.MessageBus.Persistence
                                 {
                                     conn = new SqlConnection(sqlServerConnectionString);
                                     conn.Open();
-                                    var sql = Invariant($"select {nameof(ShipmentForDatabase.RecurringScheduleSerializedAsString)} from {nameof(ShipmentForDatabase)}s where parcelid = @id");
+                                    var sql = Invariant($"select {nameof(ShipmentForDatabase.RecurringScheduleSerializedAsString)} from {nameof(ShipmentForDatabase)}s where {nameof(ShipmentForDatabase.ParcelId)} = @id");
                                     using (var command = new SqlCommand(sql, conn))
                                     {
                                         var a = new SqlParameter("@id", SqlDbType.UniqueIdentifier) { Value = @event.AggregateId };
@@ -232,8 +232,7 @@ namespace Naos.MessageBus.Persistence
                             using (var conn = new SqlConnection(sqlServerConnectionString))
                             {
                                 conn.Open();
-                                var sql =
-                                    "update shipmentfordatabases set Status = @newStatus, CurrentCrateLocatorJson = @crateLocatorJson, LastUpdatedUtc = @utcNow  where parcelid = @id";
+                                var sql = Invariant($"update {nameof(ShipmentForDatabase)}s set {nameof(ShipmentForDatabase.Status)} = @newStatus, {nameof(ShipmentForDatabase.CurrentCrateLocatorSerializedAsString)} = @crateLocatorJson, {nameof(ShipmentForDatabase.LastUpdatedUtc)} = @utcNow  where {nameof(ShipmentForDatabase.ParcelId)} = @id");
                                 using (var command = new SqlCommand(sql, conn))
                                 {
                                     var paramNewStatus = new SqlParameter("@newStatus", SqlDbType.Int) { Value = eventPayload.NewStatus };
