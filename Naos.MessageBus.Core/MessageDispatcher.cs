@@ -12,13 +12,12 @@ namespace Naos.MessageBus.Core
     using System.Linq;
     using System.Runtime.ExceptionServices;
 
-    using AsyncBridge;
-
     using Its.Log.Instrumentation;
 
     using Naos.Diagnostics.Domain;
     using Naos.MessageBus.Domain;
     using Naos.MessageBus.Domain.Exceptions;
+    using Naos.Recipes.RunWithRetry;
 
     using OBeautifulCode.TypeRepresentation;
 
@@ -207,23 +206,9 @@ namespace Naos.MessageBus.Core
                 {
                     activity.Trace(() => "Handling message (calling Handle on selected Handler).");
 
-                    using (var asyncBridge = AsyncHelper.Wait)
-                    {
-                        asyncBridge.Run(handler.HandleAsync(messageToHandle));
-                    }
+                    Run.TaskUntilCompletion(handler.HandleAsync(messageToHandle));
 
                     activity.Confirm(() => Invariant($"Successfully handled message."));
-                }
-                catch (AggregateException aex)
-                {
-                    if (aex.Source == nameof(AsyncBridge) && aex.InnerExceptions.Count == 1)
-                    {
-                        ExceptionDispatchInfo.Capture(aex.InnerExceptions.Single()).Throw();
-                    }
-                    else
-                    {
-                        throw;
-                    }
                 }
                 catch (Exception ex)
                 {
