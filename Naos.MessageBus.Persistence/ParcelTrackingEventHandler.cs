@@ -95,7 +95,7 @@ namespace Naos.MessageBus.Persistence
             {
                 conn = new SqlConnection(sqlServerConnectionString);
                 conn.Open();
-                var sql = "insert into shipmentfordatabases (ParcelId, RecurringScheduleJson, LastUpdatedUtc, Status) values (@a, @b, @c, @d)";
+                var sql = Invariant($"insert into {nameof(ShipmentForDatabase)}s ({nameof(ShipmentForDatabase.ParcelId)}, {nameof(ShipmentForDatabase.RecurringScheduleSerializedAsString)}, {nameof(ShipmentForDatabase.LastUpdatedUtc)}, {nameof(ShipmentForDatabase.Status)}) values (@a, @b, @c, @d)");
                 using (var command = new SqlCommand(sql, conn))
                 {
                     var a = new SqlParameter("@a", SqlDbType.UniqueIdentifier) { Value = payload.Parcel.Id };
@@ -186,7 +186,7 @@ namespace Naos.MessageBus.Persistence
                                 {
                                     conn = new SqlConnection(sqlServerConnectionString);
                                     conn.Open();
-                                    var sql = "select recurringschedulejson from shipmentfordatabases where parcelid = @id";
+                                    var sql = Invariant($"select {nameof(ShipmentForDatabase.RecurringScheduleSerializedAsString)} from {nameof(ShipmentForDatabase)}s where parcelid = @id");
                                     using (var command = new SqlCommand(sql, conn))
                                     {
                                         var a = new SqlParameter("@id", SqlDbType.UniqueIdentifier) { Value = @event.AggregateId };
