@@ -6,13 +6,13 @@
     <description>Recipe that installs the basic classes and references needed to run a Hangfire MessageBus Harness.  Provides clear extension points for registering message handlers, adding logging, error handling, etc.</description>
     <dependencies>
       <dependency id="CLAP" version="[4.6,)" />
-      <dependency id="Naos.Logging.Domain" version="[1.0.8,)" />
+      <dependency id="Naos.Logging.Domain" version="[1.0.9,)" />
       <dependency id="Naos.MessageBus.Core" version="[$version$,)" />
       <dependency id="Naos.MessageBus.Hangfire.Sender" version="[$version$,)" />
       <dependency id="Naos.MessageBus.Persistence" version="[$version$,)" />
-      <dependency id="Naos.Recipes.Configuration.Setup" version="[1.0.78,)" />
-      <dependency id="Naos.Recipes.Console.Bootstrapper" version="[1.0.78,)" />
-      <dependency id="Naos.Serialization.Factory" version="[1.0.41,)" />
+      <dependency id="Naos.Recipes.Configuration.Setup" version="[1.0.83,)" />
+      <dependency id="Naos.Recipes.Console.Bootstrapper" version="[1.0.83,)" />
+      <dependency id="Naos.Serialization.Factory" version="[1.0.43,)" />
       <dependency id="Hangfire.SqlServer" version="[1.5.9]" />
       <dependency id="OBeautifulCode.Collection.Recipes.EnumerableExtensions" version="[1.0.16,)" />
       <dependency id="Spritely.Recipes.MustValidation" version="[0.6.3,)" />

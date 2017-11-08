@@ -7,15 +7,20 @@
 namespace Naos.MessageBus.Test
 {
     using System;
+    using System.Collections.Generic;
     using System.Linq;
 
     using FluentAssertions;
 
     using Its.Configuration;
 
+    using Naos.Compression.Domain;
+    using Naos.Cron;
     using Naos.MessageBus.Domain;
     using Naos.MessageBus.Hangfire.Harness;
+    using Naos.MessageBus.Hangfire.Sender;
     using Naos.Recipes.Configuration.Setup;
+    using Naos.Serialization.Factory;
 
     using OBeautifulCode.TypeRepresentation;
 
@@ -93,6 +98,33 @@ namespace Naos.MessageBus.Test
             actualLaunchConfig.TimeToLive.Should().Be(expectedLaunchConfig.TimeToLive);
             actualLaunchConfig.TypeMatchStrategyForMessageResolution.Should().Be(expectedLaunchConfig.TypeMatchStrategyForMessageResolution);
             actualLaunchConfig.TypeMatchStrategyForMatchingSharingInterfaces.Should().Be(expectedLaunchConfig.TypeMatchStrategyForMatchingSharingInterfaces);
+        }
+
+        [Fact]
+        public static void MakeWaitMessageAndScheduleJson()
+        {
+            var serializer = SerializerFactory.Instance.BuildSerializer(Config.ConfigFileSerializationDescription);
+            var waitMessage = new WaitMessage { Description = "Test console send", TimeToWait = TimeSpan.FromSeconds(20) };
+            var schedule = new IntervalSchedule { Interval = TimeSpan.FromMinutes(5) };
+            var envelopeMachine = new EnvelopeMachine(
+                PostOffice.MessageSerializationDescription,
+                SerializerFactory.Instance,
+                CompressorFactory.Instance,
+                TypeMatchStrategy.NamespaceAndName);
+
+            var id = Guid.NewGuid();
+            var parcel = new Parcel
+                             {
+                                 Id = id,
+                                 Name = "Test send from Console",
+                                 Envelopes = new[] { new AddressedMessage { Message = waitMessage }.ToEnvelope(envelopeMachine) },
+                             };
+
+            var parcelJson = serializer.SerializeToString(parcel);
+            var scheduleJson = serializer.SerializeToString(schedule);
+
+            parcelJson.Should().NotBeNullOrWhiteSpace();
+            scheduleJson.Should().NotBeNullOrWhiteSpace();
         }
     }
 }
