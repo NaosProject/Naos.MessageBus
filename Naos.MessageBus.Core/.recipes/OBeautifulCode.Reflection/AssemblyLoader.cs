@@ -16,6 +16,8 @@ namespace OBeautifulCode.Reflection.Recipes
     using System.Reflection;
     using System.Text.RegularExpressions;
 
+    using OBeautifulCode.Collection.Recipes;
+
     using Spritely.Recipes;
 
     using static System.FormattableString;
@@ -123,7 +125,14 @@ namespace OBeautifulCode.Reflection.Recipes
         /// <summary>
         /// Initializes the manager by configuring <see cref="AppDomain" /> hooks and discovering then loading the assemblies in the given path.
         /// </summary>
-        public void Initialize()
+        /// <param name="suppressFileLoadException">Optionally suppress <see cref="FileLoadException"/></param>
+        /// <param name="suppressBadImageFormatException">Optinally suppress <see cref="BadImageFormatException"/></param>
+        /// <param name="suppressReflectionTypeLoadException">Optionally suppress <see cref="ReflectionTypeLoadException"/></param>
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Maintainability", "CA1502:AvoidExcessiveComplexity", Justification = "This is a complex method by it's nature.")]
+        public void Initialize(
+            bool suppressFileLoadException = false,
+            bool suppressBadImageFormatException = false,
+            bool suppressReflectionTypeLoadException = false)
         {
             // find all assemblies files to search for handlers.
             var searchOption = this.LoadRecursively ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly;
@@ -135,30 +144,63 @@ namespace OBeautifulCode.Reflection.Recipes
             this.FilePathToAssemblyMap = assemblyFilePaths.ToDictionary(
                 k => k,
                 v =>
+                {
+                    var assemblyNameWithoutExtension = Path.GetFileName(v) ?? string.Empty;
+
+                    try
                     {
-                        try
+                        foreach (var extension in this.AssemblyFileExtensionsWithoutPeriodToLoad)
                         {
-                            var assemblyNameWithoutExtension = Path.GetFileName(v) ?? string.Empty;
-                            foreach (var extension in this.AssemblyFileExtensionsWithoutPeriodToLoad)
-                            {
-                                assemblyNameWithoutExtension = assemblyNameWithoutExtension.Replace("." + extension, string.Empty);
-                            }
-
-                            // since the assembly might have been already loaded as a depdendency of another assembly...
-                            var alreadyLoaded = TryResolveAssemblyFromLoaded(v);
-
-                            // Can't use Assembly.LoadFrom() here because it fails for some reason.
-                            var assembly = alreadyLoaded ?? this.LoadAssemblyFromDisk(assemblyNameWithoutExtension, v);
-                            return assembly;
+                            assemblyNameWithoutExtension =
+                                assemblyNameWithoutExtension.Replace("." + extension, string.Empty);
                         }
-                        catch (ReflectionTypeLoadException reflectionTypeLoadException)
+
+                        // since the assembly might have been already loaded as a depdendency of another assembly...
+                        var alreadyLoaded = TryResolveAssemblyFromLoaded(v);
+
+                        // Can't use Assembly.LoadFrom() here because it fails for some reason.
+                        var assembly = alreadyLoaded ?? this.LoadAssemblyFromDisk(assemblyNameWithoutExtension, v);
+                        return assembly;
+                    }
+                    catch (ReflectionTypeLoadException reflectionTypeLoadException)
+                    {
+                        if (suppressReflectionTypeLoadException)
                         {
-                            throw new ReflectionTypeLoadException(
-                                reflectionTypeLoadException.Types,
-                                reflectionTypeLoadException.LoaderExceptions,
-                                Invariant($"Failed to load assembly: {v}. {string.Join(",", reflectionTypeLoadException.LoaderExceptions.Select(_ => _.ToString()))}"));
+                            return null;
                         }
-                    });
+                        else
+                        {
+                            var loaderExceptions = reflectionTypeLoadException.LoaderExceptions?.Select(_ => _?.ToString() ?? "<null>").ToCsv();
+                            var typesLoaded = reflectionTypeLoadException.Types?.Select(_ => _?.ToString() ?? "<null>").ToCsv();
+                            var message = Invariant($"{nameof(ReflectionTypeLoadException)} was thrown when loading assembly: {assemblyNameWithoutExtension}.{Environment.NewLine}The loader exceptions are: {loaderExceptions ?? "<null>"}.{Environment.NewLine}{Environment.NewLine}The types loaded are: {typesLoaded ?? "<null>"}.{Environment.NewLine}{Environment.NewLine}See inner exception for the original exception.");
+                            throw new TypeLoadException(message, reflectionTypeLoadException);
+                        }
+                    }
+                    catch (FileLoadException)
+                    {
+                        if (suppressFileLoadException)
+                        {
+                            return null;
+                        }
+                        else
+                        {
+                            throw;
+                        }
+                    }
+                    catch (BadImageFormatException)
+                    {
+                        if (suppressBadImageFormatException)
+                        {
+                            return null;
+                        }
+                        else
+                        {
+                            throw;
+                        }
+                    }
+                });
+
+            this.FilePathToAssemblyMap = this.FilePathToAssemblyMap.Where(_ => _.Value != null).ToDictionary(_ => _.Key, _ => _.Value);
         }
 
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Reliability", "CA2001:AvoidCallingProblematicMethods", MessageId = "System.Reflection.Assembly.LoadFrom", Justification = "Other methods don't load dependent assemblies correctly.")]
@@ -228,10 +270,23 @@ namespace OBeautifulCode.Reflection.Recipes
         /// <summary>
         /// Gets the currently loaded assemblies (excluding dynamic ones).
         /// </summary>
+        /// <remarks>
+        /// If you want to get all types, then pass-in the result of this call into AssemblyHelper.GetTypesFromAssemblies()
+        /// </remarks>
         /// <returns>Currently loaded assemblies.</returns>
         public static IReadOnlyCollection<Assembly> GetLoadedAssemblies()
         {
-            return AppDomain.CurrentDomain.GetAssemblies().Where(a => !a.IsDynamic).ToList();
+            try
+            {
+                return AppDomain.CurrentDomain.GetAssemblies().Where(a => !a.IsDynamic).ToList();
+            }
+            catch (ReflectionTypeLoadException reflectionTypeLoadException)
+            {
+                var loaderExceptions = reflectionTypeLoadException.LoaderExceptions?.Select(_ => _?.ToString() ?? "<null>").ToCsv();
+                var typesLoaded = reflectionTypeLoadException.Types?.Select(_ => _?.ToString() ?? "<null>").ToCsv();
+                var message = Invariant($"{nameof(ReflectionTypeLoadException)} was thrown when getting loaded assemblies.{Environment.NewLine}The loader exceptions are: {loaderExceptions ?? "<null>"}.{Environment.NewLine}{Environment.NewLine}The types loaded are: {typesLoaded ?? "<null>"}.{Environment.NewLine}{Environment.NewLine}See inner exception for the original exception.");
+                throw new TypeLoadException(message, reflectionTypeLoadException);
+            }
         }
 
         /// <summary>
@@ -243,6 +298,9 @@ namespace OBeautifulCode.Reflection.Recipes
         /// <param name="assemblyFileExtensionsWithoutDotToLoad">Optional list of assembly file extensions to process; ONLY the file extension not including the period e.g. "dll" NOT ".dll"; DEFAULT is <see cref="DefaultAssemblyFileExtensionsWithoutPeriodToLoad" />.</param>
         /// <param name="symbolFileExtensionsWithoutPeriodToConsider">Optional list of symbol file extensions to process; ONLY the file extension not including the period e.g. "pdb" NOT ".pdb"; DEFAULT is <see cref="DefaultSymbolFileExtensionsWithoutPeriodToLoad" />.</param>
         /// <param name="assemblyFileNameRegexBlacklist">Optional list of regular expressions to evaluate against each file name and skip loading on matches; DEFAULT is <see cref="DefaultAssemblyFileNameRegexBlacklist" />.</param>
+        /// <param name="suppressFileLoadException">Optionally suppress <see cref="FileLoadException"/></param>
+        /// <param name="suppressBadImageFormatException">Optionally suppress <see cref="BadImageFormatException"/></param>
+        /// <param name="suppressReflectionTypeLoadException">Optionally suppress <see cref="ReflectionTypeLoadException"/></param>
         /// <returns>Initialized <see cref="AssemblyLoader" /> this needs to be in scope and is dispoable so keep this alive at your most top level while reflecting.</returns>
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Reliability", "CA2000:Dispose objects before losing scope", Justification = "Factory method function and not intended to deal with disposing.")]
         public static AssemblyLoader CreateAndLoadFromDirectory(
@@ -251,7 +309,10 @@ namespace OBeautifulCode.Reflection.Recipes
             bool loadRecursively = true,
             IReadOnlyCollection<string> assemblyFileExtensionsWithoutDotToLoad = null,
             IReadOnlyCollection<string> symbolFileExtensionsWithoutPeriodToConsider = null,
-            IReadOnlyCollection<string> assemblyFileNameRegexBlacklist = null)
+            IReadOnlyCollection<string> assemblyFileNameRegexBlacklist = null,
+            bool suppressFileLoadException = false,
+            bool suppressBadImageFormatException = false,
+            bool suppressReflectionTypeLoadException = false)
         {
             void NullLogger(string message)
             {
@@ -265,7 +326,7 @@ namespace OBeautifulCode.Reflection.Recipes
                 symbolFileExtensionsWithoutPeriodToConsider ?? DefaultSymbolFileExtensionsWithoutPeriodToLoad,
                 assemblyFileNameRegexBlacklist ?? DefaultAssemblyFileNameRegexBlacklist,
                 logger ?? NullLogger);
-            ret.Initialize();
+            ret.Initialize(suppressFileLoadException, suppressBadImageFormatException, suppressReflectionTypeLoadException);
             return ret;
         }
 
