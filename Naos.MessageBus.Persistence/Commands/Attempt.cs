@@ -12,6 +12,7 @@ namespace Naos.MessageBus.Persistence
     using Microsoft.Its.Domain;
 
     using Naos.MessageBus.Domain;
+    using Naos.Telemetry.Domain;
 
     using static System.FormattableString;
 
@@ -45,6 +46,6 @@ namespace Naos.MessageBus.Persistence
         /// <summary>
         /// Gets or sets the details of who the shipment was attempted with.
         /// </summary>
-        public HarnessDetails Recipient { get; set; }
+        public DiagnosticsTelemetry Recipient { get; set; }
     }
 }

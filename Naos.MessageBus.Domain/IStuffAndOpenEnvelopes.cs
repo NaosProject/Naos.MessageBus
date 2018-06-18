@@ -13,8 +13,7 @@ namespace Naos.MessageBus.Domain
     using Naos.Serialization.Domain.Extensions;
 
     using OBeautifulCode.TypeRepresentation;
-
-    using Spritely.Recipes;
+    using OBeautifulCode.Validation.Recipes;
 
     /// <summary>
     /// Interface for stuffing and opening envelopes.
@@ -68,7 +67,9 @@ namespace Naos.MessageBus.Domain
         /// <param name="typeMatchStrategyForMessageResolution">Type match strategy to use.</param>
         public EnvelopeMachine(SerializationDescription messageSerializationDescription, ISerializerFactory serializerFactory, ICompressorFactory compressorFactory, TypeMatchStrategy typeMatchStrategyForMessageResolution)
         {
-            new { messageSerializationDescription, serializerFactory, compressorFactory }.Must().NotBeNull().OrThrowFirstFailure();
+            new { messageSerializationDescription }.Must().NotBeNull();
+            new { serializerFactory }.Must().NotBeNull();
+            new { compressorFactory }.Must().NotBeNull();
 
             this.messageSerializationDescription = messageSerializationDescription;
             this.serializerFactory = serializerFactory;
@@ -86,7 +87,7 @@ namespace Naos.MessageBus.Domain
         public T OpenEnvelope<T>(Envelope envelope)
             where T : IMessage
         {
-            new { envelope }.Must().NotBeNull().OrThrowFirstFailure();
+            new { envelope }.Must().NotBeNull();
 
             var ret = envelope.SerializedMessage.DeserializePayloadUsingSpecificFactory<T>(
                 this.serializerFactory,
@@ -100,7 +101,7 @@ namespace Naos.MessageBus.Domain
         /// <inheritdoc />
         public Envelope StuffEnvelope(AddressedMessage addressedMessage, string id = null)
         {
-            new { addressedMessage }.Must().NotBeNull().OrThrowFirstFailure();
+            new { addressedMessage }.Must().NotBeNull();
 
             var localId = id ?? Guid.NewGuid().ToString().ToUpperInvariant();
             var serializedMessage = addressedMessage.Message.ToDescribedSerializationUsingSpecificFactory(

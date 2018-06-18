@@ -16,8 +16,10 @@ namespace Naos.MessageBus.Persistence
     using Naos.Cron;
     using Naos.MessageBus.Domain;
     using Naos.MessageBus.Persistence.NaosRecipes.ItsDomain;
+    using Naos.Telemetry.Domain;
 
-    using Spritely.Recipes;
+    using OBeautifulCode.Validation.Recipes;
+
     using Spritely.Redo;
     using static System.FormattableString;
 
@@ -47,7 +49,10 @@ namespace Naos.MessageBus.Persistence
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Maintainability", "CA1506:AvoidExcessiveClassCoupling", Justification = "Keeping this way.")]
         public ParcelTrackingSystem(ICourier courier, IStuffAndOpenEnvelopes envelopeMachine, EventPersistenceConnectionConfiguration eventPersistenceConnectionConfiguration, ReadModelPersistenceConnectionConfiguration readModelPersistenceConnectionConfiguration, int retryCount = 5)
         {
-            new { courier, envelopeMachine, eventPersistenceConnectionConfiguration, readModelPersistenceConnectionConfiguration }.Must().NotBeNull().OrThrowFirstFailure();
+            new { courier }.Must().NotBeNull();
+            new { envelopeMachine }.Must().NotBeNull();
+            new { eventPersistenceConnectionConfiguration }.Must().NotBeNull();
+            new { readModelPersistenceConnectionConfiguration }.Must().NotBeNull();
 
             this.envelopeMachine = envelopeMachine;
             this.readModelPersistenceConnectionConfiguration = readModelPersistenceConnectionConfiguration;
@@ -126,11 +131,11 @@ namespace Naos.MessageBus.Persistence
         }
 
         /// <inheritdoc />
-        public async Task UpdateAttemptingAsync(TrackingCode trackingCode, HarnessDetails harnessDetails)
+        public async Task UpdateAttemptingAsync(TrackingCode trackingCode, DiagnosticsTelemetry harnessDiagnosticsTelemetry)
         {
             var shipment = await this.FetchShipmentAsync(trackingCode.ParcelId);
 
-            var command = new Attempt { TrackingCode = trackingCode, Recipient = harnessDetails };
+            var command = new Attempt { TrackingCode = trackingCode, Recipient = harnessDiagnosticsTelemetry };
             var yieldedEvents = shipment.EnactCommand(command);
 
             await this.SaveShipmentAsync(shipment);

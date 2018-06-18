@@ -16,6 +16,7 @@ namespace Naos.MessageBus.Test
     using FluentAssertions;
 
     using Naos.Compression.Domain;
+    using Naos.Diagnostics.Domain;
     using Naos.MessageBus.Core;
     using Naos.MessageBus.Domain;
     using Naos.MessageBus.Domain.Exceptions;
@@ -23,6 +24,7 @@ namespace Naos.MessageBus.Test
     using Naos.Serialization.Factory;
     using Naos.Serialization.Factory.Extensions;
     using Naos.Serialization.Json;
+    using Naos.Telemetry.Domain;
 
     using OBeautifulCode.TypeRepresentation;
 
@@ -55,7 +57,7 @@ namespace Naos.MessageBus.Test
                 handlerBuilder,
                 new ConcurrentDictionary<Type, object>(),
                 new[] { channel },
-                new HarnessStaticDetails(),
+                DummyDiagnosticsTelemetry,
                 new NullParcelTrackingSystem(),
                 new InMemoryActiveMessageTracker(),
                 senderConstructor(),
@@ -274,7 +276,7 @@ namespace Naos.MessageBus.Test
                 handlerBuilder,
                 new ConcurrentDictionary<Type, object>(),
                 new[] { channel },
-                new HarnessStaticDetails(),
+                DummyDiagnosticsTelemetry,
                 new NullParcelTrackingSystem(),
                 activeMessageTracker,
                 senderConstructor(),
@@ -296,7 +298,7 @@ namespace Naos.MessageBus.Test
                 handlerBuilder,
                 new ConcurrentDictionary<Type, object>(),
                 new[] { channel },
-                new HarnessStaticDetails(),
+                DummyDiagnosticsTelemetry,
                 new NullParcelTrackingSystem(),
                 activeMessageTracker,
                 new PostOffice(new NullParcelTrackingSystem(), new ChannelRouter(new NullChannel()), envelopeMachine),
@@ -327,7 +329,7 @@ namespace Naos.MessageBus.Test
                 new NullHandlerBuilder(),
                 new ConcurrentDictionary<Type, object>(),
                 new[] { monitoredChannel },
-                new HarnessStaticDetails(),
+                DummyDiagnosticsTelemetry,
                 new NullParcelTrackingSystem(),
                 new InMemoryActiveMessageTracker(),
                 senderConstructor(),
@@ -371,7 +373,7 @@ namespace Naos.MessageBus.Test
                 handlerBuilder,
                 new ConcurrentDictionary<Type, object>(),
                 new[] { monitoredChannel },
-                new HarnessStaticDetails(),
+                DummyDiagnosticsTelemetry,
                 trackingConstructor(),
                 new InMemoryActiveMessageTracker(),
                 senderConstructor(),
@@ -424,7 +426,7 @@ namespace Naos.MessageBus.Test
                 handlerBuilder,
                 new ConcurrentDictionary<Type, object>(),
                 new[] { monitoredChannel },
-                new HarnessStaticDetails(),
+                DummyDiagnosticsTelemetry,
                 trackingConstructor(),
                 new InMemoryActiveMessageTracker(),
                 senderConstructor(),
@@ -479,7 +481,7 @@ namespace Naos.MessageBus.Test
                 handlerBuilder,
                 new ConcurrentDictionary<Type, object>(),
                 new[] { monitoredChannel },
-                new HarnessStaticDetails(),
+                DummyDiagnosticsTelemetry,
                 trackingConstructor(),
                 new InMemoryActiveMessageTracker(),
                 senderConstructor(),
@@ -523,7 +525,7 @@ namespace Naos.MessageBus.Test
                 new NullHandlerBuilder(),
                 new ConcurrentDictionary<Type, object>(),
                 new[] { monitoredChannel },
-                new HarnessStaticDetails(),
+                DummyDiagnosticsTelemetry,
                 trackingConstructor(),
                 new InMemoryActiveMessageTracker(),
                 senderConstructor(),
@@ -555,7 +557,7 @@ namespace Naos.MessageBus.Test
                 new NullHandlerBuilder(),
                 new ConcurrentDictionary<Type, object>(),
                 new[] { monitoredChannel },
-                new HarnessStaticDetails(),
+                DummyDiagnosticsTelemetry,
                 trackingConstructor(),
                 new InMemoryActiveMessageTracker(),
                 senderConstructor(),
@@ -589,7 +591,7 @@ namespace Naos.MessageBus.Test
                 new NullHandlerBuilder(),
                 new ConcurrentDictionary<Type, object>(),
                 new[] { monitoredChannel },
-                new HarnessStaticDetails(),
+                DummyDiagnosticsTelemetry,
                 new NullParcelTrackingSystem(),
                 new InMemoryActiveMessageTracker(),
                 Factory.GetInMemorySender(trackingSends)(),
@@ -664,7 +666,7 @@ namespace Naos.MessageBus.Test
             var message = new InitialStateMessage();
 
             var channel = new SimpleChannel("fakeChannel");
-            var messageDispatcher = new MessageDispatcher(handlerBuilder, new ConcurrentDictionary<Type, object>(), new[] { channel }, new HarnessStaticDetails(), new NullParcelTrackingSystem(), new InMemoryActiveMessageTracker(), new PostOffice(new NullParcelTrackingSystem(), new ChannelRouter(new NullChannel()), envelopeMachine), envelopeMachine, shareManager);
+            var messageDispatcher = new MessageDispatcher(handlerBuilder, new ConcurrentDictionary<Type, object>(), new[] { channel }, DummyDiagnosticsTelemetry, new NullParcelTrackingSystem(), new InMemoryActiveMessageTracker(), new PostOffice(new NullParcelTrackingSystem(), new ChannelRouter(new NullChannel()), envelopeMachine), envelopeMachine, shareManager);
             var parcel = new Parcel
                              {
                                  Id = Guid.NewGuid(),
@@ -693,7 +695,7 @@ namespace Naos.MessageBus.Test
             var message = new InitialStateMessage();
 
             var channel = new SimpleChannel("fakeChannel");
-            var messageDispatcher = new MessageDispatcher(handlerBuilder, new ConcurrentDictionary<Type, object>(), new[] { channel }, new HarnessStaticDetails(), new NullParcelTrackingSystem(), new InMemoryActiveMessageTracker(), new PostOffice(new NullParcelTrackingSystem(), new ChannelRouter(new NullChannel()), envelopeMachine), envelopeMachine, shareManager);
+            var messageDispatcher = new MessageDispatcher(handlerBuilder, new ConcurrentDictionary<Type, object>(), new[] { channel }, DummyDiagnosticsTelemetry, new NullParcelTrackingSystem(), new InMemoryActiveMessageTracker(), new PostOffice(new NullParcelTrackingSystem(), new ChannelRouter(new NullChannel()), envelopeMachine), envelopeMachine, shareManager);
             var parcel = new Parcel
                              {
                                  Id = Guid.NewGuid(),
@@ -772,7 +774,7 @@ namespace Naos.MessageBus.Test
 
             if (handlerInterfaceToImplementationTypeMap == null)
             {
-                handlerInterfaceToImplementationTypeMap = new Dictionary<Type, Type>();
+                handlerInterfaceToImplementationTypeMap = new Dictionary<Type, Type> { { typeof(ShareArrayOfIntMessage), typeof(ShareArrayOfIntHandler) } };
             }
 
             var handlerBuilder = new MappedTypeHandlerFactory(handlerInterfaceToImplementationTypeMap, TypeMatchStrategy.NamespaceAndName);
@@ -781,13 +783,25 @@ namespace Naos.MessageBus.Test
                 handlerBuilder,
                 new ConcurrentDictionary<Type, object>(),
                 channels,
-                new HarnessStaticDetails(),
+                DummyDiagnosticsTelemetry,
                 new NullParcelTrackingSystem(),
                 new InMemoryActiveMessageTracker(),
                 new PostOffice(new NullParcelTrackingSystem(), new ChannelRouter(new NullChannel()), envelopeMachine),
                 envelopeMachine,
                 shareManager);
         }
+
+        private static DiagnosticsTelemetry DummyDiagnosticsTelemetry => new DiagnosticsTelemetry(
+            DateTime.UtcNow,
+            new MachineDetails(
+                new Dictionary<string, string>{ { "Test", "Test" } },
+                1,
+                new Dictionary<string, decimal>(),
+                true,
+                new OperatingSystemDetails("OS", new Version(), "ServicePack"),
+                "ClrVersion"),
+            new ProcessDetails("Process", "FilePath", "FileVersion", "ProductVersion", false),
+            new List<AssemblyDetails>());
 
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1034:NestedTypesShouldNotBeVisible", Justification = "Keeping this way for now.")]
         public class StateHandler : MessageHandlerBase<InitialStateMessage>, INeedSharedState<string>

@@ -14,8 +14,7 @@ namespace Naos.MessageBus.Persistence
     using Naos.MessageBus.Domain;
 
     using OBeautifulCode.TypeRepresentation;
-
-    using Spritely.Recipes;
+    using OBeautifulCode.Validation.Recipes;
 
     /// <summary>
     /// Aggregate for capturing shipment tracking events.
@@ -32,7 +31,7 @@ namespace Naos.MessageBus.Persistence
         /// <returns>Collection of events that were recorded.</returns>
         public IReadOnlyCollection<Event> EnactCommand(Create command)
         {
-            new { command }.Must().NotBeNull().OrThrowFirstFailure();
+            new { command }.Must().NotBeNull();
 
             var createdEvent = new Created
                               {
@@ -53,7 +52,7 @@ namespace Naos.MessageBus.Persistence
         /// <returns>Collection of events that were recorded.</returns>
         public IReadOnlyCollection<Event> EnactCommand(RequestResend command)
         {
-            new { command }.Must().NotBeNull().OrThrowFirstFailure();
+            new { command }.Must().NotBeNull();
 
             var envelopeResendRequestedEvent = new EnvelopeResendRequested
                                                    {
@@ -74,7 +73,7 @@ namespace Naos.MessageBus.Persistence
         /// <returns>Collection of events that were recorded.</returns>
         public IReadOnlyCollection<Event> EnactCommand(Send command)
         {
-            new { command }.Must().NotBeNull().OrThrowFirstFailure();
+            new { command }.Must().NotBeNull();
 
             var envelopeSentEvent = new EnvelopeSent
                                         {
@@ -97,7 +96,7 @@ namespace Naos.MessageBus.Persistence
         /// <returns>Collection of events that were recorded.</returns>
         public IReadOnlyCollection<Event> EnactCommand(Attempt command)
         {
-            new { command }.Must().NotBeNull().OrThrowFirstFailure();
+            new { command }.Must().NotBeNull();
 
             var envelopeDeliveryAttemptedEvent = new EnvelopeDeliveryAttempted
                                                      {
@@ -119,7 +118,7 @@ namespace Naos.MessageBus.Persistence
         /// <returns>Collection of events that were recorded.</returns>
         public IReadOnlyCollection<Event> EnactCommand(Abort command)
         {
-            new { command }.Must().NotBeNull().OrThrowFirstFailure();
+            new { command }.Must().NotBeNull();
 
             var envelopeDeliveryAbortedEvent = new EnvelopeDeliveryAborted
                                                    {
@@ -142,7 +141,7 @@ namespace Naos.MessageBus.Persistence
         /// <returns>Collection of events that were recorded.</returns>
         public IReadOnlyCollection<Event> EnactCommand(Reject command)
         {
-            new { command }.Must().NotBeNull().OrThrowFirstFailure();
+            new { command }.Must().NotBeNull();
 
             var envelopeDeliveryRejectedEvent = new EnvelopeDeliveryRejected
                                                     {
@@ -168,7 +167,7 @@ namespace Naos.MessageBus.Persistence
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Maintainability", "CA1506:AvoidExcessiveClassCoupling", Justification = "Keeping this way.")]
         public IReadOnlyCollection<Event> EnactCommand(Deliver command, IStuffAndOpenEnvelopes envelopeMachine)
         {
-            new { command }.Must().NotBeNull().OrThrowFirstFailure();
+            new { command }.Must().NotBeNull();
 
             var events = new List<Event<Shipment>>();
 

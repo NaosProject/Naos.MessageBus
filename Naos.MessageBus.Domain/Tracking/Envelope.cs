@@ -11,8 +11,7 @@ namespace Naos.MessageBus.Domain
     using Naos.Serialization.Domain;
 
     using OBeautifulCode.Math.Recipes;
-
-    using Spritely.Recipes;
+    using OBeautifulCode.Validation.Recipes;
 
     /// <summary>
     /// Container object to use when re-hydrating a message.
@@ -28,8 +27,8 @@ namespace Naos.MessageBus.Domain
         /// <param name="serializedMessage">Message in <see cref="DescribedSerialization" />.</param>
         public Envelope(string id, string description, IChannel address, DescribedSerialization serializedMessage)
         {
-            new { id }.Must().NotBeNull().And().NotBeWhiteSpace().OrThrowFirstFailure();
-            new { serializedMessage }.Must().NotBeNull().OrThrowFirstFailure();
+            new { id }.Must().NotBeNullNorWhiteSpace();
+            new { serializedMessage }.Must().NotBeNull();
 
             this.Id = id;
             this.Description = description;

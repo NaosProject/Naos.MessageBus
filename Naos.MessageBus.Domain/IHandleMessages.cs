@@ -11,7 +11,7 @@ namespace Naos.MessageBus.Domain
     using Naos.Compression.Domain;
     using Naos.Serialization.Domain;
 
-    using Spritely.Recipes;
+    using OBeautifulCode.Validation.Recipes;
 
     using static System.FormattableString;
 
@@ -45,11 +45,11 @@ namespace Naos.MessageBus.Domain
         /// <inheritdoc cref="IHandleMessages" />
         public async Task HandleAsync(IMessage message)
         {
-            new { message }.Must().NotBeNull().OrThrowFirstFailure();
+            new { message }.Must().NotBeNull();
 
             var messageType = message.GetType();
 
-            (messageType == typeof(T)).Named(Invariant($"typeOf-{nameof(message)}-{messageType}-MustBeEqualOrDerivativeOfGenericType-{typeof(T).FullName}")).Must().BeTrue().OrThrowFirstFailure();
+            (messageType == typeof(T)).Named(Invariant($"typeOf-{nameof(message)}-{messageType}-MustBeEqualOrDerivativeOfGenericType-{typeof(T).FullName}")).Must().BeTrue();
 
             await this.HandleAsync((T)message);
         }

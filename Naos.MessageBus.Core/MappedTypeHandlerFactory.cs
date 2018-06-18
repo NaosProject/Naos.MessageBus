@@ -15,8 +15,7 @@ namespace Naos.MessageBus.Core
 
     using OBeautifulCode.Reflection.Recipes;
     using OBeautifulCode.TypeRepresentation;
-
-    using Spritely.Recipes;
+    using OBeautifulCode.Validation.Recipes;
 
     using static System.FormattableString;
 
@@ -39,12 +38,12 @@ namespace Naos.MessageBus.Core
         /// <param name="typeMatchStrategyForComparingMessageTypes">Type match strategy to use when looking up the handler.</param>
         public MappedTypeHandlerFactory(IReadOnlyDictionary<Type, Type> messageTypeToHandlerTypeMap, TypeMatchStrategy typeMatchStrategyForComparingMessageTypes)
         {
-            new { handlerTypeMap = messageTypeToHandlerTypeMap }.Must().NotBeNull().And().NotBeWhiteSpace().OrThrowFirstFailure();
+            new { messageTypeToHandlerTypeMap }.Must().NotBeNullNorEmptyDictionaryNorContainAnyNullValues();
 
             messageTypeToHandlerTypeMap.Keys
                 .All(_ => _.GetInterfaces().Contains(typeof(IMessage), InternalTypeComparer))
                 .Named(Invariant($"KeysIn-{nameof(messageTypeToHandlerTypeMap)}-MustImplement-{nameof(IMessage)}"))
-                .Must().BeTrue().OrThrowFirstFailure();
+                .Must().BeTrue();
 
             this.messageTypeToHandlerTypeMap = messageTypeToHandlerTypeMap;
             this.typeMatchStrategyForComparingMessageTypes = typeMatchStrategyForComparingMessageTypes;
@@ -57,8 +56,7 @@ namespace Naos.MessageBus.Core
             if (handlerType != null)
             {
                 handlerType.GetInterfaces().Contains(typeof(IHandleMessages), InternalTypeComparer)
-                    .Named(Invariant($"HandlerTypeFromMapping-{handlerType.FullName}-MustImplement-{nameof(IHandleMessages)}")).Must().NotBeNull()
-                    .OrThrow<FailedToFindHandlerException>();
+                    .Named(Invariant($"HandlerTypeFromMapping-{handlerType.FullName}-MustImplement-{nameof(IHandleMessages)}")).Must().BeTrue();
 
                 var ret = handlerType.Construct();
                 return (IHandleMessages)ret;

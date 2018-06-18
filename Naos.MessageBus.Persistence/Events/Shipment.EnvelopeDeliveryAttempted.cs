@@ -9,8 +9,9 @@ namespace Naos.MessageBus.Persistence
     using Microsoft.Its.Domain;
 
     using Naos.MessageBus.Domain;
+    using Naos.Telemetry.Domain;
 
-    using Spritely.Recipes;
+    using OBeautifulCode.Validation.Recipes;
 
     /// <summary>
     /// Aggregate for capturing shipment tracking events.
@@ -28,7 +29,7 @@ namespace Naos.MessageBus.Persistence
             /// <inheritdoc />
             public override void Update(Shipment aggregate)
             {
-                new { aggregate }.Must().NotBeNull().OrThrowFirstFailure();
+                new { aggregate }.Must().NotBeNull();
 
                 var payload = this.ExtractPayload();
                 aggregate.Tracking[payload.TrackingCode].Recipient = payload.Recipient;
@@ -48,7 +49,7 @@ namespace Naos.MessageBus.Persistence
         /// <param name="trackingCode">Tracking code of the envelope being attempted.</param>
         /// <param name="newStatus">New status of the envelope.</param>
         /// <param name="recipient">Information about the recipient the deliver was attempted with.</param>
-        public PayloadEnvelopeDeliveryAttempted(TrackingCode trackingCode, ParcelStatus newStatus, HarnessDetails recipient)
+        public PayloadEnvelopeDeliveryAttempted(TrackingCode trackingCode, ParcelStatus newStatus, DiagnosticsTelemetry recipient)
         {
             this.TrackingCode = trackingCode;
             this.Recipient = recipient;
@@ -68,6 +69,6 @@ namespace Naos.MessageBus.Persistence
         /// <summary>
         /// Gets the information about the recipient the deliver was attempted with.
         /// </summary>
-        public HarnessDetails Recipient { get; private set; }
+        public DiagnosticsTelemetry Recipient { get; private set; }
     }
 }

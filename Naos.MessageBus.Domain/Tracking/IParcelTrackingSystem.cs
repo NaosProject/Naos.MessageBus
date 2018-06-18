@@ -11,6 +11,7 @@ namespace Naos.MessageBus.Domain
     using System.Threading.Tasks;
 
     using Naos.Cron;
+    using Naos.Telemetry.Domain;
 
     /// <summary>
     /// Interface for tracking parcels in the bus.
@@ -31,9 +32,9 @@ namespace Naos.MessageBus.Domain
         /// Delivery is attempted on a handler, handler details provided.
         /// </summary>
         /// <param name="trackingCode">Tracking code of the parcel.</param>
-        /// <param name="harnessDetails">Details about the harness it is being delivered to.</param>
+        /// <param name="harnessDiagnosticsTelemetry">Details about the harness it is being delivered to.</param>
         /// <returns>Task for async.</returns>
-        Task UpdateAttemptingAsync(TrackingCode trackingCode, HarnessDetails harnessDetails);
+        Task UpdateAttemptingAsync(TrackingCode trackingCode, DiagnosticsTelemetry harnessDiagnosticsTelemetry);
 
         /// <summary>
         /// Delivery was rejected by the harness.
@@ -73,7 +74,7 @@ namespace Naos.MessageBus.Domain
     public sealed class NullParcelTrackingSystem : IParcelTrackingSystem
     {
         /// <inheritdoc />
-        public async Task UpdateAttemptingAsync(TrackingCode trackingCode, HarnessDetails harnessDetails)
+        public async Task UpdateAttemptingAsync(TrackingCode trackingCode, DiagnosticsTelemetry harnessDiagnosticsTelemetry)
         {
             /* no-op */
             await Task.FromResult<object>(null);

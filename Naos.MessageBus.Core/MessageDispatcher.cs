@@ -10,7 +10,6 @@ namespace Naos.MessageBus.Core
     using System.Collections.Concurrent;
     using System.Collections.Generic;
     using System.Linq;
-    using System.Runtime.ExceptionServices;
 
     using Its.Log.Instrumentation;
 
@@ -18,10 +17,10 @@ namespace Naos.MessageBus.Core
     using Naos.MessageBus.Domain;
     using Naos.MessageBus.Domain.Exceptions;
     using Naos.Recipes.RunWithRetry;
+    using Naos.Telemetry.Domain;
 
     using OBeautifulCode.TypeRepresentation;
-
-    using Spritely.Recipes;
+    using OBeautifulCode.Validation.Recipes;
 
     using static System.FormattableString;
 
@@ -38,7 +37,7 @@ namespace Naos.MessageBus.Core
 
         private readonly ICollection<IChannel> servicedChannels;
 
-        private readonly HarnessStaticDetails harnessStaticDetails;
+        private readonly DiagnosticsTelemetry harnessDiagnosticsTelemetry;
 
         private readonly IParcelTrackingSystem parcelTrackingSystem;
 
@@ -56,7 +55,7 @@ namespace Naos.MessageBus.Core
         /// <param name="handlerBuilder">Interface for looking up handlers.</param>
         /// <param name="handlerSharedStateMap">Initial state dictionary for handlers the require state to be seeded.</param>
         /// <param name="servicedChannels">Channels being services by this dispatcher.</param>
-        /// <param name="harnessStaticDetails">Details about the harness.</param>
+        /// <param name=" harnessDiagnosticsTelemetry">Details about the harness.</param>
         /// <param name="parcelTrackingSystem">Courier to track parcel events.</param>
         /// <param name="activeMessageTracker">Interface to track active messages to know if handler harness can shutdown.</param>
         /// <param name="postOffice">Interface to send parcels.</param>
@@ -66,31 +65,28 @@ namespace Naos.MessageBus.Core
             IHandlerFactory handlerBuilder,
             ConcurrentDictionary<Type, object> handlerSharedStateMap,
             ICollection<IChannel> servicedChannels,
-            HarnessStaticDetails harnessStaticDetails,
+            DiagnosticsTelemetry harnessDiagnosticsTelemetry,
             IParcelTrackingSystem parcelTrackingSystem,
             ITrackActiveMessages activeMessageTracker,
             IPostOffice postOffice,
             IStuffAndOpenEnvelopes envelopeMachine,
             IManageShares shareManager)
         {
-            new
-                {
-                    handlerBuilder,
-                    handlerSharedStateMap,
-                    servicedChannels,
-                    harnessStaticDetails,
-                    parcelTrackingSystem,
-                    activeMessageTracker,
-                    postOffice,
-                    envelopeMachine,
-                    shareManager
-                }.Must().NotBeNull().OrThrowFirstFailure();
+            new { handlerBuilder }.Must().NotBeNull();
+            new { handlerSharedStateMap }.Must().NotBeNull();
+            new { servicedChannels }.Must().NotBeNull();
+            new { harnessDiagnosticsTelemetry }.Must().NotBeNull();
+            new { parcelTrackingSystem }.Must().NotBeNull();
+            new { activeMessageTracker }.Must().NotBeNull();
+            new { postOffice }.Must().NotBeNull();
+            new { envelopeMachine }.Must().NotBeNull();
+            new { shareManager }.Must().NotBeNull();
 
             this.handlerBuilder = handlerBuilder;
             this.handlerSharedStateMap = handlerSharedStateMap;
             this.servicedChannels = servicedChannels;
 
-            this.harnessStaticDetails = harnessStaticDetails;
+            this.harnessDiagnosticsTelemetry = harnessDiagnosticsTelemetry;
             this.parcelTrackingSystem = parcelTrackingSystem;
             this.activeMessageTracker = activeMessageTracker;
             this.postOffice = postOffice;
@@ -132,10 +128,7 @@ namespace Naos.MessageBus.Core
                     throw new RecurringParcelEncounteredException(firstEnvelope.Description);
                 }
 
-                var dynamicDetails = new HarnessDynamicDetails { AvailablePhysicalMemoryInGb = MachineDetails.GetAvailablePhysicalMemoryInGb() };
-                var harnessDetails = new HarnessDetails { StaticDetails = this.harnessStaticDetails, DynamicDetails = dynamicDetails };
-
-                void AttemptingCallback() => this.parcelTrackingSystem.UpdateAttemptingAsync(trackingCode, harnessDetails).Wait();
+                void AttemptingCallback() => this.parcelTrackingSystem.UpdateAttemptingAsync(trackingCode, this.harnessDiagnosticsTelemetry).Wait();
 
                 void DeliveredCallback(Envelope deliveredEnvelope) => this.parcelTrackingSystem.UpdateDeliveredAsync(trackingCode, deliveredEnvelope).Wait();
 
@@ -381,7 +374,8 @@ namespace Naos.MessageBus.Core
 
         private AddressedMessage DeserializeEnvelopeIntoAddressedMessage(TrackingCode trackingCode, Envelope envelope)
         {
-            new { trackingCode, envelope }.Must().NotBeNull().OrThrowFirstFailure();
+            new { trackingCode }.Must().NotBeNull();
+            new { envelope }.Must().NotBeNull();
 
             var message = envelope.Open(this.envelopeMachine);
 

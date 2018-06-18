@@ -10,8 +10,7 @@ namespace Naos.MessageBus.Domain
     using System.ComponentModel;
 
     using OBeautifulCode.Math.Recipes;
-
-    using Spritely.Recipes;
+    using OBeautifulCode.Validation.Recipes;
 
     /// <summary>
     /// Abstract representation of a "Channel" to send messages to.
@@ -45,7 +44,7 @@ namespace Naos.MessageBus.Domain
         /// <param name="name">Name of the channel.</param>
         public SimpleChannel(string name)
         {
-            new { name }.Must().NotBeNull().And().NotBeWhiteSpace().OrThrowFirstFailure();
+            new { name }.Must().NotBeNullNorWhiteSpace();
 
             this.Name = name;
         }

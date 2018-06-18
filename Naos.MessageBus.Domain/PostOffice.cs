@@ -14,8 +14,7 @@ namespace Naos.MessageBus.Domain
     using Naos.Serialization.Domain;
 
     using OBeautifulCode.TypeRepresentation;
-
-    using Spritely.Recipes;
+    using OBeautifulCode.Validation.Recipes;
 
     using static System.FormattableString;
 
@@ -44,7 +43,9 @@ namespace Naos.MessageBus.Domain
         /// <param name="envelopeMachine">Implementation of <see cref="IStuffAndOpenEnvelopes" /> to stuffing and opening envelopes.</param>
         public PostOffice(IParcelTrackingSystem parcelTrackingSystem, IRouteUnaddressedMail unaddressedMailRouter, IStuffAndOpenEnvelopes envelopeMachine)
         {
-            new { parcelTrackingSystem, unaddressedMailRouter, envelopeMachine }.Must().NotBeNull().OrThrowFirstFailure();
+            new { parcelTrackingSystem }.Must().NotBeNull();
+            new { unaddressedMailRouter }.Must().NotBeNull();
+            new { envelopeMachine }.Must().NotBeNull();
 
             this.parcelTrackingSystem = parcelTrackingSystem;
             this.unaddressedMailRouter = unaddressedMailRouter;
@@ -99,8 +100,8 @@ namespace Naos.MessageBus.Domain
         /// <inheritdoc />
         public TrackingCode SendRecurring(MessageSequence messageSequence, ScheduleBase recurringSchedule)
         {
-            new { messageSequence }.Must().NotBeNull().OrThrowFirstFailure();
-            new { recurringSchedule }.Must().NotBeNull().OrThrowFirstFailure();
+            new { messageSequence }.Must().NotBeNull();
+            new { recurringSchedule }.Must().NotBeNull();
 
             if (messageSequence.Id == default(Guid))
             {
@@ -143,8 +144,8 @@ namespace Naos.MessageBus.Domain
         /// <inheritdoc />
         public TrackingCode SendRecurring(Parcel parcel, ScheduleBase recurringSchedule)
         {
-            new { parcel }.Must().NotBeNull().OrThrowFirstFailure();
-            new { recurringSchedule }.Must().NotBeNull().OrThrowFirstFailure();
+            new { parcel }.Must().NotBeNull();
+            new { recurringSchedule }.Must().NotBeNull();
 
             if (parcel.Topic != null)
             {

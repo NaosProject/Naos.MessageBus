@@ -12,7 +12,7 @@ namespace Naos.MessageBus.Persistence
 
     using Naos.MessageBus.Domain;
 
-    using Spritely.Recipes;
+    using OBeautifulCode.Validation.Recipes;
 
     /// <summary>
     /// Aggregate for capturing shipment tracking events.
@@ -30,7 +30,7 @@ namespace Naos.MessageBus.Persistence
             /// <inheritdoc />
             public override void Update(Shipment aggregate)
             {
-                new { aggregate }.Must().NotBeNull().OrThrowFirstFailure();
+                new { aggregate }.Must().NotBeNull();
 
                 aggregate.Status = this.ExtractPayload().NewStatus;
             }

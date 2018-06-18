@@ -8,7 +8,7 @@ namespace Naos.MessageBus.Domain
 {
     using Naos.Serialization.Domain;
 
-    using Spritely.Recipes;
+    using OBeautifulCode.Validation.Recipes;
 
     /// <summary>
     /// Model class to hold a single property to be shared.
@@ -22,8 +22,8 @@ namespace Naos.MessageBus.Domain
         /// <param name="serializedValue">Value of the property as a <see cref="DescribedSerialization" />.</param>
         public SharedProperty(string name, DescribedSerialization serializedValue)
         {
-            new { name }.Must().NotBeNull().And().NotBeWhiteSpace().OrThrowFirstFailure();
-            new { serializedValue }.Must().NotBeNull().OrThrowFirstFailure();
+            new { name }.Must().NotBeNullNorWhiteSpace();
+            new { serializedValue }.Must().NotBeNull();
 
             this.Name = name;
             this.SerializedValue = serializedValue;

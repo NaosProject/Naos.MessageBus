@@ -8,13 +8,11 @@ namespace Naos.MessageBus.Persistence
 {
     using Naos.MessageBus.Domain;
     using Naos.Serialization.Domain;
-    using Naos.Serialization.Domain.Extensions;
     using Naos.Serialization.Factory;
     using Naos.Serialization.Factory.Extensions;
 
     using OBeautifulCode.TypeRepresentation;
-
-    using Spritely.Recipes;
+    using OBeautifulCode.Validation.Recipes;
 
     /// <summary>
     /// Serialization extension methods for serializing items for transport through ParcelTracking.
@@ -31,7 +29,7 @@ namespace Naos.MessageBus.Persistence
         /// <returns>Deserialized object.</returns>
         public static T DeserializeMessage<T>(this Envelope envelope)
         {
-            new { envelope }.Must().NotBeNull().OrThrowFirstFailure();
+            new { envelope }.Must().NotBeNull();
 
             return envelope.SerializedMessage.DeserializePayload<T>(TypeMatchStrategy.NamespaceAndName, MultipleMatchStrategy.NewestVersion);
         }

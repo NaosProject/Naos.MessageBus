@@ -15,8 +15,10 @@ namespace Naos.MessageBus.Test
 
     using Its.Log.Instrumentation;
 
+    using Naos.Diagnostics.Domain;
     using Naos.MessageBus.Domain;
     using Naos.MessageBus.Persistence;
+    using Naos.Telemetry.Domain;
 
     using OBeautifulCode.TypeRepresentation;
 
@@ -87,7 +89,7 @@ namespace Naos.MessageBus.Test
                 (await parcelTrackingSystem.GetTrackingReportAsync(new[] { trackingCode })).Single().Status.Should().Be(seenRejection ? ParcelStatus.Rejected : ParcelStatus.Unknown);
                 await ConfirmNoticeState(parcelTrackingSystem, topic, expectedTopicStatus);
 
-                await parcelTrackingSystem.UpdateAttemptingAsync(trackingCode, new HarnessDetails());
+                await parcelTrackingSystem.UpdateAttemptingAsync(trackingCode, DummyDiagnosticsTelemetry);
                 (await parcelTrackingSystem.GetTrackingReportAsync(new[] { trackingCode })).Single().Status.Should().Be(seenRejection ? ParcelStatus.Rejected : ParcelStatus.Unknown);
                 await ConfirmNoticeState(parcelTrackingSystem, topic, expectedTopicStatus);
 
@@ -95,7 +97,7 @@ namespace Naos.MessageBus.Test
                 (await parcelTrackingSystem.GetTrackingReportAsync(new[] { trackingCode })).Single().Status.Should().Be(ParcelStatus.Aborted);
                 await ConfirmNoticeState(parcelTrackingSystem, topic, expectedTopicStatus);
 
-                await parcelTrackingSystem.UpdateAttemptingAsync(trackingCode, new HarnessDetails());
+                await parcelTrackingSystem.UpdateAttemptingAsync(trackingCode, DummyDiagnosticsTelemetry);
                 (await parcelTrackingSystem.GetTrackingReportAsync(new[] { trackingCode })).Single().Status.Should().Be(ParcelStatus.Aborted);
                 await ConfirmNoticeState(parcelTrackingSystem, topic, expectedTopicStatus);
 
@@ -107,7 +109,7 @@ namespace Naos.MessageBus.Test
                 await ConfirmNoticeState(parcelTrackingSystem, topic, expectedTopicStatus);
                 seenRejection = true;
 
-                await parcelTrackingSystem.UpdateAttemptingAsync(trackingCode, new HarnessDetails());
+                await parcelTrackingSystem.UpdateAttemptingAsync(trackingCode, DummyDiagnosticsTelemetry);
                 (await parcelTrackingSystem.GetTrackingReportAsync(new[] { trackingCode })).Single().Status.Should().Be(ParcelStatus.Rejected);
                 await ConfirmNoticeState(parcelTrackingSystem, topic, expectedTopicStatus);
 
@@ -183,5 +185,17 @@ namespace Naos.MessageBus.Test
                 }
             }
         }
+
+        private static DiagnosticsTelemetry DummyDiagnosticsTelemetry => new DiagnosticsTelemetry(
+            DateTime.UtcNow,
+            new MachineDetails(
+                new Dictionary<string, string>(),
+                1,
+                new Dictionary<string, decimal>(),
+                true,
+                new OperatingSystemDetails("OS", new Version(), "ServicePack"),
+                "ClrVersion"),
+            new ProcessDetails("Process", "FilePath", "FileVersion", "ProductVersion", false),
+            new List<AssemblyDetails>());
     }
 }

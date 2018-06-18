@@ -12,8 +12,6 @@ using Naos.MessageBus.Hangfire.Harness;
 
 namespace Naos.MessageBus.Hangfire.Harness
 {
-    using System.Linq;
-
     using global::Hangfire;
     using global::Hangfire.Logging;
     using global::Hangfire.SqlServer;
@@ -21,13 +19,12 @@ namespace Naos.MessageBus.Hangfire.Harness
     using Its.Configuration;
 
     using Naos.Logging.Domain;
-    using Naos.MessageBus.Core;
     using Naos.MessageBus.Domain;
     using Naos.Recipes.Configuration.Setup;
 
-    using Owin;
+    using OBeautifulCode.Validation.Recipes;
 
-    using Spritely.Recipes;
+    using Owin;
 
     /// <summary>
     /// Startup class to optionally load the Hangfire server.
@@ -43,13 +40,13 @@ namespace Naos.MessageBus.Hangfire.Harness
         {
             Config.ConfigureSerialization();
 
-            var logProcessorSettings = Settings.Get<LogProcessorSettings>();
+            var logProcessorSettings = Settings.Get<LogWritingSettings>();
             var connectionConfig = Settings.Get<MessageBusConnectionConfiguration>();
 
-            new { logProcessorSettings, connectionConfig }.Must().NotBeNull().OrThrow();
+            new { logProcessorSettings, connectionConfig }.Must().NotBeNull();
 
             // May have already been setup by one of the other entry points.
-            LogProcessing.Instance.Setup(logProcessorSettings, multipleCallsToSetupStrategy: MultipleCallsToSetupStrategy.Ignore);
+            LogWriting.Instance.Setup(logProcessorSettings, multipleCallsToSetupStrategy: MultipleCallsToSetupStrategy.Ignore);
             LogProvider.SetCurrentLogProvider(new ItsLogPassThroughProvider());
 
             GlobalConfiguration.Configuration.UseSqlServerStorage(

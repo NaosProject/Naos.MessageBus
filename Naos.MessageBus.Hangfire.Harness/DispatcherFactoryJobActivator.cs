@@ -15,6 +15,7 @@ namespace Naos.MessageBus.Hangfire.Harness
     using Naos.MessageBus.Hangfire.Sender;
 
     using OBeautifulCode.TypeRepresentation;
+    using OBeautifulCode.Validation.Recipes;
 
     using Spritely.Recipes;
 
@@ -42,7 +43,7 @@ namespace Naos.MessageBus.Hangfire.Harness
         /// <inheritdoc />
         public override object ActivateJob(Type jobType)
         {
-            new { jobType }.Must().NotBeNull().OrThrowFirstFailure();
+            new { jobType }.Must().NotBeNull();
 
             if (this.typeComparer.Equals(jobType, typeof(HangfireDispatcher)))
             {

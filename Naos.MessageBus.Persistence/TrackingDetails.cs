@@ -7,6 +7,7 @@
 namespace Naos.MessageBus.Persistence
 {
     using Naos.MessageBus.Domain;
+    using Naos.Telemetry.Domain;
 
     /// <summary>
     /// Model class to track information by tracking code.
@@ -16,7 +17,7 @@ namespace Naos.MessageBus.Persistence
         /// <summary>
         /// Gets the recipient.
         /// </summary>
-        public HarnessDetails Recipient { get; internal set; }
+        public DiagnosticsTelemetry Recipient { get; internal set; }
 
         /// <summary>
         /// Gets or sets the message of the exception.

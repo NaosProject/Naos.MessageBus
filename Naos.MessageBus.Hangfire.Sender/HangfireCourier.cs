@@ -17,8 +17,8 @@ namespace Naos.MessageBus.Hangfire.Sender
     using Naos.Cron;
     using Naos.MessageBus.Domain;
     using OBeautifulCode.TypeRepresentation;
+    using OBeautifulCode.Validation.Recipes;
 
-    using Spritely.Recipes;
     using Spritely.Redo;
     using static System.FormattableString;
 
@@ -46,7 +46,8 @@ namespace Naos.MessageBus.Hangfire.Sender
         /// <param name="retryCount">Number of retries to attempt if error encountered (default if 5).</param>
         public HangfireCourier(CourierPersistenceConnectionConfiguration courierPersistenceConnectionConfiguration, IStuffAndOpenEnvelopes envelopeMachine, int retryCount = 5)
         {
-            new { courierPersistenceConnectionConfiguration, envelopeMachine }.Must().NotBeNull().OrThrowFirstFailure();
+            new { courierPersistenceConnectionConfiguration }.Must().NotBeNull();
+            new { envelopeMachine }.Must().NotBeNull();
 
             this.courierPersistenceConnectionConfiguration = courierPersistenceConnectionConfiguration;
             this.envelopeMachine = envelopeMachine;
@@ -103,7 +104,7 @@ namespace Naos.MessageBus.Hangfire.Sender
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA2204:Literals should be spelled correctly", MessageId = "requeue", Justification = "Spelling/name is correct.")]
         public void Resend(CrateLocator crateLocator)
         {
-            new { crateLocator }.Must().NotBeNull().OrThrowFirstFailure();
+            new { crateLocator }.Must().NotBeNull();
 
             GlobalConfiguration.Configuration.UseSqlServerStorage(this.courierPersistenceConnectionConfiguration.ToSqlServerConnectionString());
             var client = new BackgroundJobClient();
@@ -124,8 +125,8 @@ namespace Naos.MessageBus.Hangfire.Sender
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1045:DoNotPassTypesByReference", MessageId = "2#", Justification = "Keeping this design for now (channel passed by ref).")]
         public Parcel UncrateParcel(Crate crate, IChannel defaultChannel, ref IChannel channel)
         {
-            new { crate }.Must().NotBeNull().OrThrowFirstFailure();
-            new { defaultChannel }.Must().NotBeNull().OrThrowFirstFailure();
+            new { crate }.Must().NotBeNull();
+            new { defaultChannel }.Must().NotBeNull();
 
             Parcel parcel;
 

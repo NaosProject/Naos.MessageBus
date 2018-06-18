@@ -16,8 +16,7 @@ namespace Naos.MessageBus.Domain
     using Naos.Serialization.Domain.Extensions;
 
     using OBeautifulCode.TypeRepresentation;
-
-    using Spritely.Recipes;
+    using OBeautifulCode.Validation.Recipes;
 
     using static System.FormattableString;
 
@@ -52,8 +51,8 @@ namespace Naos.MessageBus.Domain
         /// <param name="typeMatchStrategyForMatchingSharingInterfaces">Strategy to use when matching types for sharing.</param>
         public ShareManager(ISerializerFactory serializerFactory, ICompressorFactory compressorFactory, TypeMatchStrategy typeMatchStrategyForMatchingSharingInterfaces)
         {
-            new { serializerFactory }.Must().NotBeNull().OrThrowFirstFailure();
-            new { compressorFactory }.Must().NotBeNull().OrThrowFirstFailure();
+            new { serializerFactory }.Must().NotBeNull();
+            new { compressorFactory }.Must().NotBeNull();
 
             this.typeMatchStrategyForMatchingSharingInterfaces = typeMatchStrategyForMatchingSharingInterfaces;
             this.serializerFactory = serializerFactory;
@@ -108,7 +107,7 @@ namespace Naos.MessageBus.Domain
         /// <returns>List of interface types that implement IShare.</returns>
         public static IList<Type> GetShareInterfaceTypes(IShare objectToInterrogate)
         {
-            new { objectToInterrogate }.Must().NotBeNull().OrThrowFirstFailure();
+            new { objectToInterrogate }.Must().NotBeNull();
 
             var sourceType = objectToInterrogate.GetType();
             var sourceTypeInterfaces =
@@ -199,7 +198,7 @@ namespace Naos.MessageBus.Domain
         /// <returns>Value of the property description.</returns>
         public object GetValueFromPropertyEntry(SharedProperty sharedProperty)
         {
-            new { sharedProperty }.Must().NotBeNull().OrThrowFirstFailure();
+            new { sharedProperty }.Must().NotBeNull();
 
             var ret = sharedProperty.SerializedValue.DeserializePayloadUsingSpecificFactory(
                 this.serializerFactory,

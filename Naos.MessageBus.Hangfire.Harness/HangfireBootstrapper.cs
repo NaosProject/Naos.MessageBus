@@ -10,6 +10,7 @@ namespace Naos.MessageBus.Hangfire.Harness
 {
     using System;
     using System.Collections.Concurrent;
+    using System.IO;
     using System.Linq;
     using System.Reflection;
     using System.Web.Hosting;
@@ -19,11 +20,15 @@ namespace Naos.MessageBus.Hangfire.Harness
 
     using Naos.Compression.Domain;
     using Naos.Diagnostics.Domain;
+    using Naos.Diagnostics.Recipes;
     using Naos.MessageBus.Core;
     using Naos.MessageBus.Domain;
     using Naos.MessageBus.Hangfire.Sender;
     using Naos.MessageBus.Persistence;
     using Naos.Serialization.Factory;
+    using Naos.Telemetry.Domain;
+
+    using OBeautifulCode.Validation.Recipes;
 
     using Spritely.Recipes;
 
@@ -46,8 +51,6 @@ namespace Naos.MessageBus.Hangfire.Harness
         private ConcurrentDictionary<Type, object> handlerSharedStateMap;
 
         private ReflectionHandlerFactory handlerFactory;
-
-        private HarnessStaticDetails harnessStaticDetails;
 
         private HangfireBootstrapper()
         {
@@ -110,14 +113,12 @@ namespace Naos.MessageBus.Hangfire.Harness
                                           handlerFactoryConfig.HandlerAssemblyPath,
                                           handlerFactoryConfig.TypeMatchStrategyForMessageResolution);
 
-            var assemblyDetails = this.handlerFactory.FilePathToAssemblyMap.Values.Select(SafeFetchAssemblyDetails).ToList();
-            var machineDetails = MachineDetails.Create();
-            this.harnessStaticDetails = new HarnessStaticDetails
-                                           {
-                                               MachineDetails = machineDetails,
-                                               ExecutingUser = Environment.UserDomainName + "\\" + Environment.UserName,
-                                               Assemblies = assemblyDetails
-                                           };
+            var processSiblingAssemblies = this.handlerFactory.FilePathToAssemblyMap.Values.Select(SafeFetchAssemblyDetails).ToList();
+            var dateTimeOfSampleInUtc = DateTime.UtcNow;
+            var machineDetails = DomainFactory.CreateMachineDetails();
+            var processDetails = DomainFactory.CreateProcessDetails();
+
+            var diagnosticsTelemetry = new DiagnosticsTelemetry(dateTimeOfSampleInUtc, machineDetails, processDetails, processSiblingAssemblies);
 
             this.handlerSharedStateMap = new ConcurrentDictionary<Type, object>();
 
@@ -125,7 +126,7 @@ namespace Naos.MessageBus.Hangfire.Harness
                 this.handlerFactory,
                 this.handlerSharedStateMap,
                 launchConfig.ChannelsToMonitor,
-                this.harnessStaticDetails,
+                diagnosticsTelemetry,
                 parcelTrackingSystem,
                 activeMessageTracker,
                 postOffice,
@@ -153,10 +154,15 @@ namespace Naos.MessageBus.Hangfire.Harness
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1031:DoNotCatchGeneralExceptionTypes", Justification = "Catching and swallowing on purpose.")]
         private static AssemblyDetails SafeFetchAssemblyDetails(Assembly assembly)
         {
-            new { assembly }.Must().NotBeNull().OrThrowFirstFailure();
+            new { assembly }.Must().NotBeNull();
 
             // get a default
-            var ret = new AssemblyDetails { FilePath = assembly.Location };
+            var assemblyName = assembly.GetName();
+            var ret = new AssemblyDetails(
+                assemblyName?.Name ?? "assembly.GetName() returned null",
+                assemblyName?.Version ?? new Version(0, 0),
+                assembly.Location,
+                assembly.ImageRuntimeVersion);
 
             try
             {

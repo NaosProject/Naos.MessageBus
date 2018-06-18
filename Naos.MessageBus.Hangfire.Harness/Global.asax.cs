@@ -19,7 +19,7 @@ namespace Naos.MessageBus.Hangfire.Harness
     using Naos.MessageBus.Domain;
     using Naos.Recipes.Configuration.Setup;
 
-    using Spritely.Recipes;
+    using OBeautifulCode.Validation.Recipes;
 
     /// <inheritdoc />
     public class Global : HttpApplication
@@ -33,15 +33,18 @@ namespace Naos.MessageBus.Hangfire.Harness
         {
             Config.ConfigureSerialization();
 
-            var logProcessorSettings = Settings.Get<LogProcessorSettings>();
+            var logProcessorSettings = Settings.Get<LogWritingSettings>();
             var handlerFactoryConfig = Settings.Get<HandlerFactoryConfiguration>();
             var connectionConfig = Settings.Get<MessageBusConnectionConfiguration>();
             var launchConfig = Settings.Get<MessageBusLaunchConfiguration>();
 
-            new { logProcessorSettings, handlerFactoryConfig, connectionConfig, launchConfig }.Must().NotBeNull().OrThrow();
+            new { logProcessorSettings }.Must().NotBeNull();
+            new { handlerFactoryConfig }.Must().NotBeNull();
+            new { connectionConfig }.Must().NotBeNull();
+            new { launchConfig }.Must().NotBeNull();
 
             // May have already been setup by one of the other entry points.
-            LogProcessing.Instance.Setup(logProcessorSettings, multipleCallsToSetupStrategy: MultipleCallsToSetupStrategy.Ignore);
+            LogWriting.Instance.Setup(logProcessorSettings, multipleCallsToSetupStrategy: MultipleCallsToSetupStrategy.Ignore);
             LogProvider.SetCurrentLogProvider(new ItsLogPassThroughProvider());
 
             HangfireBootstrapper.Instance.Start(handlerFactoryConfig, connectionConfig, launchConfig);

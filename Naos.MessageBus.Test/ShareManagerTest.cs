@@ -122,7 +122,7 @@ namespace Naos.MessageBus.Test
                 };
 
             // act & assert
-            testCode.ShouldThrow<ArgumentNullException>().WithMessage("\r\nParameter name: type");
+            testCode.ShouldThrow<ArgumentNullException>().WithMessage("Parameter 'type' is null.");
         }
 
         [Fact]

@@ -8,7 +8,7 @@ namespace Naos.MessageBus.Domain
 {
     using System;
 
-    using Spritely.Recipes;
+    using OBeautifulCode.Validation.Recipes;
 
     /// <summary>
     /// Collection of envelopes to use as a unit.
@@ -23,7 +23,7 @@ namespace Naos.MessageBus.Domain
         /// <returns><see cref="AddressedMessage"/> with message and channel.</returns>
         public static AddressedMessage ToAddressedMessage(this IMessage message, IChannel channel = null)
         {
-            new { message }.Must().NotBeNull().OrThrowFirstFailure();
+            new { message }.Must().NotBeNull();
 
             return new AddressedMessage
             {
@@ -41,8 +41,8 @@ namespace Naos.MessageBus.Domain
         /// <returns>New envelope.</returns>
         public static Envelope ToEnvelope(this AddressedMessage addressedMessage, IStuffAndOpenEnvelopes envelopeMachine, string id = null)
         {
-            new { addressedMessage }.Must().NotBeNull().OrThrowFirstFailure();
-            new { envelopeMachine }.Must().NotBeNull().OrThrowFirstFailure();
+            new { addressedMessage }.Must().NotBeNull();
+            new { envelopeMachine }.Must().NotBeNull();
 
             var envelope = envelopeMachine.StuffEnvelope(addressedMessage, id);
             return envelope;
@@ -56,8 +56,8 @@ namespace Naos.MessageBus.Domain
         /// <returns>Message within the envelope.</returns>
         public static IMessage Open(this Envelope envelope, IStuffAndOpenEnvelopes envelopeMachine)
         {
-            new { envelope }.Must().NotBeNull().OrThrowFirstFailure();
-            new { envelopeMachine }.Must().NotBeNull().OrThrowFirstFailure();
+            new { envelope }.Must().NotBeNull();
+            new { envelopeMachine }.Must().NotBeNull();
 
             var message = envelopeMachine.OpenEnvelope(envelope);
             return message;
@@ -73,8 +73,8 @@ namespace Naos.MessageBus.Domain
         public static T Open<T>(this Envelope envelope, IStuffAndOpenEnvelopes envelopeMachine)
             where T : IMessage
         {
-            new { envelope }.Must().NotBeNull().OrThrowFirstFailure();
-            new { envelopeMachine }.Must().NotBeNull().OrThrowFirstFailure();
+            new { envelope }.Must().NotBeNull();
+            new { envelopeMachine }.Must().NotBeNull();
 
             var message = envelopeMachine.OpenEnvelope<T>(envelope);
             return message;
