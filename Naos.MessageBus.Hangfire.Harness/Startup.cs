@@ -43,7 +43,8 @@ namespace Naos.MessageBus.Hangfire.Harness
             var logProcessorSettings = Settings.Get<LogWritingSettings>();
             var connectionConfig = Settings.Get<MessageBusConnectionConfiguration>();
 
-            new { logProcessorSettings, connectionConfig }.Must().NotBeNull();
+            new { logProcessorSettings }.Must().NotBeNull();
+            new { connectionConfig }.Must().NotBeNull();
 
             // May have already been setup by one of the other entry points.
             LogWriting.Instance.Setup(logProcessorSettings, multipleCallsToSetupStrategy: MultipleCallsToSetupStrategy.Ignore);
