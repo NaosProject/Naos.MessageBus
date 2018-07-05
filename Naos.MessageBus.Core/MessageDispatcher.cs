@@ -155,6 +155,7 @@ namespace Naos.MessageBus.Core
             }
             catch (Exception ex)
             {
+                Log.Write(() => ex);
                 this.parcelTrackingSystem.UpdateRejectedAsync(trackingCode, ex).Wait();
                 throw;
             }
