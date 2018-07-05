@@ -201,8 +201,6 @@ namespace Naos.MessageBus.Core
                     activity.Trace(() => "Handling message (calling Handle on selected Handler).");
 
                     Run.TaskUntilCompletion(handler.HandleAsync(messageToHandle));
-
-                    activity.Confirm(() => Invariant($"Successfully handled message."));
                 }
                 catch (Exception ex)
                 {
@@ -251,8 +249,6 @@ namespace Naos.MessageBus.Core
                                               };
 
                     this.postOffice.Send(envelopesParcel);
-
-                    activity.Confirm(() => "Finished sending remaining messages in sequence.");
                 }
                 catch (Exception ex)
                 {
@@ -328,8 +324,6 @@ namespace Naos.MessageBus.Core
                         activity.Trace(() => "Applying state to handler.");
                         var seedMethodInfo = handlerActualType.GetMethod("PreHandleWithState");
                         seedMethodInfo.Invoke(handler, new[] { state });
-
-                        activity.Confirm(() => "Finished state management work.");
                     }
                     catch (Exception ex)
                     {
@@ -361,8 +355,6 @@ namespace Naos.MessageBus.Core
                         {
                             this.shareManager.ApplySharedInterfaceState(sharedPropertySet, messageAsShare);
                         }
-
-                        activity.Confirm(() => "Finished property sharing.");
                     }
                     catch (Exception ex)
                     {
