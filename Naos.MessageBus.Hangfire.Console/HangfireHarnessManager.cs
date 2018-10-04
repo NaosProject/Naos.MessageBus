@@ -90,7 +90,7 @@ namespace Naos.MessageBus.Hangfire.Bootstrapper
             var serializerFactory = SerializerFactory.Instance;
             var compressorFactory = CompressorFactory.Instance;
 
-            var logProvider = new ItsLogPassThroughProvider();
+            var logProvider = new HangfireLogProviderToNaosLogWritingAdapter();
             LogProvider.SetCurrentLogProvider(logProvider);
 
             var activeMessageTracker = new InMemoryActiveMessageTracker();

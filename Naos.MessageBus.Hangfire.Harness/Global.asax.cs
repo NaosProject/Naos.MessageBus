@@ -17,6 +17,7 @@ namespace Naos.MessageBus.Hangfire.Harness
 
     using Naos.Logging.Domain;
     using Naos.MessageBus.Domain;
+    using Naos.MessageBus.Hangfire.Bootstrapper;
     using Naos.Recipes.Configuration.Setup;
 
     using OBeautifulCode.Validation.Recipes;
@@ -45,7 +46,7 @@ namespace Naos.MessageBus.Hangfire.Harness
 
             // May have already been setup by one of the other entry points.
             LogWriting.Instance.Setup(logProcessorSettings, multipleCallsToSetupStrategy: MultipleCallsToSetupStrategy.Ignore);
-            LogProvider.SetCurrentLogProvider(new ItsLogPassThroughProvider());
+            LogProvider.SetCurrentLogProvider(new HangfireLogProviderToNaosLogWritingAdapter());
 
             HangfireBootstrapper.Instance.Start(handlerFactoryConfig, connectionConfig, launchConfig);
 

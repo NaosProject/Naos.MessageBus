@@ -376,7 +376,18 @@ namespace Naos.MessageBus.Hangfire.Console
              * Normally this would just be done from the Its.Configuration file but the  *
              * we're overriding to only use the Console for demonstration purposes.      *
              *---------------------------------------------------------------------------*/
-            var logProcessorSettingsOverride = new LogWritingSettings(new[] { new ConsoleLogConfig(LogItemOrigins.All, LogItemOrigins.AllErrors),  });
+            var logProcessorSettingsOverride = new LogWritingSettings(new[]
+            {
+                new ConsoleLogConfig(
+                    new Dictionary<LogItemKind, IReadOnlyCollection<LogItemOrigin>>(),
+                    new Dictionary<LogItemKind, IReadOnlyCollection<LogItemOrigin>>
+                    {
+                        { LogItemKind.String, new[] { LogItemOrigin.ItsLogEntryPosted } },
+                        { LogItemKind.Object, new[] { LogItemOrigin.ItsLogEntryPosted } },
+                    },
+                    new Dictionary<LogItemKind, IReadOnlyCollection<LogItemOrigin>> { { LogItemKind.Exception, null } }
+                ),
+            });
 
             /*---------------------------------------------------------------------------*
              * Any method should run this logic to debug, setup config & logging, etc.   *

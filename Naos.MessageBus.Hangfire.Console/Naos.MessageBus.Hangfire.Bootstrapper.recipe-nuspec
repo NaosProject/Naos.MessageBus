@@ -26,6 +26,6 @@
     <file src="DispatcherFactoryJobActivator.cs" target="content\net45\.recipes\Naos.MessageBus\DispatcherFactoryJobActivator.cs" />
     <file src="HandlerFactory.Common.cs.pp" target="content\net45\.recipes\Naos.MessageBus\HandlerFactory.Common.cs.pp" />
     <file src="HangfireHarnessManager.cs" target="content\net45\.recipes\Naos.MessageBus\HangfireHarnessManager.cs" />
-    <file src="ItsLogPassThroughProvider.cs" target="content\net45\.recipes\Naos.MessageBus\ItsLogPassThroughProvider.cs" />
+    <file src="HangfireLogProviderToNaosLogWritingAdapter.cs" target="content\net45\.recipes\Naos.MessageBus\HangfireLogProviderToNaosLogWritingAdapter.cs" />
   </files>
 </package>
