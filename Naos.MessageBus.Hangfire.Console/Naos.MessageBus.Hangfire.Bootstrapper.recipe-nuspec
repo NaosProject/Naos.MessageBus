@@ -20,10 +20,8 @@
     </dependencies>
   </metadata>
   <files>
-    <file src="DefaultMessageBusProgram.cs.pp" target="content\net45\DefaultMessageBusProgram.cs.pp" />
-    <file src="DefaultMessageBusConsoleAbstraction.cs.pp" target="content\net45\DefaultMessageBusConsoleAbstraction.cs.pp" />
-    <file src="HandlerFactory.Example.cs.pp" target="content\net45\HandlerFactory.Example.cs.pp" />
     <file src="DispatcherFactoryJobActivator.cs" target="content\net45\.recipes\Naos.MessageBus\DispatcherFactoryJobActivator.cs" />
+    <file src="HandlerFactory.Example.cs.pp" target="content\net45\.recipes\Naos.MessageBus\HandlerFactory.Example.cs.pp" />
     <file src="HandlerFactory.Common.cs.pp" target="content\net45\.recipes\Naos.MessageBus\HandlerFactory.Common.cs.pp" />
     <file src="HangfireHarnessManager.cs" target="content\net45\.recipes\Naos.MessageBus\HangfireHarnessManager.cs" />
     <file src="HangfireLogProviderToNaosLogWritingAdapter.cs" target="content\net45\.recipes\Naos.MessageBus\HangfireLogProviderToNaosLogWritingAdapter.cs" />

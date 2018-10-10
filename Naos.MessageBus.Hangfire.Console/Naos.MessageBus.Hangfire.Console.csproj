@@ -149,10 +149,10 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include=".recipes\Naos.Configuration.Setup\Config.cs" />
-    <Compile Include=".recipes\Naos.Configuration.Setup\ConfigRequiredTest.cs" />
-    <Compile Include=".recipes\Naos.Console.Bootstrapper\ConsoleAbstractionBase.cs" />
-    <Compile Include=".recipes\Naos.Console.Domain\WellKnownConsoleVerb.cs" />
+    <Compile Include=".recipes\Naos.Configuration\Config.cs" />
+    <Compile Include=".recipes\Naos.Configuration\ConfigRequiredTest.cs" />
+    <Compile Include=".recipes\Naos.Console\ConsoleAbstractionBase.cs" />
+    <Compile Include=".recipes\Naos.Console\WellKnownConsoleVerb.cs" />
     <Compile Include=".recipes\Naos.Diagnostics\DomainFactory.cs" />
     <Compile Include=".recipes\Naos.Diagnostics\MachineMemory.cs" />
     <Compile Include=".recipes\Naos.Diagnostics\MachineMemoryKind.cs" />
@@ -186,7 +186,7 @@
     <Compile Include="HandlerFactory.Example.cs.pp" />
     <Compile Include="HangfireLogProviderToNaosLogWritingAdapter.cs" />
     <Compile Include="HangfireHarnessManager.cs" />
-    <Compile Include="DefaultMessageBusProgram.cs.pp" />
+    <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -199,15 +199,16 @@
     <Content Include=".config\ExampleProduction\MessageBusConnectionConfiguration.json" />
     <AdditionalFiles Include=".analyzers\stylecop.json" />
     <None Include=".analyzers\release.ruleset" />
-    <Content Include=".config\ExampleDevelopment\LogProcessorSettings.json">
+    <Content Include=".config\ExampleDevelopment\LogWritingSettings.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include=".config\ExampleProduction\LogProcessorSettings.json">
+    <Content Include=".config\ExampleProduction\LogWritingSettings.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
     <None Include="App.config" />
-    <Compile Include="DefaultMessageBusConsoleAbstraction.cs.pp" />
+    <Compile Include="ConsoleAbstraction.cs" />
     <Compile Include="HandlerFactory.Common.cs.pp" />
+    <None Include="ExampleConsoleApp.config" />
     <None Include="Naos.MessageBus.Hangfire.ExampleConfig.recipe-nuspec" />
     <None Include="Naos.MessageBus.Hangfire.Bootstrapper.recipe-nuspec">
       <SubType>Designer</SubType>

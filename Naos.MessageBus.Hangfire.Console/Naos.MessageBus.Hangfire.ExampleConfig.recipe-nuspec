@@ -6,7 +6,7 @@
     <description>Recipe that installs examples of configuration for Naos.MessageBus.Hangfire.Bootstrapper.</description>
   </metadata>
   <files>
-    <file src="App.config" target="content\net45\ExampleMessageBusApp.config" />
+    <file src="App.config" target="content\net45\.recipes\Naos.MessageBus\ExampleApp.config" />
     <file src=".config\**" target="content\net45\.config\" />
   </files>
 </package>
