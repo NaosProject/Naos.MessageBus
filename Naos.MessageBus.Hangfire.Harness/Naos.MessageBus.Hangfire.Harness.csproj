@@ -257,11 +257,6 @@
     </Content>
   </ItemGroup>
   <ItemGroup>
-    <Content Include=".config\ExampleDevelopment\LogProcessorSettings.json">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-  </ItemGroup>
-  <ItemGroup>
     <Content Include=".config\ExampleDevelopment\MessageBusConnectionConfiguration.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
@@ -277,12 +272,17 @@
     </Content>
   </ItemGroup>
   <ItemGroup>
-    <Content Include=".config\ExampleProduction\LogProcessorSettings.json">
+    <Content Include=".config\ExampleProduction\MessageBusConnectionConfiguration.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
   <ItemGroup>
-    <Content Include=".config\ExampleProduction\MessageBusConnectionConfiguration.json">
+    <Content Include=".config\ExampleDevelopment\LogWritingSettings.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include=".config\ExampleProduction\LogWritingSettings.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
   </ItemGroup>

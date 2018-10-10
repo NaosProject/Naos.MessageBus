@@ -18,7 +18,6 @@ namespace Naos.MessageBus.Persistence.NaosRecipes.ItsDomain
     /// <summary>
     /// Helper for authorization needs of Its.Domain.
     /// </summary>
-    [System.Diagnostics.DebuggerStepThrough]
     [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
     [System.CodeDom.Compiler.GeneratedCode("Naos.Recipes", "See package version number")]
     public static class Authorization<T>
