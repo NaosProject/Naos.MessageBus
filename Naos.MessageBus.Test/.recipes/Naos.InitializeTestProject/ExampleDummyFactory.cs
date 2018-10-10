@@ -20,7 +20,6 @@ namespace Naos.MessageBus.Test
     /// Example of how to control how dummy objects get created.
     /// </summary>
     #if !NaosRecipesInitializeTestProject
-        [System.Diagnostics.DebuggerStepThrough]
         [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
         [System.CodeDom.Compiler.GeneratedCode("Naos.Recipes.InitializeTestProject", "See package version number")]
     #endif
