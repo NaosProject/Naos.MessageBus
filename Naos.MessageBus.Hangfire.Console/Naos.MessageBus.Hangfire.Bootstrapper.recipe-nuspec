@@ -18,7 +18,7 @@
     </dependencies>
   </metadata>
   <files>
-    <file src="MessageBusLaunchConfigurationForRecipe.json" target="content\net45\.recipes\MessageBusLaunchConfiguration.Example.json" />
+    <file src="MessageBusLaunchConfigurationForRecipe.json" target="content\net45\.recipes\Naos.MessageBus\MessageBusLaunchConfiguration.Example.json" />
     <file src="DispatcherFactoryJobActivator.cs" target="content\net45\.recipes\Naos.MessageBus\DispatcherFactoryJobActivator.cs" />
     <file src="HandlerFactory.Example.cs.pp" target="content\net45\.recipes\Naos.MessageBus\HandlerFactoryExample.cs.pp" />
     <file src="HandlerFactory.Common.cs.pp" target="content\net45\.recipes\Naos.MessageBus\HandlerFactory.Common.cs.pp" />

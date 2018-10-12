@@ -5,5 +5,5 @@
     "messageDeliveryRetryCount": 0,
     "pollingInterval": "00:01:00",
     "concurrentWorkerCount": 1,
-    "channelsToMonitor": [ { "name": "messages_production" } ]
+    "channelsToMonitor": [ { "name": "[TODO_PUT_YOUR_CHANNEL_NAME_HERE]" } ]
 }
