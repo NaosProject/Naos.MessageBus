@@ -10,8 +10,7 @@
       <dependency id="Naos.MessageBus.Core" version="[$version$,)" />
       <dependency id="Naos.MessageBus.Hangfire.Sender" version="[$version$,)" />
       <dependency id="Naos.MessageBus.Persistence" version="[$version$,)" />
-      <dependency id="Naos.Recipes.Configuration.Setup" version="[1.0.83,)" />
-      <dependency id="Naos.Recipes.Console.Bootstrapper" version="[1.0.83,)" />
+      <dependency id="Naos.Recipes.Configuration.Setup" version="[1.0.102,)" />
       <dependency id="Naos.Serialization.Factory" version="[1.0.43,)" />
       <dependency id="Hangfire.SqlServer" version="[1.5.9]" />
       <dependency id="OBeautifulCode.Collection.Recipes.EnumerableExtensions" version="[1.0.21,)" />
