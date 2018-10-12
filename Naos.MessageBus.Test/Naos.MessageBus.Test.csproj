@@ -114,8 +114,8 @@
     <Reference Include="OBeautifulCode.AutoFakeItEasy, Version=1.0.107.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\OBeautifulCode.AutoFakeItEasy.1.0.107\lib\net462\OBeautifulCode.AutoFakeItEasy.dll</HintPath>
     </Reference>
-    <Reference Include="OBeautifulCode.TypeRepresentation, Version=1.0.15.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\OBeautifulCode.TypeRepresentation.1.0.15\lib\net462\OBeautifulCode.TypeRepresentation.dll</HintPath>
+    <Reference Include="OBeautifulCode.TypeRepresentation, Version=1.0.16.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\OBeautifulCode.TypeRepresentation.1.0.16\lib\net462\OBeautifulCode.TypeRepresentation.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.ComponentModel.Composition" />
@@ -160,8 +160,8 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include=".recipes\Naos.Configuration.Setup\Config.cs" />
-    <Compile Include=".recipes\Naos.Configuration.Setup\ConfigRequiredTest.cs" />
+    <Compile Include=".recipes\Naos.Configuration\Config.cs" />
+    <Compile Include=".recipes\Naos.Configuration\ConfigRequiredTest.cs" />
     <Compile Include=".recipes\Naos.InitializeTestProject\ExampleDummyFactory.cs" />
     <Compile Include=".recipes\OBeautifulCode.AutoFakeItEasy\AutoFakeItEasyBootstrapper.cs" />
     <Compile Include=".recipes\OBeautifulCode.Collection\EnumerableExtensions.cs" />
@@ -218,7 +218,7 @@
     <Content Include=".config\ExampleDevelopment\MessageBusLaunchConfiguration.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include=".config\ExampleDevelopment\LogProcessorSettings.json">
+    <Content Include=".config\ExampleDevelopment\LogWritingSettings.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
     <Content Include=".config\ExampleDevelopment\MessageBusConnectionConfiguration.json">
@@ -230,7 +230,7 @@
     <Content Include=".config\ExampleProduction\MessageBusLaunchConfiguration.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include=".config\ExampleProduction\LogProcessorSettings.json">
+    <Content Include=".config\ExampleProduction\LogWritingSettings.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
     <Content Include=".config\ExampleProduction\MessageBusConnectionConfiguration.json">

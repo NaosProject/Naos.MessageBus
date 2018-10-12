@@ -8,6 +8,8 @@
             "logInclusionKindToOriginsMap": {
                 "String": [ "ItsLogEntryPosted" ],
                 "Object": [ "ItsLogEntryPosted" ],
+                "Telemetry": [],
+                "Unknown": [],
                 "Exception": null
             },
             "logItemPropertiesToIncludeInLogMessage": "default"
@@ -16,9 +18,16 @@
             "logInclusionKindToOriginsMap": {},
             "logInclusionKindToOriginsMapForConsoleOut": {
                 "String": null,
-                "Object": null
+                "Object": null,
+                "Telemetry": [],
+                "Unknown": null,
+                "Exception": []
             },
             "logInclusionKindToOriginsMapForConsoleError": {
+                "String": [],
+                "Object": [],
+                "Telemetry": [],
+                "Unknown": [],
                 "Exception": null
             },
             "logItemPropertiesToIncludeInLogMessage": "default"

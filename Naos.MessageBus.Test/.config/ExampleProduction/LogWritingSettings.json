@@ -2,7 +2,7 @@
     "configurations": [
         {
             "timeSlicePerFile": "00:01:00",
-            "fileNamePrefix": "NaosMessageBusHangfireConsole",
+            "fileNamePrefix": "NaosMessageBusTest",
             "logFileDirectoryPath": "D:\\Logs",
             "createDirectoryStructureIfMissing": true,
             "logInclusionKindToOriginsMap": {

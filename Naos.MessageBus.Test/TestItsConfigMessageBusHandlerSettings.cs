@@ -17,9 +17,6 @@ namespace Naos.MessageBus.Test
     using Naos.Compression.Domain;
     using Naos.Cron;
     using Naos.MessageBus.Domain;
-    using Naos.MessageBus.Hangfire.Harness;
-    using Naos.MessageBus.Hangfire.Sender;
-    using Naos.Recipes.Configuration.Setup;
     using Naos.Serialization.Factory;
 
     using OBeautifulCode.TypeRepresentation;

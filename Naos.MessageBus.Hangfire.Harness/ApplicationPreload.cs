@@ -19,7 +19,6 @@ namespace Naos.MessageBus.Hangfire.Harness
     using Naos.Logging.Domain;
     using Naos.MessageBus.Domain;
     using Naos.MessageBus.Hangfire.Bootstrapper;
-    using Naos.Recipes.Configuration.Setup;
 
     using OBeautifulCode.Validation.Recipes;
 

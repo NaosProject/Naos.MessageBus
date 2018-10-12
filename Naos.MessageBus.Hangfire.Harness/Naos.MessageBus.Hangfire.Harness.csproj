@@ -117,8 +117,8 @@
       <HintPath>..\packages\Newtonsoft.Json.9.0.1\lib\net45\Newtonsoft.Json.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="OBeautifulCode.TypeRepresentation, Version=1.0.15.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\OBeautifulCode.TypeRepresentation.1.0.15\lib\net462\OBeautifulCode.TypeRepresentation.dll</HintPath>
+    <Reference Include="OBeautifulCode.TypeRepresentation, Version=1.0.16.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\OBeautifulCode.TypeRepresentation.1.0.16\lib\net462\OBeautifulCode.TypeRepresentation.dll</HintPath>
     </Reference>
     <Reference Include="Owin, Version=1.0.0.0, Culture=neutral, PublicKeyToken=f0ebd12fd5e55cc5, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
@@ -178,8 +178,8 @@
     <Content Include=".analyzers\dictionary.xml" />
     <AdditionalFiles Include=".analyzers\stylecop.json" />
     <Content Include=".analyzers\release.ruleset" />
-    <Compile Include=".recipes\Naos.Configuration.Setup\Config.cs" />
-    <Compile Include=".recipes\Naos.Configuration.Setup\ConfigRequiredTest.cs" />
+    <Compile Include=".recipes\Naos.Configuration\Config.cs" />
+    <Compile Include=".recipes\Naos.Configuration\ConfigRequiredTest.cs" />
     <Compile Include=".recipes\Naos.Diagnostics\DomainFactory.cs" />
     <Compile Include=".recipes\Naos.Diagnostics\MachineMemory.cs" />
     <Compile Include=".recipes\Naos.Diagnostics\MachineMemoryKind.cs" />
