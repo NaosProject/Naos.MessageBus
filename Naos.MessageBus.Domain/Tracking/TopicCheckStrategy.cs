@@ -1,6 +1,6 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="TopicCheckStrategy.cs" company="Naos">
-//    Copyright (c) Naos 2017. All Rights Reserved.
+// <copyright file="TopicCheckStrategy.cs" company="Naos Project">
+//    Copyright (c) Naos Project 2019. All rights reserved.
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
@@ -29,6 +29,6 @@ namespace Naos.MessageBus.Domain
         /// <summary>
         /// Match only on all topics.
         /// </summary>
-        All
+        All,
     }
 }

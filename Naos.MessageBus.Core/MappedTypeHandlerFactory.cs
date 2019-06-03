@@ -1,6 +1,6 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="MappedTypeHandlerFactory.cs" company="Naos">
-//    Copyright (c) Naos 2017. All Rights Reserved.
+// <copyright file="MappedTypeHandlerFactory.cs" company="Naos Project">
+//    Copyright (c) Naos Project 2019. All rights reserved.
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
@@ -14,7 +14,7 @@ namespace Naos.MessageBus.Core
     using Naos.MessageBus.Domain.Exceptions;
 
     using OBeautifulCode.Reflection.Recipes;
-    using OBeautifulCode.TypeRepresentation;
+    using OBeautifulCode.Type;
     using OBeautifulCode.Validation.Recipes;
 
     using static System.FormattableString;

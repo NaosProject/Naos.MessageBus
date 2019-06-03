@@ -1,6 +1,6 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="MessageDispatcherTest.cs" company="Naos">
-//    Copyright (c) Naos 2017. All Rights Reserved.
+// <copyright file="MessageDispatcherTest.cs" company="Naos Project">
+//    Copyright (c) Naos Project 2019. All rights reserved.
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
@@ -26,7 +26,7 @@ namespace Naos.MessageBus.Test
     using Naos.Serialization.Json;
     using Naos.Telemetry.Domain;
 
-    using OBeautifulCode.TypeRepresentation;
+    using OBeautifulCode.Type;
 
     using Xunit;
 
@@ -48,7 +48,7 @@ namespace Naos.MessageBus.Test
             var handlerInterfaceToImplementationTypeMap = new Dictionary<Type, Type>
                                                               {
                                                                       { typeof(FirstEnumMessage), typeof(FirstEnumHandler) },
-                                                                      { typeof(SecondEnumMessage), typeof(SecondEnumHandler) }
+                                                                      { typeof(SecondEnumMessage), typeof(SecondEnumHandler) },
                                                               };
 
             var handlerBuilder = new MappedTypeHandlerFactory(handlerInterfaceToImplementationTypeMap, TypeMatchStrategy.NamespaceAndName);
@@ -76,19 +76,19 @@ namespace Naos.MessageBus.Test
                                                       new AddressedMessage
                                                           {
                                                               Address = channel,
-                                                              Message = firstMessage
+                                                              Message = firstMessage,
                                                           },
                                                       new AddressedMessage
                                                           {
                                                               Address = channel,
-                                                              Message = secondMessage
+                                                              Message = secondMessage,
                                                           },
                                                       new AddressedMessage
                                                           {
                                                               Address = channel,
-                                                              Message = thirdMessage
-                                                          }
-                                                  }
+                                                              Message = thirdMessage,
+                                                          },
+                                                  },
                                       };
 
             var envelopesFromSequence = messageSequence.AddressedMessages.Select(addressedMessage => addressedMessage.ToEnvelope(envelopeMachine)).ToList();
@@ -109,7 +109,7 @@ namespace Naos.MessageBus.Test
             Assert.True(
                 typeComparer.Equals(typeof(IShareEnum).ToTypeDescription(), sharedPropertySet.InterfaceType));
             Assert.Equal("EnumValueToShare", sharedPropertySet.Properties.Single().Name);
-            var jsoner = new NaosJsonSerializer();
+            var jsoner = PostOffice.DefaultSerializer;
 
             var seedValueAsJson = jsoner.SerializeToString(firstMessage.SeedValue);
             Assert.Equal(seedValueAsJson, sharedPropertySet.Properties.Single().SerializedValue.SerializedPayload);
@@ -135,7 +135,7 @@ namespace Naos.MessageBus.Test
             var handlerInterfaceToImplementationTypeMap = new Dictionary<Type, Type>
                                                               {
                                                                       { typeof(FirstEnumMessage), typeof(FirstEnumHandler) },
-                                                                      { typeof(SecondEnumMessage), typeof(SecondEnumHandler) }
+                                                                      { typeof(SecondEnumMessage), typeof(SecondEnumHandler) },
                                                               };
 
             var trackingSends = new List<Parcel>();
@@ -154,7 +154,7 @@ namespace Naos.MessageBus.Test
                                                     new DescribedSerialization(
                                                         new TypeDescription("Not Real Space", "Not Real Name", "Not Real AQN"),
                                                         "Not Real Payload",
-                                                        PostOffice.MessageSerializationDescription))
+                                                        PostOffice.MessageSerializationDescription)),
                                             };
 
             var parcel = new Parcel { Envelopes = envelopesFromSequence };
@@ -184,7 +184,7 @@ namespace Naos.MessageBus.Test
             var handlerInterfaceToImplementationTypeMap = new Dictionary<Type, Type>
                                                               {
                                                                       { typeof(MessageOne), typeof(MessageOneHandler) },
-                                                                      { typeof(MessageTwo), typeof(MessageTwoHandler) }
+                                                                      { typeof(MessageTwo), typeof(MessageTwoHandler) },
                                                               };
 
             var trackingSends = new List<Parcel>();
@@ -197,7 +197,7 @@ namespace Naos.MessageBus.Test
             var envelopesFromSequence = new[]
                                             {
                                                 firstMessage.ToAddressedMessage(channel).ToEnvelope(envelopeMachine),
-                                                secondMessage.ToAddressedMessage(channel).ToEnvelope(envelopeMachine)
+                                                secondMessage.ToAddressedMessage(channel).ToEnvelope(envelopeMachine),
                                             };
 
             var parcel = new Parcel { Envelopes = envelopesFromSequence };
@@ -232,7 +232,7 @@ namespace Naos.MessageBus.Test
             var handlerInterfaceToImplementationTypeMap = new Dictionary<Type, Type>
                                                               {
                                                                       { typeof(MessageOneShare), typeof(MessageOneShareHandler) },
-                                                                      { typeof(MessageTwoShare), typeof(MessageTwoShareHandler) }
+                                                                      { typeof(MessageTwoShare), typeof(MessageTwoShareHandler) },
                                                               };
 
             var trackingSends = new List<Parcel>();
@@ -245,7 +245,7 @@ namespace Naos.MessageBus.Test
             var envelopesFromSequence = new[]
                                             {
                                                 firstMessage.ToAddressedMessage(channel).ToEnvelope(envelopeMachine),
-                                                secondMessage.ToAddressedMessage(channel).ToEnvelope(envelopeMachine)
+                                                secondMessage.ToAddressedMessage(channel).ToEnvelope(envelopeMachine),
                                             };
 
             var parcel = new Parcel { Envelopes = envelopesFromSequence };
@@ -387,10 +387,9 @@ namespace Naos.MessageBus.Test
                                                  {
                                                      new ThrowsExceptionMessage()
                                                          {
-                                                             SerializedExceptionToThrow = exception.ToDescribedSerialization(
-                                                                 PostOffice.MessageSerializationDescription)
-                                                         }.ToAddressedMessage(monitoredChannel).ToEnvelope(envelopeMachine)
-                                                 }
+                                                             SerializedExceptionToThrow = exception.ToDescribedSerialization(PostOffice.MessageSerializationDescription),
+                                                         }.ToAddressedMessage(monitoredChannel).ToEnvelope(envelopeMachine),
+                                                 },
                              };
 
             dispatcher.Dispatch("Parcel", new TrackingCode(), parcel, monitoredChannel);
@@ -441,10 +440,10 @@ namespace Naos.MessageBus.Test
                                          {
                                              new ThrowsExceptionMessage()
                                                  {
-                                                     SerializedExceptionToThrow = exception.ToDescribedSerialization(PostOffice.MessageSerializationDescription)
+                                                     SerializedExceptionToThrow = exception.ToDescribedSerialization(PostOffice.MessageSerializationDescription),
                                                  }.ToAddressedMessage(
-                                                     monitoredChannel).ToEnvelope(envelopeMachine)
-                                         }
+                                                     monitoredChannel).ToEnvelope(envelopeMachine),
+                                         },
             };
 
             dispatcher.Dispatch("Parcel", new TrackingCode(), parcel, monitoredChannel);
@@ -495,10 +494,9 @@ namespace Naos.MessageBus.Test
                                                  {
                                                      new ThrowsExceptionMessage()
                                                          {
-                                                             SerializedExceptionToThrow = exception.ToDescribedSerialization(
-                                                                 PostOffice.MessageSerializationDescription)
-                                                         }.ToAddressedMessage(monitoredChannel).ToEnvelope(envelopeMachine)
-                                                 }
+                                                             SerializedExceptionToThrow = exception.ToDescribedSerialization(PostOffice.MessageSerializationDescription),
+                                                         }.ToAddressedMessage(monitoredChannel).ToEnvelope(envelopeMachine),
+                                                 },
                              };
 
             Action testCode = () => dispatcher.Dispatch("Parcel", new TrackingCode(), parcel, monitoredChannel);
@@ -571,7 +569,7 @@ namespace Naos.MessageBus.Test
                                          {
                                              new RecurringHeaderMessage().ToAddressedMessage().ToEnvelope(envelopeMachine),
                                              new NullMessage().ToAddressedMessage(monitoredChannel).ToEnvelope(envelopeMachine),
-                                         }
+                                         },
                              };
 
             dispatcher.Dispatch("Parcel", new TrackingCode(), parcel, monitoredChannel);
@@ -647,7 +645,7 @@ namespace Naos.MessageBus.Test
                         new Parcel
                             {
                                 Id = Guid.Empty,
-                                Envelopes = new List<Envelope>(new[] { message.ToAddressedMessage(channel).ToEnvelope(envelopeMachine) })
+                                Envelopes = new List<Envelope>(new[] { message.ToAddressedMessage(channel).ToEnvelope(envelopeMachine) }),
                             },
                         channel);
                 };
@@ -672,7 +670,7 @@ namespace Naos.MessageBus.Test
                                  Id = Guid.NewGuid(),
                                  Envelopes =
                                      new List<Envelope>(
-                                     new[] { message.ToAddressedMessage(channel).ToEnvelope(envelopeMachine, "id") })
+                                     new[] { message.ToAddressedMessage(channel).ToEnvelope(envelopeMachine, "id") }),
                              };
 
             Assert.Empty(StateHandler.StateHistory);
@@ -701,7 +699,7 @@ namespace Naos.MessageBus.Test
                                  Id = Guid.NewGuid(),
                                  Envelopes =
                                      new List<Envelope>(
-                                         new[] { message.ToAddressedMessage(channel).ToEnvelope(envelopeMachine, "id") })
+                                         new[] { message.ToAddressedMessage(channel).ToEnvelope(envelopeMachine, "id") }),
                              };
 
             Assert.Empty(StateHandler.StateHistory);
@@ -737,7 +735,7 @@ namespace Naos.MessageBus.Test
                                  Id = Guid.NewGuid(),
                                  Envelopes =
                                      new List<Envelope>(
-                                         new[] { message.ToAddressedMessage(channel).ToEnvelope(envelopeMachine, "id") })
+                                         new[] { message.ToAddressedMessage(channel).ToEnvelope(envelopeMachine, "id") }),
                              };
 
             Assert.Empty(StateHandler.StateHistory);
@@ -794,11 +792,11 @@ namespace Naos.MessageBus.Test
         private static DiagnosticsTelemetry DummyDiagnosticsTelemetry => new DiagnosticsTelemetry(
             DateTime.UtcNow,
             new MachineDetails(
-                new Dictionary<string, string>{ { "Test", "Test" } },
+                new Dictionary<string, string> { { "Test", "Test" } },
                 1,
                 new Dictionary<string, decimal>(),
                 true,
-                new OperatingSystemDetails("OS", new Version(), "ServicePack"),
+                new OperatingSystemDetails("OS", new Version().ToString(), "ServicePack"),
                 "ClrVersion"),
             new ProcessDetails("Process", "FilePath", "FileVersion", "ProductVersion", false),
             new List<AssemblyDetails>());

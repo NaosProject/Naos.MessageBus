@@ -1,6 +1,6 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="TestItsConfigMessageBusHandlerSettings.cs" company="Naos">
-//    Copyright (c) Naos 2017. All Rights Reserved.
+// <copyright file="TestItsConfigMessageBusHandlerSettings.cs" company="Naos Project">
+//    Copyright (c) Naos Project 2019. All rights reserved.
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
@@ -19,7 +19,7 @@ namespace Naos.MessageBus.Test
     using Naos.MessageBus.Domain;
     using Naos.Serialization.Factory;
 
-    using OBeautifulCode.TypeRepresentation;
+    using OBeautifulCode.Type;
 
     using Spritely.Recipes;
 
@@ -52,11 +52,10 @@ namespace Naos.MessageBus.Test
 
             var expectedConnectionConfiguration = new MessageBusConnectionConfiguration
             {
-                                                          CourierPersistenceConnectionConfiguration = new CourierPersistenceConnectionConfiguration { Server = "hangfire.database.development.my-company.com", Database = "Hangfire", Credentials = new Credentials { User = "sa", Password = "a-good-password".ToSecureString() } },
-                                                          EventPersistenceConnectionConfiguration = new EventPersistenceConnectionConfiguration { Server = "hangfire.database.development.my-company.com", Database = "ParcelTrackingEvents", Credentials = new Credentials { User = "sa", Password = "a-good-password".ToSecureString() } },
-                                                          ReadModelPersistenceConnectionConfiguration = new ReadModelPersistenceConnectionConfiguration { Server = "hangfire.database.development.my-company.com", Database = "ParcelTrackingReadModel", Credentials = new Credentials { User = "sa", Password = "a-good-password".ToSecureString() } }
-                                                      };
-
+                  CourierPersistenceConnectionConfiguration = new CourierPersistenceConnectionConfiguration { Server = "hangfire.database.development.my-company.com", Database = "Hangfire", Credentials = new Credentials { User = "sa", Password = "a-good-password".ToSecureString() } },
+                  EventPersistenceConnectionConfiguration = new EventPersistenceConnectionConfiguration { Server = "hangfire.database.development.my-company.com", Database = "ParcelTrackingEvents", Credentials = new Credentials { User = "sa", Password = "a-good-password".ToSecureString() } },
+                  ReadModelPersistenceConnectionConfiguration = new ReadModelPersistenceConnectionConfiguration { Server = "hangfire.database.development.my-company.com", Database = "ParcelTrackingReadModel", Credentials = new Credentials { User = "sa", Password = "a-good-password".ToSecureString() } },
+            };
 
             // Act
             var actualConnectionConfiguration = Settings.Get<MessageBusConnectionConfiguration>();

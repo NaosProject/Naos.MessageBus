@@ -1,13 +1,13 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="PostOfficeExtensions.cs" company="Naos">
-//    Copyright (c) Naos 2017. All Rights Reserved.
+// <copyright file="PostOfficeExtensions.cs" company="Naos Project">
+//    Copyright (c) Naos Project 2019. All rights reserved.
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
 namespace Naos.MessageBus.Domain
 {
     using System;
-
+    using OBeautifulCode.Type;
     using OBeautifulCode.Validation.Recipes;
 
     /// <summary>
@@ -20,15 +20,17 @@ namespace Naos.MessageBus.Domain
         /// </summary>
         /// <param name="message">Message to wrap.</param>
         /// <param name="channel">Channel to send to.</param>
+        /// <param name="jsonConfigurationType">Type of configuration to use for JSON serialization which is necessary for message transport.</param>
         /// <returns><see cref="AddressedMessage"/> with message and channel.</returns>
-        public static AddressedMessage ToAddressedMessage(this IMessage message, IChannel channel = null)
+        public static AddressedMessage ToAddressedMessage(this IMessage message, IChannel channel = null, TypeDescription jsonConfigurationType = null)
         {
             new { message }.Must().NotBeNull();
 
             return new AddressedMessage
             {
                 Address = channel ?? new NullChannel(),
-                Message = message
+                Message = message,
+                JsonConfigurationType = jsonConfigurationType,
             };
         }
 

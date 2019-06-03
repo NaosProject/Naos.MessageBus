@@ -1,6 +1,6 @@
 // --------------------------------------------------------------------------------------------------------------------
-// <copyright file="PostOfficeTests.cs" company="Naos">
-//    Copyright (c) Naos 2017. All Rights Reserved.
+// <copyright file="PostOfficeTests.cs" company="Naos Project">
+//    Copyright (c) Naos Project 2019. All rights reserved.
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
@@ -15,7 +15,7 @@ namespace Naos.MessageBus.Test
     using Naos.Cron;
     using Naos.MessageBus.Domain;
 
-    using OBeautifulCode.TypeRepresentation;
+    using OBeautifulCode.Type;
 
     using Xunit;
 
@@ -245,7 +245,7 @@ namespace Naos.MessageBus.Test
                                                    new TopicBeingAffectedMessage { Topic = new AffectedTopic(sampleTopic) }.ToAddressedMessage(channel).ToEnvelope(envelopeMachine),
                                                    new NullMessage().ToAddressedMessage(channel).ToEnvelope(envelopeMachine),
                                                    new TopicWasAffectedMessage() { Topic = new AffectedTopic(sampleTopic) }.ToAddressedMessage(channel).ToEnvelope(envelopeMachine),
-                                               }
+                                               },
                                    };
 
             // act
@@ -298,21 +298,21 @@ namespace Naos.MessageBus.Test
             var schedule = new DailyScheduleInUtc();
             var channel = new SimpleChannel("something");
             var parcelToSend = new Parcel()
-                                   {
-                                       DependencyTopicCheckStrategy = TopicCheckStrategy.Any,
-                                       SimultaneousRunsStrategy = SimultaneousRunsStrategy.AbortSubsequentRunsWhenOneIsRunning,
-                                       Id = Guid.NewGuid(),
-                                       DependencyTopics = null,
-                                       Name = name,
-                                       Topic = new AffectedTopic(sampleTopic),
-                                       Envelopes =
-                                           new[]
-                                               {
-                                                   new NullMessage().ToAddressedMessage(channel).ToEnvelope(envelopeMachine),
-                                                   new TopicBeingAffectedMessage { Topic = new AffectedTopic(sampleTopic) }.ToAddressedMessage(channel).ToEnvelope(envelopeMachine),
-                                                   new TopicWasAffectedMessage() { Topic = new AffectedTopic(sampleTopic) }.ToAddressedMessage(channel).ToEnvelope(envelopeMachine),
-                                                   new NullMessage().ToAddressedMessage(channel).ToEnvelope(envelopeMachine),
-                                               }
+            {
+                DependencyTopicCheckStrategy = TopicCheckStrategy.Any,
+                SimultaneousRunsStrategy = SimultaneousRunsStrategy.AbortSubsequentRunsWhenOneIsRunning,
+                Id = Guid.NewGuid(),
+                DependencyTopics = null,
+                Name = name,
+                Topic = new AffectedTopic(sampleTopic),
+                Envelopes =
+                    new[]
+                    {
+                        new NullMessage().ToAddressedMessage(channel).ToEnvelope(envelopeMachine),
+                        new TopicBeingAffectedMessage { Topic = new AffectedTopic(sampleTopic) }.ToAddressedMessage(channel).ToEnvelope(envelopeMachine),
+                        new TopicWasAffectedMessage() { Topic = new AffectedTopic(sampleTopic) }.ToAddressedMessage(channel).ToEnvelope(envelopeMachine),
+                        new NullMessage().ToAddressedMessage(channel).ToEnvelope(envelopeMachine),
+                    },
             };
 
             // act
@@ -383,7 +383,7 @@ namespace Naos.MessageBus.Test
                                                    new NullMessage().ToAddressedMessage(channel).ToEnvelope(envelopeMachine),
                                                    new TopicBeingAffectedMessage { Topic = new AffectedTopic(sampleTopic) }.ToAddressedMessage(channel).ToEnvelope(envelopeMachine),
                                                    new NullMessage().ToAddressedMessage(channel).ToEnvelope(envelopeMachine),
-                                               }
+                                               },
                                    };
 
             Action action = () => postOffice.SendRecurring(parcelToSend, schedule);
@@ -419,7 +419,7 @@ namespace Naos.MessageBus.Test
                                                    new NullMessage().ToAddressedMessage(channel).ToEnvelope(envelopeMachine),
                                                    new TopicWasAffectedMessage() { Topic = new AffectedTopic(sampleTopic) }.ToAddressedMessage(channel).ToEnvelope(envelopeMachine),
                                                    new NullMessage().ToAddressedMessage(channel).ToEnvelope(envelopeMachine),
-                                               }
+                                               },
                                    };
 
             Action action = () => postOffice.SendRecurring(parcelToSend, schedule);
@@ -457,7 +457,7 @@ namespace Naos.MessageBus.Test
                                                    new TopicBeingAffectedMessage { Topic = new AffectedTopic(sampleTopic) }.ToAddressedMessage(channel).ToEnvelope(envelopeMachine),
                                                    new TopicWasAffectedMessage() { Topic = new AffectedTopic(sampleTopic) }.ToAddressedMessage(channel).ToEnvelope(envelopeMachine),
                                                    new NullMessage().ToAddressedMessage(channel).ToEnvelope(envelopeMachine),
-                                               }
+                                               },
                                    };
 
             Action action = () => postOffice.SendRecurring(parcelToSend, schedule);
@@ -495,7 +495,7 @@ namespace Naos.MessageBus.Test
                                                    new TopicWasAffectedMessage() { Topic = new AffectedTopic(sampleTopic) }.ToAddressedMessage(channel).ToEnvelope(envelopeMachine),
                                                    new TopicWasAffectedMessage() { Topic = new AffectedTopic(sampleTopic) }.ToAddressedMessage(channel).ToEnvelope(envelopeMachine),
                                                    new NullMessage().ToAddressedMessage(channel).ToEnvelope(envelopeMachine),
-                                               }
+                                               },
                                    };
 
             Action action = () => postOffice.SendRecurring(parcelToSend, schedule);
@@ -532,7 +532,7 @@ namespace Naos.MessageBus.Test
                                                    new TopicWasAffectedMessage() { Topic = new AffectedTopic(sampleTopic) }.ToAddressedMessage(channel).ToEnvelope(envelopeMachine),
                                                    new TopicBeingAffectedMessage { Topic = new AffectedTopic(sampleTopic) }.ToAddressedMessage(channel).ToEnvelope(envelopeMachine),
                                                    new NullMessage().ToAddressedMessage(channel).ToEnvelope(envelopeMachine),
-                                               }
+                                               },
                                    };
 
             Action action = () => postOffice.SendRecurring(parcelToSend, schedule);

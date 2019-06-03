@@ -1,6 +1,6 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="SimultaneousRunsStrategy.cs" company="Naos">
-//    Copyright (c) Naos 2017. All Rights Reserved.
+// <copyright file="SimultaneousRunsStrategy.cs" company="Naos Project">
+//    Copyright (c) Naos Project 2019. All rights reserved.
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
@@ -24,6 +24,6 @@ namespace Naos.MessageBus.Domain
         /// <summary>
         /// Abort any runs that attempt to start while another run is going for the same topic.
         /// </summary>
-        AbortSubsequentRunsWhenOneIsRunning
+        AbortSubsequentRunsWhenOneIsRunning,
     }
 }

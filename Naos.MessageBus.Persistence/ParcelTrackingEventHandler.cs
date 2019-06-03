@@ -1,6 +1,6 @@
 // --------------------------------------------------------------------------------------------------------------------
-// <copyright file="ParcelTrackingEventHandler.cs" company="Naos">
-//    Copyright (c) Naos 2017. All Rights Reserved.
+// <copyright file="ParcelTrackingEventHandler.cs" company="Naos Project">
+//    Copyright (c) Naos Project 2019. All rights reserved.
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
@@ -16,7 +16,7 @@ namespace Naos.MessageBus.Persistence
     using Microsoft.Its.Domain;
     using Naos.Cron;
     using Naos.MessageBus.Domain;
-    using OBeautifulCode.TypeRepresentation;
+    using OBeautifulCode.Type;
     using OBeautifulCode.Validation.Recipes;
 
     using Spritely.Redo;
@@ -132,7 +132,7 @@ namespace Naos.MessageBus.Persistence
                                     Message =
                                     Invariant(
                                         $"Retried a failure in updating MessageBusPersistence from EventHandler ({nameof(Shipment.EnvelopeResendRequested)}): {_.Message}"),
-                                    Exception = _
+                                    Exception = _,
                                 }))
                 .WithMaxRetries(this.retryCount)
                 .Run(
@@ -177,7 +177,7 @@ namespace Naos.MessageBus.Persistence
                                         Message =
                                         Invariant(
                                             $"Retried a failure in updating MessageBusPersistence from EventHandler ({nameof(Shipment.EnvelopeSent)}:CheckForRecurringSchedule): {_.Message}"),
-                                        Exception = _
+                                        Exception = _,
                                     }))
                     .WithMaxRetries(this.retryCount)
                     .Run(
@@ -223,7 +223,7 @@ namespace Naos.MessageBus.Persistence
                                     Message =
                                     Invariant(
                                         $"Retried a failure in updating MessageBusPersistence from EventHandler ({nameof(Shipment.EnvelopeSent)}:Save): {_.Message}"),
-                                    Exception = _
+                                    Exception = _,
                                 }))
                 .WithMaxRetries(this.retryCount)
                 .Run(
@@ -264,7 +264,7 @@ namespace Naos.MessageBus.Persistence
                                     Message =
                                     Invariant(
                                         $"Retried a failure in updating MessageBusPersistence from EventHandler ({nameof(Shipment.EnvelopeDeliveryAborted)}): {_.Message}"),
-                                    Exception = _
+                                    Exception = _,
                                 }))
                 .WithMaxRetries(this.retryCount)
                 .Run(
@@ -293,7 +293,7 @@ namespace Naos.MessageBus.Persistence
                                     Message =
                                     Invariant(
                                         $"Retried a failure in updating MessageBusPersistence from EventHandler ({nameof(Shipment.EnvelopeDeliveryRejected)}): {_.Message}"),
-                                    Exception = _
+                                    Exception = _,
                                 }))
                 .WithMaxRetries(this.retryCount)
                 .Run(
@@ -330,7 +330,7 @@ namespace Naos.MessageBus.Persistence
                                     Message =
                                     Invariant(
                                         $"Retried a failure in updating MessageBusPersistence from EventHandler ({nameof(Shipment.EnvelopeDelivered)}): {_.Message}"),
-                                    Exception = _
+                                    Exception = _,
                                 }))
                 .WithMaxRetries(this.retryCount)
                 .Run(
@@ -359,7 +359,7 @@ namespace Naos.MessageBus.Persistence
                                     Message =
                                     Invariant(
                                         $"Retried a failure in updating MessageBusPersistence from EventHandler ({nameof(Shipment.ParcelDelivered)}): {_.Message}"),
-                                    Exception = _
+                                    Exception = _,
                                 }))
                 .WithMaxRetries(this.retryCount)
                 .Run(
@@ -388,7 +388,7 @@ namespace Naos.MessageBus.Persistence
                                     Message =
                                     Invariant(
                                         $"Retried a failure in updating MessageBusPersistence from EventHandler ({nameof(Shipment.TopicBeingAffected)}): {_.Message}"),
-                                    Exception = _
+                                    Exception = _,
                                 }))
                 .WithMaxRetries(this.retryCount)
                 .Run(
@@ -424,7 +424,7 @@ namespace Naos.MessageBus.Persistence
                                                         Status = TopicStatus.BeingAffected,
                                                         ParcelId = @event.ExtractPayload().TrackingCode.ParcelId,
                                                         TopicBeingAffectedEnvelopeSerializedAsString = @event.ExtractPayload().Envelope.ToParcelTrackingSerializedString(),
-                                                        LastUpdatedUtc = DateTime.UtcNow
+                                                        LastUpdatedUtc = DateTime.UtcNow,
                                                     };
 
                                     db.Notices.Add(entry);
@@ -453,7 +453,7 @@ namespace Naos.MessageBus.Persistence
                                     Message =
                                     Invariant(
                                         $"Retried a failure in updating MessageBusPersistence from EventHandler ({nameof(Shipment.TopicWasAffected)}): {_.Message}"),
-                                    Exception = _
+                                    Exception = _,
                                 }))
                 .WithMaxRetries(this.retryCount)
                 .Run(
@@ -479,7 +479,7 @@ namespace Naos.MessageBus.Persistence
                                                     ImpactingTopicName = @event.ExtractPayload().Topic.Name,
                                                     Status = TopicStatus.BeingAffected,
                                                     ParcelId = @event.ExtractPayload().TrackingCode.ParcelId,
-                                                    LastUpdatedUtc = DateTime.UtcNow
+                                                    LastUpdatedUtc = DateTime.UtcNow,
                                                 };
 
                                     db.Notices.Add(entry);

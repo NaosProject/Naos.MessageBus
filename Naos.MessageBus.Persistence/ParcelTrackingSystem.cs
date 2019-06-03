@@ -1,6 +1,6 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="ParcelTrackingSystem.cs" company="Naos">
-//    Copyright (c) Naos 2017. All Rights Reserved.
+// <copyright file="ParcelTrackingSystem.cs" company="Naos Project">
+//    Copyright (c) Naos Project 2019. All rights reserved.
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
@@ -189,7 +189,7 @@ namespace Naos.MessageBus.Persistence
                                     new
                                         {
                                             Message = Invariant($"Retried a failure in updating MessageBusPersistence from {nameof(IParcelTrackingSystem)} ({nameof(this.FetchShipmentAsync)}): {_.Message}"),
-                                            Exception = _
+                                            Exception = _,
                                         }))
                         .WithMaxRetries(this.retryCount)
                         .RunAsync(() => this.configuration.Repository<Shipment>().GetLatest(parcelId))
@@ -208,7 +208,7 @@ namespace Naos.MessageBus.Persistence
                                 new
                                     {
                                         Message = Invariant($"Retried a failure in updating MessageBusPersistence from {nameof(IParcelTrackingSystem)} ({nameof(this.SaveShipmentAsync)}): {_.Message}"),
-                                        Exception = _
+                                        Exception = _,
                                     }))
                     .WithMaxRetries(this.retryCount)
                     .RunAsync(() => this.configuration.Repository<Shipment>().Save(shipment))
@@ -229,7 +229,7 @@ namespace Naos.MessageBus.Persistence
                                             Message =
                                             Invariant(
                                                 $"Retried a failure in updating MessageBusPersistence from {nameof(IParcelTrackingSystem)} ({nameof(this.GetTrackingReportAsync)}): {_.Message}"),
-                                            Exception = _
+                                            Exception = _,
                                         }))
                         .WithMaxRetries(this.retryCount)
                         .RunAsync(
@@ -250,7 +250,7 @@ namespace Naos.MessageBus.Persistence
                                                                     ? null
                                                                     : _.CurrentCrateLocatorSerializedAsString.FromParcelTrackingSerializedString<CrateLocator>().TrackingCode,
                                                             Status = _.Status,
-                                                            LastUpdatedUtc = _.LastUpdatedUtc
+                                                            LastUpdatedUtc = _.LastUpdatedUtc,
                                                         }).ToList();
 
                                         return Task.FromResult(results);
@@ -279,7 +279,7 @@ namespace Naos.MessageBus.Persistence
                                             Message =
                                             Invariant(
                                                 $"Retried a failure in updating MessageBusPersistence from {nameof(IParcelTrackingSystem)} ({nameof(this.GetLatestTopicStatusReportAsync)}): {_.Message}"),
-                                            Exception = _
+                                            Exception = _,
                                         }))
                         .WithMaxRetries(this.retryCount)
                         .RunAsync(
@@ -309,7 +309,7 @@ namespace Naos.MessageBus.Persistence
                                                                 Topic = new AffectedTopic(topic.Name),
                                                                 Status = TopicStatus.Unknown,
                                                                 AffectedItems = new AffectedItem[0],
-                                                                DependencyTopicNoticesAtStart = new TopicStatusReport[0]
+                                                                DependencyTopicNoticesAtStart = new TopicStatusReport[0],
                                                             });
                                             }
                                         }
@@ -357,7 +357,7 @@ namespace Naos.MessageBus.Persistence
                                                             AffectsCompletedDateTimeUtc = mostRecentNotice.AffectsCompletedDateTimeUtc,
                                                             AffectedItems = items ?? new AffectedItem[0],
                                                             Status = mostRecentNotice.Status,
-                                                            DependencyTopicNoticesAtStart = dependencyNotices
+                                                            DependencyTopicNoticesAtStart = dependencyNotices,
                                                         });
                                         }
                                     }

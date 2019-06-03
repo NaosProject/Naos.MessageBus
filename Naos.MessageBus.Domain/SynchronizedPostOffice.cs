@@ -1,6 +1,6 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="SynchronizedPostOffice.cs" company="Naos">
-//    Copyright (c) Naos 2017. All Rights Reserved.
+// <copyright file="SynchronizedPostOffice.cs" company="Naos Project">
+//    Copyright (c) Naos Project 2019. All rights reserved.
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
@@ -9,6 +9,7 @@ namespace Naos.MessageBus.Domain
     using System.Collections.Generic;
 
     using Naos.Cron;
+    using OBeautifulCode.Type;
 
     /// <summary>
     /// Implementation of <see cref="IPostOffice"/> that will take a PostOffice and only allow a single call at a time.
@@ -35,11 +36,12 @@ namespace Naos.MessageBus.Domain
             AffectedTopic topic = null,
             IReadOnlyCollection<DependencyTopic> dependencyTopics = null,
             TopicCheckStrategy dependencyTopicCheckStrategy = TopicCheckStrategy.Unspecified,
-            SimultaneousRunsStrategy simultaneousRunsStrategy = SimultaneousRunsStrategy.Unspecified)
+            SimultaneousRunsStrategy simultaneousRunsStrategy = SimultaneousRunsStrategy.Unspecified,
+            TypeDescription jsonConfigurationType = null)
         {
             lock (this.syncPostOffice)
             {
-                return this.postOffice.Send(message, channel, name, topic, dependencyTopics, dependencyTopicCheckStrategy, simultaneousRunsStrategy);
+                return this.postOffice.Send(message, channel, name, topic, dependencyTopics, dependencyTopicCheckStrategy, simultaneousRunsStrategy, jsonConfigurationType);
             }
         }
 
@@ -79,7 +81,8 @@ namespace Naos.MessageBus.Domain
             AffectedTopic topic = null,
             IReadOnlyCollection<DependencyTopic> dependencyTopics = null,
             TopicCheckStrategy dependencyTopicCheckStrategy = TopicCheckStrategy.Unspecified,
-            SimultaneousRunsStrategy simultaneousRunsStrategy = SimultaneousRunsStrategy.Unspecified)
+            SimultaneousRunsStrategy simultaneousRunsStrategy = SimultaneousRunsStrategy.Unspecified,
+            TypeDescription jsonConfigurationType = null)
         {
             lock (this.syncPostOffice)
             {
@@ -91,7 +94,8 @@ namespace Naos.MessageBus.Domain
                     topic,
                     dependencyTopics,
                     dependencyTopicCheckStrategy,
-                    simultaneousRunsStrategy);
+                    simultaneousRunsStrategy,
+                    jsonConfigurationType);
             }
         }
 

@@ -1,6 +1,6 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="ParcelTrackingSerializationExtensions.cs" company="Naos">
-//    Copyright (c) Naos 2017. All Rights Reserved.
+// <copyright file="ParcelTrackingSerializationExtensions.cs" company="Naos Project">
+//    Copyright (c) Naos Project 2019. All rights reserved.
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
@@ -11,7 +11,7 @@ namespace Naos.MessageBus.Persistence
     using Naos.Serialization.Factory;
     using Naos.Serialization.Factory.Extensions;
 
-    using OBeautifulCode.TypeRepresentation;
+    using OBeautifulCode.Type;
     using OBeautifulCode.Validation.Recipes;
 
     /// <summary>
@@ -19,7 +19,7 @@ namespace Naos.MessageBus.Persistence
     /// </summary>
     public static class ParcelTrackingSerializationExtensions
     {
-        private static readonly SerializationDescription ParcelTrackingSerializationDescription = new SerializationDescription(SerializationFormat.Json, SerializationRepresentation.String);
+        private static readonly SerializationDescription ParcelTrackingSerializationDescription = new SerializationDescription(SerializationKind.Json, SerializationFormat.String, typeof(MessageBusJsonConfiguration).ToTypeDescription());
 
         /// <summary>
         /// Deserializes the message in an envelope.

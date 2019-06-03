@@ -1,6 +1,6 @@
 // --------------------------------------------------------------------------------------------------------------------
-// <copyright file="Send.cs" company="Naos">
-//    Copyright (c) Naos 2017. All Rights Reserved.
+// <copyright file="Send.cs" company="Naos Project">
+//    Copyright (c) Naos Project 2019. All rights reserved.
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
@@ -23,7 +23,7 @@ namespace Naos.MessageBus.Persistence
         /// <inheritdoc />
         public override IValidationRule<Shipment> Validator => new ValidationPlan<Shipment>
                                                                    {
-                                                                       ValidationRules.IsUnknown(this.TrackingCode)
+                                                                       ValidationRules.IsUnknown(this.TrackingCode),
                                                                    };
 
         /// <inheritdoc />

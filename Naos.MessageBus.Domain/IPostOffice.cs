@@ -1,6 +1,6 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="IPostOffice.cs" company="Naos">
-//    Copyright (c) Naos 2017. All Rights Reserved.
+// <copyright file="IPostOffice.cs" company="Naos Project">
+//    Copyright (c) Naos Project 2019. All rights reserved.
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
@@ -9,6 +9,7 @@ namespace Naos.MessageBus.Domain
     using System.Collections.Generic;
 
     using Naos.Cron;
+    using OBeautifulCode.Type;
 
     /// <summary>
     /// Interface for brokering message and parcels to a courier.
@@ -25,6 +26,7 @@ namespace Naos.MessageBus.Domain
         /// <param name="dependencyTopics">Optional topics that the message depends on.</param>
         /// <param name="dependencyTopicCheckStrategy">Strategy to check dependency topics if they are specified.</param>
         /// <param name="simultaneousRunsStrategy">Strategy on how to deal with multiple runs if <see cref="AffectedTopic"/> is specified.</param>
+        /// <param name="jsonConfigurationType">Type of configuration to use for JSON serialization which is necessary for message transport.</param>
         /// <returns>ID of the scheduled message.</returns>
         TrackingCode Send(
             IMessage message,
@@ -33,7 +35,8 @@ namespace Naos.MessageBus.Domain
             AffectedTopic topic = null,
             IReadOnlyCollection<DependencyTopic> dependencyTopics = null,
             TopicCheckStrategy dependencyTopicCheckStrategy = TopicCheckStrategy.Unspecified,
-            SimultaneousRunsStrategy simultaneousRunsStrategy = SimultaneousRunsStrategy.Unspecified);
+            SimultaneousRunsStrategy simultaneousRunsStrategy = SimultaneousRunsStrategy.Unspecified,
+            TypeDescription jsonConfigurationType = null);
 
         /// <summary>
         /// Send an ordered set of messages that should be handled as soon as possible.
@@ -66,6 +69,7 @@ namespace Naos.MessageBus.Domain
         /// <param name="dependencyTopics">Optional topics that the message depends on.</param>
         /// <param name="dependencyTopicCheckStrategy">Strategy to check dependency topics if they are specified.</param>
         /// <param name="simultaneousRunsStrategy">Strategy on how to deal with multiple runs if Topic is specified.</param>
+        /// <param name="jsonConfigurationType">Type of configuration to use for JSON serialization which is necessary for message transport.</param>
         /// <returns>ID of the scheduled message.</returns>
         TrackingCode SendRecurring(
             IMessage message,
@@ -75,7 +79,8 @@ namespace Naos.MessageBus.Domain
             AffectedTopic topic = null,
             IReadOnlyCollection<DependencyTopic> dependencyTopics = null,
             TopicCheckStrategy dependencyTopicCheckStrategy = TopicCheckStrategy.Unspecified,
-            SimultaneousRunsStrategy simultaneousRunsStrategy = SimultaneousRunsStrategy.Unspecified);
+            SimultaneousRunsStrategy simultaneousRunsStrategy = SimultaneousRunsStrategy.Unspecified,
+            TypeDescription jsonConfigurationType = null);
 
         /// <summary>
         /// Send an ordered set of messages to recur on a schedule.

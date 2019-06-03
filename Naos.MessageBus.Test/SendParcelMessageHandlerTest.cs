@@ -1,6 +1,6 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="SendParcelMessageHandlerTest.cs" company="Naos">
-//    Copyright (c) Naos 2017. All Rights Reserved.
+// <copyright file="SendParcelMessageHandlerTest.cs" company="Naos Project">
+//    Copyright (c) Naos Project 2019. All rights reserved.
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
@@ -40,7 +40,7 @@ namespace Naos.MessageBus.Test
             var parcel = new Parcel
                              {
                                  Id = Guid.NewGuid(),
-                                 Envelopes = new[] { new WaitMessage().ToAddressedMessage(new SimpleChannel("channel")).ToEnvelope(envelopeMachine) }
+                                 Envelopes = new[] { new WaitMessage().ToAddressedMessage(new SimpleChannel("channel")).ToEnvelope(envelopeMachine) },
                              };
 
             var message = new SendParcelMessage { ParcelToSend = parcel };
@@ -68,7 +68,7 @@ namespace Naos.MessageBus.Test
             var parcel = new Parcel
                              {
                                  Id = Guid.NewGuid(),
-                                 Envelopes = new[] { new WaitMessage().ToAddressedMessage(new SimpleChannel("channel")).ToEnvelope(envelopeMachine) }
+                                 Envelopes = new[] { new WaitMessage().ToAddressedMessage(new SimpleChannel("channel")).ToEnvelope(envelopeMachine) },
                              };
 
             var message = new SendParcelMessage { ParcelToSend = parcel };

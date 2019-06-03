@@ -1,6 +1,6 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="AbortIfTopicsHaveSpecificStatusMessageHandlerTests.cs" company="Naos">
-//    Copyright (c) Naos 2017. All Rights Reserved.
+// <copyright file="AbortIfTopicsHaveSpecificStatusMessageHandlerTests.cs" company="Naos Project">
+//    Copyright (c) Naos Project 2019. All rights reserved.
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
@@ -48,9 +48,9 @@ namespace Naos.MessageBus.Test
                                                     {
                                                         Topic = new AffectedTopic(_.Name),
                                                         Status = TopicStatus.WasAffected,
-                                                        AffectsCompletedDateTimeUtc = DateTime.UtcNow.Add(TimeSpan.FromHours(1))
-                                                    }).ToArray()
-                                    }
+                                                        AffectsCompletedDateTimeUtc = DateTime.UtcNow.Add(TimeSpan.FromHours(1)),
+                                                    }).ToArray(),
+                                    },
                             })
                     .ToArray();
 
@@ -60,7 +60,7 @@ namespace Naos.MessageBus.Test
                 StatusesToAbortOn = new[] { TopicStatus.BeingAffected },
                 TopicCheckStrategy = TopicCheckStrategy.Any,
                 TopicStatusReports = reports,
-                TopicsToCheck = reports.Select(_ => _.Topic.ToNamedTopic()).ToArray()
+                TopicsToCheck = reports.Select(_ => _.Topic.ToNamedTopic()).ToArray(),
             };
 
             var handler = new AbortIfTopicsHaveSpecificStatusesMessageHandler();
@@ -101,9 +101,9 @@ namespace Naos.MessageBus.Test
                                                     {
                                                         Topic = new AffectedTopic(_.Name),
                                                         Status = TopicStatus.WasAffected,
-                                                        AffectsCompletedDateTimeUtc = DateTime.UtcNow.Add(TimeSpan.FromHours(1))
-                                                    }).ToArray()
-                                    }
+                                                        AffectsCompletedDateTimeUtc = DateTime.UtcNow.Add(TimeSpan.FromHours(1)),
+                                                    }).ToArray(),
+                                    },
                             })
                     .ToArray();
 
@@ -113,7 +113,7 @@ namespace Naos.MessageBus.Test
                 StatusesToAbortOn = new[] { TopicStatus.BeingAffected },
                 TopicCheckStrategy = TopicCheckStrategy.Any,
                 TopicStatusReports = reports,
-                TopicsToCheck = reports.Select(_ => _.Topic.ToNamedTopic()).ToArray()
+                TopicsToCheck = reports.Select(_ => _.Topic.ToNamedTopic()).ToArray(),
             };
 
             var handler = new AbortIfTopicsHaveSpecificStatusesMessageHandler();
@@ -143,7 +143,7 @@ namespace Naos.MessageBus.Test
                 StatusesToAbortOn = new[] { TopicStatus.BeingAffected },
                 TopicCheckStrategy = TopicCheckStrategy.All,
                 TopicStatusReports = reports,
-                TopicsToCheck = reports.Select(_ => _.Topic.ToNamedTopic()).ToArray()
+                TopicsToCheck = reports.Select(_ => _.Topic.ToNamedTopic()).ToArray(),
             };
 
             var handler = new AbortIfTopicsHaveSpecificStatusesMessageHandler();
@@ -183,9 +183,9 @@ namespace Naos.MessageBus.Test
                                                     {
                                                         Topic = new AffectedTopic(_.Name),
                                                         Status = TopicStatus.WasAffected,
-                                                        AffectsCompletedDateTimeUtc = DateTime.UtcNow.Add(TimeSpan.FromHours(1))
-                                                    }).ToArray()
-                                    }
+                                                        AffectsCompletedDateTimeUtc = DateTime.UtcNow.Add(TimeSpan.FromHours(1)),
+                                                    }).ToArray(),
+                                    },
                             })
                     .ToArray();
 
@@ -195,7 +195,7 @@ namespace Naos.MessageBus.Test
                 StatusesToAbortOn = new[] { TopicStatus.BeingAffected },
                 TopicCheckStrategy = TopicCheckStrategy.All,
                 TopicStatusReports = reports,
-                TopicsToCheck = reports.Select(_ => _.Topic.ToNamedTopic()).ToArray()
+                TopicsToCheck = reports.Select(_ => _.Topic.ToNamedTopic()).ToArray(),
             };
 
             var handler = new AbortIfTopicsHaveSpecificStatusesMessageHandler();

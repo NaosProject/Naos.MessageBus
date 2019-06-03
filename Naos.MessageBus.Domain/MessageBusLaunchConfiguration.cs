@@ -1,6 +1,6 @@
 // --------------------------------------------------------------------------------------------------------------------
-// <copyright file="MessageBusLaunchConfiguration.cs" company="Naos">
-//    Copyright (c) Naos 2017. All Rights Reserved.
+// <copyright file="MessageBusLaunchConfiguration.cs" company="Naos Project">
+//    Copyright (c) Naos Project 2019. All rights reserved.
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
@@ -9,7 +9,7 @@ namespace Naos.MessageBus.Domain
     using System;
     using System.Collections.Generic;
 
-    using OBeautifulCode.TypeRepresentation;
+    using OBeautifulCode.Type;
 
     /// <summary>
     /// Model object with settings to launch a harness.

@@ -1,6 +1,6 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="HangfireBootstrapper.cs" company="Naos">
-//    Copyright (c) Naos 2017. All Rights Reserved.
+// <copyright file="HangfireBootstrapper.cs" company="Naos Project">
+//    Copyright (c) Naos Project 2019. All rights reserved.
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
@@ -37,7 +37,7 @@ namespace Naos.MessageBus.Hangfire.Harness
     public sealed class HangfireBootstrapper : IRegisteredObject, IDisposable
     {
         /// <summary>
-        /// Instance variable of the singleton
+        /// Instance variable of the singleton.
         /// </summary>
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Security", "CA2104:DoNotDeclareReadOnlyMutableReferenceTypes", Justification = "Keeping this way for now.")]
         public static readonly HangfireBootstrapper Instance = new HangfireBootstrapper();
@@ -160,7 +160,7 @@ namespace Naos.MessageBus.Hangfire.Harness
             var assemblyName = assembly.GetName();
             var ret = new AssemblyDetails(
                 assemblyName?.Name ?? "assembly.GetName() returned null",
-                assemblyName?.Version ?? new Version(0, 0),
+                (assemblyName?.Version ?? new Version(0, 0)).ToString(),
                 assembly.Location,
                 assembly.ImageRuntimeVersion);
 

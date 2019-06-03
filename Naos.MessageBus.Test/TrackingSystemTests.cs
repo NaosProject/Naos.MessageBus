@@ -1,6 +1,6 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="TrackingSystemTests.cs" company="Naos">
-//    Copyright (c) Naos 2017. All Rights Reserved.
+// <copyright file="TrackingSystemTests.cs" company="Naos Project">
+//    Copyright (c) Naos Project 2019. All rights reserved.
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
@@ -20,7 +20,7 @@ namespace Naos.MessageBus.Test
     using Naos.MessageBus.Persistence;
     using Naos.Telemetry.Domain;
 
-    using OBeautifulCode.TypeRepresentation;
+    using OBeautifulCode.Type;
 
     using Xunit;
 
@@ -193,7 +193,7 @@ namespace Naos.MessageBus.Test
                 1,
                 new Dictionary<string, decimal>(),
                 true,
-                new OperatingSystemDetails("OS", new Version(), "ServicePack"),
+                new OperatingSystemDetails("OS", new Version().ToString(), "ServicePack"),
                 "ClrVersion"),
             new ProcessDetails("Process", "FilePath", "FileVersion", "ProductVersion", false),
             new List<AssemblyDetails>());

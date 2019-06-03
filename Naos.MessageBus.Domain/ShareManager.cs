@@ -1,6 +1,6 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="ShareManager.cs" company="Naos">
-//    Copyright (c) Naos 2017. All Rights Reserved.
+// <copyright file="ShareManager.cs" company="Naos Project">
+//    Copyright (c) Naos Project 2019. All rights reserved.
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
@@ -13,9 +13,8 @@ namespace Naos.MessageBus.Domain
     using Naos.Compression.Domain;
     using Naos.MessageBus.Domain.Exceptions;
     using Naos.Serialization.Domain;
-    using Naos.Serialization.Domain.Extensions;
 
-    using OBeautifulCode.TypeRepresentation;
+    using OBeautifulCode.Type;
     using OBeautifulCode.Validation.Recipes;
 
     using static System.FormattableString;
@@ -28,7 +27,7 @@ namespace Naos.MessageBus.Domain
         /// <summary>
         /// Gets the <see cref="SerializationDescription" /> to use for serializing messages.
         /// </summary>
-        public static SerializationDescription SharedPropertySerializationDescription => new SerializationDescription(SerializationFormat.Json, SerializationRepresentation.String);
+        public static SerializationDescription SharedPropertySerializationDescription => new SerializationDescription(SerializationKind.Json, SerializationFormat.String, typeof(MessageBusJsonConfiguration).ToTypeDescription());
 
         // Make this permissive since it's the underlying logic and shouldn't be coupled to whether others are matched in a stricter mode assigned in constructor.
         private static readonly TypeComparer CheckForSharingTypeComparer = new TypeComparer(TypeMatchStrategy.NamespaceAndName);
@@ -138,7 +137,7 @@ namespace Naos.MessageBus.Domain
                                 {
                                     SourceType = objectToShareFrom.GetType().ToTypeDescription(),
                                     InterfaceType = type.ToTypeDescription(),
-                                    Properties = new List<SharedProperty>()
+                                    Properties = new List<SharedProperty>(),
                                 };
 
                 var properties = type.GetProperties();

@@ -1,6 +1,6 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="MessageDispatcher.cs" company="Naos">
-//    Copyright (c) Naos 2017. All Rights Reserved.
+// <copyright file="MessageDispatcher.cs" company="Naos Project">
+//    Copyright (c) Naos Project 2019. All rights reserved.
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
@@ -19,7 +19,7 @@ namespace Naos.MessageBus.Core
     using Naos.Recipes.RunWithRetry;
     using Naos.Telemetry.Domain;
 
-    using OBeautifulCode.TypeRepresentation;
+    using OBeautifulCode.Type;
     using OBeautifulCode.Validation.Recipes;
 
     using static System.FormattableString;
@@ -245,7 +245,7 @@ namespace Naos.MessageBus.Core
                                                   Id = parcelId, // parcel ID provided may or may not match the tracking code's parcel ID...
                                                   Name = envelopes.FirstOrDefault()?.Description,
                                                   Envelopes = envelopes,
-                                                  SharedInterfaceStates = shareSets
+                                                  SharedInterfaceStates = shareSets,
                                               };
 
                     this.postOffice.Send(envelopesParcel);

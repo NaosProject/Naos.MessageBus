@@ -1,6 +1,6 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="RetryTrackingCodesInSpecificStatusesMessageHandler.cs" company="Naos">
-//    Copyright (c) Naos 2017. All Rights Reserved.
+// <copyright file="RetryTrackingCodesInSpecificStatusesMessageHandler.cs" company="Naos Project">
+//    Copyright (c) Naos Project 2019. All rights reserved.
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
@@ -58,7 +58,7 @@ namespace Naos.MessageBus.Core
                 var parcelsThatNeedRetrying = reports.Where(_ => message.StatusesToRetry.Contains(_.Status)).ToList();
                 var parcelsThatPotentiallyNeedRetrying = reports.Where(_ => _.Status == ParcelStatus.InTransit || _.Status == ParcelStatus.OutForDelivery).ToList();
 
-                Log.Write($"Found {parcelsThatNeedRetrying.Count} parcels to retry.");
+                Log.Write($"Found {parcelsThatNeedRetrying.Count} parcels to retry."); // origin NaosMessageBusHarness
                 foreach (var parcelThatNeedsRetrying in parcelsThatNeedRetrying)
                 {
                     var currentRetryCount = parcelIdRetryCountMap[parcelThatNeedsRetrying.CurrentTrackingCode.ParcelId];

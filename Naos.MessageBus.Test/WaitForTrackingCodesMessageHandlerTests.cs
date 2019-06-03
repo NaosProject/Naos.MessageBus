@@ -1,6 +1,6 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="WaitForTrackingCodesMessageHandlerTests.cs" company="Naos">
-//    Copyright (c) Naos 2017. All Rights Reserved.
+// <copyright file="WaitForTrackingCodesMessageHandlerTests.cs" company="Naos Project">
+//    Copyright (c) Naos Project 2019. All rights reserved.
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
@@ -37,7 +37,7 @@ namespace Naos.MessageBus.Test
                                   Description = "Description",
                                   WaitTimeBetweenChecks = TimeSpan.FromSeconds(.01),
                                   TrackingCodes = new[] { trackingCode },
-                                  AllowedStatuses = new[] { parcelStatusToBreakOn }
+                                  AllowedStatuses = new[] { parcelStatusToBreakOn },
                               };
 
             var seedStatuses = new[] { ParcelStatus.Delivered, parcelStatusToBreakOn };
@@ -64,7 +64,7 @@ namespace Naos.MessageBus.Test
                                   Description = "Description",
                                   WaitTimeBetweenChecks = TimeSpan.FromSeconds(.01),
                                   TrackingCodes = new TrackingCode[0],
-                                  AllowedStatuses = new[] { parcelStatusToBreakOn }
+                                  AllowedStatuses = new[] { parcelStatusToBreakOn },
                               };
 
             var parcelTracker = Factory.GetSeededTrackerForGetTrackingReportAsync(new List<Tuple<TrackingCode[], List<ParcelTrackingReport>>>());

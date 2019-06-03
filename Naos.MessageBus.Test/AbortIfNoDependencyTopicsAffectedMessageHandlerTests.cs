@@ -1,6 +1,6 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="AbortIfNoDependencyTopicsAffectedMessageHandlerTests.cs" company="Naos">
-//    Copyright (c) Naos 2017. All Rights Reserved.
+// <copyright file="AbortIfNoDependencyTopicsAffectedMessageHandlerTests.cs" company="Naos Project">
+//    Copyright (c) Naos Project 2019. All rights reserved.
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
@@ -34,7 +34,7 @@ namespace Naos.MessageBus.Test
 
             var reportsJson = "[{\"topic\": {\r\n        \"name\": \"cmf\"\r\n      },\r\n      \"affectedItems\": [],\r\n      \"status\": \"failed\",\r\n      \"affectsCompletedDateTimeUtc\": null,\r\n      \"dependencyTopicNoticesAtStart\": [\r\n        {\r\n          \"topic\": {\r\n            \"name\": \"cmc\"\r\n          },\r\n          \"affectedItems\": [],\r\n          \"status\": \"wasAffected\",\r\n          \"affectsCompletedDateTimeUtc\": \"2016-08-13T06:36:48.84\",\r\n          \"dependencyTopicNoticesAtStart\": [\r\n            {\r\n              \"topic\": {\r\n                \"name\": \"cmd\"\r\n              },\r\n              \"affectedItems\": [],\r\n              \"status\": \"wasAffected\",\r\n              \"affectsCompletedDateTimeUtc\": \"2016-08-13T06:26:39.71\",\r\n              \"dependencyTopicNoticesAtStart\": []\r\n            }\r\n          ]\r\n        },\r\n        {\r\n          \"topic\": {\r\n            \"name\": \"cme\"\r\n          },\r\n          \"affectedItems\": [],\r\n          \"status\": \"wasAffected\",\r\n          \"affectsCompletedDateTimeUtc\": \"2016-08-13T06:36:48.153\",\r\n          \"dependencyTopicNoticesAtStart\": [\r\n            {\r\n              \"topic\": {\r\n                \"name\": \"cmd\"\r\n              },\r\n              \"affectedItems\": [],\r\n              \"status\": \"wasAffected\",\r\n              \"affectsCompletedDateTimeUtc\": \"2016-08-13T06:26:39.71\",\r\n              \"dependencyTopicNoticesAtStart\": []\r\n            }\r\n          ]\r\n        },\r\n        {\r\n          \"topic\": {\r\n            \"name\": \"cmd\"\r\n          },\r\n          \"affectedItems\": [],\r\n          \"status\": \"wasAffected\",\r\n          \"affectsCompletedDateTimeUtc\": \"2016-08-13T06:26:39.71\",\r\n          \"dependencyTopicNoticesAtStart\": []\r\n        }\r\n      ]\r\n    },\r\n    {\r\n      \"topic\": {\r\n        \"name\": \"cme\"\r\n      },\r\n      \"affectedItems\": [],\r\n      \"status\": \"wasAffected\",\r\n      \"affectsCompletedDateTimeUtc\": \"2016-08-13T06:36:48.153\",\r\n      \"dependencyTopicNoticesAtStart\": [\r\n        {\r\n          \"topic\": {\r\n            \"name\": \"cmd\"\r\n          },\r\n          \"affectedItems\": [],\r\n          \"status\": \"wasAffected\",\r\n          \"affectsCompletedDateTimeUtc\": \"2016-08-13T06:26:39.71\",\r\n          \"dependencyTopicNoticesAtStart\": []\r\n        }\r\n      ]\r\n    },\r\n    {\r\n      \"topic\": {\r\n        \"name\": \"cmc\"\r\n      },\r\n      \"affectedItems\": [],\r\n      \"status\": \"wasAffected\",\r\n      \"affectsCompletedDateTimeUtc\": \"2016-08-13T06:36:48.84\",\r\n      \"dependencyTopicNoticesAtStart\": [\r\n        {\r\n          \"topic\": {\r\n            \"name\": \"cmd\"\r\n          },\r\n          \"affectedItems\": [],\r\n          \"status\": \"wasAffected\",\r\n          \"affectsCompletedDateTimeUtc\": \"2016-08-13T06:26:39.71\",\r\n          \"dependencyTopicNoticesAtStart\": []\r\n        }\r\n      ]\r\n    },\r\n    {\r\n      \"topic\": {\r\n        \"name\": \"cmfc\"\r\n      },\r\n      \"affectedItems\": [],\r\n      \"status\": \"unknown\",\r\n      \"affectsCompletedDateTimeUtc\": null,\r\n      \"dependencyTopicNoticesAtStart\": []\r\n    }\r\n  ]";
 
-            var reports = new NaosJsonSerializer().Deserialize<TopicStatusReport[]>(reportsJson);
+            var reports = new NaosJsonSerializer(typeof(MessageBusJsonConfiguration)).Deserialize<TopicStatusReport[]>(reportsJson);
 
             var message = new AbortIfNoDependencyTopicsAffectedMessage
             {
@@ -42,7 +42,7 @@ namespace Naos.MessageBus.Test
                 Topic = new AffectedTopic(impactingTopic),
                 DependencyTopics = dependentTopics.Select(_ => new DependencyTopic(_)).ToArray(),
                 TopicCheckStrategy = TopicCheckStrategy.All,
-                TopicStatusReports = reports
+                TopicStatusReports = reports,
             };
 
             var handler = new AbortIfNoDependencyTopicsAffectedMessageHandler();
@@ -77,10 +77,9 @@ namespace Naos.MessageBus.Test
                                                     {
                                                         Topic = new AffectedTopic(_.Name),
                                                         Status = TopicStatus.WasAffected,
-                                                        AffectsCompletedDateTimeUtc =
-                                                            DateTime.UtcNow.Subtract(TimeSpan.FromHours(1))
-                                                    }).ToArray()
-                                    }
+                                                        AffectsCompletedDateTimeUtc = DateTime.UtcNow.Subtract(TimeSpan.FromHours(1)),
+                                                    }).ToArray(),
+                                    },
                             })
                     .ToArray();
 
@@ -90,7 +89,7 @@ namespace Naos.MessageBus.Test
                 Topic = impactingTopic,
                 DependencyTopics = topics.ToArray(),
                 TopicCheckStrategy = TopicCheckStrategy.Any,
-                TopicStatusReports = reports
+                TopicStatusReports = reports,
             };
 
             var handler = new AbortIfNoDependencyTopicsAffectedMessageHandler();
@@ -125,9 +124,9 @@ namespace Naos.MessageBus.Test
                                                     {
                                                         Topic = new AffectedTopic(_.Name),
                                                         Status = TopicStatus.WasAffected,
-                                                        AffectsCompletedDateTimeUtc = DateTime.UtcNow.Add(TimeSpan.FromHours(1))
-                                                    }).ToArray()
-                                    }
+                                                        AffectsCompletedDateTimeUtc = DateTime.UtcNow.Add(TimeSpan.FromHours(1)),
+                                                    }).ToArray(),
+                                    },
                             })
                     .ToArray();
 
@@ -137,7 +136,7 @@ namespace Naos.MessageBus.Test
                 Topic = impactingTopic,
                 DependencyTopics = topics.ToArray(),
                 TopicCheckStrategy = TopicCheckStrategy.Any,
-                TopicStatusReports = reports
+                TopicStatusReports = reports,
             };
 
             var handler = new AbortIfNoDependencyTopicsAffectedMessageHandler();
@@ -163,7 +162,7 @@ namespace Naos.MessageBus.Test
                         {
                             Topic = new AffectedTopic(_.Name),
                             Status = TopicStatus.WasAffected,
-                            AffectsCompletedDateTimeUtc = DateTime.UtcNow.Subtract(TimeSpan.FromHours(1))
+                            AffectsCompletedDateTimeUtc = DateTime.UtcNow.Subtract(TimeSpan.FromHours(1)),
                         })
                     .Union(
                         new[]
@@ -179,9 +178,9 @@ namespace Naos.MessageBus.Test
                                                     {
                                                         Topic = new AffectedTopic(_.Name),
                                                         Status = TopicStatus.WasAffected,
-                                                        AffectsCompletedDateTimeUtc = DateTime.UtcNow.Add(TimeSpan.FromHours(1))
-                                                    }).ToArray()
-                                    }
+                                                        AffectsCompletedDateTimeUtc = DateTime.UtcNow.Add(TimeSpan.FromHours(1)),
+                                                    }).ToArray(),
+                                    },
                             })
                     .ToArray();
 
@@ -191,7 +190,7 @@ namespace Naos.MessageBus.Test
                 Topic = impactingTopic,
                 DependencyTopics = topics.ToArray(),
                 TopicCheckStrategy = TopicCheckStrategy.None,
-                TopicStatusReports = reports
+                TopicStatusReports = reports,
             };
 
             var handler = new AbortIfNoDependencyTopicsAffectedMessageHandler();
@@ -218,7 +217,7 @@ namespace Naos.MessageBus.Test
                         {
                             Topic = new AffectedTopic(_.Name),
                             Status = TopicStatus.WasAffected,
-                            AffectsCompletedDateTimeUtc = DateTime.UtcNow.Subtract(TimeSpan.FromHours(1))
+                            AffectsCompletedDateTimeUtc = DateTime.UtcNow.Subtract(TimeSpan.FromHours(1)),
                         })
                     .Union(
                         new[]
@@ -235,9 +234,9 @@ namespace Naos.MessageBus.Test
                                                     {
                                                         Topic = new AffectedTopic(_.Name),
                                                         Status = TopicStatus.WasAffected,
-                                                        AffectsCompletedDateTimeUtc = DateTime.UtcNow.Add(TimeSpan.FromHours(1))
-                                                    }).ToArray()
-                                    }
+                                                        AffectsCompletedDateTimeUtc = DateTime.UtcNow.Add(TimeSpan.FromHours(1)),
+                                                    }).ToArray(),
+                                    },
                             })
                     .ToArray();
 
@@ -247,7 +246,7 @@ namespace Naos.MessageBus.Test
                 Topic = impactingTopic,
                 DependencyTopics = topics.ToArray(),
                 TopicCheckStrategy = TopicCheckStrategy.Any,
-                TopicStatusReports = reports
+                TopicStatusReports = reports,
             };
 
             var handler = new AbortIfNoDependencyTopicsAffectedMessageHandler();
@@ -272,7 +271,7 @@ namespace Naos.MessageBus.Test
                             {
                                 Topic = new AffectedTopic(_.Name),
                                 Status = TopicStatus.WasAffected,
-                                AffectsCompletedDateTimeUtc = DateTime.UtcNow
+                                AffectsCompletedDateTimeUtc = DateTime.UtcNow,
                             })
                     .Union(new[] { new TopicStatusReport { Topic = impactingTopic, Status = TopicStatus.WasAffected } })
                     .ToArray();
@@ -283,7 +282,7 @@ namespace Naos.MessageBus.Test
                 Topic = impactingTopic,
                 DependencyTopics = topics.ToArray(),
                 TopicCheckStrategy = TopicCheckStrategy.Any,
-                TopicStatusReports = reports
+                TopicStatusReports = reports,
             };
 
             var handler = new AbortIfNoDependencyTopicsAffectedMessageHandler();
@@ -313,8 +312,8 @@ namespace Naos.MessageBus.Test
                                     Topic = impactingTopic,
                                     Status = TopicStatus.WasAffected,
                                     AffectsCompletedDateTimeUtc = DateTime.UtcNow,
-                                    DependencyTopicNoticesAtStart = topicStatusReports
-                                }
+                                    DependencyTopicNoticesAtStart = topicStatusReports,
+                                },
                         }).ToArray();
 
             var message = new AbortIfNoDependencyTopicsAffectedMessage
@@ -323,7 +322,7 @@ namespace Naos.MessageBus.Test
                 Topic = impactingTopic,
                 DependencyTopics = topics.ToArray(),
                 TopicCheckStrategy = TopicCheckStrategy.Any,
-                TopicStatusReports = reports
+                TopicStatusReports = reports,
             };
 
             var handler = new AbortIfNoDependencyTopicsAffectedMessageHandler();
@@ -349,7 +348,7 @@ namespace Naos.MessageBus.Test
                         {
                             Topic = new AffectedTopic(_.Name),
                             Status = TopicStatus.WasAffected,
-                            AffectsCompletedDateTimeUtc = DateTime.UtcNow
+                            AffectsCompletedDateTimeUtc = DateTime.UtcNow,
                         })
                     .Union(
                         new[]
@@ -366,11 +365,10 @@ namespace Naos.MessageBus.Test
                                                     {
                                                         Topic = new AffectedTopic(_.Name),
                                                         Status = TopicStatus.WasAffected,
-                                                        AffectsCompletedDateTimeUtc =
-                                                            DateTime.UtcNow.Subtract(TimeSpan.FromHours(1))
-                                                    }).ToArray()
+                                                        AffectsCompletedDateTimeUtc = DateTime.UtcNow.Subtract(TimeSpan.FromHours(1)),
+                                                    }).ToArray(),
                                     },
-                                new TopicStatusReport { Topic = notCertified, Status = TopicStatus.BeingAffected }
+                                new TopicStatusReport { Topic = notCertified, Status = TopicStatus.BeingAffected },
                             })
                     .ToArray();
 
@@ -380,7 +378,7 @@ namespace Naos.MessageBus.Test
                 Topic = impactingTopic,
                 DependencyTopics = topics.ToArray(),
                 TopicCheckStrategy = TopicCheckStrategy.Any,
-                TopicStatusReports = reports
+                TopicStatusReports = reports,
             };
 
             var handler = new AbortIfNoDependencyTopicsAffectedMessageHandler();
@@ -406,7 +404,7 @@ namespace Naos.MessageBus.Test
                         {
                             Topic = new AffectedTopic(_.Name),
                             Status = TopicStatus.WasAffected,
-                            AffectsCompletedDateTimeUtc = DateTime.UtcNow
+                            AffectsCompletedDateTimeUtc = DateTime.UtcNow,
                         })
                     .Union(
                         new[]
@@ -422,10 +420,9 @@ namespace Naos.MessageBus.Test
                                                     {
                                                         Topic = new AffectedTopic(_.Name),
                                                         Status = TopicStatus.WasAffected,
-                                                        AffectsCompletedDateTimeUtc =
-                                                            DateTime.UtcNow.Subtract(TimeSpan.FromHours(1))
-                                                    }).ToArray()
-                                    }
+                                                        AffectsCompletedDateTimeUtc = DateTime.UtcNow.Subtract(TimeSpan.FromHours(1)),
+                                                    }).ToArray(),
+                                    },
                             })
                     .ToArray();
 
@@ -435,7 +432,7 @@ namespace Naos.MessageBus.Test
                 Topic = impactingTopic,
                 DependencyTopics = topics.ToArray(),
                 TopicCheckStrategy = TopicCheckStrategy.All,
-                TopicStatusReports = reports
+                TopicStatusReports = reports,
             };
 
             var handler = new AbortIfNoDependencyTopicsAffectedMessageHandler();
@@ -463,7 +460,7 @@ namespace Naos.MessageBus.Test
                         {
                             Topic = new AffectedTopic(_.Name),
                             Status = number++ % 2 == 0 ? TopicStatus.BeingAffected : TopicStatus.WasAffected,
-                            AffectsCompletedDateTimeUtc = DateTime.UtcNow
+                            AffectsCompletedDateTimeUtc = DateTime.UtcNow,
                         })
                     .Union(
                         new[]
@@ -480,11 +477,10 @@ namespace Naos.MessageBus.Test
                                                     {
                                                         Topic = new AffectedTopic(_.Name),
                                                         Status = TopicStatus.WasAffected,
-                                                        AffectsCompletedDateTimeUtc =
-                                                            DateTime.UtcNow.Subtract(TimeSpan.FromHours(1))
-                                                    }).ToArray()
+                                                        AffectsCompletedDateTimeUtc = DateTime.UtcNow.Subtract(TimeSpan.FromHours(1)),
+                                                    }).ToArray(),
                                     },
-                                new TopicStatusReport { Topic = notCertified, Status = TopicStatus.BeingAffected }
+                                new TopicStatusReport { Topic = notCertified, Status = TopicStatus.BeingAffected },
                             })
                     .ToArray();
 
@@ -494,7 +490,7 @@ namespace Naos.MessageBus.Test
                 Topic = impactingTopic,
                 DependencyTopics = topics.ToArray(),
                 TopicCheckStrategy = TopicCheckStrategy.All,
-                TopicStatusReports = reports
+                TopicStatusReports = reports,
             };
 
             var handler = new AbortIfNoDependencyTopicsAffectedMessageHandler();

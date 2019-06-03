@@ -1,6 +1,6 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="PostOffice.cs" company="Naos">
-//    Copyright (c) Naos 2017. All Rights Reserved.
+// <copyright file="PostOffice.cs" company="Naos Project">
+//    Copyright (c) Naos Project 2019. All rights reserved.
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
@@ -12,8 +12,8 @@ namespace Naos.MessageBus.Domain
 
     using Naos.Cron;
     using Naos.Serialization.Domain;
-
-    using OBeautifulCode.TypeRepresentation;
+    using Naos.Serialization.Json;
+    using OBeautifulCode.Type;
     using OBeautifulCode.Validation.Recipes;
 
     using static System.FormattableString;
@@ -24,7 +24,12 @@ namespace Naos.MessageBus.Domain
         /// <summary>
         /// Gets the <see cref="SerializationDescription" /> to use for serializing messages.
         /// </summary>
-        public static SerializationDescription MessageSerializationDescription => new SerializationDescription(SerializationFormat.Json, SerializationRepresentation.String);
+        public static SerializationDescription MessageSerializationDescription => new SerializationDescription(SerializationKind.Json, SerializationFormat.String, typeof(MessageBusJsonConfiguration).ToTypeDescription());
+
+        /// <summary>
+        /// Gets the default serializer to use for serializing messages.
+        /// </summary>
+        public static ISerializeAndDeserialize DefaultSerializer => new NaosJsonSerializer(typeof(MessageBusJsonConfiguration));
 
         // Make this permissive since it's the underlying logic and shouldn't be coupled to whether others are matched in a stricter mode assigned in constructor.
         private static readonly TypeComparer NullChannelAndTopicAffectedMessageTypeComparer = new TypeComparer(TypeMatchStrategy.NamespaceAndName);
@@ -60,9 +65,10 @@ namespace Naos.MessageBus.Domain
             AffectedTopic topic = null,
             IReadOnlyCollection<DependencyTopic> dependencyTopics = null,
             TopicCheckStrategy dependencyTopicCheckStrategy = TopicCheckStrategy.Unspecified,
-            SimultaneousRunsStrategy simultaneousRunsStrategy = SimultaneousRunsStrategy.Unspecified)
+            SimultaneousRunsStrategy simultaneousRunsStrategy = SimultaneousRunsStrategy.Unspecified,
+            TypeDescription jsonConfigurationType = null)
         {
-            return this.SendRecurring(message, channel, new NullSchedule(), name, topic, dependencyTopics, dependencyTopicCheckStrategy, simultaneousRunsStrategy);
+            return this.SendRecurring(message, channel, new NullSchedule(), name, topic, dependencyTopics, dependencyTopicCheckStrategy, simultaneousRunsStrategy, jsonConfigurationType);
         }
 
         /// <inheritdoc />
@@ -80,18 +86,19 @@ namespace Naos.MessageBus.Domain
             AffectedTopic topic = null,
             IReadOnlyCollection<DependencyTopic> dependencyTopics = null,
             TopicCheckStrategy dependencyTopicCheckStrategy = TopicCheckStrategy.Unspecified,
-            SimultaneousRunsStrategy simultaneousRunsStrategy = SimultaneousRunsStrategy.Unspecified)
+            SimultaneousRunsStrategy simultaneousRunsStrategy = SimultaneousRunsStrategy.Unspecified,
+            TypeDescription jsonConfigurationType = null)
         {
             var messageSequenceId = Guid.NewGuid();
             var messageSequence = new MessageSequence
             {
                 Id = messageSequenceId,
                 Name = name,
-                AddressedMessages = new[] { message.ToAddressedMessage(channel) },
+                AddressedMessages = new[] { message.ToAddressedMessage(channel, jsonConfigurationType) },
                 Topic = topic,
                 DependencyTopics = dependencyTopics,
                 DependencyTopicCheckStrategy = dependencyTopicCheckStrategy,
-                SimultaneousRunsStrategy = simultaneousRunsStrategy
+                SimultaneousRunsStrategy = simultaneousRunsStrategy,
             };
 
             return this.SendRecurring(messageSequence, recurringSchedule);
@@ -123,7 +130,7 @@ namespace Naos.MessageBus.Domain
                                  Topic = messageSequence.Topic,
                                  DependencyTopics = messageSequence.DependencyTopics,
                                  DependencyTopicCheckStrategy = messageSequence.DependencyTopicCheckStrategy,
-                                 SimultaneousRunsStrategy = messageSequence.SimultaneousRunsStrategy
+                                 SimultaneousRunsStrategy = messageSequence.SimultaneousRunsStrategy,
                              };
 
             return this.SendRecurring(parcel, recurringSchedule);
@@ -206,7 +213,7 @@ namespace Naos.MessageBus.Domain
                     {
                         Description = Invariant($"{parcel.Name} - Fetch and Share Latest Topic Status Reports for: {string.Join<TopicBase>(",", allTopics)}"),
                         TopicsToFetchAndShareStatusReportsFrom = allTopics,
-                        Filter = TopicStatus.None
+                        Filter = TopicStatus.None,
                     };
 
             newEnvelopes.Add(fetchAndShareTopicStatusReportMessage.ToAddressedMessage().ToEnvelope(this.envelopeMachine));
@@ -218,7 +225,7 @@ namespace Naos.MessageBus.Domain
                     Description = Invariant($"{parcel.Name} - Abort if '{parcel.Topic}' Being Affected or Failed"),
                     TopicsToCheck = new[] { parcel.Topic.ToNamedTopic() },
                     TopicCheckStrategy = TopicCheckStrategy.All,
-                    StatusesToAbortOn = new[] { TopicStatus.BeingAffected, TopicStatus.Failed }
+                    StatusesToAbortOn = new[] { TopicStatus.BeingAffected, TopicStatus.Failed },
                 };
 
                 newEnvelopes.Add(abortIfPendingMessage.ToAddressedMessage().ToEnvelope(this.envelopeMachine));
@@ -231,7 +238,7 @@ namespace Naos.MessageBus.Domain
                     Description = Invariant($"{parcel.Name} - Abort if no updates on Depdendency Topics: {string.Join(",", dependencyTopics)}"),
                     Topic = parcel.Topic,
                     DependencyTopics = dependencyTopics,
-                    TopicCheckStrategy = parcel.DependencyTopicCheckStrategy
+                    TopicCheckStrategy = parcel.DependencyTopicCheckStrategy,
                 };
 
                 newEnvelopes.Add(abortIfNoNewDataMessage.ToAddressedMessage().ToEnvelope(this.envelopeMachine));
@@ -241,7 +248,7 @@ namespace Naos.MessageBus.Domain
             var beingAffectedMessage = new TopicBeingAffectedMessage
             {
                 Description = Invariant($"{parcel.Name} - Begin affecting Topic: {parcel.Topic}"),
-                Topic = parcel.Topic
+                Topic = parcel.Topic,
             };
 
             var beingAffectedEnvelopes = envelopes.Where(_ => NullChannelAndTopicAffectedMessageTypeComparer.Equals(_.SerializedMessage.PayloadTypeDescription, beingAffectedMessage.GetType().ToTypeDescription())).ToList();
@@ -270,7 +277,7 @@ namespace Naos.MessageBus.Domain
             var wasAffectedMessage = new TopicWasAffectedMessage
             {
                 Description = Invariant($"{parcel.Name} - Finished affecting Topic: {parcel.Topic}"),
-                Topic = parcel.Topic
+                Topic = parcel.Topic,
             };
 
             var wasAffectedEnvelopes = envelopes.Where(_ => NullChannelAndTopicAffectedMessageTypeComparer.Equals(_.SerializedMessage.PayloadTypeDescription, wasAffectedMessage.GetType().ToTypeDescription())).ToList();

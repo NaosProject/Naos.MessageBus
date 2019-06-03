@@ -1,6 +1,6 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="ThrowsExceptionMessageHandler.cs" company="Naos">
-//    Copyright (c) Naos 2017. All Rights Reserved.
+// <copyright file="ThrowsExceptionMessageHandler.cs" company="Naos Project">
+//    Copyright (c) Naos Project 2019. All rights reserved.
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
@@ -13,9 +13,9 @@ namespace Naos.MessageBus.Core
     using Its.Log.Instrumentation;
 
     using Naos.MessageBus.Domain;
-    using Naos.Serialization.Domain.Extensions;
+    using Naos.Serialization.Domain;
 
-    using OBeautifulCode.TypeRepresentation;
+    using OBeautifulCode.Type;
 
     /// <inheritdoc />
     public class ThrowsExceptionMessageHandler : MessageHandlerBase<ThrowsExceptionMessage>

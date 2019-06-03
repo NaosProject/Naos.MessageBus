@@ -1,11 +1,13 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="AddressedMessage.cs" company="Naos">
-//    Copyright (c) Naos 2017. All Rights Reserved.
+// <copyright file="AddressedMessage.cs" company="Naos Project">
+//    Copyright (c) Naos Project 2019. All rights reserved.
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
 namespace Naos.MessageBus.Domain
 {
+    using OBeautifulCode.Type;
+
     /// <summary>
     /// Message with channel.
     /// </summary>
@@ -20,5 +22,10 @@ namespace Naos.MessageBus.Domain
         /// Gets or sets the channel to broadcast the message on.
         /// </summary>
         public IChannel Address { get; set; }
+
+        /// <summary>
+        /// Gets or sets the type of configuration to use for JSON serialization which is necessary for message transport.
+        /// </summary>
+        public TypeDescription JsonConfigurationType { get; set; }
     }
 }

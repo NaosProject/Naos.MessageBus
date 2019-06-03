@@ -1,6 +1,6 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="HangfireCourierTest.cs" company="Naos">
-//    Copyright (c) Naos 2017. All Rights Reserved.
+// <copyright file="HangfireCourierTest.cs" company="Naos Project">
+//    Copyright (c) Naos Project 2019. All rights reserved.
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
@@ -16,7 +16,7 @@ namespace Naos.MessageBus.Test
     using Naos.MessageBus.Hangfire.Sender;
 
     using OBeautifulCode.Reflection.Recipes;
-    using OBeautifulCode.TypeRepresentation;
+    using OBeautifulCode.Type;
 
     using Xunit;
 
@@ -108,7 +108,7 @@ namespace Naos.MessageBus.Test
                                {
                                    Envelopes = new[]
                                                    {
-                                                       new NullMessage { Description = "description" }.ToAddressedMessage(channel).ToEnvelope(envelopeMachine, "id")
+                                                       new NullMessage { Description = "description" }.ToAddressedMessage(channel).ToEnvelope(envelopeMachine, "id"),
                                                    },
                                };
 
@@ -118,13 +118,13 @@ namespace Naos.MessageBus.Test
                                                             {
                                                                 new RecurringHeaderMessage { Description = "description" }.ToAddressedMessage(channel).ToEnvelope(envelopeMachine, "id"),
                                                                 new NullMessage { Description = "description" }.ToAddressedMessage(channel).ToEnvelope(envelopeMachine, "id"),
-                                                            }
+                                                            },
                                         };
 
             var crate = new Crate
             {
                 Parcel = parcelIn,
-                RecurringSchedule = schedule
+                RecurringSchedule = schedule,
             };
 
             // act
@@ -153,7 +153,7 @@ namespace Naos.MessageBus.Test
                                        new[]
                                            {
                                                new NullMessage { Description = "description" }.ToAddressedMessage(channel).ToEnvelope(envelopeMachine, "id"),
-                                           }
+                                           },
             };
 
             var expectedParcelOut = new Parcel
@@ -163,13 +163,13 @@ namespace Naos.MessageBus.Test
                                                 new[]
                                                     {
                                                         new NullMessage { Description = "description" }.ToAddressedMessage(channel).ToEnvelope(envelopeMachine, "id"),
-                                                    }
+                                                    },
             };
 
             var crate = new Crate
             {
                 Parcel = parcelIn,
-                RecurringSchedule = schedule
+                RecurringSchedule = schedule,
             };
 
             // act

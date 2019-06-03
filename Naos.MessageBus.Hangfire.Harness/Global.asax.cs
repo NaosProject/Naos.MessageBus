@@ -1,6 +1,6 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="Global.asax.cs" company="Naos">
-//    Copyright (c) Naos 2017. All Rights Reserved.
+// <copyright file="Global.asax.cs" company="Naos Project">
+//    Copyright (c) Naos Project 2019. All rights reserved.
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
@@ -16,6 +16,7 @@ namespace Naos.MessageBus.Hangfire.Harness
     using Its.Configuration;
 
     using Naos.Logging.Domain;
+    using Naos.Logging.Persistence;
     using Naos.MessageBus.Domain;
     using Naos.MessageBus.Hangfire.Bootstrapper;
 
@@ -48,7 +49,6 @@ namespace Naos.MessageBus.Hangfire.Harness
             LogProvider.SetCurrentLogProvider(new HangfireLogProviderToNaosLogWritingAdapter());
 
             HangfireBootstrapper.Instance.Start(handlerFactoryConfig, connectionConfig, launchConfig);
-
         }
 
         /// <summary>

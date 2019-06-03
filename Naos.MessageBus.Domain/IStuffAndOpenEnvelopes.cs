@@ -1,6 +1,6 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="IStuffAndOpenEnvelopes.cs" company="Naos">
-//    Copyright (c) Naos 2017. All Rights Reserved.
+// <copyright file="IStuffAndOpenEnvelopes.cs" company="Naos Project">
+//    Copyright (c) Naos Project 2019. All rights reserved.
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
@@ -10,9 +10,8 @@ namespace Naos.MessageBus.Domain
 
     using Naos.Compression.Domain;
     using Naos.Serialization.Domain;
-    using Naos.Serialization.Domain.Extensions;
 
-    using OBeautifulCode.TypeRepresentation;
+    using OBeautifulCode.Type;
     using OBeautifulCode.Validation.Recipes;
 
     /// <summary>
@@ -104,8 +103,21 @@ namespace Naos.MessageBus.Domain
             new { addressedMessage }.Must().NotBeNull();
 
             var localId = id ?? Guid.NewGuid().ToString().ToUpperInvariant();
+
+            var localSerializationDescription = this.messageSerializationDescription;
+            if (addressedMessage.JsonConfigurationType != null)
+            {
+                // override configuration type
+                localSerializationDescription = new SerializationDescription(
+                    localSerializationDescription.SerializationKind,
+                    localSerializationDescription.SerializationFormat,
+                    addressedMessage.JsonConfigurationType,
+                    localSerializationDescription.CompressionKind,
+                    localSerializationDescription.Metadata);
+            }
+
             var serializedMessage = addressedMessage.Message.ToDescribedSerializationUsingSpecificFactory(
-                this.messageSerializationDescription,
+                localSerializationDescription,
                 this.serializerFactory,
                 this.compressorFactory,
                 this.typeMatchStrategyForMessageResolution,

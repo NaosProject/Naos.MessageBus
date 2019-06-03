@@ -1,6 +1,6 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="RetryTrackingCodesInSpecificStatusesMessageHandlerTests.cs" company="Naos">
-//    Copyright (c) Naos 2017. All Rights Reserved.
+// <copyright file="RetryTrackingCodesInSpecificStatusesMessageHandlerTests.cs" company="Naos Project">
+//    Copyright (c) Naos Project 2019. All rights reserved.
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
@@ -37,9 +37,9 @@ namespace Naos.MessageBus.Test
                                               new TrackingCode
                                                   {
                                                       ParcelId = Guid.NewGuid(),
-                                                      EnvelopeId = Guid.NewGuid().ToString().ToUpperInvariant()
-                                                  }
-                                          }
+                                                      EnvelopeId = Guid.NewGuid().ToString().ToUpperInvariant(),
+                                                  },
+                                          },
                               };
 
             var handler = new RetryTrackingCodesInSpecificStatusesMessageHandler();
@@ -70,9 +70,9 @@ namespace Naos.MessageBus.Test
                                               new TrackingCode
                                                   {
                                                       ParcelId = Guid.NewGuid(),
-                                                      EnvelopeId = Guid.NewGuid().ToString().ToUpperInvariant()
-                                                  }
-                                          }
+                                                      EnvelopeId = Guid.NewGuid().ToString().ToUpperInvariant(),
+                                                  },
+                                          },
                               };
 
             var handler = new RetryTrackingCodesInSpecificStatusesMessageHandler();
@@ -103,9 +103,9 @@ namespace Naos.MessageBus.Test
                                               new TrackingCode
                                                   {
                                                       ParcelId = Guid.NewGuid(),
-                                                      EnvelopeId = Guid.NewGuid().ToString().ToUpperInvariant()
-                                                  }
-                                          }
+                                                      EnvelopeId = Guid.NewGuid().ToString().ToUpperInvariant(),
+                                                  },
+                                          },
                               };
 
             var handler = new RetryTrackingCodesInSpecificStatusesMessageHandler();
@@ -136,7 +136,7 @@ namespace Naos.MessageBus.Test
                                   StatusesToRetry = new[] { parcelStatusToRetryOn },
                                   WaitTimeBetweenChecks = TimeSpan.FromSeconds(.01),
                                   TrackingCodes = new[] { trackingCode },
-                                  ThrowIfRetriesExceededWithSpecificStatuses = throwIfRetriesExceededWithSpecificStatuses
+                                  ThrowIfRetriesExceededWithSpecificStatuses = throwIfRetriesExceededWithSpecificStatuses,
                               };
 
             var trackingCalls = new List<string>();
@@ -172,7 +172,7 @@ namespace Naos.MessageBus.Test
                                   StatusesToRetry = new[] { parcelStatusToRetryOn },
                                   WaitTimeBetweenChecks = TimeSpan.FromSeconds(.01),
                                   TrackingCodes = new[] { trackingCode },
-                                  ThrowIfRetriesExceededWithSpecificStatuses = throwIfRetriesExceededWithSpecificStatuses
+                                  ThrowIfRetriesExceededWithSpecificStatuses = throwIfRetriesExceededWithSpecificStatuses,
                               };
 
             var seedData = new[]
@@ -185,9 +185,9 @@ namespace Naos.MessageBus.Test
                                                    {
                                                        ParcelId = trackingCode.ParcelId,
                                                        CurrentTrackingCode = trackingCode,
-                                                       Status = parcelStatusToRetryOn
-                                                   }
-                                           }.ToList())
+                                                       Status = parcelStatusToRetryOn,
+                                                   },
+                                           }.ToList()),
                                };
 
             var trackingCalls = new List<string>();
@@ -221,7 +221,7 @@ namespace Naos.MessageBus.Test
                                   StatusesToRetry = new[] { parcelStatusToRetryOn },
                                   WaitTimeBetweenChecks = TimeSpan.FromSeconds(.01),
                                   TrackingCodes = new[] { trackingCode },
-                                  ThrowIfRetriesExceededWithSpecificStatuses = throwIfRetriesExceededWithSpecificStatuses
+                                  ThrowIfRetriesExceededWithSpecificStatuses = throwIfRetriesExceededWithSpecificStatuses,
                               };
 
             var seedData = new[]
@@ -234,9 +234,9 @@ namespace Naos.MessageBus.Test
                                                    {
                                                        ParcelId = trackingCode.ParcelId,
                                                        CurrentTrackingCode = trackingCode,
-                                                       Status = parcelStatusToRetryOn
-                                                   }
-                                           }.ToList())
+                                                       Status = parcelStatusToRetryOn,
+                                                   },
+                                           }.ToList()),
                                };
 
             var trackingCalls = new List<string>();
@@ -269,14 +269,14 @@ namespace Naos.MessageBus.Test
                 TrackingCodes = new[] { trackingCode },
                 StatusesToRetry = new[] { parcelStatusToRetryOn },
                 NumberOfRetriesToAttempt = 1,
-                ThrowIfRetriesExceededWithSpecificStatuses = true
+                ThrowIfRetriesExceededWithSpecificStatuses = true,
             };
 
             var trackingCalls = new List<string>();
             var seedStatuses = new[]
                                    {
                                        ParcelStatus.InTransit, ParcelStatus.OutForDelivery, parcelStatusToRetryOn, ParcelStatus.InTransit,
-                                       ParcelStatus.OutForDelivery, ParcelStatus.Delivered
+                                       ParcelStatus.OutForDelivery, ParcelStatus.Delivered,
                                    };
             var parcelTracker = Factory.GetRoundRobinStatusImplOfGetTrackingReportAsync(trackingCode, seedStatuses, trackingCalls);
             var trackingParcelsFromSent = new List<Parcel>();
@@ -310,7 +310,7 @@ namespace Naos.MessageBus.Test
                                   StatusesToRetry = new[] { parcelStatusToRetryOn },
                                   WaitTimeBetweenChecks = TimeSpan.FromSeconds(.01),
                                   TrackingCodes = new[] { trackingCode },
-                                  ThrowIfRetriesExceededWithSpecificStatuses = throwIfRetriesExceededWithSpecificStatuses
+                                  ThrowIfRetriesExceededWithSpecificStatuses = throwIfRetriesExceededWithSpecificStatuses,
                               };
 
             var seedData = new[]
@@ -323,9 +323,9 @@ namespace Naos.MessageBus.Test
                                                    {
                                                        ParcelId = trackingCode.ParcelId,
                                                        CurrentTrackingCode = trackingCode,
-                                                       Status = ParcelStatus.Rejected
-                                                   }
-                                           }.ToList())
+                                                       Status = ParcelStatus.Rejected,
+                                                   },
+                                           }.ToList()),
                                };
 
             var trackingCalls = new List<string>();
@@ -358,7 +358,7 @@ namespace Naos.MessageBus.Test
                                   StatusesToRetry = new[] { parcelStatusToRetryOn },
                                   WaitTimeBetweenChecks = TimeSpan.FromSeconds(.01),
                                   TrackingCodes = new TrackingCode[0],
-                                  ThrowIfRetriesExceededWithSpecificStatuses = throwIfRetriesExceededWithSpecificStatuses
+                                  ThrowIfRetriesExceededWithSpecificStatuses = throwIfRetriesExceededWithSpecificStatuses,
                               };
 
             var trackingCalls = new List<string>();

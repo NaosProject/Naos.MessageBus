@@ -1,6 +1,6 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="Shipment.EnactCommand.cs" company="Naos">
-//    Copyright (c) Naos 2017. All Rights Reserved.
+// <copyright file="Shipment.EnactCommand.cs" company="Naos Project">
+//    Copyright (c) Naos Project 2019. All rights reserved.
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
@@ -13,7 +13,7 @@ namespace Naos.MessageBus.Persistence
 
     using Naos.MessageBus.Domain;
 
-    using OBeautifulCode.TypeRepresentation;
+    using OBeautifulCode.Type;
     using OBeautifulCode.Validation.Recipes;
 
     /// <summary>
@@ -37,7 +37,7 @@ namespace Naos.MessageBus.Persistence
                               {
                                   PayloadSerializedString = new PayloadCreated(
                                                     command.Parcel,
-                                                    command.RecurringSchedule).ToJsonPayload()
+                                                    command.RecurringSchedule).ToJsonPayload(),
                               };
 
             this.RecordEvent(createdEvent);
@@ -58,7 +58,7 @@ namespace Naos.MessageBus.Persistence
                                                    {
                                                        PayloadSerializedString = new PayloadEnvelopeResendRequested(
                                                            command.TrackingCode,
-                                                           ParcelStatus.InTransit).ToJsonPayload()
+                                                           ParcelStatus.InTransit).ToJsonPayload(),
                                                    };
 
             this.RecordEvent(envelopeResendRequestedEvent);
@@ -81,7 +81,7 @@ namespace Naos.MessageBus.Persistence
                                                 command.TrackingCode,
                                                 ParcelStatus.InTransit,
                                                 command.Parcel,
-                                                command.Address).ToJsonPayload()
+                                                command.Address).ToJsonPayload(),
                                         };
 
             this.RecordEvent(envelopeSentEvent);
@@ -103,7 +103,7 @@ namespace Naos.MessageBus.Persistence
                                                          PayloadSerializedString = new PayloadEnvelopeDeliveryAttempted(
                                                              command.TrackingCode,
                                                              ParcelStatus.OutForDelivery,
-                                                             command.Recipient).ToJsonPayload()
+                                                             command.Recipient).ToJsonPayload(),
                                                      };
 
             this.RecordEvent(envelopeDeliveryAttemptedEvent);
@@ -126,7 +126,7 @@ namespace Naos.MessageBus.Persistence
                                                            new PayloadEnvelopeDeliveryAborted(
                                                                command.TrackingCode,
                                                                ParcelStatus.Aborted,
-                                                               command.Reason).ToJsonPayload()
+                                                               command.Reason).ToJsonPayload(),
                                                    };
 
             this.RecordEvent(envelopeDeliveryAbortedEvent);
@@ -150,7 +150,7 @@ namespace Naos.MessageBus.Persistence
                                                                 command.TrackingCode,
                                                                 ParcelStatus.Rejected,
                                                                 command.ExceptionMessage,
-                                                                command.ExceptionSerializedAsString).ToJsonPayload()
+                                                                command.ExceptionSerializedAsString).ToJsonPayload(),
                                                     };
 
             this.RecordEvent(envelopeDeliveryRejectedEvent);
@@ -173,7 +173,7 @@ namespace Naos.MessageBus.Persistence
 
             var envelopeDeliveredEvent = new EnvelopeDelivered
                                              {
-                                                 PayloadSerializedString = new PayloadEnvelopeDelivered(command.TrackingCode, ParcelStatus.Delivered).ToJsonPayload()
+                                                 PayloadSerializedString = new PayloadEnvelopeDelivered(command.TrackingCode, ParcelStatus.Delivered).ToJsonPayload(),
                                              };
 
             events.Add(envelopeDeliveredEvent);
@@ -193,7 +193,7 @@ namespace Naos.MessageBus.Persistence
                 var topicBeingAffectedEvent = new TopicBeingAffected
                                                   {
                                                       ParcelId = command.TrackingCode.ParcelId,
-                                                      PayloadSerializedString = new PayloadTopicBeingAffected(command.TrackingCode, message.Topic, deliveredEnvelope).ToJsonPayload()
+                                                      PayloadSerializedString = new PayloadTopicBeingAffected(command.TrackingCode, message.Topic, deliveredEnvelope).ToJsonPayload(),
                                                   };
 
                 events.Add(topicBeingAffectedEvent);
@@ -206,7 +206,7 @@ namespace Naos.MessageBus.Persistence
                 var topicWasAffectedEvent = new TopicWasAffected
                                                 {
                                                     ParcelId = command.TrackingCode.ParcelId,
-                                                    PayloadSerializedString = new PayloadTopicWasAffected(command.TrackingCode, message.Topic, deliveredEnvelope).ToJsonPayload()
+                                                    PayloadSerializedString = new PayloadTopicWasAffected(command.TrackingCode, message.Topic, deliveredEnvelope).ToJsonPayload(),
                                                 };
 
                 events.Add(topicWasAffectedEvent);

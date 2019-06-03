@@ -1,6 +1,6 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="ApplicationPreload.cs" company="Naos">
-//    Copyright (c) Naos 2017. All Rights Reserved.
+// <copyright file="ApplicationPreload.cs" company="Naos Project">
+//    Copyright (c) Naos Project 2019. All rights reserved.
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
@@ -14,9 +14,9 @@ namespace Naos.MessageBus.Hangfire.Harness
     using global::Hangfire.Logging;
 
     using Its.Configuration;
-    using Its.Log.Instrumentation;
 
     using Naos.Logging.Domain;
+    using Naos.Logging.Persistence;
     using Naos.MessageBus.Domain;
     using Naos.MessageBus.Hangfire.Bootstrapper;
 
@@ -54,7 +54,7 @@ namespace Naos.MessageBus.Hangfire.Harness
                 }
                 catch (Exception ex)
                 {
-                    Log.Write(() => new { LogMessage = "Failure in Preload Method", Exception = ex });
+                    Its.Log.Instrumentation.Log.Write(() => new { LogMessage = "Failure in Preload Method", Exception = ex });
                     throw;
                 }
             }

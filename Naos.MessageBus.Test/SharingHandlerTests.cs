@@ -1,6 +1,6 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="SharingHandlerTests.cs" company="Naos">
-//    Copyright (c) Naos 2017. All Rights Reserved.
+// <copyright file="SharingHandlerTests.cs" company="Naos Project">
+//    Copyright (c) Naos Project 2019. All rights reserved.
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
@@ -47,7 +47,7 @@ namespace Naos.MessageBus.Test
             var expected = Some.Dummies<TrackingCode>().ToArray();
             var message = new ShareTrackingCodesMessage
                               {
-                                  TrackingCodesToShare = expected
+                                  TrackingCodesToShare = expected,
                               };
 
             // act
