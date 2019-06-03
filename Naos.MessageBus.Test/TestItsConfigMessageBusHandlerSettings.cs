@@ -17,6 +17,7 @@ namespace Naos.MessageBus.Test
     using Naos.Compression.Domain;
     using Naos.Cron;
     using Naos.MessageBus.Domain;
+    using Naos.Serialization.Domain;
     using Naos.Serialization.Factory;
 
     using OBeautifulCode.Type;
@@ -99,12 +100,13 @@ namespace Naos.MessageBus.Test
         [Fact]
         public static void MakeWaitMessageAndScheduleJson()
         {
-            var serializer = SerializerFactory.Instance.BuildSerializer(Config.ConfigFileSerializationDescription);
+            var serializerFactory = new SerializationDescriptionToSerializerFactory(PostOffice.MessageSerializationDescription, PostOffice.DefaultSerializer);
+            var serializer = serializerFactory.BuildSerializer(PostOffice.MessageSerializationDescription);
             var waitMessage = new WaitMessage { Description = "Test console send", TimeToWait = TimeSpan.FromSeconds(20) };
             var schedule = new IntervalSchedule { Interval = TimeSpan.FromMinutes(5) };
             var envelopeMachine = new EnvelopeMachine(
                 PostOffice.MessageSerializationDescription,
-                SerializerFactory.Instance,
+                serializerFactory,
                 CompressorFactory.Instance,
                 TypeMatchStrategy.NamespaceAndName);
 

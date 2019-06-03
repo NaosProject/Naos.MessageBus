@@ -29,7 +29,7 @@ namespace Naos.MessageBus.Domain
         /// <summary>
         /// Gets the default serializer to use for serializing messages.
         /// </summary>
-        public static ISerializeAndDeserialize DefaultSerializer => new NaosJsonSerializer(typeof(MessageBusJsonConfiguration));
+        public static ISerializeAndDeserialize DefaultSerializer => new NaosJsonSerializer(typeof(MessageBusJsonConfiguration), UnregisteredTypeEncounteredStrategy.Attempt);
 
         // Make this permissive since it's the underlying logic and shouldn't be coupled to whether others are matched in a stricter mode assigned in constructor.
         private static readonly TypeComparer NullChannelAndTopicAffectedMessageTypeComparer = new TypeComparer(TypeMatchStrategy.NamespaceAndName);

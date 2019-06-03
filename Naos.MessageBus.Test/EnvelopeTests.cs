@@ -12,6 +12,7 @@ namespace Naos.MessageBus.Test
 
     using Naos.Compression.Domain;
     using Naos.MessageBus.Domain;
+    using Naos.Serialization.Domain;
     using Naos.Serialization.Factory;
     using Naos.Serialization.Factory.Extensions;
 
@@ -28,7 +29,7 @@ namespace Naos.MessageBus.Test
             var firstDescription = "description1";
             var firstChannel = new SimpleChannel("channel1");
             var message = new NullMessage();
-            var firstMessageDescribed = message.ToDescribedSerialization(PostOffice.MessageSerializationDescription);
+            var firstMessageDescribed = message.ToDescribedSerialization(PostOffice.MessageSerializationDescription, unregisteredTypeEncounteredStrategy: UnregisteredTypeEncounteredStrategy.Attempt);
 
             var first = new Envelope(firstId, firstDescription, firstChannel, firstMessageDescribed);
 
@@ -53,7 +54,8 @@ namespace Naos.MessageBus.Test
             // arrange
             var message = new NullMessage();
             var addressedMessage = message.ToAddressedMessage();
-            var envelopeMachine = new EnvelopeMachine(PostOffice.MessageSerializationDescription, SerializerFactory.Instance, CompressorFactory.Instance, TypeMatchStrategy.NamespaceAndName);
+            var serializerFactory = new SerializationDescriptionToSerializerFactory(PostOffice.MessageSerializationDescription, PostOffice.DefaultSerializer);
+            var envelopeMachine = new EnvelopeMachine(PostOffice.MessageSerializationDescription, serializerFactory, CompressorFactory.Instance, TypeMatchStrategy.NamespaceAndName);
 
             // act
             var envelope = addressedMessage.ToEnvelope(envelopeMachine, A.Dummy<string>());
@@ -70,7 +72,7 @@ namespace Naos.MessageBus.Test
             var firstDescription = "description1";
             var firstChannel = new SimpleChannel("channel1");
             var message = new NullMessage();
-            var firstMessageDescribed = message.ToDescribedSerialization(PostOffice.MessageSerializationDescription);
+            var firstMessageDescribed = message.ToDescribedSerialization(PostOffice.MessageSerializationDescription, unregisteredTypeEncounteredStrategy: UnregisteredTypeEncounteredStrategy.Attempt);
 
             var first = new Envelope(firstId, firstDescription, firstChannel, firstMessageDescribed);
 
@@ -96,7 +98,7 @@ namespace Naos.MessageBus.Test
             var firstDescription = "description1";
             var firstChannel = new SimpleChannel("channel1");
             var message = new NullMessage();
-            var firstMessageDescribed = message.ToDescribedSerialization(PostOffice.MessageSerializationDescription);
+            var firstMessageDescribed = message.ToDescribedSerialization(PostOffice.MessageSerializationDescription, unregisteredTypeEncounteredStrategy: UnregisteredTypeEncounteredStrategy.Attempt);
 
             var first = new Envelope(firstId, firstDescription, firstChannel, firstMessageDescribed);
 
@@ -122,7 +124,7 @@ namespace Naos.MessageBus.Test
             var firstDescription = "description1";
             var firstChannel = new SimpleChannel("channel1");
             var message = new NullMessage();
-            var firstMessageDescribed = message.ToDescribedSerialization(PostOffice.MessageSerializationDescription);
+            var firstMessageDescribed = message.ToDescribedSerialization(PostOffice.MessageSerializationDescription, unregisteredTypeEncounteredStrategy: UnregisteredTypeEncounteredStrategy.Attempt);
 
             var first = new Envelope(firstId, firstDescription, firstChannel, firstMessageDescribed);
 
@@ -148,7 +150,7 @@ namespace Naos.MessageBus.Test
             var firstDescription = "description1";
             var firstChannel = new SimpleChannel("channel1");
             var firstMessage = new NullMessage();
-            var firstMessageDescribed = firstMessage.ToDescribedSerialization(PostOffice.MessageSerializationDescription);
+            var firstMessageDescribed = firstMessage.ToDescribedSerialization(PostOffice.MessageSerializationDescription, unregisteredTypeEncounteredStrategy: UnregisteredTypeEncounteredStrategy.Attempt);
 
             var first = new Envelope(firstId, firstDescription, firstChannel, firstMessageDescribed);
 
@@ -156,7 +158,7 @@ namespace Naos.MessageBus.Test
             var secondDescription = firstDescription;
             var secondChannel = firstChannel;
             var secondMessage = new AbortIfNoDependencyTopicsAffectedMessage();
-            var secondMessageDescribed = secondMessage.ToDescribedSerialization(PostOffice.MessageSerializationDescription);
+            var secondMessageDescribed = secondMessage.ToDescribedSerialization(PostOffice.MessageSerializationDescription, unregisteredTypeEncounteredStrategy: UnregisteredTypeEncounteredStrategy.Attempt);
 
             var second = new Envelope(secondId, secondDescription, secondChannel, secondMessageDescribed);
 
@@ -175,7 +177,7 @@ namespace Naos.MessageBus.Test
             var firstDescription = "description1";
             var firstChannel = new SimpleChannel("channel1");
             var firstMessage = new RecurringHeaderMessage();
-            var firstMessageDescribed = firstMessage.ToDescribedSerialization(PostOffice.MessageSerializationDescription);
+            var firstMessageDescribed = firstMessage.ToDescribedSerialization(PostOffice.MessageSerializationDescription, unregisteredTypeEncounteredStrategy: UnregisteredTypeEncounteredStrategy.Attempt);
 
             var first = new Envelope(firstId, firstDescription, firstChannel, firstMessageDescribed);
 
@@ -183,7 +185,7 @@ namespace Naos.MessageBus.Test
             var secondDescription = firstDescription;
             var secondChannel = firstChannel;
             var secondMessage = new NullMessage();
-            var secondMessageDescribed = secondMessage.ToDescribedSerialization(PostOffice.MessageSerializationDescription);
+            var secondMessageDescribed = secondMessage.ToDescribedSerialization(PostOffice.MessageSerializationDescription, unregisteredTypeEncounteredStrategy: UnregisteredTypeEncounteredStrategy.Attempt);
 
             var second = new Envelope(secondId, secondDescription, secondChannel, secondMessageDescribed);
 

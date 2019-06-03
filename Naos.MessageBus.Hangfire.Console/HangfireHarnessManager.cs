@@ -29,6 +29,7 @@ namespace Naos.MessageBus.Hangfire.Bootstrapper
     using Naos.MessageBus.Domain;
     using Naos.MessageBus.Hangfire.Sender;
     using Naos.MessageBus.Persistence;
+    using Naos.Serialization.Domain;
     using Naos.Serialization.Factory;
     using Naos.Telemetry.Domain;
 
@@ -83,7 +84,7 @@ namespace Naos.MessageBus.Hangfire.Bootstrapper
 
             var diagnosticsTelemetry = new DiagnosticsTelemetry(dateTimeOfSampleInUtc, machineDetails, processDetails, processSiblingAssemblies);
 
-            var serializerFactory = SerializerFactory.Instance;
+            var serializerFactory = new SerializationDescriptionToSerializerFactory(PostOffice.MessageSerializationDescription, PostOffice.DefaultSerializer);
             var compressorFactory = CompressorFactory.Instance;
 
             var logProvider = new HangfireLogProviderToNaosLogWritingAdapter();
@@ -186,7 +187,7 @@ namespace Naos.MessageBus.Hangfire.Bootstrapper
             new { messageBusConnectionConfiguration }.Must().NotBeNull();
             new { parcel }.Must().NotBeNull();
 
-            var serializerFactory = SerializerFactory.Instance;
+            var serializerFactory = new SerializationDescriptionToSerializerFactory(PostOffice.MessageSerializationDescription, PostOffice.DefaultSerializer);
             var compressorFactory = CompressorFactory.Instance;
 
             var envelopeMachine = new EnvelopeMachine(

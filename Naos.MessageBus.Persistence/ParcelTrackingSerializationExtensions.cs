@@ -20,6 +20,7 @@ namespace Naos.MessageBus.Persistence
     public static class ParcelTrackingSerializationExtensions
     {
         private static readonly SerializationDescription ParcelTrackingSerializationDescription = new SerializationDescription(SerializationKind.Json, SerializationFormat.String, typeof(MessageBusJsonConfiguration).ToTypeDescription());
+        private static readonly ISerializerFactory SerializerFactory = new SerializationDescriptionToSerializerFactory(ParcelTrackingSerializationDescription, PostOffice.DefaultSerializer);
 
         /// <summary>
         /// Deserializes the message in an envelope.
@@ -43,7 +44,7 @@ namespace Naos.MessageBus.Persistence
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1720:IdentifiersShouldNotContainTypeNames", MessageId = "string", Justification = "Spelling/name is correct.")]
         public static T FromParcelTrackingSerializedString<T>(this string serializedString)
         {
-            var serializer = SerializerFactory.Instance.BuildSerializer(ParcelTrackingSerializationDescription);
+            var serializer = SerializerFactory.BuildSerializer(ParcelTrackingSerializationDescription);
             return serializer.Deserialize<T>(serializedString);
         }
 
@@ -55,7 +56,7 @@ namespace Naos.MessageBus.Persistence
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1720:IdentifiersShouldNotContainTypeNames", MessageId = "object", Justification = "Spelling/name is correct.")]
         public static string ToParcelTrackingSerializedString(this object objectToSerialize)
         {
-            var serializer = SerializerFactory.Instance.BuildSerializer(ParcelTrackingSerializationDescription);
+            var serializer = SerializerFactory.BuildSerializer(ParcelTrackingSerializationDescription);
             return serializer.SerializeToString(objectToSerialize);
         }
     }

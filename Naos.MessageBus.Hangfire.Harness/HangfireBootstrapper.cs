@@ -25,6 +25,7 @@ namespace Naos.MessageBus.Hangfire.Harness
     using Naos.MessageBus.Domain;
     using Naos.MessageBus.Hangfire.Sender;
     using Naos.MessageBus.Persistence;
+    using Naos.Serialization.Domain;
     using Naos.Serialization.Factory;
     using Naos.Telemetry.Domain;
 
@@ -85,7 +86,8 @@ namespace Naos.MessageBus.Hangfire.Harness
         {
             var activeMessageTracker = new InMemoryActiveMessageTracker();
 
-            var envelopeMachine = new EnvelopeMachine(PostOffice.MessageSerializationDescription, SerializerFactory.Instance, CompressorFactory.Instance, launchConfig.TypeMatchStrategyForMessageResolution);
+            var serializerFactory = new SerializationDescriptionToSerializerFactory(PostOffice.MessageSerializationDescription, PostOffice.DefaultSerializer);
+            var envelopeMachine = new EnvelopeMachine(PostOffice.MessageSerializationDescription, serializerFactory, CompressorFactory.Instance, launchConfig.TypeMatchStrategyForMessageResolution);
 
             var courier = new HangfireCourier(connectionConfig.CourierPersistenceConnectionConfiguration, envelopeMachine);
             var parcelTrackingSystem = new ParcelTrackingSystem(
@@ -103,10 +105,10 @@ namespace Naos.MessageBus.Hangfire.Harness
 
             HandlerToolshed.InitializePostOffice(() => synchronizedPostOffice);
             HandlerToolshed.InitializeParcelTracking(() => parcelTrackingSystem);
-            HandlerToolshed.InitializeSerializerFactory(() => SerializerFactory.Instance);
+            HandlerToolshed.InitializeSerializerFactory(() => serializerFactory);
             HandlerToolshed.InitializeCompressorFactory(() => CompressorFactory.Instance);
 
-            var shareManager = new ShareManager(SerializerFactory.Instance, CompressorFactory.Instance, launchConfig.TypeMatchStrategyForMatchingSharingInterfaces);
+            var shareManager = new ShareManager(serializerFactory, CompressorFactory.Instance, launchConfig.TypeMatchStrategyForMatchingSharingInterfaces);
             this.handlerFactory = string.IsNullOrWhiteSpace(handlerFactoryConfig.HandlerAssemblyPath)
                                       ? new ReflectionHandlerFactory(handlerFactoryConfig.TypeMatchStrategyForMessageResolution)
                                       : new ReflectionHandlerFactory(

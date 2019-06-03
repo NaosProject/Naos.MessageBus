@@ -15,7 +15,7 @@ namespace Naos.MessageBus.Test
     using System.Linq;
 
     using Its.Configuration;
-
+    using Naos.MessageBus.Domain;
     using Naos.Serialization.Domain;
     using Naos.Serialization.Json;
 
@@ -31,12 +31,7 @@ namespace Naos.MessageBus.Test
     [System.CodeDom.Compiler.GeneratedCode("Naos.Recipes", "See package version number")]
     internal static class Config
     {
-        /// <summary>
-        /// <see cref="SerializationDescription" /> used to get the <see cref="IStringDeserialize" /> used for reading config files.
-        /// </summary>
-        public static readonly SerializationDescription ConfigFileSerializationDescription = new SerializationDescription(SerializationKind.Json, SerializationFormat.String);
-
-        private static readonly IStringDeserialize deserializer = JsonSerializerFactory.Instance.BuildSerializer(ConfigFileSerializationDescription, unregisteredTypeEncounteredStrategy: UnregisteredTypeEncounteredStrategy.Attempt);
+        private static readonly IStringDeserialize deserializer = JsonSerializerFactory.Instance.BuildSerializer(PostOffice.MessageSerializationDescription, unregisteredTypeEncounteredStrategy: UnregisteredTypeEncounteredStrategy.Attempt);
 
         /// <summary>
         /// Common precedence used after the environment specific precedence.

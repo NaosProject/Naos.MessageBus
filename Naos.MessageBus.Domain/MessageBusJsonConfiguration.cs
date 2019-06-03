@@ -21,6 +21,9 @@ namespace Naos.MessageBus.Domain
         protected override IReadOnlyCollection<Type> TypesToAutoRegister => new[]
         {
             typeof(IMessage),
+            typeof(IChannel),
+            typeof(TopicBase),
+            typeof(TopicStatusReport),
         };
 
         /// <inheritdoc />

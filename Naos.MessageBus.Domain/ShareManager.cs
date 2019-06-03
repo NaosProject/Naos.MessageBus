@@ -57,7 +57,7 @@ namespace Naos.MessageBus.Domain
             this.serializerFactory = serializerFactory;
             this.compressorFactory = compressorFactory;
 
-            this.serializer = serializerFactory.BuildSerializer(SharedPropertySerializationDescription, this.typeMatchStrategyForMatchingSharingInterfaces, MultipleMatchStrategy.NewestVersion);
+            this.serializer = serializerFactory.BuildSerializer(SharedPropertySerializationDescription, this.typeMatchStrategyForMatchingSharingInterfaces, MultipleMatchStrategy.NewestVersion, UnregisteredTypeEncounteredStrategy.Attempt);
             this.typeComparer = new TypeComparer(this.typeMatchStrategyForMatchingSharingInterfaces);
         }
 
@@ -203,7 +203,8 @@ namespace Naos.MessageBus.Domain
                 this.serializerFactory,
                 this.compressorFactory,
                 this.typeMatchStrategyForMatchingSharingInterfaces,
-                MultipleMatchStrategy.NewestVersion);
+                MultipleMatchStrategy.NewestVersion,
+                UnregisteredTypeEncounteredStrategy.Attempt);
 
             return ret;
         }

@@ -387,7 +387,7 @@ namespace Naos.MessageBus.Test
                                                  {
                                                      new ThrowsExceptionMessage()
                                                          {
-                                                             SerializedExceptionToThrow = exception.ToDescribedSerialization(PostOffice.MessageSerializationDescription),
+                                                             SerializedExceptionToThrow = exception.ToDescribedSerializationUsingSpecificSerializer(PostOffice.MessageSerializationDescription, PostOffice.DefaultSerializer),
                                                          }.ToAddressedMessage(monitoredChannel).ToEnvelope(envelopeMachine),
                                                  },
                              };
@@ -440,7 +440,7 @@ namespace Naos.MessageBus.Test
                                          {
                                              new ThrowsExceptionMessage()
                                                  {
-                                                     SerializedExceptionToThrow = exception.ToDescribedSerialization(PostOffice.MessageSerializationDescription),
+                                                     SerializedExceptionToThrow = exception.ToDescribedSerialization(PostOffice.MessageSerializationDescription, unregisteredTypeEncounteredStrategy: UnregisteredTypeEncounteredStrategy.Attempt),
                                                  }.ToAddressedMessage(
                                                      monitoredChannel).ToEnvelope(envelopeMachine),
                                          },
@@ -494,7 +494,7 @@ namespace Naos.MessageBus.Test
                                                  {
                                                      new ThrowsExceptionMessage()
                                                          {
-                                                             SerializedExceptionToThrow = exception.ToDescribedSerialization(PostOffice.MessageSerializationDescription),
+                                                             SerializedExceptionToThrow = exception.ToDescribedSerializationUsingSpecificSerializer(PostOffice.MessageSerializationDescription, PostOffice.DefaultSerializer),
                                                          }.ToAddressedMessage(monitoredChannel).ToEnvelope(envelopeMachine),
                                                  },
                              };

@@ -15,6 +15,7 @@ namespace Naos.MessageBus.Test
 
     using Naos.Compression.Domain;
     using Naos.MessageBus.Domain;
+    using Naos.Serialization.Domain;
     using Naos.Serialization.Factory;
 
     using OBeautifulCode.Type;
@@ -109,9 +110,10 @@ namespace Naos.MessageBus.Test
 
         public static IStuffAndOpenEnvelopes GetEnvelopeMachine()
         {
+            var serializerFactory = new SerializationDescriptionToSerializerFactory(PostOffice.MessageSerializationDescription, PostOffice.DefaultSerializer);
             return new EnvelopeMachine(
                 PostOffice.MessageSerializationDescription,
-                SerializerFactory.Instance,
+                serializerFactory,
                 CompressorFactory.Instance,
                 TypeMatchStrategy.NamespaceAndName);
         }

@@ -29,7 +29,8 @@ namespace Naos.MessageBus.Core
                 this.SerializerFactory,
                 this.CompressorFactory,
                 TypeMatchStrategy.NamespaceAndName,
-                MultipleMatchStrategy.NewestVersion);
+                MultipleMatchStrategy.NewestVersion,
+                unregisteredTypeEncounteredStrategy: UnregisteredTypeEncounteredStrategy.Attempt);
 
             await Task.Run(() => ExceptionDispatchInfo.Capture(exception).Throw());
         }
