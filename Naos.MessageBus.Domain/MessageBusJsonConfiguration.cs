@@ -24,6 +24,8 @@ namespace Naos.MessageBus.Domain
             typeof(IChannel),
             typeof(TopicBase),
             typeof(TopicStatusReport),
+            typeof(MessageBusConnectionConfiguration),
+            typeof(MessageBusLaunchConfiguration),
         };
 
         /// <inheritdoc />
