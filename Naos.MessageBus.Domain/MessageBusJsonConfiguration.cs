@@ -27,7 +27,7 @@ namespace Naos.MessageBus.Domain
             typeof(MessageBusConnectionConfiguration),
             typeof(MessageBusLaunchConfiguration),
             typeof(HandlerFactoryConfiguration),
-        }.Concat(typeof(IMessage).Assembly.GetExportedTypes().Where(_ => _.IsAssignableTo(typeof(IMessage)))).ToList();
+        }.Concat(typeof(IMessage).Assembly.GetExportedTypes().Where(_ => !_.IsGenericType && _.IsAssignableTo(typeof(IMessage)))).ToList();
 
         /// <inheritdoc />
         public override IReadOnlyCollection<Type> DependentConfigurationTypes => new[]
