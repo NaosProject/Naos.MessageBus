@@ -12,9 +12,8 @@ namespace Naos.MessageBus.Test
 
     using FluentAssertions;
 
-    using Its.Configuration;
-
     using Naos.Compression.Domain;
+    using Naos.Configuration.Domain;
     using Naos.Cron;
     using Naos.MessageBus.Domain;
     using Naos.Serialization.Domain;
@@ -32,12 +31,12 @@ namespace Naos.MessageBus.Test
         public static void ItsConfigGetSettings_HandlerFactoryConfiguration_ComeOutCorrectly()
         {
             // Arrange
-            Config.ResetConfigureSerializationAndSetValues("ExampleDevelopment");
+            Config.SetPrecedence("ExampleDevelopment");
 
             var expectedHandlerFactoryConfig = new HandlerFactoryConfiguration(TypeMatchStrategy.NamespaceAndName, "I:\\am\\an\\optional\\path\\to\\assemblies\\to\\load\\and\\reflect\\on\\in\\Development");
 
             // Act
-            var actualHandlerFactoryConfig = Settings.Get<HandlerFactoryConfiguration>();
+            var actualHandlerFactoryConfig = Config.Get<HandlerFactoryConfiguration>(typeof(MessageBusJsonConfiguration));
 
             // Assert
             actualHandlerFactoryConfig.Should().NotBeNull();
@@ -49,7 +48,7 @@ namespace Naos.MessageBus.Test
         public static void ItsConfigGetSettings_MessageBusConnectionConfiguration_ComeOutCorrectly()
         {
             // Arrange
-            Config.ResetConfigureSerializationAndSetValues("ExampleDevelopment");
+            Config.SetPrecedence("ExampleDevelopment");
 
             var expectedConnectionConfiguration = new MessageBusConnectionConfiguration
             {
@@ -59,7 +58,7 @@ namespace Naos.MessageBus.Test
             };
 
             // Act
-            var actualConnectionConfiguration = Settings.Get<MessageBusConnectionConfiguration>();
+            var actualConnectionConfiguration = Config.Get<MessageBusConnectionConfiguration>(typeof(MessageBusJsonConfiguration));
 
             // Assert
             actualConnectionConfiguration.Should().NotBeNull();
@@ -72,7 +71,7 @@ namespace Naos.MessageBus.Test
         public static void ItsConfigGetSettings_LaunchConfiguration_ComeOutCorrectly()
         {
             // Arrange
-            Config.ResetConfigureSerializationAndSetValues("ExampleDevelopment");
+            Config.SetPrecedence("ExampleDevelopment");
 
             var expectedLaunchConfig = new MessageBusLaunchConfiguration(
                 TimeSpan.FromMinutes(10),
@@ -84,7 +83,7 @@ namespace Naos.MessageBus.Test
                 new[] { new SimpleChannel("messages_development") });
 
             // Act
-            var actualLaunchConfig = Settings.Get<MessageBusLaunchConfiguration>();
+            var actualLaunchConfig = Config.Get<MessageBusLaunchConfiguration>(typeof(MessageBusJsonConfiguration));
 
             // Assert
             actualLaunchConfig.Should().NotBeNull();

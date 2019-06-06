@@ -19,9 +19,9 @@ namespace $rootnamespace$
     using System.Reflection;
     using System.Threading.Tasks;
 
-    using Its.Configuration;
     using Its.Log.Instrumentation;
 
+	using Naos.Configuration.Domain;
     using Naos.MessageBus.Core;
     using Naos.MessageBus.Domain;
 
@@ -95,7 +95,7 @@ namespace $rootnamespace$
 
         private static IHandlerFactory BuildReflectionHandlerFactoryFromSettings()
         {
-            var configuration = Settings.Get<HandlerFactoryConfiguration>();
+            var configuration = Config.Get<HandlerFactoryConfiguration>(typeof(MessageBusJsonConfiguration));
 
             new { configuration }.Must().NotBeNull();
 

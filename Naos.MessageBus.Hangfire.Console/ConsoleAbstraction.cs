@@ -15,11 +15,12 @@ namespace $rootnamespace$
 {
     using CLAP;
 
-    using Its.Configuration;
-
+    using Naos.Configuration.Domain;
     using Naos.Cron;
     using Naos.MessageBus.Domain;
     using Naos.MessageBus.Hangfire.Bootstrapper;
+    using Naos.Serialization.Domain;
+    using Naos.Serialization.Json;
 
     /// <summary>
     /// Abstraction for use with <see cref="CLAP" /> to provide basic command line interaction.
@@ -33,15 +34,17 @@ namespace $rootnamespace$
     public class ConsoleAbstraction : ConsoleAbstractionBase
 
     {
+        private static readonly ISerializeAndDeserialize Serializer = new NaosJsonSerializer(typeof(MessageBusJsonConfiguration));
+
         /// <summary>
         /// Monitor for items in Hangfire.
         /// </summary>
         /// <param name="debug">Optional indication to launch the debugger from inside the application (default is false).</param>
-        /// <param name="environment">Optional value to use when setting the Its.Configuration precedence to use specific settings.</param>
+        /// <param name="environment">Optional value to use when setting the Naos.Configuration precedence to use specific settings.</param>
         [Verb(Aliases = nameof(WellKnownConsoleVerb.Monitor), IsDefault = false, Description = "Runs the Hangfire Harness listening on configured channels until it's triggered to end or fails;\r\n            example usage: [Harness].exe monitor\r\n                           [Harness].exe monitor /debug=true\r\n                           [Harness].exe monitor /environment=ExampleDevelopment\r\n                           [Harness].exe monitor /environment=ExampleDevelopment /debug=true\r\n")]
         public static void Monitor(
             [Aliases("")] [Description("Launches the debugger.")] [DefaultValue(false)] bool debug,
-            [Aliases("")] [Description("Sets the Its.Configuration precedence to use specific settings.")] [DefaultValue(null)] string environment)
+            [Aliases("")] [Description("Sets the Naos.Configuration precedence to use specific settings.")] [DefaultValue(null)] string environment)
         {
             /*---------------------------------------------------------------------------*
              * Any method should run this logic to debug, setup config & logging, etc.   *
@@ -56,8 +59,8 @@ namespace $rootnamespace$
             /*---------------------------------------------------------------------------*
              * Necessary configuration.                                                *
              *---------------------------------------------------------------------------*/
-            var messageBusConnectionConfiguration = Settings.Get<MessageBusConnectionConfiguration>();
-            var messageBusLaunchConfig = Settings.Get<MessageBusLaunchConfiguration>();
+            var messageBusConnectionConfiguration = Config.Get<MessageBusConnectionConfiguration>(typeof(MessageBusJsonConfiguration));
+            var messageBusLaunchConfig = Config.Get<MessageBusLaunchConfiguration>(typeof(MessageBusJsonConfiguration));
 
             /*---------------------------------------------------------------------------*
              * Launch the harness here, it will run until the TimeToLive has expired AND *
@@ -76,13 +79,13 @@ namespace $rootnamespace$
         /// <param name="parcelJson">Parcel to send as JSON.</param>
         /// <param name="scheduleJson">Optional recurring schedule as JSON; default will be a single send and NOT recurring.</param>
         /// <param name="debug">Optional indication to launch the debugger from inside the application (default is false).</param>
-        /// <param name="environment">Optional value to use when setting the Its.Configuration precedence to use specific settings.</param>
+        /// <param name="environment">Optional value to use when setting the Naos.Configuration precedence to use specific settings.</param>
         [Verb(Aliases = nameof(WellKnownConsoleVerb.Send), IsDefault = false, Description = "Runs the Hangfire Harness listening on configured channels until it's triggered to end or fails;\r\n            example usage: [Harness].exe listen\r\n                           [Harness].exe listen /debug=true\r\n                           [Harness].exe listen /environment=ExampleDevelopment\r\n                           [Harness].exe listen /environment=ExampleDevelopment /debug=true\r\n")]
         public static void Send(
             [Aliases("")] [Required] [Description("Parcel to send as JSON.")] string parcelJson,
             [Aliases("")] [Description("Optional recurring schedule as JSON.")] [DefaultValue(null)] string scheduleJson,
             [Aliases("")] [Description("Launches the debugger.")] [DefaultValue(false)] bool debug,
-            [Aliases("")] [Description("Sets the Its.Configuration precedence to use specific settings.")] [DefaultValue(null)] string environment)
+            [Aliases("")] [Description("Sets the Naos.Configuration precedence to use specific settings.")] [DefaultValue(null)] string environment)
         {
             /*---------------------------------------------------------------------------*
              * Any method should run this logic to debug, setup config & logging, etc.   *
@@ -92,10 +95,10 @@ namespace $rootnamespace$
             /*---------------------------------------------------------------------------*
              * Necessary configuration.                                                *
              *---------------------------------------------------------------------------*/
-            var parcel = (Parcel)Settings.Deserialize(typeof(Parcel), parcelJson);
-            var schedule = string.IsNullOrWhiteSpace(scheduleJson) ? null : (ScheduleBase)Settings.Deserialize(typeof(ScheduleBase), scheduleJson);
-            var messageBusConnectionConfiguration = Settings.Get<MessageBusConnectionConfiguration>();
-            var messageBusLaunchConfig = Settings.Get<MessageBusLaunchConfiguration>();
+            var parcel = (Parcel)Serializer.Deserialize(parcelJson, typeof(Parcel));
+            var schedule = string.IsNullOrWhiteSpace(scheduleJson) ? null : (ScheduleBase)Serializer.Deserialize(scheduleJson, typeof(ScheduleBase));
+            var messageBusConnectionConfiguration = Config.Get<MessageBusConnectionConfiguration>(typeof(MessageBusJsonConfiguration));
+            var messageBusLaunchConfig = Config.Get<MessageBusLaunchConfiguration>(typeof(MessageBusJsonConfiguration));
 
             /*---------------------------------------------------------------------------*
              * Send the parcel here.                                                     *

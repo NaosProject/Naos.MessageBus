@@ -13,8 +13,7 @@ namespace Naos.MessageBus.Hangfire.Harness
 
     using global::Hangfire.Logging;
 
-    using Its.Configuration;
-
+    using Naos.Configuration.Domain;
     using Naos.Logging.Domain;
     using Naos.Logging.Persistence;
     using Naos.MessageBus.Domain;
@@ -32,12 +31,10 @@ namespace Naos.MessageBus.Hangfire.Harness
         /// <param name="e">Event arguments.</param>
         protected void Application_Start(object sender, EventArgs e)
         {
-            Config.ConfigureSerialization();
-
-            var logProcessorSettings = Settings.Get<LogWritingSettings>();
-            var handlerFactoryConfig = Settings.Get<HandlerFactoryConfiguration>();
-            var connectionConfig = Settings.Get<MessageBusConnectionConfiguration>();
-            var launchConfig = Settings.Get<MessageBusLaunchConfiguration>();
+            var logProcessorSettings = Config.Get<LogWritingSettings>(typeof(LoggingJsonConfiguration));
+            var handlerFactoryConfig = Config.Get<HandlerFactoryConfiguration>(typeof(MessageBusJsonConfiguration));
+            var connectionConfig = Config.Get<MessageBusConnectionConfiguration>(typeof(MessageBusJsonConfiguration));
+            var launchConfig = Config.Get<MessageBusLaunchConfiguration>(typeof(MessageBusJsonConfiguration));
 
             new { logProcessorSettings }.Must().NotBeNull();
             new { handlerFactoryConfig }.Must().NotBeNull();

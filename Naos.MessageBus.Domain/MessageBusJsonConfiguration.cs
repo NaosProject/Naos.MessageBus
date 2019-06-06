@@ -8,7 +8,6 @@ namespace Naos.MessageBus.Domain
 {
     using System;
     using System.Collections.Generic;
-    using Naos.Cron;
     using Naos.Cron.Serialization.Json;
     using Naos.Serialization.Json;
 
@@ -26,6 +25,7 @@ namespace Naos.MessageBus.Domain
             typeof(TopicStatusReport),
             typeof(MessageBusConnectionConfiguration),
             typeof(MessageBusLaunchConfiguration),
+            typeof(HandlerFactoryConfiguration),
         };
 
         /// <inheritdoc />

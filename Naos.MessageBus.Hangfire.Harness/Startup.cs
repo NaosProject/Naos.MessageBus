@@ -16,8 +16,7 @@ namespace Naos.MessageBus.Hangfire.Harness
     using global::Hangfire.Logging;
     using global::Hangfire.SqlServer;
 
-    using Its.Configuration;
-
+    using Naos.Configuration.Domain;
     using Naos.Logging.Domain;
     using Naos.Logging.Persistence;
     using Naos.MessageBus.Domain;
@@ -39,10 +38,8 @@ namespace Naos.MessageBus.Hangfire.Harness
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Performance", "CA1822:MarkMembersAsStatic", Justification = "Non-static is the contract..")]
         public void Configuration(IAppBuilder app)
         {
-            Config.ConfigureSerialization();
-
-            var logProcessorSettings = Settings.Get<LogWritingSettings>();
-            var connectionConfig = Settings.Get<MessageBusConnectionConfiguration>();
+            var logProcessorSettings = Config.Get<LogWritingSettings>(typeof(LoggingJsonConfiguration));
+            var connectionConfig = Config.Get<MessageBusConnectionConfiguration>(typeof(MessageBusJsonConfiguration));
 
             new { logProcessorSettings }.Must().NotBeNull();
             new { connectionConfig }.Must().NotBeNull();
