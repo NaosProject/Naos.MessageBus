@@ -8,8 +8,10 @@ namespace Naos.MessageBus.Domain
 {
     using System;
     using System.Collections.Generic;
+    using System.Linq;
     using Naos.Cron.Serialization.Json;
     using Naos.Serialization.Json;
+    using OBeautifulCode.Reflection.Recipes;
 
     /// <summary>
     /// Implementation for the <see cref="Cron" /> domain.
@@ -19,14 +21,13 @@ namespace Naos.MessageBus.Domain
         /// <inheritdoc />
         protected override IReadOnlyCollection<Type> TypesToAutoRegister => new[]
         {
-            typeof(IMessage),
             typeof(IChannel),
             typeof(TopicBase),
             typeof(TopicStatusReport),
             typeof(MessageBusConnectionConfiguration),
             typeof(MessageBusLaunchConfiguration),
             typeof(HandlerFactoryConfiguration),
-        };
+        }.Concat(typeof(IMessage).Assembly.GetExportedTypes().Where(_ => _.IsAssignableTo(typeof(IMessage)))).ToList();
 
         /// <inheritdoc />
         public override IReadOnlyCollection<Type> DependentConfigurationTypes => new[]

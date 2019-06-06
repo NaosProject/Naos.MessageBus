@@ -85,7 +85,14 @@
     <Compile Include=".recipes\OBeautifulCode.Collection\EnumerableEqualityComparer.cs" />
     <Compile Include=".recipes\OBeautifulCode.Collection\EnumerableEqualityComparerStrategy.cs" />
     <Compile Include=".recipes\OBeautifulCode.Collection\EnumerableExtensions.cs" />
+    <Compile Include=".recipes\OBeautifulCode.Enum\EnumExtensions.cs" />
     <Compile Include=".recipes\OBeautifulCode.Math\HashCodeHelper.cs" />
+    <Compile Include=".recipes\OBeautifulCode.Reflection\ReflectionHelper.Attribute.cs" />
+    <Compile Include=".recipes\OBeautifulCode.Reflection\ReflectionHelper.cs" />
+    <Compile Include=".recipes\OBeautifulCode.Reflection\ReflectionHelper.Enum.cs" />
+    <Compile Include=".recipes\OBeautifulCode.Reflection\ReflectionHelper.Field.cs" />
+    <Compile Include=".recipes\OBeautifulCode.Reflection\ReflectionHelper.Property.cs" />
+    <Compile Include=".recipes\OBeautifulCode.Reflection\TypeHelper.cs" />
     <Compile Include=".recipes\OBeautifulCode.String\StringExtensions.cs" />
     <Compile Include=".recipes\OBeautifulCode.Validation\ApplyBecause.cs" />
     <Compile Include=".recipes\OBeautifulCode.Validation\DictionaryExtensions.cs" />

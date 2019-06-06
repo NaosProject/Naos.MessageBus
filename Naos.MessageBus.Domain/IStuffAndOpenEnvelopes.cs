@@ -121,7 +121,8 @@ namespace Naos.MessageBus.Domain
                 this.serializerFactory,
                 this.compressorFactory,
                 this.typeMatchStrategyForMessageResolution,
-                MultipleMatchStrategy.NewestVersion);
+                MultipleMatchStrategy.NewestVersion,
+                UnregisteredTypeEncounteredStrategy.Attempt);
 
             var ret = new Envelope(localId, addressedMessage.Message.Description, addressedMessage.Address, serializedMessage);
 
