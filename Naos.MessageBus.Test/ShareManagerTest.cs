@@ -32,7 +32,7 @@ namespace Naos.MessageBus.Test
             var testHandler = new ShareArrayOfIntHandler { IntArray = new[] { 1, 2, 3 } };
             var testMessage = new ShareArrayOfIntMessage();
 
-            var sharedProperties = shareManager.GetSharedInterfaceStates(testHandler);
+            var sharedProperties = shareManager.GetSharedInterfaceStates(testHandler, PostOffice.MessageSerializationDescription.ConfigurationTypeDescription);
             shareManager.ApplySharedInterfaceState(sharedProperties.Single(), testMessage);
 
             Assert.Equal(testHandler.IntArray, testMessage.IntArray);
@@ -45,7 +45,7 @@ namespace Naos.MessageBus.Test
             var testHandler = new TestComplexShareHandler { ComplexShareObject = new ComplexShareObject("we did it!"), OtherProp = "monkey" };
             var testMessage = new TestComplexShareMessage();
 
-            var sharedProperties = shareManager.GetSharedInterfaceStates(testHandler);
+            var sharedProperties = shareManager.GetSharedInterfaceStates(testHandler, PostOffice.MessageSerializationDescription.ConfigurationTypeDescription);
             shareManager.ApplySharedInterfaceState(sharedProperties.Single(), testMessage);
 
             Assert.Equal(testHandler.ComplexShareObject.Prop, testMessage.ComplexShareObject.Prop);
@@ -59,7 +59,7 @@ namespace Naos.MessageBus.Test
             var testHandler = new CopyFileHandler() { FilePath = "This should be set on the message" };
             var testMessage = new DeleteFileMessage();
 
-            var sharedProperties = shareManager.GetSharedInterfaceStates(testHandler);
+            var sharedProperties = shareManager.GetSharedInterfaceStates(testHandler, PostOffice.MessageSerializationDescription.ConfigurationTypeDescription);
             shareManager.ApplySharedInterfaceState(sharedProperties.Single(), testMessage);
 
             Assert.Equal(testHandler.FilePath, testMessage.FilePath);
@@ -72,7 +72,7 @@ namespace Naos.MessageBus.Test
             var testHandler = new CountHandler() { Count = 15 };
             var testMessage = new CountMessage();
 
-            var sharedProperties = shareManager.GetSharedInterfaceStates(testHandler);
+            var sharedProperties = shareManager.GetSharedInterfaceStates(testHandler, PostOffice.MessageSerializationDescription.ConfigurationTypeDescription);
             shareManager.ApplySharedInterfaceState(sharedProperties.Single(), testMessage);
 
             Assert.Equal(testHandler.Count, testMessage.Count);
@@ -85,7 +85,7 @@ namespace Naos.MessageBus.Test
             var testHandler = new FirstEnumHandler() { EnumValueToShare = MyEnum.OtherOtherValue };
             var testMessage = new SecondEnumMessage();
 
-            var sharedProperties = shareManager.GetSharedInterfaceStates(testHandler);
+            var sharedProperties = shareManager.GetSharedInterfaceStates(testHandler, PostOffice.MessageSerializationDescription.ConfigurationTypeDescription);
             shareManager.ApplySharedInterfaceState(sharedProperties.Single(), testMessage);
 
             Assert.Equal(testHandler.EnumValueToShare, testMessage.EnumValueToShare);
@@ -96,7 +96,7 @@ namespace Naos.MessageBus.Test
         {
             // Arrange
             var shareManager = new ShareManager(SerializerFactory.Instance, CompressorFactory.Instance, TypeMatchStrategy.NamespaceAndName);
-            Action testCode = () => shareManager.GetSharedInterfaceStates(null);
+            Action testCode = () => shareManager.GetSharedInterfaceStates(null, PostOffice.MessageSerializationDescription.ConfigurationTypeDescription);
 
             // Act & Assert
             testCode.ShouldThrow<SharePropertyException>().WithMessage("objectToShareFrom can not be null");

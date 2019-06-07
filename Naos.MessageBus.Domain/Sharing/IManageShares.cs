@@ -6,7 +6,9 @@
 
 namespace Naos.MessageBus.Domain
 {
+    using System;
     using System.Collections.Generic;
+    using OBeautifulCode.Type;
 
     /// <summary>
     /// Interface for managing property sharing with <see cref="IShare" /> interface.
@@ -14,11 +16,12 @@ namespace Naos.MessageBus.Domain
     public interface IManageShares
     {
         /// <summary>
-        /// Get the properites from any <see cref="IShare" /> interfaces from the provided object.
+        /// Get the properties from any <see cref="IShare" /> interfaces from the provided object.
         /// </summary>
         /// <param name="objectToShareFrom">Object to extracted shared properties from.</param>
+        /// <param name="jsonConfigurationTypeDescription">Configuration type description to use for serialization.</param>
         /// <returns>Collection of <see cref="SharedInterfaceState" />.</returns>
-        IReadOnlyCollection<SharedInterfaceState> GetSharedInterfaceStates(IShare objectToShareFrom);
+        IReadOnlyCollection<SharedInterfaceState> GetSharedInterfaceStates(IShare objectToShareFrom, TypeDescription jsonConfigurationTypeDescription);
 
         /// <summary>
         /// Apply shared properties values to an <see cref="IShare" /> object.

@@ -118,12 +118,24 @@ namespace Naos.MessageBus.Domain
         }
 
         /// <inheritdoc cref="IManageShares" />
-        public IReadOnlyCollection<SharedInterfaceState> GetSharedInterfaceStates(IShare objectToShareFrom)
+        public IReadOnlyCollection<SharedInterfaceState> GetSharedInterfaceStates(IShare objectToShareFrom, TypeDescription jsonConfigurationTypeDescription)
         {
             if (objectToShareFrom == null)
             {
                 throw new SharePropertyException(Invariant($"{nameof(objectToShareFrom)} can not be null"));
             }
+
+            if (jsonConfigurationTypeDescription == null)
+            {
+                throw new ArgumentNullException(nameof(jsonConfigurationTypeDescription));
+            }
+
+            var serializationDescription = new SerializationDescription(
+                SharedPropertySerializationDescription.SerializationKind,
+                SharedPropertySerializationDescription.SerializationFormat,
+                jsonConfigurationTypeDescription,
+                SharedPropertySerializationDescription.CompressionKind,
+                SharedPropertySerializationDescription.Metadata);
 
             var ret = new List<SharedInterfaceState>();
 
@@ -148,7 +160,7 @@ namespace Naos.MessageBus.Domain
 
                     var payloadTypeDescription = (propertyValue?.GetType() ?? prop.PropertyType).ToTypeDescription();
                     var propertyValueSerialized = this.serializer.SerializeToString(propertyValue);
-                    var valueAsDescribedSerialization = new DescribedSerialization(payloadTypeDescription, propertyValueSerialized, SharedPropertySerializationDescription);
+                    var valueAsDescribedSerialization = new DescribedSerialization(payloadTypeDescription, propertyValueSerialized, serializationDescription);
                     var propertyEntry = new SharedProperty(propertyName, valueAsDescribedSerialization);
 
                     entry.Properties.Add(propertyEntry);

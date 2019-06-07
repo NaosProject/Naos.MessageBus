@@ -106,13 +106,13 @@ namespace Naos.MessageBus.Domain
             var localId = id ?? Guid.NewGuid().ToString().ToUpperInvariant();
 
             var localSerializationDescription = this.messageSerializationDescription;
-            if (addressedMessage.JsonConfigurationType != null)
+            if (addressedMessage.JsonConfigurationTypeDescription != null)
             {
                 // override configuration type
                 localSerializationDescription = new SerializationDescription(
                     localSerializationDescription.SerializationKind,
                     localSerializationDescription.SerializationFormat,
-                    addressedMessage.JsonConfigurationType,
+                    addressedMessage.JsonConfigurationTypeDescription,
                     localSerializationDescription.CompressionKind,
                     localSerializationDescription.Metadata);
             }

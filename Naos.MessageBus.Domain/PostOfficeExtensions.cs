@@ -30,7 +30,7 @@ namespace Naos.MessageBus.Domain
             {
                 Address = channel ?? new NullChannel(),
                 Message = message,
-                JsonConfigurationType = jsonConfigurationType,
+                JsonConfigurationTypeDescription = jsonConfigurationType,
             };
         }
 

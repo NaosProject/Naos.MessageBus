@@ -17,6 +17,7 @@ namespace Naos.MessageBus.Core
     using Naos.MessageBus.Domain;
     using Naos.MessageBus.Domain.Exceptions;
     using Naos.Recipes.RunWithRetry;
+    using Naos.Serialization.Domain;
     using Naos.Telemetry.Domain;
 
     using OBeautifulCode.Type;
@@ -140,7 +141,7 @@ namespace Naos.MessageBus.Core
                 //        parcel id and then resend but we will not update any status because the new send with the new id will take care of that
                 Log.Write("Encountered recurring envelope: " + recurringParcelEncounteredException.Message);
                 var remainingEnvelopes = parcel.Envelopes.Skip(1).ToList();
-                this.SendRemainingEnvelopes(Guid.NewGuid(), trackingCode, remainingEnvelopes, parcel.SharedInterfaceStates);
+                this.SendRemainingEnvelopes(Guid.NewGuid(), trackingCode, remainingEnvelopes, parcel.SharedInterfaceStates, PostOffice.MessageSerializationDescription.ConfigurationTypeDescription);
             }
             catch (AbortParcelDeliveryException abortParcelDeliveryException)
             {
@@ -174,6 +175,7 @@ namespace Naos.MessageBus.Core
             var firstAddressedMessage = this.DeserializeEnvelopeIntoAddressedMessage(trackingCode, firstEnvelope);
 
             var messageToHandle = firstAddressedMessage.Message;
+            var messageToHandleJsonConfigurationTypeDescription = firstAddressedMessage.JsonConfigurationTypeDescription ?? PostOffice.MessageSerializationDescription.ConfigurationTypeDescription;
 
             // WARNING: this method change the state of the objects passed in!!!
             this.PrepareMessage(trackingCode, messageToHandle, parcel.SharedInterfaceStates);
@@ -213,11 +215,17 @@ namespace Naos.MessageBus.Core
 
             if (remainingEnvelopes.Any())
             {
-                this.SendRemainingEnvelopes(trackingCode.ParcelId, trackingCode, remainingEnvelopes, parcel.SharedInterfaceStates, handler);
+                this.SendRemainingEnvelopes(
+                    trackingCode.ParcelId,
+                    trackingCode,
+                    remainingEnvelopes,
+                    parcel.SharedInterfaceStates,
+                    messageToHandleJsonConfigurationTypeDescription,
+                    handler);
             }
         }
 
-        private void SendRemainingEnvelopes(Guid parcelId, TrackingCode trackingCodeYieldingEnvelopes, List<Envelope> envelopes, IList<SharedInterfaceState> existingSharedInterfaceStates, object handler = null)
+        private void SendRemainingEnvelopes(Guid parcelId, TrackingCode trackingCodeYieldingEnvelopes, List<Envelope> envelopes, IList<SharedInterfaceState> existingSharedInterfaceStates, TypeDescription messageToHandleJsonConfigurationTypeDescription, object handler = null)
         {
             using (var activity = Log.Enter(() => new { TrackingCode = trackingCodeYieldingEnvelopes, RemainingEnvelopes = envelopes }))
             {
@@ -234,7 +242,7 @@ namespace Naos.MessageBus.Core
                     if (handler is IShare handlerAsShare)
                     {
                         activity.Trace(() => "Handler is IShare, loading shared properties into parcel for future messages.");
-                        var newShareSets = this.shareManager.GetSharedInterfaceStates(handlerAsShare);
+                        var newShareSets = this.shareManager.GetSharedInterfaceStates(handlerAsShare, messageToHandleJsonConfigurationTypeDescription);
                         shareSets.AddRange(newShareSets);
                     }
 
@@ -372,7 +380,12 @@ namespace Naos.MessageBus.Core
 
             var message = envelope.Open(this.envelopeMachine);
 
-            var ret = new AddressedMessage { Message = message, Address = envelope.Address };
+            var ret = new AddressedMessage
+            {
+                Message = message,
+                Address = envelope.Address,
+                JsonConfigurationTypeDescription = envelope.SerializedMessage.SerializationDescription.ConfigurationTypeDescription,
+            };
 
             if (ret.Message == null)
             {
