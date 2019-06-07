@@ -92,7 +92,8 @@ namespace Naos.MessageBus.Domain
                 this.serializerFactory,
                 this.compressorFactory,
                 this.typeMatchStrategyForMessageResolution,
-                MultipleMatchStrategy.NewestVersion);
+                MultipleMatchStrategy.NewestVersion,
+                UnregisteredTypeEncounteredStrategy.Attempt);
 
             return ret;
         }
