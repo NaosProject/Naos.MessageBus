@@ -27,6 +27,7 @@ namespace Naos.MessageBus.Domain
             typeof(MessageBusConnectionConfiguration),
             typeof(MessageBusLaunchConfiguration),
             typeof(HandlerFactoryConfiguration),
+            typeof(UnitOfWorkResult),
         }.Concat(typeof(IMessage).Assembly.GetExportedTypes().Where(_ => !_.IsGenericType && _.IsAssignableTo(typeof(IMessage)))).ToList();
 
         /// <inheritdoc />

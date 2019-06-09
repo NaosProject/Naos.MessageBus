@@ -191,6 +191,7 @@
     <Compile Include="MappedTypeHandlerFactoryTest.cs" />
     <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="SendParcelMessageHandlerTest.cs" />
+    <Compile Include="UnitOfWorkTests.cs" />
     <Compile Include="WaitForTrackingCodesMessageHandlerTests.cs" />
     <Compile Include="RetryTrackingCodesInSpecificStatusesMessageHandlerTests.cs" />
     <Compile Include="FetchAndShareLatestTopicStatusReportsMessageHandlerTests.cs" />
