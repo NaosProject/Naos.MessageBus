@@ -45,13 +45,15 @@ namespace OBeautifulCode.Equality.Recipes
             {
                 result = comparer;
             }
-            else if (type.IsClosedSystemDictionaryType())
+            else if (type.IsSystemDictionaryType())
             {
+                var genericArguments = type.GetGenericArguments();
+
                 // IDictionary is the only System dictionary type that doesn't implement IReadOnlyDictionary
                 // which is why we have to special-case it here.
                 var equalityComparerConstructorInfo = type.GetGenericTypeDefinition() == typeof(IDictionary<,>)
-                    ? typeof(DictionaryEqualityComparer<,>).MakeGenericType(type.GenericTypeArguments).GetConstructor(new Type[0])
-                    : typeof(ReadOnlyDictionaryEqualityComparer<,>).MakeGenericType(type.GenericTypeArguments).GetConstructor(new Type[0]);
+                    ? typeof(DictionaryEqualityComparer<,>).MakeGenericType(genericArguments).GetConstructor(new Type[0])
+                    : typeof(ReadOnlyDictionaryEqualityComparer<,>).MakeGenericType(genericArguments).GetConstructor(new Type[0]);
 
                 // ReSharper disable once PossibleNullReferenceException
                 result = (IEqualityComparer<T>)equalityComparerConstructorInfo.Invoke(null);
@@ -63,11 +65,13 @@ namespace OBeautifulCode.Equality.Recipes
                 // ReSharper disable once PossibleNullReferenceException
                 result = (IEqualityComparer<T>)constructorInfo.Invoke(new object[] { EnumerableEqualityComparerStrategy.SequenceEqual });
             }
-            else if (type.IsClosedSystemCollectionType())
+            else if (type.IsSystemCollectionType())
             {
-                var constructorInfo = typeof(EnumerableEqualityComparer<>).MakeGenericType(type.GenericTypeArguments).GetConstructor(new[] { typeof(EnumerableEqualityComparerStrategy) });
+                var genericArguments = type.GetGenericArguments();
 
-                var enumerableEqualityComparerStrategy = type.IsClosedSystemOrderedCollectionType() ? EnumerableEqualityComparerStrategy.SequenceEqual : EnumerableEqualityComparerStrategy.UnorderedEqual;
+                var constructorInfo = typeof(EnumerableEqualityComparer<>).MakeGenericType(genericArguments[0]).GetConstructor(new[] { typeof(EnumerableEqualityComparerStrategy) });
+
+                var enumerableEqualityComparerStrategy = type.IsSystemOrderedCollectionType() ? EnumerableEqualityComparerStrategy.SequenceEqual : EnumerableEqualityComparerStrategy.UnorderedEqual;
 
                 // ReSharper disable once PossibleNullReferenceException
                 result = (IEqualityComparer<T>)constructorInfo.Invoke(new object[] { enumerableEqualityComparerStrategy });

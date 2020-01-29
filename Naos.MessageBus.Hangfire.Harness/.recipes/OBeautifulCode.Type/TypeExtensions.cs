@@ -27,17 +27,6 @@ namespace OBeautifulCode.Type.Recipes
     /// <summary>
     /// Extension methods on type <see cref="Type"/>.
     /// </summary>
-    /// <remarks>
-    /// These resources helped:
-    /// <a href="https://stackoverflow.com/questions/13012733/difference-between-type-isgenerictypedefinition-and-type-containsgenericparamete" />.
-    /// <a href="https://stackoverflow.com/questions/2173107/what-exactly-is-an-open-generic-type-in-net" />.
-    /// <a href="https://stackoverflow.com/questions/1735035/generics-open-and-closed-constructed-types" />.
-    /// <a href="https://stackoverflow.com/questions/25811514/detect-if-a-generic-type-is-open" />.
-    /// <a href="https://docs.microsoft.com/en-us/dotnet/api/system.type.isgenerictype" />.
-    /// <a href="https://stackoverflow.com/questions/31772922/difference-between-isgenerictype-and-isgenerictypedefinition" />.
-    /// <a href="https://stackoverflow.com/questions/59144791/if-type-isgenericparameter-true-will-type-containsgenericparameters-true?noredirect=1#comment104515860_59144791" />.
-    /// <a href="https://stackoverflow.com/questions/59141721/why-is-the-basetype-of-a-generic-type-definition-not-itself-a-generic-type-defin?noredirect=1#comment104515814_59141721" />.
-    /// </remarks>
 #if !OBeautifulCodeTypeRecipesProject
     [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
     [System.CodeDom.Compiler.GeneratedCode("OBeautifulCode.Type.Recipes", "See package version number")]
@@ -47,27 +36,7 @@ namespace OBeautifulCode.Type.Recipes
 #endif
     static class TypeExtensions
     {
-        private static readonly Type ObjectType = typeof(object);
-
-        private static readonly Type EnumerableInterfaceType = typeof(IEnumerable);
-
-        private static readonly Type DictionaryInterfaceType = typeof(IDictionary);
-
-        private static readonly Type EnumerableInterfaceGenericTypeDefinition = typeof(IEnumerable<>);
-
-        private static readonly Type DictionaryInterfaceGenericTypeDefinition = typeof(IDictionary<,>);
-
-        private static readonly Type ReadOnlyDictionaryInterfaceGenericTypeDefinition = typeof(IReadOnlyDictionary<,>);
-
-        private static readonly Type ComparableInterfaceType = typeof(IComparable);
-
-        private static readonly Type ComparableInterfaceGenericTypeDefinition = typeof(IComparable<>);
-
-        private static readonly Regex GenericBracketsRegex = new Regex("<.*>", RegexOptions.Compiled);
-
-        private static readonly CodeDomProvider CodeDomProvider = CodeDomProvider.CreateProvider("CSharp");
-
-        private static readonly HashSet<Type> SystemCollectionGenericTypeDefinitions =
+        private static readonly HashSet<Type> CollectionTypes =
             new HashSet<Type>(new[]
             {
                 typeof(Collection<>),
@@ -79,7 +48,7 @@ namespace OBeautifulCode.Type.Recipes
                 typeof(IReadOnlyList<>),
             });
 
-        private static readonly HashSet<Type> SystemOrderedCollectionGenericTypeDefinitions =
+        private static readonly HashSet<Type> OrderedCollectionTypes =
             new HashSet<Type>(new[]
             {
                 typeof(Collection<>),
@@ -89,14 +58,14 @@ namespace OBeautifulCode.Type.Recipes
                 typeof(IReadOnlyList<>),
             });
 
-        private static readonly HashSet<Type> SystemUnorderedCollectionGenericTypeDefinitions =
+        private static readonly HashSet<Type> UnorderedCollectionTypes =
             new HashSet<Type>(new[]
             {
                 typeof(ICollection<>),
                 typeof(IReadOnlyCollection<>),
             });
 
-        private static readonly HashSet<Type> SystemDictionaryGenericTypeDefinitions =
+        private static readonly HashSet<Type> DictionaryTypes =
             new HashSet<Type>(new[]
             {
                 typeof(Dictionary<,>),
@@ -106,37 +75,56 @@ namespace OBeautifulCode.Type.Recipes
                 typeof(ConcurrentDictionary<,>),
             });
 
-        private static readonly IReadOnlyDictionary<Type, string> ValueTypeToAliasMap =
-            new Dictionary<Type, string>
-            {
-                { typeof(byte), "byte" },
-                { typeof(sbyte), "sbyte" },
-                { typeof(short), "short" },
-                { typeof(ushort), "ushort" },
-                { typeof(int), "int" },
-                { typeof(uint), "uint" },
-                { typeof(long), "long" },
-                { typeof(ulong), "ulong" },
-                { typeof(float), "float" },
-                { typeof(double), "double" },
-                { typeof(decimal), "decimal" },
-                { typeof(object), "object" },
-                { typeof(bool), "bool" },
-                { typeof(char), "char" },
-                { typeof(string), "string" },
-                { typeof(void), "void" },
-            };
+        private static readonly Type ComparableType = typeof(IComparable);
+
+        private static readonly Type UnboundGenericComparableType = typeof(IComparable<>);
+
+        private static readonly Regex GenericBracketsRegex = new Regex("<.*>", RegexOptions.Compiled);
+
+        private static readonly CodeDomProvider CodeDomProvider = CodeDomProvider.CreateProvider("CSharp");
+
+        private static readonly Dictionary<Type, string> Aliases = new Dictionary<Type, string>
+        {
+            { typeof(byte), "byte" },
+            { typeof(sbyte), "sbyte" },
+            { typeof(short), "short" },
+            { typeof(ushort), "ushort" },
+            { typeof(int), "int" },
+            { typeof(uint), "uint" },
+            { typeof(long), "long" },
+            { typeof(ulong), "ulong" },
+            { typeof(float), "float" },
+            { typeof(double), "double" },
+            { typeof(decimal), "decimal" },
+            { typeof(object), "object" },
+            { typeof(bool), "bool" },
+            { typeof(char), "char" },
+            { typeof(string), "string" },
+            { typeof(void), "void" },
+        };
+
+        private static readonly Type ObjectType = typeof(object);
+
+        private static readonly Type EnumerableType = typeof(IEnumerable);
+
+        private static readonly Type DictionaryType = typeof(IDictionary);
+
+        private static readonly Type UnboundGenericEnumerableType = typeof(IEnumerable<>);
+
+        private static readonly Type UnboundGenericDictionaryType = typeof(IDictionary<,>);
+
+        private static readonly Type UnboundGenericReadOnlyDictionaryType = typeof(IReadOnlyDictionary<,>);
 
         /// <summary>
-        /// Gets the type of the elements of a specified closed Enumerable type.
+        /// Gets the type of the elements of a specified enumerable type.
         /// </summary>
-        /// <param name="type">The closed Enumerable type.</param>
+        /// <param name="type">The enumerable type.</param>
         /// <returns>
-        /// The type of the elements of the specified closed Enumerable type.
+        /// The type of the elements of the specified enumerable type.
         /// </returns>
         /// <exception cref="ArgumentNullException"><paramref name="type"/> is null.</exception>
-        /// <exception cref="ArgumentException"><paramref name="type"/> is not a closed Enumerable type.</exception>
-        public static Type GetClosedEnumerableElementType(
+        /// <exception cref="ArgumentException"><paramref name="type"/> is not assignable to <see cref="EnumerableType"/>.</exception>
+        public static Type GetEnumerableElementType(
             this Type type)
         {
             if (type == null)
@@ -144,89 +132,26 @@ namespace OBeautifulCode.Type.Recipes
                 throw new ArgumentNullException(nameof(type));
             }
 
-            if (type.ContainsGenericParameters || (!EnumerableInterfaceType.IsAssignableFrom(type)))
+            if (!type.IsAssignableTo(EnumerableType))
             {
-                throw new ArgumentException(Invariant($"Specified type is not a closed Enumerable type: {type.Name}."));
+                throw new ArgumentException(Invariant($"Specified type is not assignable to IEnumerable: {type.Name}."));
             }
 
-            Type result;
-            if (type.IsArray)
-            {
-                // type is array, shortcut
-                result = type.GetElementType();
-            }
-            else if (type.IsGenericType && (type.GetGenericTypeDefinition() == EnumerableInterfaceGenericTypeDefinition))
-            {
-                // type is IEnumerable<T>
-                result = type.GenericTypeArguments[0];
-            }
-            else
-            {
-                // type implements IEnumerable<T> or inherits it
-                // note that we are grabbing the first implementation
-                // it is possible, but highly unlikely, for a type to have multiple implementations of IEnumerable<T>
-                result = type
-                    .GetInterfaces()
-                    .Where(_ => _.IsGenericType && (_.GetGenericTypeDefinition() == EnumerableInterfaceGenericTypeDefinition))
-                    .Select(_ => _.GenericTypeArguments[0])
-                    .FirstOrDefault();
-
-                if (result == null)
-                {
-                    // we don't have to check BaseType, because you cannot derive from an array
-                    // and all of the inherited interfaces are returned by GetInterfaces()
-                    // at this point we know that this type is an IEnumerable
-                    result = ObjectType;
-                }
-            }
+            var result = type.GetEnumerableElementTypeInternal();
 
             return result;
         }
 
         /// <summary>
-        /// Gets the type of the keys of a specified closed Dictionary type.
+        /// Gets the type of the values of a specified dictionary type.
         /// </summary>
-        /// <param name="type">The closed Dictionary type.</param>
+        /// <param name="type">The dictionary type.</param>
         /// <returns>
-        /// The type of the keys of the specified closed Dictionary type.
+        /// The type of the values of the specified dictionary type.
         /// </returns>
         /// <exception cref="ArgumentNullException"><paramref name="type"/> is null.</exception>
-        /// <exception cref="ArgumentException"><paramref name="type"/> is not a closed Dictionary type.</exception>
-        public static Type GetClosedDictionaryKeyType(
-            this Type type)
-        {
-            var result = type.GetClosedDictionaryKeyOrValueTypeInternal(genericTypeArgumentIndex: 0);
-
-            return result;
-        }
-
-        /// <summary>
-        /// Gets the type of the values of a specified closed Dictionary type.
-        /// </summary>
-        /// <param name="type">The closed Dictionary type.</param>
-        /// <returns>
-        /// The type of the values of the specified closed Dictionary type.
-        /// </returns>
-        /// <exception cref="ArgumentNullException"><paramref name="type"/> is null.</exception>
-        /// <exception cref="ArgumentException"><paramref name="type"/> is not a closed Dictionary type.</exception>
-        public static Type GetClosedDictionaryValueType(
-            this Type type)
-        {
-            var result = type.GetClosedDictionaryKeyOrValueTypeInternal(genericTypeArgumentIndex: 1);
-
-            return result;
-        }
-
-        /// <summary>
-        /// Gets the type of the elements of the specified closed <see cref="System"/> Collection type.
-        /// </summary>
-        /// <param name="type">The closed <see cref="System"/> Collection type.</param>
-        /// <returns>
-        /// The type of the elements of the specified closed <see cref="System"/> Collection type.
-        /// </returns>
-        /// <exception cref="ArgumentNullException"><paramref name="type"/> is null.</exception>
-        /// <exception cref="ArgumentException"><paramref name="type"/> is not a closed <see cref="System"/> Collection type.  See <see cref="IsClosedSystemCollectionType(Type)"/>.</exception>
-        public static Type GetClosedSystemCollectionElementType(
+        /// <exception cref="ArgumentException"><paramref name="type"/> cannot be assigned to <see cref="UnboundGenericReadOnlyDictionaryType"/>, <see cref="UnboundGenericDictionaryType"/>, or <see cref="DictionaryType"/>.</exception>
+        public static Type GetDictionaryValueType(
             this Type type)
         {
             if (type == null)
@@ -234,26 +159,25 @@ namespace OBeautifulCode.Type.Recipes
                 throw new ArgumentNullException(nameof(type));
             }
 
-            if (!type.IsClosedSystemCollectionType())
+            if ((!type.IsAssignableTo(UnboundGenericReadOnlyDictionaryType, treatUnboundGenericAsAssignableTo: true)) &&
+                (!type.IsAssignableTo(UnboundGenericDictionaryType, treatUnboundGenericAsAssignableTo: true)) &&
+                (!type.IsAssignableTo(DictionaryType, treatUnboundGenericAsAssignableTo: true)))
             {
-                throw new ArgumentException(Invariant($"Specified type is not a closed System Collection type: {type.Name}."));
+                throw new ArgumentException(Invariant($"Specified type is cannot be assigned to either IReadOnlyDictionary<T,K>, IDictionary<T,K>, or IDictionary: {type.Name}."));
             }
 
-            var result = type.GenericTypeArguments.First();
+            var result = type.GetDictionaryValueTypeInternal();
 
             return result;
         }
 
         /// <summary>
-        /// Gets the type of the keys of the specified closed <see cref="System"/> Dictionary type.
+        /// Determines if a type is an anonymous type.
         /// </summary>
-        /// <param name="type">The closed <see cref="System"/> Dictionary type.</param>
-        /// <returns>
-        /// The type of the keys of the specified closed <see cref="System"/> Dictionary type.
-        /// </returns>
+        /// <param name="type">Type to check.</param>
+        /// <returns>A value indicating whether or not the type provided is anonymous.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="type"/> is null.</exception>
-        /// <exception cref="ArgumentException"><paramref name="type"/> is not a closed <see cref="System"/> Dictionary type.  See <see cref="IsClosedSystemDictionaryType(Type)"/>.</exception>
-        public static Type GetClosedSystemDictionaryKeyType(
+        public static bool IsAnonymous(
             this Type type)
         {
             if (type == null)
@@ -261,26 +185,24 @@ namespace OBeautifulCode.Type.Recipes
                 throw new ArgumentNullException(nameof(type));
             }
 
-            if (!type.IsClosedSystemDictionaryType())
-            {
-                throw new ArgumentException(Invariant($"Specified type is not a closed System Dictionary type: {type.Name}."));
-            }
-
-            var result = type.GenericTypeArguments[0];
+            var result = Attribute.IsDefined(type, typeof(CompilerGeneratedAttribute), false)
+                             && type.Namespace == null
+                             && type.IsGenericType
+                             && type.Name.Contains("AnonymousType")
+                             && (type.Name.StartsWith("<>", StringComparison.Ordinal) || type.Name.StartsWith("VB$", StringComparison.Ordinal))
+                             && type.Attributes.HasFlag(TypeAttributes.NotPublic);
 
             return result;
         }
 
         /// <summary>
-        /// Gets the type of the values of the specified closed <see cref="System"/> Dictionary type.
+        /// Determines if a type is an anonymous type using a faster, but potentially
+        /// less accurate heuristic than <see cref="IsAnonymous(Type)"/>.
         /// </summary>
-        /// <param name="type">The closed <see cref="System"/> Dictionary type.</param>
-        /// <returns>
-        /// The type of the values of the specified closed <see cref="System"/> Dictionary type.
-        /// </returns>
+        /// <param name="type">Type to check.</param>
+        /// <returns>A value indicating whether or not the type provided is anonymous.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="type"/> is null.</exception>
-        /// <exception cref="ArgumentException"><paramref name="type"/> is not a closed <see cref="System"/> Dictionary type.  See <see cref="IsClosedSystemDictionaryType(Type)"/>.</exception>
-        public static Type GetClosedSystemDictionaryValueType(
+        public static bool IsAnonymousFastCheck(
             this Type type)
         {
             if (type == null)
@@ -288,144 +210,7 @@ namespace OBeautifulCode.Type.Recipes
                 throw new ArgumentNullException(nameof(type));
             }
 
-            if (!type.IsClosedSystemDictionaryType())
-            {
-                throw new ArgumentException(Invariant($"Specified type is not a closed System Dictionary type: {type.Name}."));
-            }
-
-            var result = type.GenericTypeArguments[1];
-
-            return result;
-        }
-
-        /// <summary>
-        /// Gets the types in the inheritance path starting from the specified type's
-        /// <see cref="Type.BaseType"/> and ending in a type with no <see cref="Type.BaseType"/>.
-        /// </summary>
-        /// <param name="type">The type.</param>
-        /// <returns>
-        /// The <see cref="Type.BaseType"/> of <paramref name="type"/>, followed by that type's
-        /// <see cref="Type.BaseType"/>, and so on until a type has no <see cref="Type.BaseType"/>
-        /// (that property returns null).
-        /// If <paramref name="type"/> has no <see cref="Type.BaseType"/>, then this method returns
-        /// an empty list.
-        /// </returns>
-        /// <exception cref="ArgumentNullException"><paramref name="type"/> is null.</exception>
-        /// <exception cref="ArgumentException"><paramref name="type"/> is not assignable to <see cref="EnumerableInterfaceType"/>.</exception>
-        public static IReadOnlyList<Type> GetInheritancePath(
-            this Type type)
-        {
-            if (type == null)
-            {
-                throw new ArgumentNullException(nameof(type));
-            }
-
-            var result = new List<Type>();
-
-            type.BuildInheritancePath(result);
-
-            return result;
-        }
-
-        /// <summary>
-        /// Determines if <see cref="Comparer{T}.Default"/> will return a
-        /// working (non-throwing) comparer for the specified type.
-        /// </summary>
-        /// <remarks>
-        /// See remarks in <see cref="HasWorkingDefaultComparer(Type)"/>.
-        /// </remarks>
-        /// <typeparam name="T">The type.</typeparam>
-        /// <returns>
-        /// true if <see cref="Comparer{T}.Default"/> returns a working (non-throwing)
-        /// comparer for the specified type, otherwise false.
-        /// </returns>
-        public static bool HasWorkingDefaultComparer<T>()
-        {
-            var type = typeof(T);
-
-            var result = HasWorkingDefaultComparer(type);
-
-            return result;
-        }
-
-        /// <summary>
-        /// Determines if <see cref="Comparer{T}.Default"/> will return a
-        /// working (non-throwing) comparer for the specified type.
-        /// </summary>
-        /// <remarks>
-        /// <see cref="Comparer{T}.Default" /> will always return some comparer for
-        /// any given closed type.  However, that comparer, when used, will or will no
-        /// throw based on the type itself.  If the type implements or inherits <see cref="IComparable{T}"/>
-        /// where T is itself, then the comparer will ultimately use that implementation.
-        /// We say "ultimately" here and below because a wrapper object is used.
-        /// If the type is nullable and the underlying type implements or inherits <see cref="IComparable{T}"/>
-        /// where T is the underlying type, then the comparer will ultimately use that implementation.
-        /// Finally, if the the type, when boxed, implements or inherits <see cref="IComparable"/> then the comparer
-        /// will ultimately use that implementation.  If not, then, upon using the comparer to compare two
-        /// objects, an exception will be thrown.
-        /// It's further important to note that this method is NOT simply checking whether the specified
-        /// type is assignable to <see cref="IComparable{T}"/>.  For example:
-        /// typeof(IComparable&lt;string&gt;).HasWorkingDefaultComparer() == false
-        /// That's because that type doesn't implement IComparable&lt;IComparable&lt;string&gt;&gt;
-        /// per the heuristic described above.  That said, any type that is assignable to <see cref="IComparable"/>
-        /// will return true per the heuristic above.  For example:
-        /// typeof(IComparable).HasWorkingDefaultComparer() == true.
-        /// </remarks>
-        /// <param name="type">The type.</param>
-        /// <returns>
-        /// true if <see cref="Comparer{T}.Default"/> returns a working (non-throwing)
-        /// comparer for the specified type, otherwise false.
-        /// </returns>
-        /// <exception cref="ArgumentNullException"><paramref name="type"/> is null.</exception>
-        /// <exception cref="NotSupportedException"><paramref name="type"/> is an open type.</exception>
-        public static bool HasWorkingDefaultComparer(
-            this Type type)
-        {
-            if (type == null)
-            {
-                throw new ArgumentNullException(nameof(type));
-            }
-
-            // you cannot call Comparer{T}.Default on a closed type,
-            // not even using reflection
-            if (type.ContainsGenericParameters)
-            {
-                throw new NotSupportedException(Invariant($"Parameter '{nameof(type)}' is an open type; open types are not supported for that parameter."));
-            }
-
-            // Previously, we called Comparer<T>.Default and checked whether that was equal to ObjectComparer<T>.
-            // If so, we considered the type to be NOT comparable.  Comparer<T>.Default checks, among other things,
-            // whether T is IComparable<T>.  Unfortunately, types like Enum don't implement IComparable<T>,
-            // but are IComparable.  So for enums, Comparer<T>.Default returns ObjectComparer<T>.  It turns out,
-            // ObjectComparer<T> doesn't just check for reference equality.  Among other things, it checks whether
-            // the type is IComparable.  So we combined the approach taken by Comparer<T>.Default and ObjectComparer<T>
-            // into the follow...
-            var genericComparableType = ComparableInterfaceGenericTypeDefinition.MakeGenericType(type);
-
-            if (genericComparableType.IsAssignableFrom(type))
-            {
-                return true;
-            }
-
-            if (type.IsClosedNullableType())
-            {
-                var underlyingType = type.GenericTypeArguments[0];
-
-                var underlyingGenericComparableType = ComparableInterfaceGenericTypeDefinition.MakeGenericType(underlyingType);
-
-                if (underlyingGenericComparableType.IsAssignableFrom(underlyingType))
-                {
-                    return true;
-                }
-            }
-
-            // Is type boxed to IComparable?
-            // for example, Nullable<Enum> is not IComparable, but it boxes to Enum which is:
-            // https://docs.microsoft.com/en-us/dotnet/api/system.nullable?view=netframework-4.8
-            // https://stackoverflow.com/questions/59180389/given-a-type-how-do-you-determine-what-type-it-is-boxed-as#59180620
-            var boxedType = Nullable.GetUnderlyingType(type) ?? type;
-
-            var result = ComparableInterfaceType.IsAssignableFrom(boxedType);
+            var result = type.Namespace == null;
 
             return result;
         }
@@ -438,18 +223,17 @@ namespace OBeautifulCode.Type.Recipes
         /// </remarks>
         /// <param name="type">The current type.</param>
         /// <param name="otherType">The type to check for ability to assign to.</param>
-        /// <param name="treatGenericTypeDefinitionAsAssignableTo">If <paramref name="otherType"/> is a generic type definition, specifies whether the method should treat that type as if a closed type can be assigned to it (e.g. IsAssignableTo(List&lt;int&gt;, List&lt;&gt;)).</param>
+        /// <param name="treatUnboundGenericAsAssignableTo">Treats an unbound generic as a type that can be assigned to (e.g. IsAssignableTo(List&lt;int&gt;, List&lt;&gt;)).</param>
         /// <returns>
         /// true if <paramref name="type"/> can be assigned to <paramref name="otherType"/>; otherwise false.
         /// </returns>
         /// <exception cref="ArgumentNullException"><paramref name="type"/> is null.</exception>
         /// <exception cref="ArgumentNullException"><paramref name="otherType"/> is null.</exception>
-        /// <exception cref="NotSupportedException"><paramref name="type"/> is an open type.</exception>
-        /// <exception cref="NotSupportedException"><paramref name="otherType"/> is an open type, but not a generic type definition.</exception>
+        /// <exception cref="ArgumentException"><paramref name="type"/>.<see cref="Type.IsGenericTypeDefinition"/> is true.</exception>
         public static bool IsAssignableTo(
             this Type type,
             Type otherType,
-            bool treatGenericTypeDefinitionAsAssignableTo = false)
+            bool treatUnboundGenericAsAssignableTo = false)
         {
             if (type == null)
             {
@@ -461,14 +245,9 @@ namespace OBeautifulCode.Type.Recipes
                 throw new ArgumentNullException(nameof(otherType));
             }
 
-            if (type.ContainsGenericParameters)
+            if (type.IsGenericTypeDefinition)
             {
-                throw new NotSupportedException(Invariant($"Parameter '{nameof(type)}' is an open type; open types are not supported for that parameter."));
-            }
-
-            if ((!otherType.IsGenericTypeDefinition) && otherType.ContainsGenericParameters)
-            {
-                throw new NotSupportedException(Invariant($"Parameter '{nameof(otherType)}' is an open type, but not a generic type definition; the only open types that are supported are generic type definitions for that parameter."));
+                throw new ArgumentException(Invariant($"{nameof(type)}.{nameof(Type.IsGenericTypeDefinition)} is {true}"));
             }
 
             // type is equal to the other type
@@ -483,35 +262,30 @@ namespace OBeautifulCode.Type.Recipes
                 return true;
             }
 
-            // other type is a generic type definition and we are treating the specified closed type as if it can be assigned to a generic type definition
-            if (treatGenericTypeDefinitionAsAssignableTo && otherType.IsGenericTypeDefinition)
+            // type is generic and other type is an unbounded generic type
+            if (treatUnboundGenericAsAssignableTo && otherType.IsGenericTypeDefinition)
             {
-                // type's generic type definition is the other type
+                // type's unbounded generic version is the other type
                 if (type.IsGenericType && type.GetGenericTypeDefinition() == otherType)
                 {
                     return true;
                 }
 
-                // type implements an interface who's generic type definition is the other type
+                // type implements an interface who's unbounded generic version is the other type
                 if (type.GetInterfaces().Any(_ => _.IsGenericType && (_.GetGenericTypeDefinition() == otherType)))
                 {
                     return true;
                 }
 
-                // the type has a base type?
                 var baseType = type.BaseType;
                 if (baseType == null)
                 {
                     return false;
                 }
 
-                // check if the base types are assignable to the other type
-                // note that we don't need to check the interfaces that the base type
-                // implements because the GetInterfaces() call above returns all the interfaces implemented or inherited
-                if (type.GetInheritancePath().Any(_ => _.IsGenericType && (_.GetGenericTypeDefinition() == otherType)))
-                {
-                    return true;
-                }
+                // ReSharper disable once ConditionIsAlwaysTrueOrFalse
+                var result = baseType.IsAssignableTo(otherType, treatUnboundGenericAsAssignableTo);
+                return result;
             }
 
             return false;
@@ -520,19 +294,12 @@ namespace OBeautifulCode.Type.Recipes
         /// <summary>
         /// Determines if the specified type is assignable to null.
         /// </summary>
-        /// <remarks>
-        /// Adapted from: <a href="https://stackoverflow.com/a/1770232/356790" />.
-        /// We are specifically throwing <see cref="NotSupportedException"/> for open types here
-        /// instead of returning false unlike some of the other IsClosed... methods because
-        /// likely if you are passing-in an open type, you are doing something wrong, similar
-        /// to the GetClosed... methods.
-        /// </remarks>
+        /// <remarks>Adapted from: <a href="https://stackoverflow.com/a/1770232/356790" />.</remarks>
         /// <param name="type">The type.</param>
         /// <returns>
         /// true if the specified type is assignable to null, otherwise false.
         /// </returns>
         /// <exception cref="ArgumentNullException"><paramref name="type"/> is null.</exception>
-        /// <exception cref="NotSupportedException"><paramref name="type"/> is an open type.</exception>
         public static bool IsAssignableToNull(
             this Type type)
         {
@@ -541,23 +308,35 @@ namespace OBeautifulCode.Type.Recipes
                 throw new ArgumentNullException(nameof(type));
             }
 
-            if (type.ContainsGenericParameters)
-            {
-                throw new NotSupportedException(Invariant($"Parameter '{nameof(type)}' is an open type; open types are not supported for that parameter."));
-            }
-
-            var result = (!type.IsValueType) || type.IsClosedNullableType();
+            var result = (!type.IsValueType) || type.IsNullableType();
 
             return result;
         }
 
         /// <summary>
-        /// Determines if a type is a closed anonymous type.
+        /// Determines if the specified type is comparable.
         /// </summary>
-        /// <param name="type">Type to check.</param>
-        /// <returns>A value indicating whether or not the type provided is a closed anonymous type.</returns>
-        /// <exception cref="ArgumentNullException"><paramref name="type"/> is null.</exception>
-        public static bool IsClosedAnonymousType(
+        /// <typeparam name="T">The type.</typeparam>
+        /// <returns>
+        /// true if the type is comparable, otherwise false.
+        /// </returns>
+        public static bool IsComparableType<T>()
+        {
+            var type = typeof(T);
+
+            var result = IsComparableType(type);
+
+            return result;
+        }
+
+        /// <summary>
+        /// Determines if the specified type is comparable.
+        /// </summary>
+        /// <param name="type">The type.</param>
+        /// <returns>
+        /// true if the type is comparable, otherwise false.
+        /// </returns>
+        public static bool IsComparableType(
             this Type type)
         {
             if (type == null)
@@ -565,37 +344,35 @@ namespace OBeautifulCode.Type.Recipes
                 throw new ArgumentNullException(nameof(type));
             }
 
-            if (type.ContainsGenericParameters)
+            // Previously, we called Comparer<T>.Default and checked whether that was equal to ObjectComparer<T>.
+            // If so, we considered the type to be NOT comparable.  Comparer<T>.Default checks, among other things,
+            // whether T is IComparable<T>.  Unfortunately, types like Enum don't implement IComparable<T>,
+            // but are IComparable.  So for enums, Comparer<T>.Default returns ObjectComparer<T>.  It turns out,
+            // ObjectComparer<T> doesn't just check for reference equality.  Among other things, it checks whether
+            // the type is IComparable.  So we combined the approach taken by Comparer<T>.Default and ObjectComparer<T>
+            // into the follow...
+            bool result;
+
+            var genericComparableType = UnboundGenericComparableType.MakeGenericType(type);
+
+            if (type.IsAssignableTo(genericComparableType))
             {
-                return false;
+                result = true;
             }
-
-            var result = type.IsAnonymousType();
-
-            return result;
-        }
-
-        /// <summary>
-        /// Determines if a type is a closed anonymous type using a faster, but potentially
-        /// less accurate heuristic than <see cref="IsClosedAnonymousType(Type)"/>.
-        /// </summary>
-        /// <param name="type">Type to check.</param>
-        /// <returns>A value indicating whether or not the type provided is a closed anonymous type.</returns>
-        /// <exception cref="ArgumentNullException"><paramref name="type"/> is null.</exception>
-        public static bool IsClosedAnonymousTypeFastCheck(
-            this Type type)
-        {
-            if (type == null)
+            else if (type.IsAssignableTo(ComparableType))
             {
-                throw new ArgumentNullException(nameof(type));
+                result = true;
             }
-
-            if (type.ContainsGenericParameters)
+            else if (type.IsNullableType())
             {
-                return false;
-            }
+                var underlyingType = type.GetGenericArguments()[0];
 
-            var result = type.Namespace == null;
+                result = IsComparableType(underlyingType);
+            }
+            else
+            {
+                result = false;
+            }
 
             return result;
         }
@@ -604,14 +381,14 @@ namespace OBeautifulCode.Type.Recipes
         /// Determines if the specified type is a class type, that's not anonymous, and is closed.
         /// </summary>
         /// <remarks>
-        /// This is basically asking, "Is this a class type that can be constructed/new-ed up?".
+        /// This is basically asking, "Is this a class type that can be constructed/new-ed up?"
         /// </remarks>
         /// <param name="type">The type.</param>
         /// <returns>
         /// true if the specified type is a class type, non-anonymous, and closed.
         /// </returns>
         /// <exception cref="ArgumentNullException"><paramref name="type"/> is null.</exception>
-        public static bool IsClosedNonAnonymousClassType(
+        public static bool IsNonAnonymousClosedClassType(
             this Type type)
         {
             if (type == null)
@@ -620,23 +397,23 @@ namespace OBeautifulCode.Type.Recipes
             }
 
             var result =
-                type.IsClass
-                && (!type.IsClosedAnonymousType())
-                && (!type.ContainsGenericParameters);
+                type.IsClass &&
+                (!type.IsAnonymous()) &&
+                (!type.IsGenericTypeDefinition); // can't do an IsAssignableTo check on generic type definitions
 
             return result;
         }
 
         /// <summary>
-        /// Determines if the specified type is a closed <see cref="Nullable{T}"/> type.
+        /// Determines if the specified type is <see cref="Nullable{T}"/>.
         /// </summary>
         /// <remarks>Adapted from: <a href="https://stackoverflow.com/a/41281601/356790" />.</remarks>
         /// <param name="type">The type.</param>
         /// <returns>
-        /// true if the specified type is a closed <see cref="Nullable{T}"/> type, otherwise false.
+        /// true if the specified type is <see cref="Nullable{T}"/>, otherwise false.
         /// </returns>
         /// <exception cref="ArgumentNullException"><paramref name="type"/> is null.</exception>
-        public static bool IsClosedNullableType(
+        public static bool IsNullableType(
             this Type type)
         {
             if (type == null)
@@ -650,16 +427,14 @@ namespace OBeautifulCode.Type.Recipes
         }
 
         /// <summary>
-        /// Determines if the specified type is a closed version of one of the
-        /// following <see cref="System"/> Collection generic type definitions:
-        /// <see cref="SystemCollectionGenericTypeDefinitions"/>.
+        /// Determines if the specified type is one of the following <see cref="System"/> collection types: <see cref="CollectionTypes"/>.
         /// </summary>
         /// <param name="type">The type.</param>
         /// <returns>
-        /// true if the specified type is a closed <see cref="System"/> collection type; otherwise false.
+        /// true if the specified type is a <see cref="System"/> collection type; otherwise false.
         /// </returns>
         /// <exception cref="ArgumentNullException"><paramref name="type"/> is null.</exception>
-        public static bool IsClosedSystemCollectionType(
+        public static bool IsSystemCollectionType(
             this Type type)
         {
             if (type == null)
@@ -667,34 +442,27 @@ namespace OBeautifulCode.Type.Recipes
                 throw new ArgumentNullException(nameof(type));
             }
 
-            if (type.ContainsGenericParameters)
-            {
-                return false;
-            }
-
             if (!type.IsGenericType)
             {
                 return false;
             }
 
-            var genericTypeDefinition = type.GetGenericTypeDefinition();
+            var genericType = type.GetGenericTypeDefinition();
 
-            var result = SystemCollectionGenericTypeDefinitions.Contains(genericTypeDefinition);
+            var result = CollectionTypes.Contains(genericType);
 
             return result;
         }
 
         /// <summary>
-        /// Determines if the specified type is a closed version one of one of the
-        /// following <see cref="System"/> Dictionary generic type definitions:
-        /// <see cref="SystemDictionaryGenericTypeDefinitions"/>.
+        /// Determines if the specified type is one of the following <see cref="System"/> dictionary types: <see cref="DictionaryTypes"/>.
         /// </summary>
         /// <param name="type">The type.</param>
         /// <returns>
-        /// true if the specified type is a closed <see cref="System"/> dictionary type; otherwise false.
+        /// true if the specified type is a <see cref="System"/> dictionary type; otherwise false.
         /// </returns>
         /// <exception cref="ArgumentNullException"><paramref name="type"/> is null.</exception>
-        public static bool IsClosedSystemDictionaryType(
+        public static bool IsSystemDictionaryType(
             this Type type)
         {
             if (type == null)
@@ -702,34 +470,28 @@ namespace OBeautifulCode.Type.Recipes
                 throw new ArgumentNullException(nameof(type));
             }
 
-            if (type.ContainsGenericParameters)
-            {
-                return false;
-            }
-
             if (!type.IsGenericType)
             {
                 return false;
             }
 
-            var genericTypeDefinition = type.GetGenericTypeDefinition();
+            var genericType = type.GetGenericTypeDefinition();
 
-            var result = SystemDictionaryGenericTypeDefinitions.Contains(genericTypeDefinition);
+            var result = DictionaryTypes.Contains(genericType);
 
             return result;
         }
 
         /// <summary>
-        /// Determines if the specified type is a closed version of one of the
-        /// following ordered <see cref="System"/> Collection generic type definitions:
-        /// <see cref="SystemOrderedCollectionGenericTypeDefinitions"/>.
+        /// Determines if the specified type is one of the following <see cref="System"/>
+        /// ordered collection types: <see cref="OrderedCollectionTypes"/>.
         /// </summary>
         /// <param name="type">The type.</param>
         /// <returns>
-        /// true if the specified type is a closed, ordered <see cref="System"/> Collection type; otherwise false.
+        /// true if the specified type is an ordered <see cref="System"/> collection type; otherwise false.
         /// </returns>
         /// <exception cref="ArgumentNullException"><paramref name="type"/> is null.</exception>
-        public static bool IsClosedSystemOrderedCollectionType(
+        public static bool IsSystemOrderedCollectionType(
             this Type type)
         {
             if (type == null)
@@ -737,34 +499,28 @@ namespace OBeautifulCode.Type.Recipes
                 throw new ArgumentNullException(nameof(type));
             }
 
-            if (type.ContainsGenericParameters)
-            {
-                return false;
-            }
-
             if (!type.IsGenericType)
             {
                 return false;
             }
 
-            var genericTypeDefinition = type.GetGenericTypeDefinition();
+            var genericType = type.GetGenericTypeDefinition();
 
-            var result = SystemOrderedCollectionGenericTypeDefinitions.Contains(genericTypeDefinition);
+            var result = OrderedCollectionTypes.Contains(genericType);
 
             return result;
         }
 
         /// <summary>
-        /// Determines if the specified type is a closed version of one of the
-        /// following unordered <see cref="System"/> Collection generic type definitions:
-        /// <see cref="SystemUnorderedCollectionGenericTypeDefinitions"/>.
+        /// Determines if the specified type is one of the following <see cref="System"/>
+        /// unordered collection types: <see cref="UnorderedCollectionTypes"/>.
         /// </summary>
         /// <param name="type">The type.</param>
         /// <returns>
-        /// true if the specified type is a closed, unordered <see cref="System"/> Collection type; otherwise false.
+        /// true if the specified type is an unordered <see cref="System"/> collection type; otherwise false.
         /// </returns>
         /// <exception cref="ArgumentNullException"><paramref name="type"/> is null.</exception>
-        public static bool IsClosedSystemUnorderedCollectionType(
+        public static bool IsSystemUnorderedCollectionType(
             this Type type)
         {
             if (type == null)
@@ -772,19 +528,14 @@ namespace OBeautifulCode.Type.Recipes
                 throw new ArgumentNullException(nameof(type));
             }
 
-            if (type.ContainsGenericParameters)
-            {
-                return false;
-            }
-
             if (!type.IsGenericType)
             {
                 return false;
             }
 
-            var genericTypeDefinition = type.GetGenericTypeDefinition();
+            var genericType = type.GetGenericTypeDefinition();
 
-            var result = SystemUnorderedCollectionGenericTypeDefinitions.Contains(genericTypeDefinition);
+            var result = UnorderedCollectionTypes.Contains(genericType);
 
             return result;
         }
@@ -795,6 +546,7 @@ namespace OBeautifulCode.Type.Recipes
         /// <remarks>
         /// Adapted from: <a href="https://stackoverflow.com/a/6402967/356790" />.
         /// Adapted from: <a href="https://stackoverflow.com/questions/1362884/is-there-a-way-to-get-a-types-alias-through-reflection" />.
+        /// Helpful breakdown of generics: <a href="https://docs.microsoft.com/en-us/dotnet/api/system.type.isgenerictype" />.
         /// </remarks>
         /// <param name="type">The type.</param>
         /// <param name="throwIfNoCompilableStringExists">Optional value indicating whether to throw a <see cref="NotSupportedException"/> if there's no compilable representation of the specified type.</param>
@@ -817,7 +569,7 @@ namespace OBeautifulCode.Type.Recipes
 
             string result;
 
-            if (type.IsClosedAnonymousType())
+            if (type.IsAnonymous())
             {
                 if (throwIfNoCompilableStringExists)
                 {
@@ -843,11 +595,11 @@ namespace OBeautifulCode.Type.Recipes
             }
             else
             {
-                if (ValueTypeToAliasMap.ContainsKey(type))
+                if (Aliases.ContainsKey(type))
                 {
-                    result = ValueTypeToAliasMap[type];
+                    result = Aliases[type];
                 }
-                else if (type.IsClosedNullableType())
+                else if (type.IsNullableType())
                 {
                     result = Nullable.GetUnderlyingType(type).ToStringCompilable() + "?";
                 }
@@ -878,7 +630,7 @@ namespace OBeautifulCode.Type.Recipes
                         }
                         else
                         {
-                            var genericParameters = type.GenericTypeArguments.Select(_ => _.ToStringCompilable()).ToArray();
+                            var genericParameters = type.GetGenericArguments().Select(_ => _.ToStringCompilable()).ToArray();
 
                             result = GenericBracketsRegex.Replace(result, "<" + string.Join(", ", genericParameters) + ">");
                         }
@@ -926,81 +678,75 @@ namespace OBeautifulCode.Type.Recipes
             return result;
         }
 
-        private static void BuildInheritancePath(
-            this Type type,
-            List<Type> traversedPath)
+        private static Type GetEnumerableElementTypeInternal(
+            this Type type)
         {
-            if (type.BaseType != null)
-            {
-                traversedPath.Add(type.BaseType);
-
-                type.BaseType.BuildInheritancePath(traversedPath);
-            }
-        }
-
-        private static Type GetClosedDictionaryKeyOrValueTypeInternal(
-            this Type type,
-            int genericTypeArgumentIndex)
-        {
-            if (type == null)
-            {
-                throw new ArgumentNullException(nameof(type));
-            }
-
-            // IReadOnlyDictionary<T,K> and IDictionary<T,K> don't implement IDictionary
-            // hence the need for the additional IsAssignableTo checks.
-            if (type.ContainsGenericParameters ||
-                (
-                       (!DictionaryInterfaceType.IsAssignableFrom(type))
-                    && (!type.IsAssignableTo(DictionaryInterfaceGenericTypeDefinition, treatGenericTypeDefinitionAsAssignableTo: true))
-                    && (!type.IsAssignableTo(ReadOnlyDictionaryInterfaceGenericTypeDefinition, treatGenericTypeDefinitionAsAssignableTo: true))))
-            {
-                throw new ArgumentException(Invariant($"Specified type is not a closed Dictionary type: {type.Name}."));
-            }
-
             Type result;
-
-            if (type.IsGenericType && (type.GetGenericTypeDefinition() == DictionaryInterfaceGenericTypeDefinition))
+            if (type.IsArray)
             {
-                // type is IDictionary<T,K>
-                result = type.GenericTypeArguments[genericTypeArgumentIndex];
+                // type is array, shortcut
+                result = type.GetElementType();
             }
-            else if (type.IsGenericType && (type.GetGenericTypeDefinition() == ReadOnlyDictionaryInterfaceGenericTypeDefinition))
+            else if (type.IsGenericType && (type.GetGenericTypeDefinition() == UnboundGenericEnumerableType))
             {
-                // type is IReadOnlyDictionary<T,K>
-                result = type.GenericTypeArguments[genericTypeArgumentIndex];
+                // type is IEnumerable<T>
+                result = type.GetGenericArguments()[0];
             }
             else
             {
-                // type implements or inherits IDictionary<T,K>/IReadOnlyDictionary<T,K>
-                // note that we are grabbing the first implementation
-                // it is possible, but highly unlikely, for a type to have multiple implementations of IDictionary<T,K>/IReadOnlyDictionary<T,K>
+                // type implements IEnumerable<T> or is a subclass (sub-sub-class, ...)
+                // of a type that implements IEnumerable<T>
+                // note that we are grabbing the first implementation.  it is possible, but
+                // highly unlikely, for a type to have multiple implementations of IEnumerable<T>
                 result = type
                     .GetInterfaces()
-                    .Where(_ => _.IsGenericType && ((_.GetGenericTypeDefinition() == DictionaryInterfaceGenericTypeDefinition) || (_.GetGenericTypeDefinition() == ReadOnlyDictionaryInterfaceGenericTypeDefinition)))
-                    .Select(_ => _.GenericTypeArguments[genericTypeArgumentIndex])
+                    .Where(_ => _.IsGenericType && (_.GetGenericTypeDefinition() == UnboundGenericEnumerableType))
+                    .Select(_ => _.GenericTypeArguments[0])
                     .FirstOrDefault();
 
                 if (result == null)
                 {
-                    // we don't have to check BaseType; all of the inherited interfaces are returned by GetInterfaces()
-                    // at this point we know that this type is an IDictionary
-                    result = ObjectType;
+                    var baseType = type.BaseType;
+                    result = baseType == null ? ObjectType : GetEnumerableElementTypeInternal(baseType);
                 }
             }
 
             return result;
         }
 
-        private static bool IsAnonymousType(
+        private static Type GetDictionaryValueTypeInternal(
             this Type type)
         {
-            var result = Attribute.IsDefined(type, typeof(CompilerGeneratedAttribute), false)
-                         && type.Namespace == null
-                         && type.IsGenericType
-                         && type.Name.Contains("AnonymousType")
-                         && (type.Name.StartsWith("<>", StringComparison.Ordinal) || type.Name.StartsWith("VB$", StringComparison.Ordinal))
-                         && type.Attributes.HasFlag(TypeAttributes.NotPublic);
+            Type result;
+
+            if (type.IsGenericType && (type.GetGenericTypeDefinition() == UnboundGenericDictionaryType))
+            {
+                // type is IDictionary<T,K>
+                result = type.GetGenericArguments()[1];
+            }
+            else if (type.IsGenericType && (type.GetGenericTypeDefinition() == UnboundGenericReadOnlyDictionaryType))
+            {
+                // type is IReadOnlyDictionary<T,K>
+                result = type.GetGenericArguments()[1];
+            }
+            else
+            {
+                // type implements IDictionary<T,K>/IReadOnlyDictionary<T,K> or is a subclass (sub-sub-class, ...)
+                // of a type that implements those types
+                // note that we are grabbing the first implementation.  it is possible, but
+                // highly unlikely, for a type to have multiple implementations of IDictionary<T,K>
+                result = type
+                    .GetInterfaces()
+                    .Where(_ => _.IsGenericType && ((_.GetGenericTypeDefinition() == UnboundGenericDictionaryType) || (_.GetGenericTypeDefinition() == UnboundGenericReadOnlyDictionaryType)))
+                    .Select(_ => _.GenericTypeArguments[1])
+                    .FirstOrDefault();
+
+                if (result == null)
+                {
+                    var baseType = type.BaseType;
+                    result = baseType == null ? ObjectType : GetDictionaryValueTypeInternal(baseType);
+                }
+            }
 
             return result;
         }
@@ -1016,13 +762,13 @@ namespace OBeautifulCode.Type.Recipes
             {
                 result = type.Name;
             }
-            else if (ValueTypeToAliasMap.ContainsKey(type))
+            else if (Aliases.ContainsKey(type))
             {
                 assemblyDetailsTypes?.Add(type);
 
-                result = ValueTypeToAliasMap[type];
+                result = Aliases[type];
             }
-            else if (type.IsClosedNullableType())
+            else if (type.IsNullableType())
             {
                 result = Nullable.GetUnderlyingType(type).ToStringReadableInternal(options, assemblyDetailsTypes) + "?";
             }
@@ -1044,15 +790,15 @@ namespace OBeautifulCode.Type.Recipes
 
                 if (type.IsGenericType)
                 {
-                    var isAnonymousType = type.IsAnonymousType();
+                    var isAnonymous = type.IsAnonymous();
 
-                    if (isAnonymousType)
+                    if (isAnonymous)
                     {
                         result = result.Replace("<>f__", string.Empty);
                     }
 
                     string[] genericParameters;
-                    if (isAnonymousType && type.ContainsGenericParameters)
+                    if (isAnonymous && type.IsGenericTypeDefinition)
                     {
                         genericParameters = type.GetGenericArguments().Select((_, i) => "T" + (i + 1).ToString(CultureInfo.InvariantCulture)).ToArray();
                     }

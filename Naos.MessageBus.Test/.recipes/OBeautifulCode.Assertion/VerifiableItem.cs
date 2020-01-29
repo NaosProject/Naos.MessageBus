@@ -30,16 +30,16 @@ namespace OBeautifulCode.Assertion.Recipes
         /// <summary>
         /// Gets or sets the value of the verifiable item.
         /// </summary>
-        public object ItemValue { get; set; }
+        public object Value { get; set; }
 
         /// <summary>
         /// Gets or sets the type of the verifiable item.
         /// </summary>
-        public Type ItemType { get; set; }
+        public Type ValueType { get; set; }
 
         /// <summary>
         /// Gets or sets a value indicating whether this verifiable item is an element in an enumerable.
         /// </summary>
-        public bool ItemIsElementInEnumerable { get; set; }
+        public bool IsElementInEnumerable { get; set; }
     }
 }

@@ -46,24 +46,23 @@ namespace OBeautifulCode.Assertion.Recipes
 
                     var eachVerifiableItem = new VerifiableItem
                     {
-                        ItemValue = assertionTracker.SubjectValue,
-                        ItemType = assertionTracker.SubjectType,
-                        ItemIsElementInEnumerable = false,
+                        Value = assertionTracker.SubjectValue,
+                        ValueType = assertionTracker.SubjectType,
+                        IsElementInEnumerable = false,
                     };
 
-                    ThrowIfNotAssignableToType(eachVerification, eachVerifiableItem, MustBeEnumerableTypeValidations.Single());
+                    ThrowIfNotOfType(eachVerification, eachVerifiableItem, MustBeEnumerableTypeValidations.Single());
 
                     NotBeNullInternal(assertionTracker, eachVerification, eachVerifiableItem);
                 }
 
                 var valueAsEnumerable = (IEnumerable)assertionTracker.SubjectValue;
-
-                var enumerableElementType = assertionTracker.SubjectType.GetClosedEnumerableElementType();
+                var enumerableType = assertionTracker.SubjectType.GetEnumerableElementType();
 
                 var verifiableItem = new VerifiableItem
                 {
-                    ItemIsElementInEnumerable = true,
-                    ItemType = enumerableElementType,
+                    IsElementInEnumerable = true,
+                    ValueType = enumerableType,
                 };
 
                 foreach (var typeValidation in verification.TypeValidations ?? new TypeValidation[] { })
@@ -73,7 +72,7 @@ namespace OBeautifulCode.Assertion.Recipes
 
                 foreach (var element in valueAsEnumerable)
                 {
-                    verifiableItem.ItemValue = element;
+                    verifiableItem.Value = element;
 
                     verification.Handler(assertionTracker, verification, verifiableItem);
                 }
@@ -82,9 +81,9 @@ namespace OBeautifulCode.Assertion.Recipes
             {
                 var verifiableItem = new VerifiableItem
                 {
-                    ItemIsElementInEnumerable = false,
-                    ItemValue = assertionTracker.SubjectValue,
-                    ItemType = assertionTracker.SubjectType,
+                    IsElementInEnumerable = false,
+                    Value = assertionTracker.SubjectValue,
+                    ValueType = assertionTracker.SubjectType,
                 };
 
                 foreach (var typeValidation in verification.TypeValidations ?? new TypeValidation[] { })
@@ -116,13 +115,13 @@ namespace OBeautifulCode.Assertion.Recipes
 
             var subjectNameQualifier = assertionTracker.SubjectName == null ? string.Empty : Invariant($" (name: '{assertionTracker.SubjectName}')");
 
-            var enumerableQualifier = verifiableItem.ItemIsElementInEnumerable ? " contains an element that" : string.Empty;
+            var enumerableQualifier = verifiableItem.IsElementInEnumerable ? " contains an element that" : string.Empty;
 
             var methodologyInfoQualifier = methodologyInfo == null ? null : " " + methodologyInfo;
 
             var contextualInfoQualifier = contextualInfo == null ? null : "  " + contextualInfo;
 
-            var failingValueQualifier = include.HasFlag(Include.FailingValue) ? (verifiableItem.ItemIsElementInEnumerable ? "  Element value" : "  Provided value") + Invariant($" is {verifiableItem.ItemValue.ToStringInErrorMessage()}.") : string.Empty;
+            var failingValueQualifier = include.HasFlag(Include.FailingValue) ? (verifiableItem.IsElementInEnumerable ? "  Element value" : "  Provided value") + Invariant($" is {verifiableItem.Value.ToStringInErrorMessage()}.") : string.Empty;
 
             var verificationParametersQualifier = verification.VerificationParameters == null || !verification.VerificationParameters.Any() ? string.Empty : string.Join(string.Empty, verification.VerificationParameters.Select(_ => _.ToStringInErrorMessage()));
 

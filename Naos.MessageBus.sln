@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 14
-VisualStudioVersion = 14.0.25123.0
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.29025.244
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Naos.MessageBus.Hangfire.Harness", "Naos.MessageBus.Hangfire.Harness\Naos.MessageBus.Hangfire.Harness.csproj", "{21D8E190-560B-4990-AC12-90A1F28C9AEA}"
 EndProject
@@ -18,6 +18,14 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Naos.MessageBus.Persistence", "Naos.MessageBus.Persistence\Naos.MessageBus.Persistence.csproj", "{79C72D99-9C0C-45FA-9BC3-F2B36F63FFB3}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Naos.MessageBus.Domain", "Naos.MessageBus.Domain\Naos.MessageBus.Domain.csproj", "{C4A9E41B-29F7-48C7-A77F-3642D66DF2D8}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{5450CAA2-CA7F-43C1-AFB2-F6E3704CBFA5}"
+	ProjectSection(SolutionItems) = preProject
+		.gitignore = .gitignore
+		LICENSE = LICENSE
+		README.md = README.md
+		RepoConfig.state = RepoConfig.state
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -60,5 +68,8 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {46C04430-20A9-44E3-A0F3-EAEE8B9BE10A}
 	EndGlobalSection
 EndGlobal
