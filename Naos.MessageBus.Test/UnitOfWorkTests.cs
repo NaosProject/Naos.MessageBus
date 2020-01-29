@@ -13,9 +13,10 @@ namespace Naos.MessageBus.Test
     using FluentAssertions;
 
     using Naos.MessageBus.Domain;
-    using Naos.Serialization.Domain;
-    using Naos.Serialization.Factory.Extensions;
-    using Naos.Serialization.Json;
+    using OBeautifulCode.Representation.System;
+    using OBeautifulCode.Serialization;
+    using OBeautifulCode.Serialization.Json;
+    using OBeautifulCode.Serialization.Recipes;
     using OBeautifulCode.Type;
 
     using Xunit;
@@ -26,10 +27,10 @@ namespace Naos.MessageBus.Test
         public static void Serializes()
         {
             var configurationType = typeof(TestDetailsJsonConfiguration);
-            var serializer = new NaosJsonSerializer(configurationType);
+            var serializer = new ObcJsonSerializer(configurationType);
             var details = new TestDetailsImplementation { Property = A.Dummy<string>() };
-            var description = new SerializationDescription(SerializationKind.Json, SerializationFormat.String, configurationType.ToTypeDescription());
-            var described = new DescribedSerialization(typeof(TestDetailsBase).ToTypeDescription(), serializer.SerializeToString(details), description);
+            var description = new SerializationDescription(SerializationKind.Json, SerializationFormat.String, configurationType.ToRepresentation());
+            var described = new DescribedSerialization(typeof(TestDetailsBase).ToRepresentation(), serializer.SerializeToString(details), description);
 
             var expected = new UnitOfWorkResult
             {
@@ -38,7 +39,7 @@ namespace Naos.MessageBus.Test
                 Details = described,
             };
 
-            var messageBusSerializer = new NaosJsonSerializer(typeof(MessageBusJsonConfiguration));
+            var messageBusSerializer = new ObcJsonSerializer(typeof(MessageBusJsonConfiguration));
             var serializedUnitOfWork = messageBusSerializer.SerializeToString(expected);
             var actual = messageBusSerializer.Deserialize<UnitOfWorkResult>(serializedUnitOfWork);
 

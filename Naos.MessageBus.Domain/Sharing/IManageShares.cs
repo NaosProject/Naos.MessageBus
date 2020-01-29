@@ -8,6 +8,7 @@ namespace Naos.MessageBus.Domain
 {
     using System;
     using System.Collections.Generic;
+    using OBeautifulCode.Representation.System;
     using OBeautifulCode.Type;
 
     /// <summary>
@@ -19,9 +20,9 @@ namespace Naos.MessageBus.Domain
         /// Get the properties from any <see cref="IShare" /> interfaces from the provided object.
         /// </summary>
         /// <param name="objectToShareFrom">Object to extracted shared properties from.</param>
-        /// <param name="jsonConfigurationTypeDescription">Configuration type description to use for serialization.</param>
+        /// <param name="jsonConfigurationTypeRepresentation">Configuration type description to use for serialization.</param>
         /// <returns>Collection of <see cref="SharedInterfaceState" />.</returns>
-        IReadOnlyCollection<SharedInterfaceState> GetSharedInterfaceStates(IShare objectToShareFrom, TypeDescription jsonConfigurationTypeDescription);
+        IReadOnlyCollection<SharedInterfaceState> GetSharedInterfaceStates(IShare objectToShareFrom, TypeRepresentation jsonConfigurationTypeRepresentation);
 
         /// <summary>
         /// Apply shared properties values to an <see cref="IShare" /> object.

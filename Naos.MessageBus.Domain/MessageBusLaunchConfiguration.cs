@@ -8,7 +8,7 @@ namespace Naos.MessageBus.Domain
 {
     using System;
     using System.Collections.Generic;
-
+    using OBeautifulCode.Representation.System;
     using OBeautifulCode.Type;
 
     /// <summary>

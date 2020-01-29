@@ -7,8 +7,8 @@
 namespace Naos.MessageBus.Persistence
 {
     using Naos.MessageBus.Domain;
-    using Naos.Serialization.Domain;
-    using Naos.Serialization.Json;
+    using OBeautifulCode.Serialization;
+    using OBeautifulCode.Serialization.Json;
 
     using OBeautifulCode.Validation.Recipes;
 
@@ -38,7 +38,7 @@ namespace Naos.MessageBus.Persistence
     /// </summary>
     public static class PayloadSerializationExtensions
     {
-        private static readonly ISerializeAndDeserialize PayloadSerializer = new NaosJsonSerializer(typeof(MessageBusJsonConfiguration), UnregisteredTypeEncounteredStrategy.Attempt);
+        private static readonly ISerializeAndDeserialize PayloadSerializer = new ObcJsonSerializer(typeof(MessageBusJsonConfiguration), UnregisteredTypeEncounteredStrategy.Attempt);
 
         /// <summary>
         /// Serializes a payload to JSON.

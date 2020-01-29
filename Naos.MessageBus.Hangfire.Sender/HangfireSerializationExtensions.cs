@@ -7,8 +7,8 @@
 namespace Naos.MessageBus.Hangfire.Sender
 {
     using Naos.MessageBus.Domain;
-    using Naos.Serialization.Domain;
-    using Naos.Serialization.Json;
+    using OBeautifulCode.Serialization;
+    using OBeautifulCode.Serialization.Json;
 
     /// <summary>
     /// Serialization extension methods for serializing items for transport through Hangfire.
@@ -16,7 +16,7 @@ namespace Naos.MessageBus.Hangfire.Sender
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly", MessageId = "Hangfire", Justification = "Spelling/name is correct.")]
     public static class HangfireSerializationExtensions
     {
-        private static readonly ISerializeAndDeserialize HangfireSerializer = new NaosJsonSerializer(typeof(MessageBusJsonConfiguration), UnregisteredTypeEncounteredStrategy.Attempt);
+        private static readonly ISerializeAndDeserialize HangfireSerializer = new ObcJsonSerializer(typeof(MessageBusJsonConfiguration), UnregisteredTypeEncounteredStrategy.Attempt);
 
         /// <summary>
         /// Deserializes a string used to pass information through Hangfire.

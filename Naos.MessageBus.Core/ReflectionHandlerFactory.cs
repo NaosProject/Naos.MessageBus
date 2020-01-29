@@ -16,6 +16,7 @@ namespace Naos.MessageBus.Core
     using Naos.MessageBus.Domain;
 
     using OBeautifulCode.Reflection.Recipes;
+    using OBeautifulCode.Representation.System;
     using OBeautifulCode.Type;
     using OBeautifulCode.Validation.Recipes;
 

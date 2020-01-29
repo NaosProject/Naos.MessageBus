@@ -7,11 +7,9 @@
 namespace Naos.MessageBus.Persistence
 {
     using Naos.MessageBus.Domain;
-    using Naos.Serialization.Domain;
-    using Naos.Serialization.Factory;
-    using Naos.Serialization.Factory.Extensions;
-
-    using OBeautifulCode.Type;
+    using OBeautifulCode.Representation.System;
+    using OBeautifulCode.Serialization;
+    using OBeautifulCode.Serialization.Recipes;
     using OBeautifulCode.Validation.Recipes;
 
     /// <summary>
@@ -19,7 +17,7 @@ namespace Naos.MessageBus.Persistence
     /// </summary>
     public static class ParcelTrackingSerializationExtensions
     {
-        private static readonly SerializationDescription ParcelTrackingSerializationDescription = new SerializationDescription(SerializationKind.Json, SerializationFormat.String, typeof(MessageBusJsonConfiguration).ToTypeDescription());
+        private static readonly SerializationDescription ParcelTrackingSerializationDescription = new SerializationDescription(SerializationKind.Json, SerializationFormat.String, typeof(MessageBusJsonConfiguration).ToRepresentation());
         private static readonly ISerializerFactory SerializerFactory = new SerializationDescriptionToSerializerFactory(ParcelTrackingSerializationDescription, PostOffice.DefaultSerializer);
 
         /// <summary>

@@ -13,7 +13,7 @@ namespace Naos.MessageBus.Hangfire.Harness
     using Naos.MessageBus.Domain;
     using Naos.MessageBus.Domain.Exceptions;
     using Naos.MessageBus.Hangfire.Sender;
-
+    using OBeautifulCode.Representation.System;
     using OBeautifulCode.Type;
     using OBeautifulCode.Validation.Recipes;
 

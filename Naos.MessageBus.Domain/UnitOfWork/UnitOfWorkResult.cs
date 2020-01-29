@@ -6,7 +6,7 @@
 
 namespace Naos.MessageBus.Domain
 {
-    using Naos.Serialization.Domain;
+    using OBeautifulCode.Serialization;
 
     /// <summary>
     /// Result of some work being done.

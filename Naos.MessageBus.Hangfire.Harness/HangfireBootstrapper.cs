@@ -14,23 +14,20 @@ namespace Naos.MessageBus.Hangfire.Harness
     using System.Linq;
     using System.Reflection;
     using System.Web.Hosting;
-
     using global::Hangfire;
     using global::Hangfire.SqlServer;
-
-    using Naos.Compression.Domain;
     using Naos.Diagnostics.Domain;
     using Naos.Diagnostics.Recipes;
     using Naos.MessageBus.Core;
     using Naos.MessageBus.Domain;
     using Naos.MessageBus.Hangfire.Sender;
     using Naos.MessageBus.Persistence;
-    using Naos.Serialization.Domain;
-    using Naos.Serialization.Factory;
     using Naos.Telemetry.Domain;
-
+    using OBeautifulCode.Compression;
+    using OBeautifulCode.Compression.Recipes;
+    using OBeautifulCode.Serialization;
+    using OBeautifulCode.Serialization.Recipes;
     using OBeautifulCode.Validation.Recipes;
-
     using Spritely.Recipes;
 
     /// <inheritdoc />

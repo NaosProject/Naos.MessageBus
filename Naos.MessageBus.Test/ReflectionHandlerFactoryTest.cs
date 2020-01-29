@@ -14,7 +14,7 @@ namespace Naos.MessageBus.Test
 
     using Naos.MessageBus.Core;
     using Naos.MessageBus.Domain;
-
+    using OBeautifulCode.Representation.System;
     using OBeautifulCode.Type;
 
     using Xunit;

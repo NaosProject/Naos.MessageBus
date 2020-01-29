@@ -6,7 +6,7 @@
 
 namespace Naos.MessageBus.Domain
 {
-    using Naos.Serialization.Domain;
+    using OBeautifulCode.Serialization;
 
     /// <summary>
     /// Message to force an error using provided exception.

@@ -7,7 +7,7 @@
 namespace Naos.MessageBus.Domain
 {
     using System;
-
+    using OBeautifulCode.Representation.System;
     using OBeautifulCode.Type;
 
     /// <summary>
@@ -31,7 +31,7 @@ namespace Naos.MessageBus.Domain
         /// <inheritdoc cref="IHandlerFactory" />
         public IHandleMessages BuildHandlerForMessageType(Type messageType)
         {
-            if (messageType.ToTypeDescription().Equals(typeof(NullMessage).ToTypeDescription()))
+            if (messageType.ToRepresentation().Equals(typeof(NullMessage).ToRepresentation()))
             {
                 return new NullMessageHandler();
             }

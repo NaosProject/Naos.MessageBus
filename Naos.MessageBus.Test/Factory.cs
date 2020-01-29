@@ -10,14 +10,13 @@ namespace Naos.MessageBus.Test
     using System.Collections.Generic;
     using System.Linq;
     using System.Threading.Tasks;
-
     using FakeItEasy;
-
-    using Naos.Compression.Domain;
     using Naos.MessageBus.Domain;
-    using Naos.Serialization.Domain;
-    using Naos.Serialization.Factory;
-
+    using OBeautifulCode.Compression;
+    using OBeautifulCode.Compression.Recipes;
+    using OBeautifulCode.Representation.System;
+    using OBeautifulCode.Serialization;
+    using OBeautifulCode.Serialization.Recipes;
     using OBeautifulCode.Type;
 
     internal class Factory

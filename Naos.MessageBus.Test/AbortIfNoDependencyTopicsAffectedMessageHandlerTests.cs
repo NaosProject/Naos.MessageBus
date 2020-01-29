@@ -9,19 +9,14 @@ namespace Naos.MessageBus.Test
     using System;
     using System.Linq;
     using System.Threading.Tasks;
-
     using FakeItEasy;
-
     using FluentAssertions;
-
     using Naos.MessageBus.Core;
     using Naos.MessageBus.Domain;
     using Naos.MessageBus.Domain.Exceptions;
-    using Naos.Serialization.Domain;
-    using Naos.Serialization.Json;
-
     using OBeautifulCode.AutoFakeItEasy;
-
+    using OBeautifulCode.Serialization;
+    using OBeautifulCode.Serialization.Json;
     using Xunit;
 
     public static class AbortIfNoDependencyTopicsAffectedMessageHandlerTests
@@ -35,7 +30,7 @@ namespace Naos.MessageBus.Test
 
             var reportsJson = "[{\"topic\": {\r\n        \"name\": \"cmf\"\r\n      },\r\n      \"affectedItems\": [],\r\n      \"status\": \"failed\",\r\n      \"affectsCompletedDateTimeUtc\": null,\r\n      \"dependencyTopicNoticesAtStart\": [\r\n        {\r\n          \"topic\": {\r\n            \"name\": \"cmc\"\r\n          },\r\n          \"affectedItems\": [],\r\n          \"status\": \"wasAffected\",\r\n          \"affectsCompletedDateTimeUtc\": \"2016-08-13T06:36:48.8400Z\",\r\n          \"dependencyTopicNoticesAtStart\": [\r\n            {\r\n              \"topic\": {\r\n                \"name\": \"cmd\"\r\n              },\r\n              \"affectedItems\": [],\r\n              \"status\": \"wasAffected\",\r\n              \"affectsCompletedDateTimeUtc\": \"2016-08-13T06:26:39.7100Z\",\r\n              \"dependencyTopicNoticesAtStart\": []\r\n            }\r\n          ]\r\n        },\r\n        {\r\n          \"topic\": {\r\n            \"name\": \"cme\"\r\n          },\r\n          \"affectedItems\": [],\r\n          \"status\": \"wasAffected\",\r\n          \"affectsCompletedDateTimeUtc\": \"2016-08-13T06:36:48.15300Z\",\r\n          \"dependencyTopicNoticesAtStart\": [\r\n            {\r\n              \"topic\": {\r\n                \"name\": \"cmd\"\r\n              },\r\n              \"affectedItems\": [],\r\n              \"status\": \"wasAffected\",\r\n              \"affectsCompletedDateTimeUtc\": \"2016-08-13T06:26:39.7100Z\",\r\n              \"dependencyTopicNoticesAtStart\": []\r\n            }\r\n          ]\r\n        },\r\n        {\r\n          \"topic\": {\r\n            \"name\": \"cmd\"\r\n          },\r\n          \"affectedItems\": [],\r\n          \"status\": \"wasAffected\",\r\n          \"affectsCompletedDateTimeUtc\": \"2016-08-13T06:26:39.7100Z\",\r\n          \"dependencyTopicNoticesAtStart\": []\r\n        }\r\n      ]\r\n    },\r\n    {\r\n      \"topic\": {\r\n        \"name\": \"cme\"\r\n      },\r\n      \"affectedItems\": [],\r\n      \"status\": \"wasAffected\",\r\n      \"affectsCompletedDateTimeUtc\": \"2016-08-13T06:36:48.15300Z\",\r\n      \"dependencyTopicNoticesAtStart\": [\r\n        {\r\n          \"topic\": {\r\n            \"name\": \"cmd\"\r\n          },\r\n          \"affectedItems\": [],\r\n          \"status\": \"wasAffected\",\r\n          \"affectsCompletedDateTimeUtc\": \"2016-08-13T06:26:39.7100Z\",\r\n          \"dependencyTopicNoticesAtStart\": []\r\n        }\r\n      ]\r\n    },\r\n    {\r\n      \"topic\": {\r\n        \"name\": \"cmc\"\r\n      },\r\n      \"affectedItems\": [],\r\n      \"status\": \"wasAffected\",\r\n      \"affectsCompletedDateTimeUtc\": \"2016-08-13T06:36:48.8400Z\",\r\n      \"dependencyTopicNoticesAtStart\": [\r\n        {\r\n          \"topic\": {\r\n            \"name\": \"cmd\"\r\n          },\r\n          \"affectedItems\": [],\r\n          \"status\": \"wasAffected\",\r\n          \"affectsCompletedDateTimeUtc\": \"2016-08-13T06:26:39.7100Z\",\r\n          \"dependencyTopicNoticesAtStart\": []\r\n        }\r\n      ]\r\n    },\r\n    {\r\n      \"topic\": {\r\n        \"name\": \"cmfc\"\r\n      },\r\n      \"affectedItems\": [],\r\n      \"status\": \"unknown\",\r\n      \"affectsCompletedDateTimeUtc\": null,\r\n      \"dependencyTopicNoticesAtStart\": []\r\n    }\r\n  ]";
 
-            var reports = new NaosJsonSerializer(typeof(MessageBusJsonConfiguration), UnregisteredTypeEncounteredStrategy.Attempt).Deserialize<TopicStatusReport[]>(reportsJson);
+            var reports = new ObcJsonSerializer(typeof(MessageBusJsonConfiguration), UnregisteredTypeEncounteredStrategy.Attempt).Deserialize<TopicStatusReport[]>(reportsJson);
 
             var message = new AbortIfNoDependencyTopicsAffectedMessage
             {

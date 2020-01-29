@@ -7,17 +7,14 @@
 namespace Naos.MessageBus.Test
 {
     using FakeItEasy;
-
     using FluentAssertions;
-
-    using Naos.Compression.Domain;
     using Naos.MessageBus.Domain;
-    using Naos.Serialization.Domain;
-    using Naos.Serialization.Factory;
-    using Naos.Serialization.Factory.Extensions;
-
+    using OBeautifulCode.Compression;
+    using OBeautifulCode.Compression.Recipes;
+    using OBeautifulCode.Representation.System;
+    using OBeautifulCode.Serialization;
+    using OBeautifulCode.Serialization.Recipes;
     using OBeautifulCode.Type;
-
     using Xunit;
 
     public static class EnvelopeTests

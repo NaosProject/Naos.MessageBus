@@ -9,14 +9,12 @@ namespace Naos.MessageBus.Domain
     using System;
     using System.Collections.Generic;
     using System.Linq;
-
-    using Naos.Compression.Domain;
     using Naos.MessageBus.Domain.Exceptions;
-    using Naos.Serialization.Domain;
-
+    using OBeautifulCode.Compression;
+    using OBeautifulCode.Representation.System;
+    using OBeautifulCode.Serialization;
     using OBeautifulCode.Type;
     using OBeautifulCode.Validation.Recipes;
-
     using static System.FormattableString;
 
     /// <summary>
@@ -27,7 +25,7 @@ namespace Naos.MessageBus.Domain
         /// <summary>
         /// Gets the <see cref="SerializationDescription" /> to use for serializing messages.
         /// </summary>
-        public static SerializationDescription SharedPropertySerializationDescription => new SerializationDescription(SerializationKind.Json, SerializationFormat.String, typeof(MessageBusJsonConfiguration).ToTypeDescription());
+        public static SerializationDescription SharedPropertySerializationDescription => new SerializationDescription(SerializationKind.Json, SerializationFormat.String, typeof(MessageBusJsonConfiguration).ToRepresentation());
 
         // Make this permissive since it's the underlying logic and shouldn't be coupled to whether others are matched in a stricter mode assigned in constructor.
         private static readonly TypeComparer CheckForSharingTypeComparer = new TypeComparer(TypeMatchStrategy.NamespaceAndName);
@@ -118,22 +116,22 @@ namespace Naos.MessageBus.Domain
         }
 
         /// <inheritdoc cref="IManageShares" />
-        public IReadOnlyCollection<SharedInterfaceState> GetSharedInterfaceStates(IShare objectToShareFrom, TypeDescription jsonConfigurationTypeDescription)
+        public IReadOnlyCollection<SharedInterfaceState> GetSharedInterfaceStates(IShare objectToShareFrom, TypeRepresentation jsonConfigurationTypeRepresentation)
         {
             if (objectToShareFrom == null)
             {
                 throw new SharePropertyException(Invariant($"{nameof(objectToShareFrom)} can not be null"));
             }
 
-            if (jsonConfigurationTypeDescription == null)
+            if (jsonConfigurationTypeRepresentation == null)
             {
-                throw new ArgumentNullException(nameof(jsonConfigurationTypeDescription));
+                throw new ArgumentNullException(nameof(jsonConfigurationTypeRepresentation));
             }
 
             var serializationDescription = new SerializationDescription(
                 SharedPropertySerializationDescription.SerializationKind,
                 SharedPropertySerializationDescription.SerializationFormat,
-                jsonConfigurationTypeDescription,
+                jsonConfigurationTypeRepresentation,
                 SharedPropertySerializationDescription.CompressionKind,
                 SharedPropertySerializationDescription.Metadata);
 
@@ -147,8 +145,8 @@ namespace Naos.MessageBus.Domain
             {
                 var entry = new SharedInterfaceState
                                 {
-                                    SourceType = objectToShareFrom.GetType().ToTypeDescription(),
-                                    InterfaceType = type.ToTypeDescription(),
+                                    SourceType = objectToShareFrom.GetType().ToRepresentation(),
+                                    InterfaceType = type.ToRepresentation(),
                                     Properties = new List<SharedProperty>(),
                                 };
 
@@ -158,9 +156,9 @@ namespace Naos.MessageBus.Domain
                     var propertyName = prop.Name;
                     var propertyValue = prop.GetValue(objectToShareFrom);
 
-                    var payloadTypeDescription = (propertyValue?.GetType() ?? prop.PropertyType).ToTypeDescription();
+                    var payloadTypeRepresentation = (propertyValue?.GetType() ?? prop.PropertyType).ToRepresentation();
                     var propertyValueSerialized = this.serializer.SerializeToString(propertyValue);
-                    var valueAsDescribedSerialization = new DescribedSerialization(payloadTypeDescription, propertyValueSerialized, serializationDescription);
+                    var valueAsDescribedSerialization = new DescribedSerialization(payloadTypeRepresentation, propertyValueSerialized, serializationDescription);
                     var propertyEntry = new SharedProperty(propertyName, valueAsDescribedSerialization);
 
                     entry.Properties.Add(propertyEntry);
@@ -184,10 +182,10 @@ namespace Naos.MessageBus.Domain
 
             // get the ishare implementations to check for match
             var shareInterfaceTypes = GetShareInterfaceTypes(objectToShareTo);
-            var shareInterfaceTypeDescriptions = shareInterfaceTypes.Select(_ => _.ToTypeDescription()).ToList();
+            var shareInterfaceTypeRepresentations = shareInterfaceTypes.Select(_ => _.ToRepresentation()).ToList();
 
             // check if the interface of the shared set is implemented by the message
-            if (shareInterfaceTypeDescriptions.Contains(sharedPropertiesFromAnotherShareObject.InterfaceType, this.typeComparer))
+            if (shareInterfaceTypeRepresentations.Contains(sharedPropertiesFromAnotherShareObject.InterfaceType, this.typeComparer))
             {
                 var typeProperties = objectToShareTo.GetType().GetProperties();
                 foreach (var sharedPropertyEntry in sharedPropertiesFromAnotherShareObject.Properties)

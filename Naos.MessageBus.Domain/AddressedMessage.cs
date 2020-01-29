@@ -6,6 +6,7 @@
 
 namespace Naos.MessageBus.Domain
 {
+    using OBeautifulCode.Representation.System;
     using OBeautifulCode.Type;
 
     /// <summary>
@@ -26,6 +27,6 @@ namespace Naos.MessageBus.Domain
         /// <summary>
         /// Gets or sets the type of configuration to use for JSON serialization which is necessary for message transport.
         /// </summary>
-        public TypeDescription JsonConfigurationTypeDescription { get; set; }
+        public TypeRepresentation JsonConfigurationTypeRepresentation { get; set; }
     }
 }

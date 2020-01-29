@@ -10,19 +10,16 @@ namespace Naos.MessageBus.Core
     using System.Collections.Concurrent;
     using System.Collections.Generic;
     using System.Linq;
-
     using Its.Log.Instrumentation;
-
     using Naos.Diagnostics.Domain;
     using Naos.MessageBus.Domain;
     using Naos.MessageBus.Domain.Exceptions;
     using Naos.Recipes.RunWithRetry;
-    using Naos.Serialization.Domain;
     using Naos.Telemetry.Domain;
-
+    using OBeautifulCode.Representation.System;
+    using OBeautifulCode.Serialization;
     using OBeautifulCode.Type;
     using OBeautifulCode.Validation.Recipes;
-
     using static System.FormattableString;
 
     /// <inheritdoc />
@@ -124,7 +121,7 @@ namespace Naos.MessageBus.Core
 
                 // this is a very special case and must be checked before marking any status changes to the parcel (otherwise it should be in InternalDispatch...)
                 var firstEnvelope = parcel.Envelopes.First();
-                if (this.internalTypeComparerForRecurringMessageCheck.Equals(firstEnvelope.SerializedMessage.PayloadTypeDescription, typeof(RecurringHeaderMessage).ToTypeDescription()))
+                if (this.internalTypeComparerForRecurringMessageCheck.Equals(firstEnvelope.SerializedMessage.PayloadTypeRepresentation, typeof(RecurringHeaderMessage).ToRepresentation()))
                 {
                     throw new RecurringParcelEncounteredException(firstEnvelope.Description);
                 }
@@ -141,7 +138,7 @@ namespace Naos.MessageBus.Core
                 //        parcel id and then resend but we will not update any status because the new send with the new id will take care of that
                 Log.Write("Encountered recurring envelope: " + recurringParcelEncounteredException.Message);
                 var remainingEnvelopes = parcel.Envelopes.Skip(1).ToList();
-                this.SendRemainingEnvelopes(Guid.NewGuid(), trackingCode, remainingEnvelopes, parcel.SharedInterfaceStates, PostOffice.MessageSerializationDescription.ConfigurationTypeDescription);
+                this.SendRemainingEnvelopes(Guid.NewGuid(), trackingCode, remainingEnvelopes, parcel.SharedInterfaceStates, PostOffice.MessageSerializationDescription.ConfigurationTypeRepresentation);
             }
             catch (AbortParcelDeliveryException abortParcelDeliveryException)
             {
@@ -175,12 +172,12 @@ namespace Naos.MessageBus.Core
             var firstAddressedMessage = this.DeserializeEnvelopeIntoAddressedMessage(trackingCode, firstEnvelope);
 
             var messageToHandle = firstAddressedMessage.Message;
-            var messageToHandleJsonConfigurationTypeDescription = firstAddressedMessage.JsonConfigurationTypeDescription ?? PostOffice.MessageSerializationDescription.ConfigurationTypeDescription;
+            var messageToHandleJsonConfigurationTypeRepresentation = firstAddressedMessage.JsonConfigurationTypeRepresentation ?? PostOffice.MessageSerializationDescription.ConfigurationTypeRepresentation;
 
             // WARNING: this method change the state of the objects passed in!!!
             this.PrepareMessage(trackingCode, messageToHandle, parcel.SharedInterfaceStates);
             var deliveredEnvelope = messageToHandle.ToAddressedMessage(address).ToEnvelope(this.envelopeMachine, firstEnvelope.Id);
-            Log.Write(() => Invariant($"Delivered Envelope Channel: {deliveredEnvelope.Address}, Type: {deliveredEnvelope.SerializedMessage.PayloadTypeDescription}, Payload: {deliveredEnvelope.SerializedMessage.SerializedPayload}"));
+            Log.Write(() => Invariant($"Delivered Envelope Channel: {deliveredEnvelope.Address}, Type: {deliveredEnvelope.SerializedMessage.PayloadTypeRepresentation}, Payload: {deliveredEnvelope.SerializedMessage.SerializedPayload}"));
 
             var messageType = messageToHandle.GetType();
 
@@ -220,12 +217,12 @@ namespace Naos.MessageBus.Core
                     trackingCode,
                     remainingEnvelopes,
                     parcel.SharedInterfaceStates,
-                    messageToHandleJsonConfigurationTypeDescription,
+                    messageToHandleJsonConfigurationTypeRepresentation,
                     handler);
             }
         }
 
-        private void SendRemainingEnvelopes(Guid parcelId, TrackingCode trackingCodeYieldingEnvelopes, List<Envelope> envelopes, IList<SharedInterfaceState> existingSharedInterfaceStates, TypeDescription messageToHandleJsonConfigurationTypeDescription, object handler = null)
+        private void SendRemainingEnvelopes(Guid parcelId, TrackingCode trackingCodeYieldingEnvelopes, List<Envelope> envelopes, IList<SharedInterfaceState> existingSharedInterfaceStates, TypeRepresentation messageToHandleJsonConfigurationTypeRepresentation, object handler = null)
         {
             using (var activity = Log.Enter(() => new { TrackingCode = trackingCodeYieldingEnvelopes, RemainingEnvelopes = envelopes }))
             {
@@ -242,7 +239,7 @@ namespace Naos.MessageBus.Core
                     if (handler is IShare handlerAsShare)
                     {
                         activity.Trace(() => "Handler is IShare, loading shared properties into parcel for future messages.");
-                        var newShareSets = this.shareManager.GetSharedInterfaceStates(handlerAsShare, messageToHandleJsonConfigurationTypeDescription);
+                        var newShareSets = this.shareManager.GetSharedInterfaceStates(handlerAsShare, messageToHandleJsonConfigurationTypeRepresentation);
                         shareSets.AddRange(newShareSets);
                     }
 
@@ -384,7 +381,7 @@ namespace Naos.MessageBus.Core
             {
                 Message = message,
                 Address = envelope.Address,
-                JsonConfigurationTypeDescription = envelope.SerializedMessage.SerializationDescription.ConfigurationTypeDescription,
+                JsonConfigurationTypeRepresentation = envelope.SerializedMessage.SerializationDescription.ConfigurationTypeRepresentation,
             };
 
             if (ret.Message == null)

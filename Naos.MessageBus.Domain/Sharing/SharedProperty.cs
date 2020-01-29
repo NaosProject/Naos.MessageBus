@@ -6,7 +6,7 @@
 
 namespace Naos.MessageBus.Domain
 {
-    using Naos.Serialization.Domain;
+    using OBeautifulCode.Serialization;
 
     using OBeautifulCode.Validation.Recipes;
 

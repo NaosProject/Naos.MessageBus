@@ -12,24 +12,20 @@ namespace Naos.MessageBus.Test
     using System.Linq;
     using System.Threading;
     using System.Threading.Tasks;
-
     using FluentAssertions;
-
-    using Naos.Compression.Domain;
     using Naos.Diagnostics.Domain;
     using Naos.MessageBus.Core;
     using Naos.MessageBus.Domain;
     using Naos.MessageBus.Domain.Exceptions;
-    using Naos.Serialization.Domain;
-    using Naos.Serialization.Factory;
-    using Naos.Serialization.Factory.Extensions;
-    using Naos.Serialization.Json;
     using Naos.Telemetry.Domain;
-
+    using OBeautifulCode.Compression;
+    using OBeautifulCode.Compression.Recipes;
+    using OBeautifulCode.Representation.System;
+    using OBeautifulCode.Serialization;
+    using OBeautifulCode.Serialization.Json;
+    using OBeautifulCode.Serialization.Recipes;
     using OBeautifulCode.Type;
-
     using Xunit;
-
     using static System.FormattableString;
 
     public static class MessageDispatcherTest
@@ -107,7 +103,7 @@ namespace Naos.MessageBus.Test
             var sharedPropertySet = newParcel.SharedInterfaceStates.Single();
             var typeComparer = new TypeComparer(TypeMatchStrategy.NamespaceAndName);
             Assert.True(
-                typeComparer.Equals(typeof(IShareEnum).ToTypeDescription(), sharedPropertySet.InterfaceType));
+                typeComparer.Equals(typeof(IShareEnum).ToRepresentation(), sharedPropertySet.InterfaceType));
             Assert.Equal("EnumValueToShare", sharedPropertySet.Properties.Single().Name);
             var jsoner = PostOffice.DefaultSerializer;
 
@@ -121,8 +117,8 @@ namespace Naos.MessageBus.Test
             Assert.Equal(2, trackingSends.Count);
             var newNewParcel = trackingSends.Single(_ => _.Envelopes.First().Description == thirdMessage.Description);
             Assert.Equal(2, newNewParcel.SharedInterfaceStates.Count);
-            Assert.Equal(typeof(FirstEnumHandler).ToTypeDescription().Name, newNewParcel.SharedInterfaceStates.First().SourceType.Name);
-            Assert.Equal(typeof(SecondEnumHandler).ToTypeDescription().Name, newNewParcel.SharedInterfaceStates.Skip(1).First().SourceType.Name);
+            Assert.Equal(typeof(FirstEnumHandler).ToRepresentation().Name, newNewParcel.SharedInterfaceStates.First().SourceType.Name);
+            Assert.Equal(typeof(SecondEnumHandler).ToRepresentation().Name, newNewParcel.SharedInterfaceStates.Skip(1).First().SourceType.Name);
         }
 
         [Fact]
@@ -152,7 +148,7 @@ namespace Naos.MessageBus.Test
                                                     "No work",
                                                     channel,
                                                     new DescribedSerialization(
-                                                        new TypeDescription("Not Real Space", "Not Real Name", "Not Real AQN"),
+                                                        new TypeRepresentation("Not Real Space", "Not Real Name", "Not Real AQN", new List<TypeRepresentation>()),
                                                         "Not Real Payload",
                                                         PostOffice.MessageSerializationDescription)),
                                             };

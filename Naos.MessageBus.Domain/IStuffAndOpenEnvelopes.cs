@@ -8,8 +8,9 @@ namespace Naos.MessageBus.Domain
 {
     using System;
 
-    using Naos.Compression.Domain;
-    using Naos.Serialization.Domain;
+    using OBeautifulCode.Compression;
+    using OBeautifulCode.Representation.System;
+    using OBeautifulCode.Serialization;
 
     using OBeautifulCode.Type;
     using OBeautifulCode.Validation.Recipes;
@@ -106,13 +107,13 @@ namespace Naos.MessageBus.Domain
             var localId = id ?? Guid.NewGuid().ToString().ToUpperInvariant();
 
             var localSerializationDescription = this.messageSerializationDescription;
-            if (addressedMessage.JsonConfigurationTypeDescription != null)
+            if (addressedMessage.JsonConfigurationTypeRepresentation != null)
             {
                 // override configuration type
                 localSerializationDescription = new SerializationDescription(
                     localSerializationDescription.SerializationKind,
                     localSerializationDescription.SerializationFormat,
-                    addressedMessage.JsonConfigurationTypeDescription,
+                    addressedMessage.JsonConfigurationTypeRepresentation,
                     localSerializationDescription.CompressionKind,
                     localSerializationDescription.Metadata);
             }

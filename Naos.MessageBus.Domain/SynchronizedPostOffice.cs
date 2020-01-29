@@ -9,6 +9,7 @@ namespace Naos.MessageBus.Domain
     using System.Collections.Generic;
 
     using Naos.Cron;
+    using OBeautifulCode.Representation.System;
     using OBeautifulCode.Type;
 
     /// <summary>
@@ -37,7 +38,7 @@ namespace Naos.MessageBus.Domain
             IReadOnlyCollection<DependencyTopic> dependencyTopics = null,
             TopicCheckStrategy dependencyTopicCheckStrategy = TopicCheckStrategy.Unspecified,
             SimultaneousRunsStrategy simultaneousRunsStrategy = SimultaneousRunsStrategy.Unspecified,
-            TypeDescription jsonConfigurationType = null)
+            TypeRepresentation jsonConfigurationType = null)
         {
             lock (this.syncPostOffice)
             {
@@ -82,7 +83,7 @@ namespace Naos.MessageBus.Domain
             IReadOnlyCollection<DependencyTopic> dependencyTopics = null,
             TopicCheckStrategy dependencyTopicCheckStrategy = TopicCheckStrategy.Unspecified,
             SimultaneousRunsStrategy simultaneousRunsStrategy = SimultaneousRunsStrategy.Unspecified,
-            TypeDescription jsonConfigurationType = null)
+            TypeRepresentation jsonConfigurationType = null)
         {
             lock (this.syncPostOffice)
             {

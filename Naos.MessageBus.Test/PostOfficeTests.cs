@@ -14,7 +14,7 @@ namespace Naos.MessageBus.Test
 
     using Naos.Cron;
     using Naos.MessageBus.Domain;
-
+    using OBeautifulCode.Representation.System;
     using OBeautifulCode.Type;
 
     using Xunit;
@@ -102,27 +102,27 @@ namespace Naos.MessageBus.Test
 
             // abort if pending
             var indexFetch = 0;
-            parcel.Envelopes.Skip(indexFetch).First().SerializedMessage.PayloadTypeDescription.Should().Be(typeof(FetchAndShareLatestTopicStatusReportsMessage).ToTypeDescription());
+            parcel.Envelopes.Skip(indexFetch).First().SerializedMessage.PayloadTypeRepresentation.Should().Be(typeof(FetchAndShareLatestTopicStatusReportsMessage).ToRepresentation());
             parcel.Envelopes.Skip(indexFetch).First().Open<FetchAndShareLatestTopicStatusReportsMessage>(envelopeMachine).TopicsToFetchAndShareStatusReportsFrom.Single().Name.Should().Be(sampleTopic);
 
             // abort if pending
             var indexAbort = 1;
-            parcel.Envelopes.Skip(indexAbort).First().SerializedMessage.PayloadTypeDescription.Should().Be(typeof(AbortIfTopicsHaveSpecificStatusesMessage).ToTypeDescription());
+            parcel.Envelopes.Skip(indexAbort).First().SerializedMessage.PayloadTypeRepresentation.Should().Be(typeof(AbortIfTopicsHaveSpecificStatusesMessage).ToRepresentation());
             parcel.Envelopes.Skip(indexAbort).First().Open<AbortIfTopicsHaveSpecificStatusesMessage>(envelopeMachine).TopicsToCheck.Single().Name.Should().Be(sampleTopic);
 
             // being affected
             var indexBeing = 2;
-            parcel.Envelopes.Skip(indexBeing).First().SerializedMessage.PayloadTypeDescription.Should().Be(typeof(TopicBeingAffectedMessage).ToTypeDescription());
+            parcel.Envelopes.Skip(indexBeing).First().SerializedMessage.PayloadTypeRepresentation.Should().Be(typeof(TopicBeingAffectedMessage).ToRepresentation());
             parcel.Envelopes.Skip(indexBeing).First().Open<TopicBeingAffectedMessage>(envelopeMachine).Topic.Name.Should().Be(sampleTopic);
 
             // mine
             var indexMine = 3;
-            parcel.Envelopes.Skip(indexMine).First().SerializedMessage.PayloadTypeDescription.Should().Be(typeof(NullMessage).ToTypeDescription());
+            parcel.Envelopes.Skip(indexMine).First().SerializedMessage.PayloadTypeRepresentation.Should().Be(typeof(NullMessage).ToRepresentation());
             parcel.Envelopes.Skip(indexMine).First().Address.Should().Be(channel);
 
             // was affected
             var indexWas = 4;
-            parcel.Envelopes.Skip(indexWas).First().SerializedMessage.PayloadTypeDescription.Should().Be(typeof(TopicWasAffectedMessage).ToTypeDescription());
+            parcel.Envelopes.Skip(indexWas).First().SerializedMessage.PayloadTypeRepresentation.Should().Be(typeof(TopicWasAffectedMessage).ToRepresentation());
             parcel.Envelopes.Skip(indexWas).First().Open<TopicWasAffectedMessage>(envelopeMachine).Topic.Name.Should().Be(sampleTopic);
         }
 
@@ -186,35 +186,35 @@ namespace Naos.MessageBus.Test
 
             // abort if pending
             var indexFetch = 0;
-            parcel.Envelopes.Skip(indexFetch).First().SerializedMessage.PayloadTypeDescription.Should().Be(typeof(FetchAndShareLatestTopicStatusReportsMessage).ToTypeDescription());
+            parcel.Envelopes.Skip(indexFetch).First().SerializedMessage.PayloadTypeRepresentation.Should().Be(typeof(FetchAndShareLatestTopicStatusReportsMessage).ToRepresentation());
             parcel.Envelopes.Skip(indexFetch).First().Open<FetchAndShareLatestTopicStatusReportsMessage>(envelopeMachine)
                 .TopicsToFetchAndShareStatusReportsFrom.ShouldAllBeEquivalentTo(
                     dependantTopics.Select(_ => _.ToNamedTopic()).Union(new[] { new NamedTopic(sampleTopic) }).ToArray());
 
             // abort if pending
             var indexAbort = 1;
-            parcel.Envelopes.Skip(indexAbort).First().SerializedMessage.PayloadTypeDescription.Should().Be(typeof(AbortIfTopicsHaveSpecificStatusesMessage).ToTypeDescription());
+            parcel.Envelopes.Skip(indexAbort).First().SerializedMessage.PayloadTypeRepresentation.Should().Be(typeof(AbortIfTopicsHaveSpecificStatusesMessage).ToRepresentation());
             parcel.Envelopes.Skip(indexAbort).First().Open<AbortIfTopicsHaveSpecificStatusesMessage>(envelopeMachine).TopicsToCheck.Single().Name.Should().Be(sampleTopic);
 
             // abort if no new
             var indexNoNewAbort = 2;
-            parcel.Envelopes.Skip(indexNoNewAbort).First().SerializedMessage.PayloadTypeDescription.Should().Be(typeof(AbortIfNoDependencyTopicsAffectedMessage).ToTypeDescription());
+            parcel.Envelopes.Skip(indexNoNewAbort).First().SerializedMessage.PayloadTypeRepresentation.Should().Be(typeof(AbortIfNoDependencyTopicsAffectedMessage).ToRepresentation());
             parcel.Envelopes.Skip(indexNoNewAbort).First().Open<AbortIfNoDependencyTopicsAffectedMessage>(envelopeMachine).Topic.Name.Should().Be(sampleTopic);
             parcel.Envelopes.Skip(indexNoNewAbort).First().Open<AbortIfNoDependencyTopicsAffectedMessage>(envelopeMachine).DependencyTopics.ShouldBeEquivalentTo(dependantTopics);
 
             // being affected
             var indexBeing = 3;
-            parcel.Envelopes.Skip(indexBeing).First().SerializedMessage.PayloadTypeDescription.Should().Be(typeof(TopicBeingAffectedMessage).ToTypeDescription());
+            parcel.Envelopes.Skip(indexBeing).First().SerializedMessage.PayloadTypeRepresentation.Should().Be(typeof(TopicBeingAffectedMessage).ToRepresentation());
             parcel.Envelopes.Skip(indexBeing).First().Open<TopicBeingAffectedMessage>(envelopeMachine).Topic.Name.Should().Be(sampleTopic);
 
             // mine
             var indexMine = 4;
-            parcel.Envelopes.Skip(indexMine).First().SerializedMessage.PayloadTypeDescription.Should().Be(typeof(NullMessage).ToTypeDescription());
+            parcel.Envelopes.Skip(indexMine).First().SerializedMessage.PayloadTypeRepresentation.Should().Be(typeof(NullMessage).ToRepresentation());
             parcel.Envelopes.Skip(indexMine).First().Address.Should().Be(channel);
 
             // was affected
             var indexWas = 5;
-            parcel.Envelopes.Skip(indexWas).First().SerializedMessage.PayloadTypeDescription.Should().Be(typeof(TopicWasAffectedMessage).ToTypeDescription());
+            parcel.Envelopes.Skip(indexWas).First().SerializedMessage.PayloadTypeRepresentation.Should().Be(typeof(TopicWasAffectedMessage).ToRepresentation());
             parcel.Envelopes.Skip(indexWas).First().Open<TopicWasAffectedMessage>(envelopeMachine).Topic.Name.Should().Be(sampleTopic);
         }
 
@@ -260,27 +260,27 @@ namespace Naos.MessageBus.Test
 
             // abort if pending
             var indexFetch = 0;
-            parcel.Envelopes.Skip(indexFetch).First().SerializedMessage.PayloadTypeDescription.Should().Be(typeof(FetchAndShareLatestTopicStatusReportsMessage).ToTypeDescription());
+            parcel.Envelopes.Skip(indexFetch).First().SerializedMessage.PayloadTypeRepresentation.Should().Be(typeof(FetchAndShareLatestTopicStatusReportsMessage).ToRepresentation());
             parcel.Envelopes.Skip(indexFetch).First().Open<FetchAndShareLatestTopicStatusReportsMessage>(envelopeMachine).TopicsToFetchAndShareStatusReportsFrom.Single().Name.Should().Be(sampleTopic);
 
             // abort if pending
             var indexAbort = 1;
-            parcel.Envelopes.Skip(indexAbort).First().SerializedMessage.PayloadTypeDescription.Should().Be(typeof(AbortIfTopicsHaveSpecificStatusesMessage).ToTypeDescription());
+            parcel.Envelopes.Skip(indexAbort).First().SerializedMessage.PayloadTypeRepresentation.Should().Be(typeof(AbortIfTopicsHaveSpecificStatusesMessage).ToRepresentation());
             parcel.Envelopes.Skip(indexAbort).First().Open<AbortIfTopicsHaveSpecificStatusesMessage>(envelopeMachine).TopicsToCheck.Single().Name.Should().Be(sampleTopic);
 
             // being affected
             var indexBeing = 2;
-            parcel.Envelopes.Skip(indexBeing).First().SerializedMessage.PayloadTypeDescription.Should().Be(typeof(TopicBeingAffectedMessage).ToTypeDescription());
+            parcel.Envelopes.Skip(indexBeing).First().SerializedMessage.PayloadTypeRepresentation.Should().Be(typeof(TopicBeingAffectedMessage).ToRepresentation());
             parcel.Envelopes.Skip(indexBeing).First().Open<TopicBeingAffectedMessage>(envelopeMachine).Topic.Name.Should().Be(sampleTopic);
 
             // mine
             var indexMine = 3;
-            parcel.Envelopes.Skip(indexMine).First().SerializedMessage.PayloadTypeDescription.Should().Be(typeof(NullMessage).ToTypeDescription());
+            parcel.Envelopes.Skip(indexMine).First().SerializedMessage.PayloadTypeRepresentation.Should().Be(typeof(NullMessage).ToRepresentation());
             parcel.Envelopes.Skip(indexMine).First().Address.Should().Be(channel);
 
             // was affected
             var indexWas = 4;
-            parcel.Envelopes.Skip(indexWas).First().SerializedMessage.PayloadTypeDescription.Should().Be(typeof(TopicWasAffectedMessage).ToTypeDescription());
+            parcel.Envelopes.Skip(indexWas).First().SerializedMessage.PayloadTypeRepresentation.Should().Be(typeof(TopicWasAffectedMessage).ToRepresentation());
             parcel.Envelopes.Skip(indexWas).First().Open<TopicWasAffectedMessage>(envelopeMachine).Topic.Name.Should().Be(sampleTopic);
         }
 
@@ -327,32 +327,32 @@ namespace Naos.MessageBus.Test
 
             // abort if pending
             var indexFetch = 0;
-            parcel.Envelopes.Skip(indexFetch).First().SerializedMessage.PayloadTypeDescription.Should().Be(typeof(FetchAndShareLatestTopicStatusReportsMessage).ToTypeDescription());
+            parcel.Envelopes.Skip(indexFetch).First().SerializedMessage.PayloadTypeRepresentation.Should().Be(typeof(FetchAndShareLatestTopicStatusReportsMessage).ToRepresentation());
             parcel.Envelopes.Skip(indexFetch).First().Open<FetchAndShareLatestTopicStatusReportsMessage>(envelopeMachine).TopicsToFetchAndShareStatusReportsFrom.Single().Name.Should().Be(sampleTopic);
 
             // abort if pending
             var indexAbort = 1;
-            parcel.Envelopes.Skip(indexAbort).First().SerializedMessage.PayloadTypeDescription.Should().Be(typeof(AbortIfTopicsHaveSpecificStatusesMessage).ToTypeDescription());
+            parcel.Envelopes.Skip(indexAbort).First().SerializedMessage.PayloadTypeRepresentation.Should().Be(typeof(AbortIfTopicsHaveSpecificStatusesMessage).ToRepresentation());
             parcel.Envelopes.Skip(indexAbort).First().Open<AbortIfTopicsHaveSpecificStatusesMessage>(envelopeMachine).TopicsToCheck.Single().Name.Should().Be(sampleTopic);
 
             // mine
             var indexMine = 2;
-            parcel.Envelopes.Skip(indexMine).First().SerializedMessage.PayloadTypeDescription.Should().Be(typeof(NullMessage).ToTypeDescription());
+            parcel.Envelopes.Skip(indexMine).First().SerializedMessage.PayloadTypeRepresentation.Should().Be(typeof(NullMessage).ToRepresentation());
             parcel.Envelopes.Skip(indexMine).First().Address.Should().Be(channel);
 
             // being affected
             var indexBeing = 3;
-            parcel.Envelopes.Skip(indexBeing).First().SerializedMessage.PayloadTypeDescription.Should().Be(typeof(TopicBeingAffectedMessage).ToTypeDescription());
+            parcel.Envelopes.Skip(indexBeing).First().SerializedMessage.PayloadTypeRepresentation.Should().Be(typeof(TopicBeingAffectedMessage).ToRepresentation());
             parcel.Envelopes.Skip(indexBeing).First().Open<TopicBeingAffectedMessage>(envelopeMachine).Topic.Name.Should().Be(sampleTopic);
 
             // was affected
             var indexWas = 4;
-            parcel.Envelopes.Skip(indexWas).First().SerializedMessage.PayloadTypeDescription.Should().Be(typeof(TopicWasAffectedMessage).ToTypeDescription());
+            parcel.Envelopes.Skip(indexWas).First().SerializedMessage.PayloadTypeRepresentation.Should().Be(typeof(TopicWasAffectedMessage).ToRepresentation());
             parcel.Envelopes.Skip(indexWas).First().Open<TopicWasAffectedMessage>(envelopeMachine).Topic.Name.Should().Be(sampleTopic);
 
             // mine
             var indexLast = 5;
-            parcel.Envelopes.Skip(indexLast).First().SerializedMessage.PayloadTypeDescription.Should().Be(typeof(NullMessage).ToTypeDescription());
+            parcel.Envelopes.Skip(indexLast).First().SerializedMessage.PayloadTypeRepresentation.Should().Be(typeof(NullMessage).ToRepresentation());
             parcel.Envelopes.Skip(indexLast).First().Address.Should().Be(channel);
         }
 

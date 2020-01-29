@@ -10,17 +10,15 @@ namespace Naos.MessageBus.Test
     using System.IO;
     using System.Linq;
     using System.Threading.Tasks;
-
     using FluentAssertions;
-
-    using Naos.Compression.Domain;
     using Naos.MessageBus.Domain;
     using Naos.MessageBus.Domain.Exceptions;
-    using Naos.Serialization.Domain;
-    using Naos.Serialization.Factory;
-
+    using OBeautifulCode.Compression;
+    using OBeautifulCode.Compression.Recipes;
+    using OBeautifulCode.Representation.System;
+    using OBeautifulCode.Serialization;
+    using OBeautifulCode.Serialization.Recipes;
     using OBeautifulCode.Type;
-
     using Xunit;
 
     public static class ShareManagerTest
@@ -32,7 +30,7 @@ namespace Naos.MessageBus.Test
             var testHandler = new ShareArrayOfIntHandler { IntArray = new[] { 1, 2, 3 } };
             var testMessage = new ShareArrayOfIntMessage();
 
-            var sharedProperties = shareManager.GetSharedInterfaceStates(testHandler, PostOffice.MessageSerializationDescription.ConfigurationTypeDescription);
+            var sharedProperties = shareManager.GetSharedInterfaceStates(testHandler, PostOffice.MessageSerializationDescription.ConfigurationTypeRepresentation);
             shareManager.ApplySharedInterfaceState(sharedProperties.Single(), testMessage);
 
             Assert.Equal(testHandler.IntArray, testMessage.IntArray);
@@ -45,7 +43,7 @@ namespace Naos.MessageBus.Test
             var testHandler = new TestComplexShareHandler { ComplexShareObject = new ComplexShareObject("we did it!"), OtherProp = "monkey" };
             var testMessage = new TestComplexShareMessage();
 
-            var sharedProperties = shareManager.GetSharedInterfaceStates(testHandler, PostOffice.MessageSerializationDescription.ConfigurationTypeDescription);
+            var sharedProperties = shareManager.GetSharedInterfaceStates(testHandler, PostOffice.MessageSerializationDescription.ConfigurationTypeRepresentation);
             shareManager.ApplySharedInterfaceState(sharedProperties.Single(), testMessage);
 
             Assert.Equal(testHandler.ComplexShareObject.Prop, testMessage.ComplexShareObject.Prop);
@@ -59,7 +57,7 @@ namespace Naos.MessageBus.Test
             var testHandler = new CopyFileHandler() { FilePath = "This should be set on the message" };
             var testMessage = new DeleteFileMessage();
 
-            var sharedProperties = shareManager.GetSharedInterfaceStates(testHandler, PostOffice.MessageSerializationDescription.ConfigurationTypeDescription);
+            var sharedProperties = shareManager.GetSharedInterfaceStates(testHandler, PostOffice.MessageSerializationDescription.ConfigurationTypeRepresentation);
             shareManager.ApplySharedInterfaceState(sharedProperties.Single(), testMessage);
 
             Assert.Equal(testHandler.FilePath, testMessage.FilePath);
@@ -72,7 +70,7 @@ namespace Naos.MessageBus.Test
             var testHandler = new CountHandler() { Count = 15 };
             var testMessage = new CountMessage();
 
-            var sharedProperties = shareManager.GetSharedInterfaceStates(testHandler, PostOffice.MessageSerializationDescription.ConfigurationTypeDescription);
+            var sharedProperties = shareManager.GetSharedInterfaceStates(testHandler, PostOffice.MessageSerializationDescription.ConfigurationTypeRepresentation);
             shareManager.ApplySharedInterfaceState(sharedProperties.Single(), testMessage);
 
             Assert.Equal(testHandler.Count, testMessage.Count);
@@ -85,7 +83,7 @@ namespace Naos.MessageBus.Test
             var testHandler = new FirstEnumHandler() { EnumValueToShare = MyEnum.OtherOtherValue };
             var testMessage = new SecondEnumMessage();
 
-            var sharedProperties = shareManager.GetSharedInterfaceStates(testHandler, PostOffice.MessageSerializationDescription.ConfigurationTypeDescription);
+            var sharedProperties = shareManager.GetSharedInterfaceStates(testHandler, PostOffice.MessageSerializationDescription.ConfigurationTypeRepresentation);
             shareManager.ApplySharedInterfaceState(sharedProperties.Single(), testMessage);
 
             Assert.Equal(testHandler.EnumValueToShare, testMessage.EnumValueToShare);
@@ -96,7 +94,7 @@ namespace Naos.MessageBus.Test
         {
             // Arrange
             var shareManager = new ShareManager(SerializerFactory.Instance, CompressorFactory.Instance, TypeMatchStrategy.NamespaceAndName);
-            Action testCode = () => shareManager.GetSharedInterfaceStates(null, PostOffice.MessageSerializationDescription.ConfigurationTypeDescription);
+            Action testCode = () => shareManager.GetSharedInterfaceStates(null, PostOffice.MessageSerializationDescription.ConfigurationTypeRepresentation);
 
             // Act & Assert
             testCode.ShouldThrow<SharePropertyException>().WithMessage("objectToShareFrom can not be null");
@@ -112,17 +110,17 @@ namespace Naos.MessageBus.Test
                     var sharedPropertyEntry = new SharedProperty(
                         "FilePath",
                         new DescribedSerialization(
-                            new TypeDescription() { AssemblyQualifiedName = "NotReal", Namespace = "NotReal", Name = "NotReal" },
+                            new TypeRepresentation() { AssemblyQualifiedName = "NotReal", Namespace = "NotReal", Name = "NotReal" },
                             "Value",
                             ShareManager.SharedPropertySerializationDescription));
 
                     shareManager.ApplySharedInterfaceState(
-                        new SharedInterfaceState { InterfaceType = typeof(IShareFilePath).ToTypeDescription(), Properties = new[] { sharedPropertyEntry } },
+                        new SharedInterfaceState { InterfaceType = typeof(IShareFilePath).ToRepresentation(), Properties = new[] { sharedPropertyEntry } },
                         new CopyFileMessage());
                 };
 
             // act & assert
-            testCode.ShouldThrow<ArgumentNullException>().WithMessage("Parameter 'type' is null.");
+            testCode.ShouldThrow<ArgumentNullException>().WithMessage("Provided value (name: 'type') is null.");
         }
 
         [Fact]

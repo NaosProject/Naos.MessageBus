@@ -16,6 +16,7 @@ namespace Naos.MessageBus.Hangfire.Sender
     using Its.Log.Instrumentation;
     using Naos.Cron;
     using Naos.MessageBus.Domain;
+    using OBeautifulCode.Representation.System;
     using OBeautifulCode.Type;
     using OBeautifulCode.Validation.Recipes;
 
@@ -130,7 +131,7 @@ namespace Naos.MessageBus.Hangfire.Sender
 
             Parcel parcel;
 
-            if (crate.RecurringSchedule != null && crate.RecurringSchedule.GetType().ToTypeDescription() != typeof(NullSchedule).ToTypeDescription())
+            if (crate.RecurringSchedule != null && crate.RecurringSchedule.GetType().ToRepresentation() != typeof(NullSchedule).ToRepresentation())
             {
                 // need to inject a recurring message to make it work (must be the default channel because it will go there anyway)...
                 var newEnvelopes = new List<Envelope>(new[] { new RecurringHeaderMessage { Description = crate.Label }.ToAddressedMessage().ToEnvelope(this.envelopeMachine) });

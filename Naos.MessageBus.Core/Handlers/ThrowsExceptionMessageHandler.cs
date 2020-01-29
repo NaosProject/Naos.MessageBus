@@ -13,7 +13,8 @@ namespace Naos.MessageBus.Core
     using Its.Log.Instrumentation;
 
     using Naos.MessageBus.Domain;
-    using Naos.Serialization.Domain;
+    using OBeautifulCode.Representation.System;
+    using OBeautifulCode.Serialization;
 
     using OBeautifulCode.Type;
 

@@ -132,7 +132,7 @@ namespace Naos.MessageBus.Test
 
             // assert
             actualParcelOut.Envelopes.Should().HaveCount(expectedParcelOut.Envelopes.Count);
-            actualParcelOut.Envelopes.First().SerializedMessage.PayloadTypeDescription.Should().Be(expectedParcelOut.Envelopes.First().SerializedMessage.PayloadTypeDescription);
+            actualParcelOut.Envelopes.First().SerializedMessage.PayloadTypeRepresentation.Should().Be(expectedParcelOut.Envelopes.First().SerializedMessage.PayloadTypeRepresentation);
             channel.Should().Be(defaultChannel);
         }
 

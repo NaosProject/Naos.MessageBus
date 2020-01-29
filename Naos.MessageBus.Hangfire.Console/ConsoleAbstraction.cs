@@ -19,8 +19,8 @@ namespace $rootnamespace$
     using Naos.Cron;
     using Naos.MessageBus.Domain;
     using Naos.MessageBus.Hangfire.Bootstrapper;
-    using Naos.Serialization.Domain;
-    using Naos.Serialization.Json;
+    using OBeautifulCode.Serialization;
+    using OBeautifulCode.Serialization.Json;
 
     /// <summary>
     /// Abstraction for use with <see cref="CLAP" /> to provide basic command line interaction.
@@ -34,7 +34,7 @@ namespace $rootnamespace$
     public class ConsoleAbstraction : ConsoleAbstractionBase
 
     {
-        private static readonly ISerializeAndDeserialize Serializer = new NaosJsonSerializer(typeof(MessageBusJsonConfiguration));
+        private static readonly ISerializeAndDeserialize Serializer = new ObcJsonSerializer(typeof(MessageBusJsonConfiguration));
 
         /// <summary>
         /// Monitor for items in Hangfire.

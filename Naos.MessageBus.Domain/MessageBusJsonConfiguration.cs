@@ -10,8 +10,8 @@ namespace Naos.MessageBus.Domain
     using System.Collections.Generic;
     using System.Linq;
     using Naos.Cron.Serialization.Json;
-    using Naos.Serialization.Json;
     using OBeautifulCode.Reflection.Recipes;
+    using OBeautifulCode.Serialization.Json;
 
     /// <summary>
     /// Implementation for the <see cref="Cron" /> domain.

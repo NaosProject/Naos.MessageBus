@@ -8,8 +8,8 @@ namespace Naos.MessageBus.Domain
 {
     using System.Threading.Tasks;
 
-    using Naos.Compression.Domain;
-    using Naos.Serialization.Domain;
+    using OBeautifulCode.Compression;
+    using OBeautifulCode.Serialization;
 
     using OBeautifulCode.Validation.Recipes;
 

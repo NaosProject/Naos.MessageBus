@@ -9,7 +9,7 @@ namespace Naos.MessageBus.Test
     using FluentAssertions;
 
     using Naos.MessageBus.Core;
-
+    using OBeautifulCode.Representation.System;
     using OBeautifulCode.Type;
 
     using Xunit;

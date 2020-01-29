@@ -8,8 +8,8 @@ namespace Naos.MessageBus.Domain
 {
     using System;
 
-    using Naos.Compression.Domain;
-    using Naos.Serialization.Domain;
+    using OBeautifulCode.Compression;
+    using OBeautifulCode.Serialization;
 
     /// <summary>
     /// Factory that can be seeded in harness for use in the handlers if needed.

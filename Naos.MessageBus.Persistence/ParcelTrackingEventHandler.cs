@@ -16,6 +16,7 @@ namespace Naos.MessageBus.Persistence
     using Microsoft.Its.Domain;
     using Naos.Cron;
     using Naos.MessageBus.Domain;
+    using OBeautifulCode.Representation.System;
     using OBeautifulCode.Type;
     using OBeautifulCode.Validation.Recipes;
 
@@ -37,11 +38,11 @@ namespace Naos.MessageBus.Persistence
                                          IUpdateProjectionWhen<Shipment.TopicBeingAffected>,
                                          IUpdateProjectionWhen<Shipment.TopicWasAffected>
     {
-        private static readonly Dictionary<TypeDescription, MethodInfo> EventTypeDescriptionToUpdateProjectionMethodInfoMap =
+        private static readonly Dictionary<TypeRepresentation, MethodInfo> EventTypeRepresentationToUpdateProjectionMethodInfoMap =
             typeof(ParcelTrackingEventHandler).GetMethods()
                 .Where(_ => _.Name == nameof(IUpdateProjectionWhen<Event>.UpdateProjection))
                 .ToList()
-                .ToDictionary(k => k.GetParameters().Single().ParameterType.ToTypeDescription(), v => v);
+                .ToDictionary(k => k.GetParameters().Single().ParameterType.ToRepresentation(), v => v);
 
         private readonly ICourier courier;
 
@@ -72,8 +73,8 @@ namespace Naos.MessageBus.Persistence
 
             foreach (var yieldedEvent in yieldedEvents)
             {
-                var eventType = yieldedEvent.GetType().ToTypeDescription();
-                var foundEventMethod = EventTypeDescriptionToUpdateProjectionMethodInfoMap.TryGetValue(eventType, out MethodInfo eventMethod);
+                var eventType = yieldedEvent.GetType().ToRepresentation();
+                var foundEventMethod = EventTypeRepresentationToUpdateProjectionMethodInfoMap.TryGetValue(eventType, out MethodInfo eventMethod);
                 if (foundEventMethod)
                 {
                     eventMethod.Invoke(this, new object[] { yieldedEvent });

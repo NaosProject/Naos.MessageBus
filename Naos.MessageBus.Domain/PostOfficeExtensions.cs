@@ -7,6 +7,7 @@
 namespace Naos.MessageBus.Domain
 {
     using System;
+    using OBeautifulCode.Representation.System;
     using OBeautifulCode.Type;
     using OBeautifulCode.Validation.Recipes;
 
@@ -22,7 +23,7 @@ namespace Naos.MessageBus.Domain
         /// <param name="channel">Channel to send to.</param>
         /// <param name="jsonConfigurationType">Type of configuration to use for JSON serialization which is necessary for message transport.</param>
         /// <returns><see cref="AddressedMessage"/> with message and channel.</returns>
-        public static AddressedMessage ToAddressedMessage(this IMessage message, IChannel channel = null, TypeDescription jsonConfigurationType = null)
+        public static AddressedMessage ToAddressedMessage(this IMessage message, IChannel channel = null, TypeRepresentation jsonConfigurationType = null)
         {
             new { message }.Must().NotBeNull();
 
@@ -30,7 +31,7 @@ namespace Naos.MessageBus.Domain
             {
                 Address = channel ?? new NullChannel(),
                 Message = message,
-                JsonConfigurationTypeDescription = jsonConfigurationType,
+                JsonConfigurationTypeRepresentation = jsonConfigurationType,
             };
         }
 

@@ -11,8 +11,9 @@ namespace Naos.MessageBus.Domain
     using System.Linq;
 
     using Naos.Cron;
-    using Naos.Serialization.Domain;
-    using Naos.Serialization.Json;
+    using OBeautifulCode.Representation.System;
+    using OBeautifulCode.Serialization;
+    using OBeautifulCode.Serialization.Json;
     using OBeautifulCode.Type;
     using OBeautifulCode.Validation.Recipes;
 
@@ -24,12 +25,12 @@ namespace Naos.MessageBus.Domain
         /// <summary>
         /// Gets the <see cref="SerializationDescription" /> to use for serializing messages.
         /// </summary>
-        public static SerializationDescription MessageSerializationDescription => new SerializationDescription(SerializationKind.Json, SerializationFormat.String, typeof(MessageBusJsonConfiguration).ToTypeDescription());
+        public static SerializationDescription MessageSerializationDescription => new SerializationDescription(SerializationKind.Json, SerializationFormat.String, typeof(MessageBusJsonConfiguration).ToRepresentation());
 
         /// <summary>
         /// Gets the default serializer to use for serializing messages.
         /// </summary>
-        public static ISerializeAndDeserialize DefaultSerializer => new NaosJsonSerializer(typeof(MessageBusJsonConfiguration), UnregisteredTypeEncounteredStrategy.Attempt);
+        public static ISerializeAndDeserialize DefaultSerializer => new ObcJsonSerializer(typeof(MessageBusJsonConfiguration), UnregisteredTypeEncounteredStrategy.Attempt);
 
         // Make this permissive since it's the underlying logic and shouldn't be coupled to whether others are matched in a stricter mode assigned in constructor.
         private static readonly TypeComparer NullChannelAndTopicAffectedMessageTypeComparer = new TypeComparer(TypeMatchStrategy.NamespaceAndName);
@@ -66,7 +67,7 @@ namespace Naos.MessageBus.Domain
             IReadOnlyCollection<DependencyTopic> dependencyTopics = null,
             TopicCheckStrategy dependencyTopicCheckStrategy = TopicCheckStrategy.Unspecified,
             SimultaneousRunsStrategy simultaneousRunsStrategy = SimultaneousRunsStrategy.Unspecified,
-            TypeDescription jsonConfigurationType = null)
+            TypeRepresentation jsonConfigurationType = null)
         {
             return this.SendRecurring(message, channel, new NullSchedule(), name, topic, dependencyTopics, dependencyTopicCheckStrategy, simultaneousRunsStrategy, jsonConfigurationType);
         }
@@ -87,7 +88,7 @@ namespace Naos.MessageBus.Domain
             IReadOnlyCollection<DependencyTopic> dependencyTopics = null,
             TopicCheckStrategy dependencyTopicCheckStrategy = TopicCheckStrategy.Unspecified,
             SimultaneousRunsStrategy simultaneousRunsStrategy = SimultaneousRunsStrategy.Unspecified,
-            TypeDescription jsonConfigurationType = null)
+            TypeRepresentation jsonConfigurationType = null)
         {
             var messageSequenceId = Guid.NewGuid();
             var messageSequence = new MessageSequence
@@ -251,7 +252,7 @@ namespace Naos.MessageBus.Domain
                 Topic = parcel.Topic,
             };
 
-            var beingAffectedEnvelopes = envelopes.Where(_ => NullChannelAndTopicAffectedMessageTypeComparer.Equals(_.SerializedMessage.PayloadTypeDescription, beingAffectedMessage.GetType().ToTypeDescription())).ToList();
+            var beingAffectedEnvelopes = envelopes.Where(_ => NullChannelAndTopicAffectedMessageTypeComparer.Equals(_.SerializedMessage.PayloadTypeRepresentation, beingAffectedMessage.GetType().ToRepresentation())).ToList();
             if (beingAffectedEnvelopes.Count > 0)
             {
                 if (beingAffectedEnvelopes.Count > 1)
@@ -280,7 +281,7 @@ namespace Naos.MessageBus.Domain
                 Topic = parcel.Topic,
             };
 
-            var wasAffectedEnvelopes = envelopes.Where(_ => NullChannelAndTopicAffectedMessageTypeComparer.Equals(_.SerializedMessage.PayloadTypeDescription, wasAffectedMessage.GetType().ToTypeDescription())).ToList();
+            var wasAffectedEnvelopes = envelopes.Where(_ => NullChannelAndTopicAffectedMessageTypeComparer.Equals(_.SerializedMessage.PayloadTypeRepresentation, wasAffectedMessage.GetType().ToRepresentation())).ToList();
             if (wasAffectedEnvelopes.Count > 0)
             {
                 if (wasAffectedEnvelopes.Count > 1)

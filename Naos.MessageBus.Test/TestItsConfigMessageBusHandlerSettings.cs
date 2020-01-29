@@ -9,20 +9,16 @@ namespace Naos.MessageBus.Test
     using System;
     using System.Collections.Generic;
     using System.Linq;
-
     using FluentAssertions;
-
-    using Naos.Compression.Domain;
     using Naos.Configuration.Domain;
     using Naos.Cron;
     using Naos.MessageBus.Domain;
-    using Naos.Serialization.Domain;
-    using Naos.Serialization.Factory;
-
+    using OBeautifulCode.Compression;
+    using OBeautifulCode.Compression.Recipes;
+    using OBeautifulCode.Representation.System;
+    using OBeautifulCode.Serialization;
     using OBeautifulCode.Type;
-
     using Spritely.Recipes;
-
     using Xunit;
 
     public static class TestItsConfigMessageBusHandlerSettings

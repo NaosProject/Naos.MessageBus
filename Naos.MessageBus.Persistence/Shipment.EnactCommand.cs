@@ -12,7 +12,7 @@ namespace Naos.MessageBus.Persistence
     using Microsoft.Its.Domain;
 
     using Naos.MessageBus.Domain;
-
+    using OBeautifulCode.Representation.System;
     using OBeautifulCode.Type;
     using OBeautifulCode.Validation.Recipes;
 
@@ -186,7 +186,7 @@ namespace Naos.MessageBus.Persistence
 
             var deliveredEnvelope = command.DeliveredEnvelope;
 
-            var beingAffected = TopicAffectedMessageTypeComparer.Equals(deliveredEnvelope.SerializedMessage.PayloadTypeDescription, typeof(TopicBeingAffectedMessage).ToTypeDescription());
+            var beingAffected = TopicAffectedMessageTypeComparer.Equals(deliveredEnvelope.SerializedMessage.PayloadTypeRepresentation, typeof(TopicBeingAffectedMessage).ToRepresentation());
             if (beingAffected)
             {
                 var message = deliveredEnvelope.Open<TopicBeingAffectedMessage>(envelopeMachine);
@@ -199,7 +199,7 @@ namespace Naos.MessageBus.Persistence
                 events.Add(topicBeingAffectedEvent);
             }
 
-            var wasAffected = TopicAffectedMessageTypeComparer.Equals(deliveredEnvelope.SerializedMessage.PayloadTypeDescription, typeof(TopicWasAffectedMessage).ToTypeDescription());
+            var wasAffected = TopicAffectedMessageTypeComparer.Equals(deliveredEnvelope.SerializedMessage.PayloadTypeRepresentation, typeof(TopicWasAffectedMessage).ToRepresentation());
             if (wasAffected)
             {
                 var message = deliveredEnvelope.Open<TopicWasAffectedMessage>(envelopeMachine);

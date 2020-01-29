@@ -6,6 +6,7 @@
 
 namespace Naos.MessageBus.Domain
 {
+    using OBeautifulCode.Representation.System;
     using OBeautifulCode.Type;
 
     /// <summary>

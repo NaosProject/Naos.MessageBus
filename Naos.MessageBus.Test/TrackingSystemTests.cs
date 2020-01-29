@@ -19,7 +19,7 @@ namespace Naos.MessageBus.Test
     using Naos.MessageBus.Domain;
     using Naos.MessageBus.Persistence;
     using Naos.Telemetry.Domain;
-
+    using OBeautifulCode.Representation.System;
     using OBeautifulCode.Type;
 
     using Xunit;
@@ -114,13 +114,13 @@ namespace Naos.MessageBus.Test
                 await ConfirmNoticeState(parcelTrackingSystem, topic, expectedTopicStatus);
 
                 await parcelTrackingSystem.UpdateDeliveredAsync(trackingCode, envelope);
-                if (envelope.SerializedMessage.PayloadTypeDescription == typeof(TopicBeingAffectedMessage).ToTypeDescription())
+                if (envelope.SerializedMessage.PayloadTypeRepresentation == typeof(TopicBeingAffectedMessage).ToRepresentation())
                 {
                     expectedTopicStatus = TopicStatus.BeingAffected;
                 }
 
                 // should be last message and will assert differently
-                if (envelope.SerializedMessage.PayloadTypeDescription != typeof(TopicWasAffectedMessage).ToTypeDescription())
+                if (envelope.SerializedMessage.PayloadTypeRepresentation != typeof(TopicWasAffectedMessage).ToRepresentation())
                 {
                     (await parcelTrackingSystem.GetTrackingReportAsync(new[] { trackingCode })).Single().Status.Should().Be(ParcelStatus.Rejected);
                     await ConfirmNoticeState(parcelTrackingSystem, topic, expectedTopicStatus);
