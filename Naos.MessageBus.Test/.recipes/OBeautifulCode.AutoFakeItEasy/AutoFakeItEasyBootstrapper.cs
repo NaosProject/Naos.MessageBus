@@ -32,6 +32,7 @@ namespace OBeautifulCode.AutoFakeItEasy.Recipes
             // That's a lot easier than trying to find the path to the assembly, which
             // is typically what you would do here.
             AutoFixtureBackedDummyFactory.LoadInAppDomain();
+
             return base.GetAssemblyFileNamesToScanForExtensions();
         }
     }

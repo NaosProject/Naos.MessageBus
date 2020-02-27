@@ -10,6 +10,9 @@
 namespace OBeautifulCode.Reflection.Recipes
 {
     using System;
+    using System.Collections.Concurrent;
+    using System.Collections.Generic;
+    using System.Collections.ObjectModel;
     using System.Linq;
     using System.Reflection;
     using System.Runtime.CompilerServices;
@@ -30,6 +33,35 @@ namespace OBeautifulCode.Reflection.Recipes
 #endif
     static class TypeHelper
     {
+        private static readonly Type[] CollectionTypes =
+        {
+            typeof(Collection<>),
+            typeof(ICollection<>),
+            typeof(ReadOnlyCollection<>),
+            typeof(IReadOnlyCollection<>),
+            typeof(List<>),
+            typeof(IList<>),
+            typeof(IReadOnlyList<>)
+        };
+
+        private static readonly Type[] OrderedCollectionTypes =
+        {
+            typeof(Collection<>),
+            typeof(ReadOnlyCollection<>),
+            typeof(List<>),
+            typeof(IList<>),
+            typeof(IReadOnlyList<>)
+        };
+
+        private static readonly Type[] DictionaryTypes =
+        {
+            typeof(Dictionary<,>),
+            typeof(IDictionary<,>),
+            typeof(ReadOnlyDictionary<,>),
+            typeof(IReadOnlyDictionary<,>),
+            typeof(ConcurrentDictionary<,>),
+        };
+
         /// <summary>
         /// Determines if a type is an anonymous type.
         /// </summary>
@@ -39,6 +71,10 @@ namespace OBeautifulCode.Reflection.Recipes
         public static bool IsAnonymous(
             this Type type)
         {
+            // A copy of this method exists in OBC.Validation.
+            // Any bug fixes made here should also be applied to OBC.Validation.
+            // OBC.Validation cannot take a reference to OBC.Reflection because it creates a circular reference
+            // since OBC.Reflection itself depends on OBC.Validation.
             new { type }.Must().NotBeNull();
 
             var result = Attribute.IsDefined(type, typeof(CompilerGeneratedAttribute), false)
@@ -138,6 +174,133 @@ namespace OBeautifulCode.Reflection.Recipes
             }
 
             return false;
+        }
+
+        /// <summary>
+        /// Determines if the specified type is a class type, that's not anonymous, and is closed.
+        /// </summary>
+        /// <remarks>
+        /// This is basically asking, "Is this a class type that can be constructed/new-ed up?"
+        /// </remarks>
+        /// <param name="type">The type.</param>
+        /// <returns>
+        /// true if the specified type is a class type, non-anonymous, and closed.
+        /// </returns>
+        /// <exception cref="ArgumentNullException"><paramref name="type"/> is null.</exception>
+        public static bool IsNonAnonymousClosedClassType(
+            this Type type)
+        {
+            new { type }.Must().NotBeNull();
+
+            var result =
+                type.IsClass &&
+                (!type.IsAnonymous()) &&
+                (!type.IsGenericTypeDefinition); // can't do an IsAssignableTo check on generic type definitions
+
+            return result;
+        }
+
+        /// <summary>
+        /// Determines if the specified type is <see cref="Nullable{T}"/>.
+        /// </summary>
+        /// <remarks>Adapted from: <a href="https://stackoverflow.com/a/41281601/356790" />.</remarks>
+        /// <param name="type">The type.</param>
+        /// <returns>
+        /// true if the specified type is <see cref="Nullable{T}"/>, otherwise false.
+        /// </returns>
+        /// <exception cref="ArgumentNullException"><paramref name="type"/> is null.</exception>
+        public static bool IsNullableType(
+            this Type type)
+        {
+            // A copy of this method exists in OBC.Validation.
+            // Any bug fixes made here should also be applied to OBC.Validation.
+            // OBC.Validation cannot take a reference to OBC.Reflection because it creates a circular reference
+            // since OBC.Reflection itself depends on OBC.Validation.
+            new { type }.Must().NotBeNull();
+
+            var result = Nullable.GetUnderlyingType(type) != null;
+
+            return result;
+        }
+
+        /// <summary>
+        /// Determines if the specified type is one of the following <see cref="System"/> collection types: <see cref="CollectionTypes"/>.
+        /// </summary>
+        /// <param name="type">The type.</param>
+        /// <returns>
+        /// true if the specified type is a <see cref="System"/> collection type; otherwise false.
+        /// </returns>
+        /// <exception cref="ArgumentNullException"><paramref name="type"/> is null.</exception>
+        public static bool IsSystemCollectionType(
+            this Type type)
+        {
+            new { type }.Must().NotBeNull();
+
+            if (!type.IsGenericType)
+            {
+                return false;
+            }
+
+            var genericType = type.GetGenericTypeDefinition();
+
+            var result = CollectionTypes.Any(_ => genericType == _);
+            return result;
+        }
+
+        /// <summary>
+        /// Determines if the specified type is one of the following <see cref="System"/> dictionary types: <see cref="DictionaryTypes"/>.
+        /// </summary>
+        /// <param name="type">The type.</param>
+        /// <returns>
+        /// true if the specified type is a <see cref="System"/> dictionary type; otherwise false.
+        /// </returns>
+        /// <exception cref="ArgumentNullException"><paramref name="type"/> is null.</exception>
+        public static bool IsSystemDictionaryType(
+            this Type type)
+        {
+            new { type }.Must().NotBeNull();
+
+            if (!type.IsGenericType)
+            {
+                return false;
+            }
+
+            var genericType = type.GetGenericTypeDefinition();
+
+            var result = DictionaryTypes.Any(_ => genericType == _);
+
+            return result;
+        }
+
+        /// <summary>
+        /// Determines if the specified type is a <see cref="System"/> ordered <see cref="IEnumerable{T}"/>:
+        /// Either an <see cref="Array"/> or one of these types: <see cref="OrderedCollectionTypes"/>.
+        /// </summary>
+        /// <param name="type">The type.</param>
+        /// <returns>
+        /// true if the specified type is a <see cref="System"/> ordered <see cref="IEnumerable{T}"/>.
+        /// </returns>
+        /// <exception cref="ArgumentNullException"><paramref name="type"/> is null.</exception>
+        public static bool IsSystemOrderedEnumerableType(
+            this Type type)
+        {
+            new { type }.Must().NotBeNull();
+
+            if (type.IsArray)
+            {
+                return true;
+            }
+            
+            if (!type.IsGenericType)
+            {
+                return false;
+            }
+
+            var genericType = type.GetGenericTypeDefinition();
+
+            var result = OrderedCollectionTypes.Any(_ => genericType == _);
+
+            return result;
         }
     }
 }
