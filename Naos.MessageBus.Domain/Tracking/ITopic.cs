@@ -8,7 +8,7 @@ namespace Naos.MessageBus.Domain
 {
     using System;
 
-    using OBeautifulCode.Math.Recipes;
+    using OBeautifulCode.Equality.Recipes;
 
     /// <summary>
     /// Abstract representation of a data "Topic".

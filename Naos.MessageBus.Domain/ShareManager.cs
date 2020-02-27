@@ -10,11 +10,10 @@ namespace Naos.MessageBus.Domain
     using System.Collections.Generic;
     using System.Linq;
     using Naos.MessageBus.Domain.Exceptions;
+    using OBeautifulCode.Assertion.Recipes;
     using OBeautifulCode.Compression;
     using OBeautifulCode.Representation.System;
     using OBeautifulCode.Serialization;
-    using OBeautifulCode.Type;
-    using OBeautifulCode.Validation.Recipes;
     using static System.FormattableString;
 
     /// <summary>
@@ -48,8 +47,8 @@ namespace Naos.MessageBus.Domain
         /// <param name="typeMatchStrategyForMatchingSharingInterfaces">Strategy to use when matching types for sharing.</param>
         public ShareManager(ISerializerFactory serializerFactory, ICompressorFactory compressorFactory, TypeMatchStrategy typeMatchStrategyForMatchingSharingInterfaces)
         {
-            new { serializerFactory }.Must().NotBeNull();
-            new { compressorFactory }.Must().NotBeNull();
+            new { serializerFactory }.AsArg().Must().NotBeNull();
+            new { compressorFactory }.AsArg().Must().NotBeNull();
 
             this.typeMatchStrategyForMatchingSharingInterfaces = typeMatchStrategyForMatchingSharingInterfaces;
             this.serializerFactory = serializerFactory;
@@ -104,7 +103,7 @@ namespace Naos.MessageBus.Domain
         /// <returns>List of interface types that implement IShare.</returns>
         public static IList<Type> GetShareInterfaceTypes(IShare objectToInterrogate)
         {
-            new { objectToInterrogate }.Must().NotBeNull();
+            new { objectToInterrogate }.AsArg().Must().NotBeNull();
 
             var sourceType = objectToInterrogate.GetType();
             var sourceTypeInterfaces =
@@ -207,7 +206,7 @@ namespace Naos.MessageBus.Domain
         /// <returns>Value of the property description.</returns>
         public object GetValueFromPropertyEntry(SharedProperty sharedProperty)
         {
-            new { sharedProperty }.Must().NotBeNull();
+            new { sharedProperty }.AsArg().Must().NotBeNull();
 
             var ret = sharedProperty.SerializedValue.DeserializePayloadUsingSpecificFactory(
                 this.serializerFactory,

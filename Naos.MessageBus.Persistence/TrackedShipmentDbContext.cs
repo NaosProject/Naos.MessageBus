@@ -8,7 +8,7 @@ namespace Naos.MessageBus.Persistence
 {
     using System.Data.Entity;
 
-    using OBeautifulCode.Validation.Recipes;
+    using OBeautifulCode.Assertion.Recipes;
 
     /// <summary>
     /// Database context for the read model tracking shipments.
@@ -37,7 +37,7 @@ namespace Naos.MessageBus.Persistence
         /// <inheritdoc />
         protected override void OnModelCreating(DbModelBuilder modelBuilder)
         {
-            new { modelBuilder }.Must().NotBeNull();
+            new { modelBuilder }.AsArg().Must().NotBeNull();
 
             modelBuilder.Entity<ShipmentForDatabase>().HasKey(s => s.ParcelId);
             modelBuilder.Entity<NoticeForDatabase>().HasKey(s => s.Id);

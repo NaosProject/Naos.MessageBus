@@ -16,10 +16,8 @@ namespace Naos.MessageBus.Hangfire.Sender
     using Its.Log.Instrumentation;
     using Naos.Cron;
     using Naos.MessageBus.Domain;
+    using OBeautifulCode.Assertion.Recipes;
     using OBeautifulCode.Representation.System;
-    using OBeautifulCode.Type;
-    using OBeautifulCode.Validation.Recipes;
-
     using Spritely.Redo;
     using static System.FormattableString;
 
@@ -47,8 +45,8 @@ namespace Naos.MessageBus.Hangfire.Sender
         /// <param name="retryCount">Number of retries to attempt if error encountered (default if 5).</param>
         public HangfireCourier(CourierPersistenceConnectionConfiguration courierPersistenceConnectionConfiguration, IStuffAndOpenEnvelopes envelopeMachine, int retryCount = 5)
         {
-            new { courierPersistenceConnectionConfiguration }.Must().NotBeNull();
-            new { envelopeMachine }.Must().NotBeNull();
+            new { courierPersistenceConnectionConfiguration }.AsArg().Must().NotBeNull();
+            new { envelopeMachine }.AsArg().Must().NotBeNull();
 
             this.courierPersistenceConnectionConfiguration = courierPersistenceConnectionConfiguration;
             this.envelopeMachine = envelopeMachine;
@@ -105,7 +103,7 @@ namespace Naos.MessageBus.Hangfire.Sender
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA2204:Literals should be spelled correctly", MessageId = "requeue", Justification = "Spelling/name is correct.")]
         public void Resend(CrateLocator crateLocator)
         {
-            new { crateLocator }.Must().NotBeNull();
+            new { crateLocator }.AsArg().Must().NotBeNull();
 
             GlobalConfiguration.Configuration.UseSqlServerStorage(this.courierPersistenceConnectionConfiguration.ToSqlServerConnectionString());
             var client = new BackgroundJobClient();
@@ -126,8 +124,8 @@ namespace Naos.MessageBus.Hangfire.Sender
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1045:DoNotPassTypesByReference", MessageId = "2#", Justification = "Keeping this design for now (channel passed by ref).")]
         public Parcel UncrateParcel(Crate crate, IChannel defaultChannel, ref IChannel channel)
         {
-            new { crate }.Must().NotBeNull();
-            new { defaultChannel }.Must().NotBeNull();
+            new { crate }.AsArg().Must().NotBeNull();
+            new { defaultChannel }.AsArg().Must().NotBeNull();
 
             Parcel parcel;
 
@@ -176,10 +174,7 @@ namespace Naos.MessageBus.Hangfire.Sender
 
             if (simpleChannel.Name.Length > HangfireQueueNameMaxLength)
             {
-                throw new ArgumentException(
-                    "Cannot use a channel name longer than " + HangfireQueueNameMaxLength
-                    + " characters.  The supplied channel name: " + simpleChannel.Name + " is "
-                    + simpleChannel.Name.Length + " characters long.");
+                throw new ArgumentException(Invariant($"Cannot use a channel name longer than {HangfireQueueNameMaxLength} characters.  The supplied channel name: {simpleChannel.Name} is {simpleChannel.Name.Length} characters long."));
             }
 
             if (!Regex.IsMatch(simpleChannel.Name, HangfireQueueNameAllowedRegex, RegexOptions.None))

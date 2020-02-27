@@ -9,15 +9,10 @@ namespace Naos.MessageBus.Core
     using System;
     using System.Collections.Generic;
     using System.Linq;
-
     using Naos.MessageBus.Domain;
-    using Naos.MessageBus.Domain.Exceptions;
-
+    using OBeautifulCode.Assertion.Recipes;
     using OBeautifulCode.Reflection.Recipes;
     using OBeautifulCode.Representation.System;
-    using OBeautifulCode.Type;
-    using OBeautifulCode.Validation.Recipes;
-
     using static System.FormattableString;
 
     /// <summary>
@@ -39,11 +34,11 @@ namespace Naos.MessageBus.Core
         /// <param name="typeMatchStrategyForComparingMessageTypes">Type match strategy to use when looking up the handler.</param>
         public MappedTypeHandlerFactory(IReadOnlyDictionary<Type, Type> messageTypeToHandlerTypeMap, TypeMatchStrategy typeMatchStrategyForComparingMessageTypes)
         {
-            new { messageTypeToHandlerTypeMap }.Must().NotBeNullNorEmptyDictionaryNorContainAnyNullValues();
+            new { messageTypeToHandlerTypeMap }.AsArg().Must().NotBeNullNorEmptyDictionaryNorContainAnyNullValues();
 
             messageTypeToHandlerTypeMap.Keys
                 .All(_ => _.GetInterfaces().Contains(typeof(IMessage), InternalTypeComparer))
-                .Named(Invariant($"KeysIn-{nameof(messageTypeToHandlerTypeMap)}-MustImplement-{nameof(IMessage)}"))
+                .AsOp(Invariant($"KeysIn-{nameof(messageTypeToHandlerTypeMap)}-MustImplement-{nameof(IMessage)}"))
                 .Must().BeTrue();
 
             this.messageTypeToHandlerTypeMap = messageTypeToHandlerTypeMap;
@@ -57,7 +52,7 @@ namespace Naos.MessageBus.Core
             if (handlerType != null)
             {
                 handlerType.GetInterfaces().Contains(typeof(IHandleMessages), InternalTypeComparer)
-                    .Named(Invariant($"HandlerTypeFromMapping-{handlerType.FullName}-MustImplement-{nameof(IHandleMessages)}")).Must().BeTrue();
+                    .AsOp(Invariant($"HandlerTypeFromMapping-{handlerType.FullName}-MustImplement-{nameof(IHandleMessages)}")).Must().BeTrue();
 
                 var ret = handlerType.Construct();
                 return (IHandleMessages)ret;

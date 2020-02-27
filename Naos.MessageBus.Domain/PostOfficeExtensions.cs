@@ -7,9 +7,8 @@
 namespace Naos.MessageBus.Domain
 {
     using System;
+    using OBeautifulCode.Assertion.Recipes;
     using OBeautifulCode.Representation.System;
-    using OBeautifulCode.Type;
-    using OBeautifulCode.Validation.Recipes;
 
     /// <summary>
     /// Collection of envelopes to use as a unit.
@@ -25,7 +24,7 @@ namespace Naos.MessageBus.Domain
         /// <returns><see cref="AddressedMessage"/> with message and channel.</returns>
         public static AddressedMessage ToAddressedMessage(this IMessage message, IChannel channel = null, TypeRepresentation jsonConfigurationType = null)
         {
-            new { message }.Must().NotBeNull();
+            new { message }.AsArg().Must().NotBeNull();
 
             return new AddressedMessage
             {
@@ -44,8 +43,8 @@ namespace Naos.MessageBus.Domain
         /// <returns>New envelope.</returns>
         public static Envelope ToEnvelope(this AddressedMessage addressedMessage, IStuffAndOpenEnvelopes envelopeMachine, string id = null)
         {
-            new { addressedMessage }.Must().NotBeNull();
-            new { envelopeMachine }.Must().NotBeNull();
+            new { addressedMessage }.AsArg().Must().NotBeNull();
+            new { envelopeMachine }.AsArg().Must().NotBeNull();
 
             var envelope = envelopeMachine.StuffEnvelope(addressedMessage, id);
             return envelope;
@@ -59,8 +58,8 @@ namespace Naos.MessageBus.Domain
         /// <returns>Message within the envelope.</returns>
         public static IMessage Open(this Envelope envelope, IStuffAndOpenEnvelopes envelopeMachine)
         {
-            new { envelope }.Must().NotBeNull();
-            new { envelopeMachine }.Must().NotBeNull();
+            new { envelope }.AsArg().Must().NotBeNull();
+            new { envelopeMachine }.AsArg().Must().NotBeNull();
 
             var message = envelopeMachine.OpenEnvelope(envelope);
             return message;
@@ -76,8 +75,8 @@ namespace Naos.MessageBus.Domain
         public static T Open<T>(this Envelope envelope, IStuffAndOpenEnvelopes envelopeMachine)
             where T : IMessage
         {
-            new { envelope }.Must().NotBeNull();
-            new { envelopeMachine }.Must().NotBeNull();
+            new { envelope }.AsArg().Must().NotBeNull();
+            new { envelopeMachine }.AsArg().Must().NotBeNull();
 
             var message = envelopeMachine.OpenEnvelope<T>(envelope);
             return message;

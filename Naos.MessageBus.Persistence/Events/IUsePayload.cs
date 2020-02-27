@@ -7,10 +7,9 @@
 namespace Naos.MessageBus.Persistence
 {
     using Naos.MessageBus.Domain;
+    using OBeautifulCode.Assertion.Recipes;
     using OBeautifulCode.Serialization;
     using OBeautifulCode.Serialization.Json;
-
-    using OBeautifulCode.Validation.Recipes;
 
     /// <summary>
     /// Interface to support common extraction logic.
@@ -62,7 +61,7 @@ namespace Naos.MessageBus.Persistence
         public static T ExtractPayload<T>(this IUsePayload<T> payloadedObject)
             where T : class, IPayload
         {
-            new { payloadedObject }.Must().NotBeNull();
+            new { payloadedObject }.AsArg().Must().NotBeNull();
 
             return PayloadSerializer.Deserialize<T>(payloadedObject.PayloadSerializedString);
         }

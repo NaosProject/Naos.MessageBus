@@ -11,15 +11,12 @@ namespace Naos.MessageBus.Core
     using System.Collections.Generic;
     using System.Linq;
     using Its.Log.Instrumentation;
-    using Naos.Diagnostics.Domain;
     using Naos.MessageBus.Domain;
     using Naos.MessageBus.Domain.Exceptions;
     using Naos.Recipes.RunWithRetry;
     using Naos.Telemetry.Domain;
+    using OBeautifulCode.Assertion.Recipes;
     using OBeautifulCode.Representation.System;
-    using OBeautifulCode.Serialization;
-    using OBeautifulCode.Type;
-    using OBeautifulCode.Validation.Recipes;
     using static System.FormattableString;
 
     /// <inheritdoc />
@@ -70,15 +67,15 @@ namespace Naos.MessageBus.Core
             IStuffAndOpenEnvelopes envelopeMachine,
             IManageShares shareManager)
         {
-            new { handlerBuilder }.Must().NotBeNull();
-            new { handlerSharedStateMap }.Must().NotBeNull();
-            new { servicedChannels }.Must().NotBeNull();
-            new { harnessDiagnosticsTelemetry }.Must().NotBeNull();
-            new { parcelTrackingSystem }.Must().NotBeNull();
-            new { activeMessageTracker }.Must().NotBeNull();
-            new { postOffice }.Must().NotBeNull();
-            new { envelopeMachine }.Must().NotBeNull();
-            new { shareManager }.Must().NotBeNull();
+            new { handlerBuilder }.AsArg().Must().NotBeNull();
+            new { handlerSharedStateMap }.AsArg().Must().NotBeNull();
+            new { servicedChannels }.AsArg().Must().NotBeNull();
+            new { harnessDiagnosticsTelemetry }.AsArg().Must().NotBeNull();
+            new { parcelTrackingSystem }.AsArg().Must().NotBeNull();
+            new { activeMessageTracker }.AsArg().Must().NotBeNull();
+            new { postOffice }.AsArg().Must().NotBeNull();
+            new { envelopeMachine }.AsArg().Must().NotBeNull();
+            new { shareManager }.AsArg().Must().NotBeNull();
 
             this.handlerBuilder = handlerBuilder;
             this.handlerSharedStateMap = handlerSharedStateMap;
@@ -372,8 +369,8 @@ namespace Naos.MessageBus.Core
 
         private AddressedMessage DeserializeEnvelopeIntoAddressedMessage(TrackingCode trackingCode, Envelope envelope)
         {
-            new { trackingCode }.Must().NotBeNull();
-            new { envelope }.Must().NotBeNull();
+            new { trackingCode }.AsArg().Must().NotBeNull();
+            new { envelope }.AsArg().Must().NotBeNull();
 
             var message = envelope.Open(this.envelopeMachine);
 

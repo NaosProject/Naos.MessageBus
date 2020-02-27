@@ -18,7 +18,7 @@ namespace Naos.MessageBus.Persistence
     using Naos.MessageBus.Persistence.NaosRecipes.ItsDomain;
     using Naos.Telemetry.Domain;
 
-    using OBeautifulCode.Validation.Recipes;
+    using OBeautifulCode.Assertion.Recipes;
 
     using Spritely.Redo;
     using static System.FormattableString;
@@ -49,10 +49,10 @@ namespace Naos.MessageBus.Persistence
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Maintainability", "CA1506:AvoidExcessiveClassCoupling", Justification = "Keeping this way.")]
         public ParcelTrackingSystem(ICourier courier, IStuffAndOpenEnvelopes envelopeMachine, EventPersistenceConnectionConfiguration eventPersistenceConnectionConfiguration, ReadModelPersistenceConnectionConfiguration readModelPersistenceConnectionConfiguration, int retryCount = 5)
         {
-            new { courier }.Must().NotBeNull();
-            new { envelopeMachine }.Must().NotBeNull();
-            new { eventPersistenceConnectionConfiguration }.Must().NotBeNull();
-            new { readModelPersistenceConnectionConfiguration }.Must().NotBeNull();
+            new { courier }.AsArg().Must().NotBeNull();
+            new { envelopeMachine }.AsArg().Must().NotBeNull();
+            new { eventPersistenceConnectionConfiguration }.AsArg().Must().NotBeNull();
+            new { readModelPersistenceConnectionConfiguration }.AsArg().Must().NotBeNull();
 
             this.envelopeMachine = envelopeMachine;
             this.readModelPersistenceConnectionConfiguration = readModelPersistenceConnectionConfiguration;

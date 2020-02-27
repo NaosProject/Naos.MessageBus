@@ -6,9 +6,8 @@
 
 namespace Naos.MessageBus.Domain
 {
+    using OBeautifulCode.Assertion.Recipes;
     using OBeautifulCode.Serialization;
-
-    using OBeautifulCode.Validation.Recipes;
 
     /// <summary>
     /// Model class to hold a single property to be shared.
@@ -22,8 +21,8 @@ namespace Naos.MessageBus.Domain
         /// <param name="serializedValue">Value of the property as a <see cref="DescribedSerialization" />.</param>
         public SharedProperty(string name, DescribedSerialization serializedValue)
         {
-            new { name }.Must().NotBeNullNorWhiteSpace();
-            new { serializedValue }.Must().NotBeNull();
+            new { name }.AsArg().Must().NotBeNullNorWhiteSpace();
+            new { serializedValue }.AsArg().Must().NotBeNull();
 
             this.Name = name;
             this.SerializedValue = serializedValue;

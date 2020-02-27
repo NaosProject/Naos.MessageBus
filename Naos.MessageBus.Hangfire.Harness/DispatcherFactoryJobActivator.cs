@@ -7,18 +7,12 @@
 namespace Naos.MessageBus.Hangfire.Harness
 {
     using System;
-
     using global::Hangfire;
-
     using Naos.MessageBus.Domain;
     using Naos.MessageBus.Domain.Exceptions;
     using Naos.MessageBus.Hangfire.Sender;
+    using OBeautifulCode.Assertion.Recipes;
     using OBeautifulCode.Representation.System;
-    using OBeautifulCode.Type;
-    using OBeautifulCode.Validation.Recipes;
-
-    using Spritely.Recipes;
-
     using static System.FormattableString;
 
     /// <summary>
@@ -43,7 +37,7 @@ namespace Naos.MessageBus.Hangfire.Harness
         /// <inheritdoc />
         public override object ActivateJob(Type jobType)
         {
-            new { jobType }.Must().NotBeNull();
+            new { jobType }.AsArg().Must().NotBeNull();
 
             if (this.typeComparer.Equals(jobType, typeof(HangfireDispatcher)))
             {

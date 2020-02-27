@@ -22,7 +22,7 @@ namespace Naos.MessageBus.Hangfire.Harness
     using Naos.MessageBus.Domain;
     using Naos.MessageBus.Hangfire.Bootstrapper;
 
-    using OBeautifulCode.Validation.Recipes;
+    using OBeautifulCode.Assertion.Recipes;
 
     using Owin;
 
@@ -41,8 +41,8 @@ namespace Naos.MessageBus.Hangfire.Harness
             var logProcessorSettings = Config.Get<LogWritingSettings>(typeof(LoggingJsonConfiguration));
             var connectionConfig = Config.Get<MessageBusConnectionConfiguration>(typeof(MessageBusJsonConfiguration));
 
-            new { logProcessorSettings }.Must().NotBeNull();
-            new { connectionConfig }.Must().NotBeNull();
+            new { logProcessorSettings }.AsArg().Must().NotBeNull();
+            new { connectionConfig }.AsArg().Must().NotBeNull();
 
             // May have already been setup by one of the other entry points.
             LogWriting.Instance.Setup(logProcessorSettings, multipleCallsToSetupStrategy: MultipleCallsToSetupStrategy.Ignore);

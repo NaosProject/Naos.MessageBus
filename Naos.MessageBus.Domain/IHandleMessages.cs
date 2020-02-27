@@ -7,12 +7,9 @@
 namespace Naos.MessageBus.Domain
 {
     using System.Threading.Tasks;
-
+    using OBeautifulCode.Assertion.Recipes;
     using OBeautifulCode.Compression;
     using OBeautifulCode.Serialization;
-
-    using OBeautifulCode.Validation.Recipes;
-
     using static System.FormattableString;
 
     /// <summary>
@@ -45,11 +42,11 @@ namespace Naos.MessageBus.Domain
         /// <inheritdoc cref="IHandleMessages" />
         public async Task HandleAsync(IMessage message)
         {
-            new { message }.Must().NotBeNull();
+            new { message }.AsArg().Must().NotBeNull();
 
             var messageType = message.GetType();
 
-            (messageType == typeof(T)).Named(Invariant($"typeOf-{nameof(message)}-{messageType}-MustBeEqualOrDerivativeOfGenericType-{typeof(T).FullName}")).Must().BeTrue();
+            (messageType == typeof(T)).AsArg(Invariant($"typeOf-{nameof(message)}-{messageType}-MustBeEqualOrDerivativeOfGenericType-{typeof(T).FullName}")).Must().BeTrue();
 
             await this.HandleAsync((T)message);
         }

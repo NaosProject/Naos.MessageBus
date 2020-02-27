@@ -16,9 +16,10 @@ namespace Naos.MessageBus.Test
     using Naos.MessageBus.Hangfire.Sender;
 
     using OBeautifulCode.Reflection.Recipes;
-    using OBeautifulCode.Type;
 
     using Xunit;
+
+    using static System.FormattableString;
 
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly", MessageId = "Hangfire", Justification = "Spelling/name is correct.")]
     public static class HangfireCourierTest
@@ -64,9 +65,7 @@ namespace Naos.MessageBus.Test
 
             // act & assert
             testCode.ShouldThrow<ArgumentException>()
-                .WithMessage(
-                    "Cannot use a channel name longer than 20 characters.  The supplied channel name: " + channel.Name + " is " + channel.Name.Length
-                    + " characters long.");
+                .WithMessage(Invariant($"Cannot use a channel name longer than 20 characters.  The supplied channel name: {channel.Name} is {channel.Name.Length} characters long."));
         }
 
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1702:CompoundWordsShouldBeCasedCorrectly", MessageId = "UpperCase", Justification = "Spelling/name is correct.")]

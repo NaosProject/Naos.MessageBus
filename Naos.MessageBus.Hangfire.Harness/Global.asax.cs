@@ -19,7 +19,7 @@ namespace Naos.MessageBus.Hangfire.Harness
     using Naos.MessageBus.Domain;
     using Naos.MessageBus.Hangfire.Bootstrapper;
 
-    using OBeautifulCode.Validation.Recipes;
+    using OBeautifulCode.Assertion.Recipes;
 
     /// <inheritdoc />
     public class Global : HttpApplication
@@ -36,10 +36,10 @@ namespace Naos.MessageBus.Hangfire.Harness
             var connectionConfig = Config.Get<MessageBusConnectionConfiguration>(typeof(MessageBusJsonConfiguration));
             var launchConfig = Config.Get<MessageBusLaunchConfiguration>(typeof(MessageBusJsonConfiguration));
 
-            new { logProcessorSettings }.Must().NotBeNull();
-            new { handlerFactoryConfig }.Must().NotBeNull();
-            new { connectionConfig }.Must().NotBeNull();
-            new { launchConfig }.Must().NotBeNull();
+            new { logProcessorSettings }.AsArg().Must().NotBeNull();
+            new { handlerFactoryConfig }.AsArg().Must().NotBeNull();
+            new { connectionConfig }.AsArg().Must().NotBeNull();
+            new { launchConfig }.AsArg().Must().NotBeNull();
 
             // May have already been setup by one of the other entry points.
             LogWriting.Instance.Setup(logProcessorSettings, multipleCallsToSetupStrategy: MultipleCallsToSetupStrategy.Ignore);

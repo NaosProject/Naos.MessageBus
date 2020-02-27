@@ -9,14 +9,11 @@ namespace Naos.MessageBus.Domain
     using System;
     using System.Collections.Generic;
     using System.Linq;
-
     using Naos.Cron;
+    using OBeautifulCode.Assertion.Recipes;
     using OBeautifulCode.Representation.System;
     using OBeautifulCode.Serialization;
     using OBeautifulCode.Serialization.Json;
-    using OBeautifulCode.Type;
-    using OBeautifulCode.Validation.Recipes;
-
     using static System.FormattableString;
 
     /// <inheritdoc />
@@ -49,9 +46,9 @@ namespace Naos.MessageBus.Domain
         /// <param name="envelopeMachine">Implementation of <see cref="IStuffAndOpenEnvelopes" /> to stuffing and opening envelopes.</param>
         public PostOffice(IParcelTrackingSystem parcelTrackingSystem, IRouteUnaddressedMail unaddressedMailRouter, IStuffAndOpenEnvelopes envelopeMachine)
         {
-            new { parcelTrackingSystem }.Must().NotBeNull();
-            new { unaddressedMailRouter }.Must().NotBeNull();
-            new { envelopeMachine }.Must().NotBeNull();
+            new { parcelTrackingSystem }.AsArg().Must().NotBeNull();
+            new { unaddressedMailRouter }.AsArg().Must().NotBeNull();
+            new { envelopeMachine }.AsArg().Must().NotBeNull();
 
             this.parcelTrackingSystem = parcelTrackingSystem;
             this.unaddressedMailRouter = unaddressedMailRouter;
@@ -108,8 +105,8 @@ namespace Naos.MessageBus.Domain
         /// <inheritdoc />
         public TrackingCode SendRecurring(MessageSequence messageSequence, ScheduleBase recurringSchedule)
         {
-            new { messageSequence }.Must().NotBeNull();
-            new { recurringSchedule }.Must().NotBeNull();
+            new { messageSequence }.AsArg().Must().NotBeNull();
+            new { recurringSchedule }.AsArg().Must().NotBeNull();
 
             if (messageSequence.Id == default(Guid))
             {
@@ -152,8 +149,8 @@ namespace Naos.MessageBus.Domain
         /// <inheritdoc />
         public TrackingCode SendRecurring(Parcel parcel, ScheduleBase recurringSchedule)
         {
-            new { parcel }.Must().NotBeNull();
-            new { recurringSchedule }.Must().NotBeNull();
+            new { parcel }.AsArg().Must().NotBeNull();
+            new { recurringSchedule }.AsArg().Must().NotBeNull();
 
             if (parcel.Topic != null)
             {

@@ -10,15 +10,11 @@ namespace Naos.MessageBus.Core
     using System.Collections.Generic;
     using System.Linq;
     using System.Reflection;
-
     using Its.Log.Instrumentation;
-
     using Naos.MessageBus.Domain;
-
+    using OBeautifulCode.Assertion.Recipes;
     using OBeautifulCode.Reflection.Recipes;
     using OBeautifulCode.Representation.System;
-    using OBeautifulCode.Type;
-    using OBeautifulCode.Validation.Recipes;
 
     /// <summary>
     /// Implementation of <see cref="IHandlerFactory" /> that will reflect over the assemblies in a directory and load the types as well as any currently loaded types.
@@ -51,7 +47,7 @@ namespace Naos.MessageBus.Core
         /// <param name="typeMatchStrategyForResolvingMessageTypes"><see cref="TypeMatchStrategy"/> to use when finding a handler of a specific message type.</param>
         public ReflectionHandlerFactory(string handlerAssemblyPath, TypeMatchStrategy typeMatchStrategyForResolvingMessageTypes)
         {
-            new { handlerAssemblyPath }.Must().NotBeNullNorWhiteSpace();
+            new { handlerAssemblyPath }.AsArg().Must().NotBeNullNorWhiteSpace();
 
             var messageTypeToHandlerTypeMap = new Dictionary<Type, Type>();
             var currentlyLoadedAssemblies = AssemblyLoader.GetLoadedAssemblies();
@@ -71,8 +67,8 @@ namespace Naos.MessageBus.Core
         /// <param name="assemblies">Assemblies to reflect over.</param>
         public static void LoadHandlerTypeMapFromAssemblies(Dictionary<Type, Type> messageTypeToHandlerTypeMap, IReadOnlyCollection<Assembly> assemblies)
         {
-            new { messageTypeToHandlerTypeMap }.Must().NotBeNull();
-            new { assemblies }.Must().NotBeNull();
+            new { messageTypeToHandlerTypeMap }.AsArg().Must().NotBeNull();
+            new { assemblies }.AsArg().Must().NotBeNull();
 
             foreach (var assembly in assemblies)
             {

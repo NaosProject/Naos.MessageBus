@@ -7,13 +7,10 @@
 namespace Naos.MessageBus.Domain
 {
     using System;
-
+    using OBeautifulCode.Assertion.Recipes;
     using OBeautifulCode.Compression;
     using OBeautifulCode.Representation.System;
     using OBeautifulCode.Serialization;
-
-    using OBeautifulCode.Type;
-    using OBeautifulCode.Validation.Recipes;
 
     /// <summary>
     /// Interface for stuffing and opening envelopes.
@@ -67,9 +64,9 @@ namespace Naos.MessageBus.Domain
         /// <param name="typeMatchStrategyForMessageResolution">Type match strategy to use.</param>
         public EnvelopeMachine(SerializationDescription messageSerializationDescription, ISerializerFactory serializerFactory, ICompressorFactory compressorFactory, TypeMatchStrategy typeMatchStrategyForMessageResolution)
         {
-            new { messageSerializationDescription }.Must().NotBeNull();
-            new { serializerFactory }.Must().NotBeNull();
-            new { compressorFactory }.Must().NotBeNull();
+            new { messageSerializationDescription }.AsArg().Must().NotBeNull();
+            new { serializerFactory }.AsArg().Must().NotBeNull();
+            new { compressorFactory }.AsArg().Must().NotBeNull();
 
             this.messageSerializationDescription = messageSerializationDescription;
             this.serializerFactory = serializerFactory;
@@ -87,7 +84,7 @@ namespace Naos.MessageBus.Domain
         public T OpenEnvelope<T>(Envelope envelope)
             where T : IMessage
         {
-            new { envelope }.Must().NotBeNull();
+            new { envelope }.AsArg().Must().NotBeNull();
 
             var ret = envelope.SerializedMessage.DeserializePayloadUsingSpecificFactory<T>(
                 this.serializerFactory,
@@ -102,7 +99,7 @@ namespace Naos.MessageBus.Domain
         /// <inheritdoc />
         public Envelope StuffEnvelope(AddressedMessage addressedMessage, string id = null)
         {
-            new { addressedMessage }.Must().NotBeNull();
+            new { addressedMessage }.AsArg().Must().NotBeNull();
 
             var localId = id ?? Guid.NewGuid().ToString().ToUpperInvariant();
 
