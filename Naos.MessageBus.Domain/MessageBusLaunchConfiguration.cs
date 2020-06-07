@@ -20,17 +20,13 @@ namespace Naos.MessageBus.Domain
         /// Initializes a new instance of the <see cref="MessageBusLaunchConfiguration"/> class.
         /// </summary>
         /// <param name="timeToLive">Time to live (will not be honored until active messages are finished processing).</param>
-        /// <param name="typeMatchStrategyForMatchingSharingInterfaces">Strategy to match sharing interface types.</param>
-        /// <param name="typeMatchStrategyForMessageResolution">Strategy to match message types.</param>
         /// <param name="messageDeliveryRetryCount">Number of attempts to try message handling.</param>
         /// <param name="pollingInterval">Interval to poll for completion.</param>
         /// <param name="concurrentWorkerCount">Number of concurrent messages to be processed at once.</param>
         /// <param name="channelsToMonitor">Channels to monitor.</param>
-        public MessageBusLaunchConfiguration(TimeSpan timeToLive, TypeMatchStrategy typeMatchStrategyForMatchingSharingInterfaces, TypeMatchStrategy typeMatchStrategyForMessageResolution, int messageDeliveryRetryCount, TimeSpan pollingInterval, int concurrentWorkerCount, ICollection<IChannel> channelsToMonitor)
+        public MessageBusLaunchConfiguration(TimeSpan timeToLive, int messageDeliveryRetryCount, TimeSpan pollingInterval, int concurrentWorkerCount, ICollection<IChannel> channelsToMonitor)
         {
             this.TimeToLive = timeToLive;
-            this.TypeMatchStrategyForMatchingSharingInterfaces = typeMatchStrategyForMatchingSharingInterfaces;
-            this.TypeMatchStrategyForMessageResolution = typeMatchStrategyForMessageResolution;
             this.MessageDeliveryRetryCount = messageDeliveryRetryCount;
             this.PollingInterval = pollingInterval;
             this.ConcurrentWorkerCount = concurrentWorkerCount;
@@ -41,16 +37,6 @@ namespace Naos.MessageBus.Domain
         /// Gets the time to live (will not be honored until active messages are finished processing).
         /// </summary>
         public TimeSpan TimeToLive { get; private set; }
-
-        /// <summary>
-        /// Gets the strategy to match sharing interface types.
-        /// </summary>
-        public TypeMatchStrategy TypeMatchStrategyForMatchingSharingInterfaces { get; private set; }
-
-        /// <summary>
-        /// Gets the strategy to match message types.
-        /// </summary>
-        public TypeMatchStrategy TypeMatchStrategyForMessageResolution { get; private set; }
 
         /// <summary>
         /// Gets the number of attempts to try message handling.

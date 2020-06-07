@@ -84,7 +84,7 @@ namespace Naos.MessageBus.Hangfire.Harness
             var activeMessageTracker = new InMemoryActiveMessageTracker();
 
             var serializerFactory = SerializerFactory.Instance;
-            var envelopeMachine = new EnvelopeMachine(PostOffice.MessageSerializationDescription, serializerFactory, CompressorFactory.Instance, launchConfig.TypeMatchStrategyForMessageResolution);
+            var envelopeMachine = new EnvelopeMachine(PostOffice.MessageSerializerRepresentation, serializerFactory);
 
             var courier = new HangfireCourier(connectionConfig.CourierPersistenceConnectionConfiguration, envelopeMachine);
             var parcelTrackingSystem = new ParcelTrackingSystem(
@@ -105,12 +105,11 @@ namespace Naos.MessageBus.Hangfire.Harness
             HandlerToolshed.InitializeSerializerFactory(() => serializerFactory);
             HandlerToolshed.InitializeCompressorFactory(() => CompressorFactory.Instance);
 
-            var shareManager = new ShareManager(serializerFactory, CompressorFactory.Instance, launchConfig.TypeMatchStrategyForMatchingSharingInterfaces);
+            var shareManager = new ShareManager(serializerFactory);
             this.handlerFactory = string.IsNullOrWhiteSpace(handlerFactoryConfig.HandlerAssemblyPath)
-                                      ? new ReflectionHandlerFactory(handlerFactoryConfig.TypeMatchStrategyForMessageResolution)
+                                      ? new ReflectionHandlerFactory()
                                       : new ReflectionHandlerFactory(
-                                          handlerFactoryConfig.HandlerAssemblyPath,
-                                          handlerFactoryConfig.TypeMatchStrategyForMessageResolution);
+                                          handlerFactoryConfig.HandlerAssemblyPath);
 
             var processSiblingAssemblies = this.handlerFactory.FilePathToAssemblyMap.Values.Select(SafeFetchAssemblyDetails).ToList();
             var dateTimeOfSampleInUtc = DateTime.UtcNow;

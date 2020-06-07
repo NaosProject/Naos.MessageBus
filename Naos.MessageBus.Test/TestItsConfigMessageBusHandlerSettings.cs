@@ -17,6 +17,7 @@ namespace Naos.MessageBus.Test
     using OBeautifulCode.Compression.Recipes;
     using OBeautifulCode.Representation.System;
     using OBeautifulCode.Serialization;
+    using OBeautifulCode.Serialization.Json;
     using OBeautifulCode.Type;
     using Spritely.Recipes;
     using Xunit;
@@ -29,15 +30,14 @@ namespace Naos.MessageBus.Test
             // Arrange
             Config.SetPrecedence("ExampleDevelopment");
 
-            var expectedHandlerFactoryConfig = new HandlerFactoryConfiguration(TypeMatchStrategy.NamespaceAndName, "I:\\am\\an\\optional\\path\\to\\assemblies\\to\\load\\and\\reflect\\on\\in\\Development");
+            var expectedHandlerFactoryConfig = new HandlerFactoryConfiguration("I:\\am\\an\\optional\\path\\to\\assemblies\\to\\load\\and\\reflect\\on\\in\\Development");
 
             // Act
-            var actualHandlerFactoryConfig = Config.Get<HandlerFactoryConfiguration>(typeof(MessageBusJsonConfiguration));
+            var actualHandlerFactoryConfig = Config.Get<HandlerFactoryConfiguration>(new SerializerRepresentation(SerializationKind.Json, typeof(MessageBusJsonSerializationConfiguration).ToRepresentation()));
 
             // Assert
             actualHandlerFactoryConfig.Should().NotBeNull();
             actualHandlerFactoryConfig.HandlerAssemblyPath.Should().Be(expectedHandlerFactoryConfig.HandlerAssemblyPath);
-            actualHandlerFactoryConfig.TypeMatchStrategyForMessageResolution.Should().Be(expectedHandlerFactoryConfig.TypeMatchStrategyForMessageResolution);
         }
 
         [Fact]
@@ -54,7 +54,7 @@ namespace Naos.MessageBus.Test
             };
 
             // Act
-            var actualConnectionConfiguration = Config.Get<MessageBusConnectionConfiguration>(typeof(MessageBusJsonConfiguration));
+            var actualConnectionConfiguration = Config.Get<MessageBusConnectionConfiguration>(new SerializerRepresentation(SerializationKind.Json, typeof(MessageBusJsonSerializationConfiguration).ToRepresentation()));
 
             // Assert
             actualConnectionConfiguration.Should().NotBeNull();
@@ -71,15 +71,13 @@ namespace Naos.MessageBus.Test
 
             var expectedLaunchConfig = new MessageBusLaunchConfiguration(
                 TimeSpan.FromMinutes(10),
-                TypeMatchStrategy.NamespaceAndName,
-                TypeMatchStrategy.NamespaceAndName,
                 0,
                 TimeSpan.FromMinutes(1),
                 1,
                 new[] { new SimpleChannel("messages_development") });
 
             // Act
-            var actualLaunchConfig = Config.Get<MessageBusLaunchConfiguration>(typeof(MessageBusJsonConfiguration));
+            var actualLaunchConfig = Config.Get<MessageBusLaunchConfiguration>(new SerializerRepresentation(SerializationKind.Json, typeof(MessageBusJsonSerializationConfiguration).ToRepresentation()));
 
             // Assert
             actualLaunchConfig.Should().NotBeNull();
@@ -88,22 +86,18 @@ namespace Naos.MessageBus.Test
             actualLaunchConfig.MessageDeliveryRetryCount.Should().Be(expectedLaunchConfig.MessageDeliveryRetryCount);
             actualLaunchConfig.PollingInterval.Should().Be(expectedLaunchConfig.PollingInterval);
             actualLaunchConfig.TimeToLive.Should().Be(expectedLaunchConfig.TimeToLive);
-            actualLaunchConfig.TypeMatchStrategyForMessageResolution.Should().Be(expectedLaunchConfig.TypeMatchStrategyForMessageResolution);
-            actualLaunchConfig.TypeMatchStrategyForMatchingSharingInterfaces.Should().Be(expectedLaunchConfig.TypeMatchStrategyForMatchingSharingInterfaces);
         }
 
         [Fact]
         public static void MakeWaitMessageAndScheduleJson()
         {
-            var serializerFactory = new SerializationDescriptionToSerializerFactory(PostOffice.MessageSerializationDescription, PostOffice.DefaultSerializer);
-            var serializer = serializerFactory.BuildSerializer(PostOffice.MessageSerializationDescription);
+            var serializerFactory = new JsonSerializerFactory();
+            var serializer = serializerFactory.BuildSerializer(PostOffice.MessageSerializerRepresentation);
             var waitMessage = new WaitMessage { Description = "Test console send", TimeToWait = TimeSpan.FromSeconds(20) };
             var schedule = new IntervalSchedule { Interval = TimeSpan.FromMinutes(5) };
             var envelopeMachine = new EnvelopeMachine(
-                PostOffice.MessageSerializationDescription,
-                serializerFactory,
-                CompressorFactory.Instance,
-                TypeMatchStrategy.NamespaceAndName);
+                PostOffice.MessageSerializerRepresentation,
+                serializerFactory);
 
             var id = Guid.NewGuid();
             var parcel = new Parcel

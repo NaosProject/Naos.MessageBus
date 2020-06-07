@@ -28,7 +28,7 @@ namespace Naos.MessageBus.Test
             var actual = input.Distinct().ToList();
 
             // assert
-            Assert.Equal(1, actual.Count);
+            Assert.Single(actual);
             Assert.Equal(duplicateName, actual.Single().Name);
         }
 
@@ -97,7 +97,7 @@ namespace Naos.MessageBus.Test
             var actual = first.Equals(second);
 
             // assert
-            Assert.Equal(false, actual);
+            Assert.False(actual);
         }
 
         [Fact]
@@ -112,7 +112,7 @@ namespace Naos.MessageBus.Test
             var actual = first.Equals(second);
 
             // assert
-            Assert.Equal(true, actual);
+            Assert.True(actual);
         }
 
         [Fact]

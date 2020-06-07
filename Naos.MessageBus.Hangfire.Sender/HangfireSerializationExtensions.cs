@@ -16,7 +16,7 @@ namespace Naos.MessageBus.Hangfire.Sender
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly", MessageId = "Hangfire", Justification = "Spelling/name is correct.")]
     public static class HangfireSerializationExtensions
     {
-        private static readonly ISerializeAndDeserialize HangfireSerializer = new ObcJsonSerializer(typeof(MessageBusJsonConfiguration), UnregisteredTypeEncounteredStrategy.Attempt);
+        private static readonly ISerializeAndDeserialize HangfireSerializer = new ObcJsonSerializer(typeof(MessageBusJsonSerializationConfiguration).ToJsonSerializationConfigurationType());
 
         /// <summary>
         /// Deserializes a string used to pass information through Hangfire.

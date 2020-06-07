@@ -26,12 +26,7 @@ namespace Naos.MessageBus.Core
         {
             Log.Write(new LogEntry(message.Description, message));
 
-            var exception = message.SerializedExceptionToThrow.DeserializePayloadUsingSpecificFactory<Exception>(
-                this.SerializerFactory,
-                this.CompressorFactory,
-                TypeMatchStrategy.NamespaceAndName,
-                MultipleMatchStrategy.NewestVersion,
-                unregisteredTypeEncounteredStrategy: UnregisteredTypeEncounteredStrategy.Attempt);
+            var exception = message.SerializedExceptionToThrow.DeserializePayloadUsingSpecificFactory<Exception>(this.SerializerFactory);
 
             await Task.Run(() => ExceptionDispatchInfo.Capture(exception).Throw());
         }

@@ -23,7 +23,8 @@ namespace Naos.MessageBus.Hangfire.Harness
     using Naos.MessageBus.Hangfire.Bootstrapper;
 
     using OBeautifulCode.Assertion.Recipes;
-
+    using OBeautifulCode.Representation.System;
+    using OBeautifulCode.Serialization;
     using Owin;
 
     /// <summary>
@@ -38,8 +39,8 @@ namespace Naos.MessageBus.Hangfire.Harness
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Performance", "CA1822:MarkMembersAsStatic", Justification = "Non-static is the contract..")]
         public void Configuration(IAppBuilder app)
         {
-            var logProcessorSettings = Config.Get<LogWritingSettings>(typeof(LoggingJsonConfiguration));
-            var connectionConfig = Config.Get<MessageBusConnectionConfiguration>(typeof(MessageBusJsonConfiguration));
+            var logProcessorSettings = Config.Get<LogWritingSettings>(new SerializerRepresentation(SerializationKind.Json, typeof(LoggingJsonSerializationConfiguration).ToRepresentation()));
+            var connectionConfig = Config.Get<MessageBusConnectionConfiguration>(new SerializerRepresentation(SerializationKind.Json, typeof(MessageBusJsonSerializationConfiguration).ToRepresentation()));
 
             new { logProcessorSettings }.AsArg().Must().NotBeNull();
             new { connectionConfig }.AsArg().Must().NotBeNull();

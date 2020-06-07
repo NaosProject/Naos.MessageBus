@@ -29,23 +29,21 @@ namespace Naos.MessageBus.Core
         /// <summary>
         /// Initializes a new instance of the <see cref="ReflectionHandlerFactory"/> class.
         /// </summary>
-        /// <param name="typeMatchStrategyForResolvingMessageTypes"><see cref="TypeMatchStrategy"/> to use when finding a handler of a specific message type.</param>
-        public ReflectionHandlerFactory(TypeMatchStrategy typeMatchStrategyForResolvingMessageTypes)
+        public ReflectionHandlerFactory()
         {
             var currentlyLoadedAssemblies = AssemblyLoader.GetLoadedAssemblies();
 
             var messageTypeToHandlerTypeMap = new Dictionary<Type, Type>();
             LoadHandlerTypeMapFromAssemblies(messageTypeToHandlerTypeMap, currentlyLoadedAssemblies);
 
-            this.mappedTypeHandlerFactory = new MappedTypeHandlerFactory(messageTypeToHandlerTypeMap, typeMatchStrategyForResolvingMessageTypes);
+            this.mappedTypeHandlerFactory = new MappedTypeHandlerFactory(messageTypeToHandlerTypeMap);
         }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ReflectionHandlerFactory"/> class.
         /// </summary>
         /// <param name="handlerAssemblyPath">Path to the assemblies being searched through to be loaded as message handlers.</param>
-        /// <param name="typeMatchStrategyForResolvingMessageTypes"><see cref="TypeMatchStrategy"/> to use when finding a handler of a specific message type.</param>
-        public ReflectionHandlerFactory(string handlerAssemblyPath, TypeMatchStrategy typeMatchStrategyForResolvingMessageTypes)
+        public ReflectionHandlerFactory(string handlerAssemblyPath)
         {
             new { handlerAssemblyPath }.AsArg().Must().NotBeNullNorWhiteSpace();
 
@@ -57,7 +55,7 @@ namespace Naos.MessageBus.Core
 
             LoadHandlerTypeMapFromAssemblies(messageTypeToHandlerTypeMap, this.assemblyLoader.FilePathToAssemblyMap.Values.ToList());
 
-            this.mappedTypeHandlerFactory = new MappedTypeHandlerFactory(messageTypeToHandlerTypeMap, typeMatchStrategyForResolvingMessageTypes);
+            this.mappedTypeHandlerFactory = new MappedTypeHandlerFactory(messageTypeToHandlerTypeMap);
         }
 
         /// <summary>

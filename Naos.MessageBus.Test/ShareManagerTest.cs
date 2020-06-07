@@ -26,11 +26,11 @@ namespace Naos.MessageBus.Test
         [Fact]
         public static void GetAndApplySharedPropertySet_ShareContractOfIntArray_CanBeExtractedAndApplied()
         {
-            var shareManager = new ShareManager(SerializerFactory.Instance, CompressorFactory.Instance, TypeMatchStrategy.NamespaceAndName);
+            var shareManager = new ShareManager(SerializerFactory.Instance);
             var testHandler = new ShareArrayOfIntHandler { IntArray = new[] { 1, 2, 3 } };
             var testMessage = new ShareArrayOfIntMessage();
 
-            var sharedProperties = shareManager.GetSharedInterfaceStates(testHandler, PostOffice.MessageSerializationDescription.ConfigurationTypeRepresentation);
+            var sharedProperties = shareManager.GetSharedInterfaceStates(testHandler, PostOffice.MessageSerializerRepresentation.SerializationConfigType);
             shareManager.ApplySharedInterfaceState(sharedProperties.Single(), testMessage);
 
             Assert.Equal(testHandler.IntArray, testMessage.IntArray);
@@ -39,11 +39,11 @@ namespace Naos.MessageBus.Test
         [Fact]
         public static void GetAndApplySharedPropertySet_ShareContractOfComplexType_CanBeExtractedAndApplied()
         {
-            var shareManager = new ShareManager(SerializerFactory.Instance, CompressorFactory.Instance, TypeMatchStrategy.NamespaceAndName);
+            var shareManager = new ShareManager(SerializerFactory.Instance);
             var testHandler = new TestComplexShareHandler { ComplexShareObject = new ComplexShareObject("we did it!"), OtherProp = "monkey" };
             var testMessage = new TestComplexShareMessage();
 
-            var sharedProperties = shareManager.GetSharedInterfaceStates(testHandler, PostOffice.MessageSerializationDescription.ConfigurationTypeRepresentation);
+            var sharedProperties = shareManager.GetSharedInterfaceStates(testHandler, PostOffice.MessageSerializerRepresentation.SerializationConfigType);
             shareManager.ApplySharedInterfaceState(sharedProperties.Single(), testMessage);
 
             Assert.Equal(testHandler.ComplexShareObject.Prop, testMessage.ComplexShareObject.Prop);
@@ -53,11 +53,11 @@ namespace Naos.MessageBus.Test
         [Fact]
         public static void GetAndApplySharedPropertySet_ShareContractOfString_CanBeExtractedAndApplied()
         {
-            var shareManager = new ShareManager(SerializerFactory.Instance, CompressorFactory.Instance, TypeMatchStrategy.NamespaceAndName);
+            var shareManager = new ShareManager(SerializerFactory.Instance);
             var testHandler = new CopyFileHandler() { FilePath = "This should be set on the message" };
             var testMessage = new DeleteFileMessage();
 
-            var sharedProperties = shareManager.GetSharedInterfaceStates(testHandler, PostOffice.MessageSerializationDescription.ConfigurationTypeRepresentation);
+            var sharedProperties = shareManager.GetSharedInterfaceStates(testHandler, PostOffice.MessageSerializerRepresentation.SerializationConfigType);
             shareManager.ApplySharedInterfaceState(sharedProperties.Single(), testMessage);
 
             Assert.Equal(testHandler.FilePath, testMessage.FilePath);
@@ -66,11 +66,11 @@ namespace Naos.MessageBus.Test
         [Fact]
         public static void GetAndApplySharedPropertySet_ShareContractOfInt_CanBeExtractedAndApplied()
         {
-            var shareManager = new ShareManager(SerializerFactory.Instance, CompressorFactory.Instance, TypeMatchStrategy.NamespaceAndName);
+            var shareManager = new ShareManager(SerializerFactory.Instance);
             var testHandler = new CountHandler() { Count = 15 };
             var testMessage = new CountMessage();
 
-            var sharedProperties = shareManager.GetSharedInterfaceStates(testHandler, PostOffice.MessageSerializationDescription.ConfigurationTypeRepresentation);
+            var sharedProperties = shareManager.GetSharedInterfaceStates(testHandler, PostOffice.MessageSerializerRepresentation.SerializationConfigType);
             shareManager.ApplySharedInterfaceState(sharedProperties.Single(), testMessage);
 
             Assert.Equal(testHandler.Count, testMessage.Count);
@@ -79,11 +79,11 @@ namespace Naos.MessageBus.Test
         [Fact]
         public static void GetAndApplySharedPropertySet_ShareContractOfEnum_CanBeExtractedAndApplied()
         {
-            var shareManager = new ShareManager(SerializerFactory.Instance, CompressorFactory.Instance, TypeMatchStrategy.NamespaceAndName);
-            var testHandler = new FirstEnumHandler() { EnumValueToShare = MyEnum.OtherOtherValue };
+            var shareManager = new ShareManager(SerializerFactory.Instance);
+            var testHandler = new FirstEnumHandler() { EnumValueToShare = MyEnumeration.OtherOtherValue };
             var testMessage = new SecondEnumMessage();
 
-            var sharedProperties = shareManager.GetSharedInterfaceStates(testHandler, PostOffice.MessageSerializationDescription.ConfigurationTypeRepresentation);
+            var sharedProperties = shareManager.GetSharedInterfaceStates(testHandler, PostOffice.MessageSerializerRepresentation.SerializationConfigType);
             shareManager.ApplySharedInterfaceState(sharedProperties.Single(), testMessage);
 
             Assert.Equal(testHandler.EnumValueToShare, testMessage.EnumValueToShare);
@@ -93,8 +93,8 @@ namespace Naos.MessageBus.Test
         public static void GetSharedPropertySetFromShareObject_SourceNull_Throws()
         {
             // Arrange
-            var shareManager = new ShareManager(SerializerFactory.Instance, CompressorFactory.Instance, TypeMatchStrategy.NamespaceAndName);
-            Action testCode = () => shareManager.GetSharedInterfaceStates(null, PostOffice.MessageSerializationDescription.ConfigurationTypeRepresentation);
+            var shareManager = new ShareManager(SerializerFactory.Instance);
+            Action testCode = () => shareManager.GetSharedInterfaceStates(null, PostOffice.MessageSerializerRepresentation.SerializationConfigType);
 
             // Act & Assert
             testCode.ShouldThrow<SharePropertyException>().WithMessage("objectToShareFrom can not be null");
@@ -104,30 +104,38 @@ namespace Naos.MessageBus.Test
         public static void ApplySharedPropertySetToShareObject_InvalidType_Throws()
         {
             // arrange
-            var shareManager = new ShareManager(SerializerFactory.Instance, CompressorFactory.Instance, TypeMatchStrategy.NamespaceAndName);
+            var shareManager = new ShareManager(SerializerFactory.Instance);
             Action testCode = () =>
-                {
-                    var sharedPropertyEntry = new SharedProperty(
-                        "FilePath",
-                        new DescribedSerialization(
-                            new TypeRepresentation() { AssemblyQualifiedName = "NotReal", Namespace = "NotReal", Name = "NotReal" },
-                            "Value",
-                            ShareManager.SharedPropertySerializationDescription));
+                              {
+                                  var sharedPropertyEntry = new SharedProperty(
+                                      "FilePath",
+                                      new DescribedSerialization(
+                                          new TypeRepresentation("Not real", "Not Real", "Not reaL", "not real", new TypeRepresentation[0]),
+                                          "Value",
+                                          ShareManager.SharedPropertySerializerRepresentation,
+                                          SerializationFormat.String));
 
-                    shareManager.ApplySharedInterfaceState(
-                        new SharedInterfaceState { InterfaceType = typeof(IShareFilePath).ToRepresentation(), Properties = new[] { sharedPropertyEntry } },
-                        new CopyFileMessage());
-                };
+                                  shareManager.ApplySharedInterfaceState(
+                                      new SharedInterfaceState
+                                      {
+                                          InterfaceType = typeof(IShareFilePath).ToRepresentation(),
+                                          Properties = new[]
+                                                       {
+                                                           sharedPropertyEntry,
+                                                       },
+                                      },
+                                      new CopyFileMessage());
+                              };
 
             // act & assert
-            testCode.ShouldThrow<ArgumentNullException>().WithMessage("Provided value (name: 'type') is null.");
+            testCode.ShouldThrow<InvalidOperationException>().WithMessage("Unable to resolve the specified TypeRepresentation (Not real.Not Real, Not reaL, Version=not real).  These assemblies are not loaded: Not reaL.");
         }
 
         [Fact]
         public static void ApplySharedPropertySetToShareObject_TargetNull_Throws()
         {
             // arrange
-            var shareManager = new ShareManager(SerializerFactory.Instance, CompressorFactory.Instance, TypeMatchStrategy.NamespaceAndName);
+            var shareManager = new ShareManager(SerializerFactory.Instance);
             Action testCode = () =>
             {
                 shareManager.ApplySharedInterfaceState(new SharedInterfaceState(), null);
@@ -141,7 +149,7 @@ namespace Naos.MessageBus.Test
         public static void ApplySharedPropertySetToShareObject_PropertySetNull_Throws()
         {
             // arrange
-            var shareManager = new ShareManager(SerializerFactory.Instance, CompressorFactory.Instance, TypeMatchStrategy.NamespaceAndName);
+            var shareManager = new ShareManager(SerializerFactory.Instance);
             Action testCode = () =>
             {
                 shareManager.ApplySharedInterfaceState(null, new CopyFileMessage());
@@ -155,7 +163,7 @@ namespace Naos.MessageBus.Test
         public static void ApplySharedProperties_Source_Throws()
         {
             // arrange
-            var shareManager = new ShareManager(SerializerFactory.Instance, CompressorFactory.Instance, TypeMatchStrategy.NamespaceAndName);
+            var shareManager = new ShareManager(SerializerFactory.Instance);
             Action testCode = () =>
             {
                 shareManager.ApplySharedProperties(null, new CopyFileMessage());
@@ -169,7 +177,7 @@ namespace Naos.MessageBus.Test
         public static void ApplySharedProperties_Target_Throws()
         {
             // arrange
-            var shareManager = new ShareManager(SerializerFactory.Instance, CompressorFactory.Instance, TypeMatchStrategy.NamespaceAndName);
+            var shareManager = new ShareManager(SerializerFactory.Instance);
             Action testCode = () =>
             {
                 shareManager.ApplySharedProperties(null, new CopyFileMessage());
@@ -182,7 +190,7 @@ namespace Naos.MessageBus.Test
         [Fact]
         public static void ApplySharedProperties_ValidMatch_PropertiesSet()
         {
-            var shareManager = new ShareManager(SerializerFactory.Instance, CompressorFactory.Instance, TypeMatchStrategy.NamespaceAndName);
+            var shareManager = new ShareManager(SerializerFactory.Instance);
             var testHandler = new CopyFileHandler() { FilePath = "This should be set on the message" };
             var testMessage = new DeleteFileMessage();
 
@@ -194,8 +202,8 @@ namespace Naos.MessageBus.Test
         [Fact]
         public static void ApplySharedProperties_ValidMatchOnEnum_PropertiesSet()
         {
-            var shareManager = new ShareManager(SerializerFactory.Instance, CompressorFactory.Instance, TypeMatchStrategy.NamespaceAndName);
-            var testHandler = new FirstEnumHandler { EnumValueToShare = MyEnum.OtherValue };
+            var shareManager = new ShareManager(SerializerFactory.Instance);
+            var testHandler = new FirstEnumHandler { EnumValueToShare = MyEnumeration.OtherValue };
             var testMessage = new SecondEnumMessage();
 
             Assert.NotEqual(testHandler.EnumValueToShare, testMessage.EnumValueToShare);
@@ -242,7 +250,7 @@ namespace Naos.MessageBus.Test
             this.EnumValueToShare = await Task.FromResult(message.SeedValue);
         }
 
-        public MyEnum EnumValueToShare { get; set; }
+        public MyEnumeration EnumValueToShare { get; set; }
     }
 
     public class SecondEnumHandler : MessageHandlerBase<SecondEnumMessage>, IShareEnum
@@ -256,9 +264,9 @@ namespace Naos.MessageBus.Test
             }
         }
 
-        public MyEnum EnumValueToShare { get; set; }
+        public MyEnumeration EnumValueToShare { get; set; }
 
-        public MyEnum EnumValueToSet { get; set; }
+        public MyEnumeration EnumValueToSet { get; set; }
 
         public bool SetFromMessageInsteadOfToSet { get; set; }
     }
@@ -267,20 +275,20 @@ namespace Naos.MessageBus.Test
     {
         public string Description { get; set; }
 
-        public MyEnum EnumValueToTest { get; set; }
+        public MyEnumeration EnumValueToTest { get; set; }
 
-        public MyEnum SeedValue { get; set; }
+        public MyEnumeration SeedValue { get; set; }
     }
 
     public class SecondEnumMessage : IMessage, IShareEnum
     {
         public string Description { get; set; }
 
-        public MyEnum EnumValueToShare { get; set; }
+        public MyEnumeration EnumValueToShare { get; set; }
     }
 
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1711:IdentifiersShouldNotHaveIncorrectSuffix", Justification = "Spelling/name is correct.")]
-    public enum MyEnum
+    public enum MyEnumeration
     {
         /// <summary>
         /// Test value.
@@ -301,7 +309,7 @@ namespace Naos.MessageBus.Test
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1711:IdentifiersShouldNotHaveIncorrectSuffix", Justification = "Spelling/name is correct.")]
     public interface IShareEnum : IShare
     {
-        MyEnum EnumValueToShare { get; set; }
+        MyEnumeration EnumValueToShare { get; set; }
     }
 
     public interface IShareArrayOfInt : IShare

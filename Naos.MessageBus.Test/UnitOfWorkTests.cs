@@ -26,11 +26,11 @@ namespace Naos.MessageBus.Test
         [Fact]
         public static void Serializes()
         {
-            var configurationType = typeof(TestDetailsJsonConfiguration);
-            var serializer = new ObcJsonSerializer(configurationType);
+            var configurationType = typeof(TestDetailsJsonSerializationConfiguration);
+            var serializer = new ObcJsonSerializer(configurationType.ToJsonSerializationConfigurationType());
             var details = new TestDetailsImplementation { Property = A.Dummy<string>() };
-            var description = new SerializationDescription(SerializationKind.Json, SerializationFormat.String, configurationType.ToRepresentation());
-            var described = new DescribedSerialization(typeof(TestDetailsBase).ToRepresentation(), serializer.SerializeToString(details), description);
+            var description = new SerializerRepresentation(SerializationKind.Json, configurationType.ToRepresentation());
+            var described = new DescribedSerialization(typeof(TestDetailsBase).ToRepresentation(), serializer.SerializeToString(details), description, SerializationFormat.String);
 
             var expected = new UnitOfWorkResult
             {
@@ -39,7 +39,7 @@ namespace Naos.MessageBus.Test
                 Details = described,
             };
 
-            var messageBusSerializer = new ObcJsonSerializer(typeof(MessageBusJsonConfiguration));
+            var messageBusSerializer = new ObcJsonSerializer(typeof(MessageBusJsonSerializationConfiguration).ToJsonSerializationConfigurationType());
             var serializedUnitOfWork = messageBusSerializer.SerializeToString(expected);
             var actual = messageBusSerializer.Deserialize<UnitOfWorkResult>(serializedUnitOfWork);
 
@@ -58,8 +58,12 @@ namespace Naos.MessageBus.Test
     {
     }
 
-    public class TestDetailsJsonConfiguration : JsonConfigurationBase
+    public class TestDetailsJsonSerializationConfiguration : JsonSerializationConfigurationBase
     {
-        protected override IReadOnlyCollection<Type> TypesToAutoRegister => new[] { typeof(TestDetailsBase) };
+        /// <inheritdoc />
+        protected override IReadOnlyCollection<TypeToRegisterForJson> TypesToRegisterForJson => new[]
+                                                                                               {
+                                                                                                   typeof(TestDetailsBase).ToTypeToRegisterForJson(),
+                                                                                               };
     }
 }

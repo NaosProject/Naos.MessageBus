@@ -20,6 +20,8 @@ namespace Naos.MessageBus.Hangfire.Harness
     using Naos.MessageBus.Hangfire.Bootstrapper;
 
     using OBeautifulCode.Assertion.Recipes;
+    using OBeautifulCode.Representation.System;
+    using OBeautifulCode.Serialization;
 
     /// <inheritdoc />
     public class Global : HttpApplication
@@ -31,10 +33,10 @@ namespace Naos.MessageBus.Hangfire.Harness
         /// <param name="e">Event arguments.</param>
         protected void Application_Start(object sender, EventArgs e)
         {
-            var logProcessorSettings = Config.Get<LogWritingSettings>(typeof(LoggingJsonConfiguration));
-            var handlerFactoryConfig = Config.Get<HandlerFactoryConfiguration>(typeof(MessageBusJsonConfiguration));
-            var connectionConfig = Config.Get<MessageBusConnectionConfiguration>(typeof(MessageBusJsonConfiguration));
-            var launchConfig = Config.Get<MessageBusLaunchConfiguration>(typeof(MessageBusJsonConfiguration));
+            var logProcessorSettings = Config.Get<LogWritingSettings>(new SerializerRepresentation(SerializationKind.Json, typeof(LoggingJsonSerializationConfiguration).ToRepresentation()));
+            var handlerFactoryConfig = Config.Get<HandlerFactoryConfiguration>(new SerializerRepresentation(SerializationKind.Json, typeof(MessageBusJsonSerializationConfiguration).ToRepresentation()));
+            var connectionConfig = Config.Get<MessageBusConnectionConfiguration>(new SerializerRepresentation(SerializationKind.Json, typeof(MessageBusJsonSerializationConfiguration).ToRepresentation()));
+            var launchConfig = Config.Get<MessageBusLaunchConfiguration>(new SerializerRepresentation(SerializationKind.Json, typeof(MessageBusJsonSerializationConfiguration).ToRepresentation()));
 
             new { logProcessorSettings }.AsArg().Must().NotBeNull();
             new { handlerFactoryConfig }.AsArg().Must().NotBeNull();

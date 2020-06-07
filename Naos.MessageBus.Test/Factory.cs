@@ -16,6 +16,7 @@ namespace Naos.MessageBus.Test
     using OBeautifulCode.Compression.Recipes;
     using OBeautifulCode.Representation.System;
     using OBeautifulCode.Serialization;
+    using OBeautifulCode.Serialization.Json;
     using OBeautifulCode.Serialization.Recipes;
     using OBeautifulCode.Type;
 
@@ -109,17 +110,15 @@ namespace Naos.MessageBus.Test
 
         public static IStuffAndOpenEnvelopes GetEnvelopeMachine()
         {
-            var serializerFactory = new SerializationDescriptionToSerializerFactory(PostOffice.MessageSerializationDescription, PostOffice.DefaultSerializer);
+            var serializerFactory = new JsonSerializerFactory();
             return new EnvelopeMachine(
-                PostOffice.MessageSerializationDescription,
-                serializerFactory,
-                CompressorFactory.Instance,
-                TypeMatchStrategy.NamespaceAndName);
+                PostOffice.MessageSerializerRepresentation,
+                serializerFactory);
         }
 
         public static IManageShares GetShareManager()
         {
-            return new ShareManager(SerializerFactory.Instance, CompressorFactory.Instance, TypeMatchStrategy.NamespaceAndName);
+            return new ShareManager(SerializerFactory.Instance);
         }
 
         public static IPostOffice GetInMemoryParcelTrackingSystemBackedPostOffice(List<string> trackingCalls, List<Parcel> trackingSends)

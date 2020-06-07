@@ -29,7 +29,7 @@ namespace Naos.MessageBus.Test
             var description = type.ToRepresentation();
 
             // assert
-            Assert.Equal(type.AssemblyQualifiedName, description.AssemblyQualifiedName);
+            type.AssemblyQualifiedName.Should().Contain(description.BuildAssemblyQualifiedName());
             Assert.Equal(type.Namespace, description.Namespace);
             Assert.Equal(type.Name, description.Name);
         }
@@ -57,7 +57,7 @@ namespace Naos.MessageBus.Test
             var description = type.ToRepresentation();
 
             // assert
-            Assert.Equal(type.AssemblyQualifiedName, description.AssemblyQualifiedName);
+            type.AssemblyQualifiedName.Should().Contain(description.BuildAssemblyQualifiedName());
             Assert.Equal(type.Namespace, description.Namespace);
             Assert.Equal(type.Name, description.Name);
         }

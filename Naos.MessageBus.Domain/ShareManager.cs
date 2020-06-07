@@ -22,20 +22,18 @@ namespace Naos.MessageBus.Domain
     public class ShareManager : IManageShares
     {
         /// <summary>
-        /// Gets the <see cref="SerializationDescription" /> to use for serializing messages.
+        /// Gets the <see cref="SerializerRepresentation" /> to use for serializing messages.
         /// </summary>
-        public static SerializationDescription SharedPropertySerializationDescription => new SerializationDescription(SerializationKind.Json, SerializationFormat.String, typeof(MessageBusJsonConfiguration).ToRepresentation());
+        public static SerializerRepresentation SharedPropertySerializerRepresentation => new SerializerRepresentation(SerializationKind.Json, typeof(MessageBusJsonSerializationConfiguration).ToRepresentation());
 
         // Make this permissive since it's the underlying logic and shouldn't be coupled to whether others are matched in a stricter mode assigned in constructor.
-        private static readonly TypeComparer CheckForSharingTypeComparer = new TypeComparer(TypeMatchStrategy.NamespaceAndName);
-
-        private readonly TypeMatchStrategy typeMatchStrategyForMatchingSharingInterfaces;
+        private static readonly IEqualityComparer<Type> CheckForSharingTypeComparer = new VersionlessTypeEqualityComparer();
 
         private readonly ISerializerFactory serializerFactory;
 
-        private readonly ICompressorFactory compressorFactory;
+        private readonly IEqualityComparer<Type> typeComparer = new VersionlessTypeEqualityComparer();
 
-        private readonly TypeComparer typeComparer;
+        private readonly IEqualityComparer<TypeRepresentation> typeRepresentationComparer = new VersionlessTypeRepresentationEqualityComparer();
 
         private readonly IStringSerializeAndDeserialize serializer;
 
@@ -43,19 +41,13 @@ namespace Naos.MessageBus.Domain
         /// Initializes a new instance of the <see cref="ShareManager"/> class.
         /// </summary>
         /// <param name="serializerFactory">Serializer factory for <see cref="DescribedSerialization" /> use.</param>
-        /// <param name="compressorFactory">Compressor factory for <see cref="DescribedSerialization" /> use.</param>
-        /// <param name="typeMatchStrategyForMatchingSharingInterfaces">Strategy to use when matching types for sharing.</param>
-        public ShareManager(ISerializerFactory serializerFactory, ICompressorFactory compressorFactory, TypeMatchStrategy typeMatchStrategyForMatchingSharingInterfaces)
+        public ShareManager(ISerializerFactory serializerFactory)
         {
             new { serializerFactory }.AsArg().Must().NotBeNull();
-            new { compressorFactory }.AsArg().Must().NotBeNull();
 
-            this.typeMatchStrategyForMatchingSharingInterfaces = typeMatchStrategyForMatchingSharingInterfaces;
             this.serializerFactory = serializerFactory;
-            this.compressorFactory = compressorFactory;
 
-            this.serializer = serializerFactory.BuildSerializer(SharedPropertySerializationDescription, this.typeMatchStrategyForMatchingSharingInterfaces, MultipleMatchStrategy.NewestVersion, UnregisteredTypeEncounteredStrategy.Attempt);
-            this.typeComparer = new TypeComparer(this.typeMatchStrategyForMatchingSharingInterfaces);
+            this.serializer = serializerFactory.BuildSerializer(SharedPropertySerializerRepresentation);
         }
 
         /// <summary>
@@ -127,12 +119,11 @@ namespace Naos.MessageBus.Domain
                 throw new ArgumentNullException(nameof(jsonConfigurationTypeRepresentation));
             }
 
-            var serializationDescription = new SerializationDescription(
-                SharedPropertySerializationDescription.SerializationKind,
-                SharedPropertySerializationDescription.SerializationFormat,
+            var serializerRepresentation = new SerializerRepresentation(
+                SharedPropertySerializerRepresentation.SerializationKind,
                 jsonConfigurationTypeRepresentation,
-                SharedPropertySerializationDescription.CompressionKind,
-                SharedPropertySerializationDescription.Metadata);
+                SharedPropertySerializerRepresentation.CompressionKind,
+                SharedPropertySerializerRepresentation.Metadata);
 
             var ret = new List<SharedInterfaceState>();
 
@@ -157,7 +148,7 @@ namespace Naos.MessageBus.Domain
 
                     var payloadTypeRepresentation = (propertyValue?.GetType() ?? prop.PropertyType).ToRepresentation();
                     var propertyValueSerialized = this.serializer.SerializeToString(propertyValue);
-                    var valueAsDescribedSerialization = new DescribedSerialization(payloadTypeRepresentation, propertyValueSerialized, serializationDescription);
+                    var valueAsDescribedSerialization = new DescribedSerialization(payloadTypeRepresentation, propertyValueSerialized, serializerRepresentation, SerializationFormat.String);
                     var propertyEntry = new SharedProperty(propertyName, valueAsDescribedSerialization);
 
                     entry.Properties.Add(propertyEntry);
@@ -184,7 +175,7 @@ namespace Naos.MessageBus.Domain
             var shareInterfaceTypeRepresentations = shareInterfaceTypes.Select(_ => _.ToRepresentation()).ToList();
 
             // check if the interface of the shared set is implemented by the message
-            if (shareInterfaceTypeRepresentations.Contains(sharedPropertiesFromAnotherShareObject.InterfaceType, this.typeComparer))
+            if (shareInterfaceTypeRepresentations.Contains(sharedPropertiesFromAnotherShareObject.InterfaceType, this.typeRepresentationComparer))
             {
                 var typeProperties = objectToShareTo.GetType().GetProperties();
                 foreach (var sharedPropertyEntry in sharedPropertiesFromAnotherShareObject.Properties)
@@ -209,11 +200,7 @@ namespace Naos.MessageBus.Domain
             new { sharedProperty }.AsArg().Must().NotBeNull();
 
             var ret = sharedProperty.SerializedValue.DeserializePayloadUsingSpecificFactory(
-                this.serializerFactory,
-                this.compressorFactory,
-                this.typeMatchStrategyForMatchingSharingInterfaces,
-                MultipleMatchStrategy.NewestVersion,
-                UnregisteredTypeEncounteredStrategy.Attempt);
+                this.serializerFactory);
 
             return ret;
         }

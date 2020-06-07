@@ -6,6 +6,7 @@
 
 namespace Naos.MessageBus.Persistence
 {
+    using System;
     using System.Collections.Generic;
     using System.Linq;
     using Microsoft.Its.Domain;
@@ -19,7 +20,7 @@ namespace Naos.MessageBus.Persistence
     public partial class Shipment
     {
         // Make this permissive since it's the underlying logic and shouldn't be coupled to whether others are matched in a stricter mode assigned in constructor.
-        private static readonly TypeComparer TopicAffectedMessageTypeComparer = new TypeComparer(TypeMatchStrategy.NamespaceAndName);
+        private static readonly IEqualityComparer<TypeRepresentation> TopicAffectedMessageTypeRepresentationComparer = new VersionlessTypeRepresentationEqualityComparer();
 
         /// <summary>
         /// Enact the <see cref="Create"/> command.
@@ -183,7 +184,7 @@ namespace Naos.MessageBus.Persistence
 
             var deliveredEnvelope = command.DeliveredEnvelope;
 
-            var beingAffected = TopicAffectedMessageTypeComparer.Equals(deliveredEnvelope.SerializedMessage.PayloadTypeRepresentation, typeof(TopicBeingAffectedMessage).ToRepresentation());
+            var beingAffected = TopicAffectedMessageTypeRepresentationComparer.Equals(deliveredEnvelope.SerializedMessage.PayloadTypeRepresentation, typeof(TopicBeingAffectedMessage).ToRepresentation());
             if (beingAffected)
             {
                 var message = deliveredEnvelope.Open<TopicBeingAffectedMessage>(envelopeMachine);
@@ -196,7 +197,7 @@ namespace Naos.MessageBus.Persistence
                 events.Add(topicBeingAffectedEvent);
             }
 
-            var wasAffected = TopicAffectedMessageTypeComparer.Equals(deliveredEnvelope.SerializedMessage.PayloadTypeRepresentation, typeof(TopicWasAffectedMessage).ToRepresentation());
+            var wasAffected = TopicAffectedMessageTypeRepresentationComparer.Equals(deliveredEnvelope.SerializedMessage.PayloadTypeRepresentation, typeof(TopicWasAffectedMessage).ToRepresentation());
             if (wasAffected)
             {
                 var message = deliveredEnvelope.Open<TopicWasAffectedMessage>(envelopeMachine);

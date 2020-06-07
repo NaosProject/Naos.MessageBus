@@ -26,7 +26,7 @@ namespace Naos.MessageBus.Test
             // Arrange
             var messageType = typeof(FetchAndShareLatestTopicStatusReportsMessage);
             var handlerType = typeof(FetchAndShareLatestTopicStatusReportsMessageHandler);
-            var handlerFactory = new MappedTypeHandlerFactory(new Dictionary<Type, Type> { { messageType, handlerType } }, TypeMatchStrategy.NamespaceAndName);
+            var handlerFactory = new MappedTypeHandlerFactory(new Dictionary<Type, Type> { { messageType, handlerType } });
 
             // Act
             var actual = handlerFactory.BuildHandlerForMessageType(messageType);

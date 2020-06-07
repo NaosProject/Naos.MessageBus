@@ -37,7 +37,7 @@ namespace Naos.MessageBus.Persistence
     /// </summary>
     public static class PayloadSerializationExtensions
     {
-        private static readonly ISerializeAndDeserialize PayloadSerializer = new ObcJsonSerializer(typeof(MessageBusJsonConfiguration), UnregisteredTypeEncounteredStrategy.Attempt);
+        private static readonly ISerializeAndDeserialize PayloadSerializer = new ObcJsonSerializer(typeof(MessageBusJsonSerializationConfiguration).ToJsonSerializationConfigurationType());
 
         /// <summary>
         /// Serializes a payload to JSON.

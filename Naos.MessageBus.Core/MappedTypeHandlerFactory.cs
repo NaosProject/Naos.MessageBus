@@ -21,18 +21,15 @@ namespace Naos.MessageBus.Core
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1063:ImplementIDisposableCorrectly", Justification = "No unmanaged resources.")]
     public sealed class MappedTypeHandlerFactory : IHandlerFactory
     {
-        private static readonly TypeComparer InternalTypeComparer = new TypeComparer(TypeMatchStrategy.NamespaceAndName);
+        private static readonly IEqualityComparer<Type> InternalTypeComparer = new VersionlessTypeEqualityComparer();
 
         private readonly IReadOnlyDictionary<Type, Type> messageTypeToHandlerTypeMap;
-
-        private readonly TypeMatchStrategy typeMatchStrategyForComparingMessageTypes;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="MappedTypeHandlerFactory"/> class.
         /// </summary>
         /// <param name="messageTypeToHandlerTypeMap">Map of message types to a concreate handler type to be constructed using default constructor.</param>
-        /// <param name="typeMatchStrategyForComparingMessageTypes">Type match strategy to use when looking up the handler.</param>
-        public MappedTypeHandlerFactory(IReadOnlyDictionary<Type, Type> messageTypeToHandlerTypeMap, TypeMatchStrategy typeMatchStrategyForComparingMessageTypes)
+        public MappedTypeHandlerFactory(IReadOnlyDictionary<Type, Type> messageTypeToHandlerTypeMap)
         {
             new { messageTypeToHandlerTypeMap }.AsArg().Must().NotBeNullNorEmptyDictionaryNorContainAnyNullValues();
 
@@ -42,7 +39,6 @@ namespace Naos.MessageBus.Core
                 .Must().BeTrue();
 
             this.messageTypeToHandlerTypeMap = messageTypeToHandlerTypeMap;
-            this.typeMatchStrategyForComparingMessageTypes = typeMatchStrategyForComparingMessageTypes;
         }
 
         /// <inheritdoc cref="IHandlerFactory" />
@@ -65,10 +61,9 @@ namespace Naos.MessageBus.Core
 
         private Type GetHandlerTypeToUse(Type messageType)
         {
-            var typeComparer = new TypeComparer(this.typeMatchStrategyForComparingMessageTypes);
             foreach (var typeMapEntry in this.messageTypeToHandlerTypeMap)
             {
-                if (typeComparer.Equals(typeMapEntry.Key, messageType))
+                if (typeMapEntry.Key.Name != "T" && InternalTypeComparer.Equals(typeMapEntry.Key, messageType))
                 {
                     return typeMapEntry.Value;
                 }

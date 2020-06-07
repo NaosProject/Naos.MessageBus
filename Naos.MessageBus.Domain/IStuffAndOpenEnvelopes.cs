@@ -47,31 +47,24 @@ namespace Naos.MessageBus.Domain
     /// </summary>
     public class EnvelopeMachine : IStuffAndOpenEnvelopes
     {
-        private readonly SerializationDescription messageSerializationDescription;
+        private readonly SerializerRepresentation messageSerializerRepresentation;
 
         private readonly ISerializerFactory serializerFactory;
-
-        private readonly ICompressorFactory compressorFactory;
-
-        private readonly TypeMatchStrategy typeMatchStrategyForMessageResolution;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="EnvelopeMachine"/> class.
         /// </summary>
-        /// <param name="messageSerializationDescription">Serialization description to use.</param>
+        /// <param name="messageSerializerRepresentation">Serialization description to use.</param>
         /// <param name="serializerFactory">Serializer factory to use.</param>
-        /// <param name="compressorFactory">Compressor factory to use.</param>
-        /// <param name="typeMatchStrategyForMessageResolution">Type match strategy to use.</param>
-        public EnvelopeMachine(SerializationDescription messageSerializationDescription, ISerializerFactory serializerFactory, ICompressorFactory compressorFactory, TypeMatchStrategy typeMatchStrategyForMessageResolution)
+        public EnvelopeMachine(
+            SerializerRepresentation messageSerializerRepresentation,
+            ISerializerFactory serializerFactory)
         {
-            new { messageSerializationDescription }.AsArg().Must().NotBeNull();
+            new { messageSerializerRepresentation }.AsArg().Must().NotBeNull();
             new { serializerFactory }.AsArg().Must().NotBeNull();
-            new { compressorFactory }.AsArg().Must().NotBeNull();
 
-            this.messageSerializationDescription = messageSerializationDescription;
+            this.messageSerializerRepresentation = messageSerializerRepresentation;
             this.serializerFactory = serializerFactory;
-            this.compressorFactory = compressorFactory;
-            this.typeMatchStrategyForMessageResolution = typeMatchStrategyForMessageResolution;
         }
 
         /// <inheritdoc />
@@ -87,11 +80,7 @@ namespace Naos.MessageBus.Domain
             new { envelope }.AsArg().Must().NotBeNull();
 
             var ret = envelope.SerializedMessage.DeserializePayloadUsingSpecificFactory<T>(
-                this.serializerFactory,
-                this.compressorFactory,
-                this.typeMatchStrategyForMessageResolution,
-                MultipleMatchStrategy.NewestVersion,
-                UnregisteredTypeEncounteredStrategy.Attempt);
+                this.serializerFactory);
 
             return ret;
         }
@@ -103,25 +92,21 @@ namespace Naos.MessageBus.Domain
 
             var localId = id ?? Guid.NewGuid().ToString().ToUpperInvariant();
 
-            var localSerializationDescription = this.messageSerializationDescription;
-            if (addressedMessage.JsonConfigurationTypeRepresentation != null)
+            var localSerializerRepresentation = this.messageSerializerRepresentation;
+            if (addressedMessage.JsonSerializationConfigurationTypeRepresentation != null)
             {
                 // override configuration type
-                localSerializationDescription = new SerializationDescription(
-                    localSerializationDescription.SerializationKind,
-                    localSerializationDescription.SerializationFormat,
-                    addressedMessage.JsonConfigurationTypeRepresentation,
-                    localSerializationDescription.CompressionKind,
-                    localSerializationDescription.Metadata);
+                localSerializerRepresentation = new SerializerRepresentation(
+                    localSerializerRepresentation.SerializationKind,
+                    addressedMessage.JsonSerializationConfigurationTypeRepresentation,
+                    localSerializerRepresentation.CompressionKind,
+                    localSerializerRepresentation.Metadata);
             }
 
             var serializedMessage = addressedMessage.Message.ToDescribedSerializationUsingSpecificFactory(
-                localSerializationDescription,
+                localSerializerRepresentation,
                 this.serializerFactory,
-                this.compressorFactory,
-                this.typeMatchStrategyForMessageResolution,
-                MultipleMatchStrategy.NewestVersion,
-                UnregisteredTypeEncounteredStrategy.Attempt);
+                SerializationFormat.String);
 
             var ret = new Envelope(localId, addressedMessage.Message.Description, addressedMessage.Address, serializedMessage);
 

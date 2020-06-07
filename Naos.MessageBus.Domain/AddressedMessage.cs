@@ -27,6 +27,6 @@ namespace Naos.MessageBus.Domain
         /// <summary>
         /// Gets or sets the type of configuration to use for JSON serialization which is necessary for message transport.
         /// </summary>
-        public TypeRepresentation JsonConfigurationTypeRepresentation { get; set; }
+        public TypeRepresentation JsonSerializationConfigurationTypeRepresentation { get; set; }
     }
 }

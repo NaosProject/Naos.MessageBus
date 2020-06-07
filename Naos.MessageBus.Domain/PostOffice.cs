@@ -20,17 +20,19 @@ namespace Naos.MessageBus.Domain
     public class PostOffice : IPostOffice
     {
         /// <summary>
-        /// Gets the <see cref="SerializationDescription" /> to use for serializing messages.
+        /// Gets the <see cref="SerializerRepresentation" /> to use for serializing messages.
         /// </summary>
-        public static SerializationDescription MessageSerializationDescription => new SerializationDescription(SerializationKind.Json, SerializationFormat.String, typeof(MessageBusJsonConfiguration).ToRepresentation());
+        public static SerializerRepresentation MessageSerializerRepresentation => new SerializerRepresentation(SerializationKind.Json, typeof(MessageBusJsonSerializationConfiguration).ToRepresentation());
 
         /// <summary>
         /// Gets the default serializer to use for serializing messages.
         /// </summary>
-        public static ISerializeAndDeserialize DefaultSerializer => new ObcJsonSerializer(typeof(MessageBusJsonConfiguration), UnregisteredTypeEncounteredStrategy.Attempt);
+        public static ISerializer DefaultSerializer => new ObcJsonSerializer(typeof(MessageBusJsonSerializationConfiguration).ToJsonSerializationConfigurationType());
 
         // Make this permissive since it's the underlying logic and shouldn't be coupled to whether others are matched in a stricter mode assigned in constructor.
-        private static readonly TypeComparer NullChannelAndTopicAffectedMessageTypeComparer = new TypeComparer(TypeMatchStrategy.NamespaceAndName);
+        private static readonly IEqualityComparer<Type> NullChannelAndTopicAffectedMessageTypeComparer = new VersionlessTypeEqualityComparer();
+
+        private static readonly IEqualityComparer<TypeRepresentation> NullChannelAndTopicAffectedMessageTypeRepresentationComparer = new VersionlessTypeRepresentationEqualityComparer();
 
         private readonly IParcelTrackingSystem parcelTrackingSystem;
 
@@ -249,7 +251,7 @@ namespace Naos.MessageBus.Domain
                 Topic = parcel.Topic,
             };
 
-            var beingAffectedEnvelopes = envelopes.Where(_ => NullChannelAndTopicAffectedMessageTypeComparer.Equals(_.SerializedMessage.PayloadTypeRepresentation, beingAffectedMessage.GetType().ToRepresentation())).ToList();
+            var beingAffectedEnvelopes = envelopes.Where(_ => NullChannelAndTopicAffectedMessageTypeRepresentationComparer.Equals(_.SerializedMessage.PayloadTypeRepresentation, beingAffectedMessage.GetType().ToRepresentation())).ToList();
             if (beingAffectedEnvelopes.Count > 0)
             {
                 if (beingAffectedEnvelopes.Count > 1)
@@ -278,7 +280,7 @@ namespace Naos.MessageBus.Domain
                 Topic = parcel.Topic,
             };
 
-            var wasAffectedEnvelopes = envelopes.Where(_ => NullChannelAndTopicAffectedMessageTypeComparer.Equals(_.SerializedMessage.PayloadTypeRepresentation, wasAffectedMessage.GetType().ToRepresentation())).ToList();
+            var wasAffectedEnvelopes = envelopes.Where(_ => NullChannelAndTopicAffectedMessageTypeRepresentationComparer.Equals(_.SerializedMessage.PayloadTypeRepresentation, wasAffectedMessage.GetType().ToRepresentation())).ToList();
             if (wasAffectedEnvelopes.Count > 0)
             {
                 if (wasAffectedEnvelopes.Count > 1)
