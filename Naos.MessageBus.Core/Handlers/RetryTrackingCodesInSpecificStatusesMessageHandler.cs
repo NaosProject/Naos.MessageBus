@@ -11,9 +11,7 @@ namespace Naos.MessageBus.Core
     using System.Runtime.Serialization;
     using System.Threading;
     using System.Threading.Tasks;
-
-    using Its.Log.Instrumentation;
-
+    using Naos.Logging.Domain;
     using Naos.MessageBus.Domain;
 
     /// <summary>
@@ -58,20 +56,20 @@ namespace Naos.MessageBus.Core
                 var parcelsThatNeedRetrying = reports.Where(_ => message.StatusesToRetry.Contains(_.Status)).ToList();
                 var parcelsThatPotentiallyNeedRetrying = reports.Where(_ => _.Status == ParcelStatus.InTransit || _.Status == ParcelStatus.OutForDelivery).ToList();
 
-                Log.Write($"Found {parcelsThatNeedRetrying.Count} parcels to retry."); // origin NaosMessageBusHarness
+                Log.Write(() => $"Found {parcelsThatNeedRetrying.Count} parcels to retry."); // origin NaosMessageBusHarness
                 foreach (var parcelThatNeedsRetrying in parcelsThatNeedRetrying)
                 {
                     var currentRetryCount = parcelIdRetryCountMap[parcelThatNeedsRetrying.CurrentTrackingCode.ParcelId];
                     if (message.NumberOfRetriesToAttempt == -1 || currentRetryCount < message.NumberOfRetriesToAttempt)
                     {
-                        Log.Write($"Attempting retry {parcelThatNeedsRetrying.CurrentTrackingCode}");
+                        Log.Write(() => $"Attempting retry {parcelThatNeedsRetrying.CurrentTrackingCode}");
                         postOffice.Resend(parcelThatNeedsRetrying.CurrentTrackingCode);
                         parcelIdRetryCountMap[parcelThatNeedsRetrying.CurrentTrackingCode.ParcelId] = currentRetryCount + 1;
                         retryAttempted = true;
                     }
                     else
                     {
-                        Log.Write($"Retry needed for {parcelThatNeedsRetrying.CurrentTrackingCode} but exceeded max retries {message.NumberOfRetriesToAttempt}");
+                        Log.Write(() => $"Retry needed for {parcelThatNeedsRetrying.CurrentTrackingCode} but exceeded max retries {message.NumberOfRetriesToAttempt}");
                     }
                 }
 

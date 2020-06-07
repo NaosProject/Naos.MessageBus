@@ -10,7 +10,7 @@ namespace Naos.MessageBus.Core
     using System.Collections.Concurrent;
     using System.Collections.Generic;
     using System.Linq;
-    using Its.Log.Instrumentation;
+    using Naos.Logging.Domain;
     using Naos.MessageBus.Domain;
     using Naos.MessageBus.Domain.Exceptions;
     using Naos.Recipes.RunWithRetry;
@@ -135,18 +135,18 @@ namespace Naos.MessageBus.Core
             {
                 // this is a very special case, this was invoked with a recurring header message as the next message, we need to reset the
                 //        parcel id and then resend but we will not update any status because the new send with the new id will take care of that
-                Log.Write("Encountered recurring envelope: " + recurringParcelEncounteredException.Message);
+                Log.Write(() => "Encountered recurring envelope: " + recurringParcelEncounteredException.Message);
                 var remainingEnvelopes = parcel.Envelopes.Skip(1).ToList();
                 this.SendRemainingEnvelopes(Guid.NewGuid(), trackingCode, remainingEnvelopes, parcel.SharedInterfaceStates, PostOffice.MessageSerializerRepresentation.SerializationConfigType);
             }
             catch (AbortParcelDeliveryException abortParcelDeliveryException)
             {
-                Log.Write(Invariant($"Aborted parcel delivery; {nameof(TrackingCode)}: {trackingCode}, Exception: {abortParcelDeliveryException}"));
+                Log.Write(() => Invariant($"Aborted parcel delivery; {nameof(TrackingCode)}: {trackingCode}, Exception: {abortParcelDeliveryException}"));
                 this.parcelTrackingSystem.UpdateAbortedAsync(trackingCode, abortParcelDeliveryException.Reason).Wait();
 
                 if (abortParcelDeliveryException.Reschedule)
                 {
-                    Log.Write(Invariant($"Rescheduling parcel; {nameof(TrackingCode)}: {trackingCode}"));
+                    Log.Write(() => Invariant($"Rescheduling parcel; {nameof(TrackingCode)}: {trackingCode}"));
                     this.postOffice.Send(parcel);
                 }
             }
@@ -192,17 +192,17 @@ namespace Naos.MessageBus.Core
             // WARNING: this method change the state of the objects passed in!!!
             this.PrepareHandler(trackingCode, handler);
 
-            using (var activity = Log.Enter(() => new { TrackingCode = trackingCode, MessageDescription = messageToHandle.Description, HandlerType = handler.GetType() }))
+            using (var activity = Log.With(() => new { TrackingCode = trackingCode, MessageDescription = messageToHandle.Description, HandlerType = handler.GetType() }))
             {
                 try
                 {
-                    activity.Trace(() => "Handling message (calling Handle on selected Handler).");
+                    activity.Write(() => "Handling message (calling Handle on selected Handler).");
 
                     Run.TaskUntilCompletion(handler.HandleAsync(messageToHandle));
                 }
                 catch (Exception ex)
                 {
-                    activity.Trace(() => ex);
+                    activity.Write(() => ex);
                     throw;
                 }
             }
@@ -223,11 +223,11 @@ namespace Naos.MessageBus.Core
 
         private void SendRemainingEnvelopes(Guid parcelId, TrackingCode trackingCodeYieldingEnvelopes, List<Envelope> envelopes, IList<SharedInterfaceState> existingSharedInterfaceStates, TypeRepresentation messageToHandleJsonSerializationConfigurationTypeRepresentation, object handler = null)
         {
-            using (var activity = Log.Enter(() => new { TrackingCode = trackingCodeYieldingEnvelopes, RemainingEnvelopes = envelopes }))
+            using (var activity = Log.With(() => new { TrackingCode = trackingCodeYieldingEnvelopes, RemainingEnvelopes = envelopes }))
             {
                 try
                 {
-                    activity.Trace(() => "Found remaining messages in sequence.");
+                    activity.Write(() => "Found remaining messages in sequence.");
 
                     var shareSets = new List<SharedInterfaceState>();
                     if (existingSharedInterfaceStates != null)
@@ -237,12 +237,12 @@ namespace Naos.MessageBus.Core
 
                     if (handler is IShare handlerAsShare)
                     {
-                        activity.Trace(() => "Handler is IShare, loading shared properties into parcel for future messages.");
+                        activity.Write(() => "Handler is IShare, loading shared properties into parcel for future messages.");
                         var newShareSets = this.shareManager.GetSharedInterfaceStates(handlerAsShare, messageToHandleJsonSerializationConfigurationTypeRepresentation);
                         shareSets.AddRange(newShareSets);
                     }
 
-                    activity.Trace(() => "Sending remaining messages in sequence.");
+                    activity.Write(() => "Sending remaining messages in sequence.");
 
                     var envelopesParcel = new Parcel
                                               {
@@ -256,7 +256,7 @@ namespace Naos.MessageBus.Core
                 }
                 catch (Exception ex)
                 {
-                    activity.Trace(() => ex);
+                    activity.Write(() => ex);
                     throw;
                 }
             }
@@ -269,11 +269,11 @@ namespace Naos.MessageBus.Core
             var handlerInterfaces = handlerActualType.GetInterfaces();
             if (handlerInterfaces.Any(_ => _.IsGenericType && this.internalTypeComparerForRecurringMessageCheck.Equals(_.GetGenericTypeDefinition(), typeof(INeedSharedState<>))))
             {
-                using (var activity = Log.Enter(() => new { TrackingCode = trackingCode, HandlerType = handlerActualType }))
+                using (var activity = Log.With(() => new { TrackingCode = trackingCode, HandlerType = handlerActualType }))
                 {
                     try
                     {
-                        activity.Trace(() => "Detected need for state management.");
+                        activity.Write(() => "Detected need for state management.");
 
                         // this will only get set to false if there is existing state AND it is valid
                         var stateNeedsCreation = true;
@@ -281,27 +281,27 @@ namespace Naos.MessageBus.Core
                         var haveStateToValidateAndUse = this.handlerSharedStateMap.TryGetValue(handlerActualType, out object state);
                         if (haveStateToValidateAndUse)
                         {
-                            activity.Trace(() => "Found pre-generated initial state.");
+                            activity.Write(() => "Found pre-generated initial state.");
                             var validateMethodInfo = handlerActualType.GetMethod("IsStateStillValid");
                             var validRaw = validateMethodInfo.Invoke(handler, new[] { state });
                             var valid = (bool)validRaw;
                             if (!valid)
                             {
-                                activity.Trace(() => "State was found to be invalid, not using.");
+                                activity.Write(() => "State was found to be invalid, not using.");
                                 var removedThisTime = this.handlerSharedStateMap.TryRemove(handlerActualType, out object removalOutput);
                                 if (removedThisTime)
                                 {
                                     // this is where you would dispose if it were disposable DO NOT DO THIS!!! this object could be in live handlers that are not finished yet...
-                                    activity.Trace(() => "Invalidated state and removed from dictionary.");
+                                    activity.Write(() => "Invalidated state and removed from dictionary.");
                                 }
                                 else
                                 {
-                                    activity.Trace(() => "Invalidated state but was already removed from dictionary.");
+                                    activity.Write(() => "Invalidated state but was already removed from dictionary.");
                                 }
                             }
                             else
                             {
-                                activity.Trace(() => "Initial state was found to be valid.");
+                                activity.Write(() => "Initial state was found to be valid.");
                                 stateNeedsCreation = false;
                             }
                         }
@@ -309,29 +309,29 @@ namespace Naos.MessageBus.Core
                         // this is the performance gain in case state creation is expensive...
                         if (stateNeedsCreation)
                         {
-                            activity.Trace(
+                            activity.Write(
                                 () => "No pre-existing state or it is invalid, creating new state for this use and future uses.");
                             var getInitialStateMethod = handlerActualType.GetMethod("CreateState");
                             state = getInitialStateMethod.Invoke(handler, new object[0]);
 
-                            activity.Trace(() => "Adding state to tracking map for future use.");
+                            activity.Write(() => "Adding state to tracking map for future use.");
                             this.handlerSharedStateMap.AddOrUpdate(
                                 handlerActualType,
                                 state,
                                 (key, existingStateInDictionary) =>
                                     {
-                                        activity.Trace(() => "State already exists in map, updating with new state.");
+                                        activity.Write(() => "State already exists in map, updating with new state.");
                                         return state;
                                     });
                         }
 
-                        activity.Trace(() => "Applying state to handler.");
+                        activity.Write(() => "Applying state to handler.");
                         var seedMethodInfo = handlerActualType.GetMethod("PreHandleWithState");
                         seedMethodInfo.Invoke(handler, new[] { state });
                     }
                     catch (Exception ex)
                     {
-                        activity.Trace(() => ex);
+                        activity.Write(() => ex);
                         throw;
                     }
                 }
@@ -347,11 +347,11 @@ namespace Naos.MessageBus.Core
 
             if (message is IShare messageAsShare && sharedProperties.Count > 0)
             {
-                using (var activity = Log.Enter(() => new { TrackingCode = trackingCode, MessageDescription = message.Description }))
+                using (var activity = Log.With(() => new { TrackingCode = trackingCode, MessageDescription = message.Description }))
                 {
                     try
                     {
-                        activity.Trace(
+                        activity.Write(
                             () =>
                             "Discovered need to evaluate shared properties, sharing applicable properties to message from sharedProperties in parcel.");
 
@@ -362,7 +362,7 @@ namespace Naos.MessageBus.Core
                     }
                     catch (Exception ex)
                     {
-                        activity.Trace(() => ex);
+                        activity.Write(() => ex);
                         throw;
                     }
                 }

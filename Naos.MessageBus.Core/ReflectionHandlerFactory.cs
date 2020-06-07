@@ -10,7 +10,7 @@ namespace Naos.MessageBus.Core
     using System.Collections.Generic;
     using System.Linq;
     using System.Reflection;
-    using Its.Log.Instrumentation;
+    using Naos.Logging.Domain;
     using Naos.MessageBus.Domain;
     using OBeautifulCode.Assertion.Recipes;
     using OBeautifulCode.Reflection.Recipes;
@@ -77,9 +77,9 @@ namespace Naos.MessageBus.Core
                 }
                 catch (ReflectionTypeLoadException ex)
                 {
-                    Log.Write(() => new LogEntry("Failed to get types from loaded assembly: " + assembly.FullName, ex));
+                    Log.Write(() => ex, "Failed to get types from loaded assembly: " + assembly.FullName);
                     ex.LoaderExceptions.ToList()
-                        .ForEach(_ => Log.Write(() => new LogEntry("Failed to get types from loaded assembly (LoaderException): " + assembly.FullName, _)));
+                        .ForEach(_ => Log.Write(() =>  _, "Failed to get types from loaded assembly (LoaderException): " + assembly.FullName));
 
                     throw;
                 }

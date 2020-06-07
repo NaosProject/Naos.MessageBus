@@ -7,9 +7,7 @@
 namespace Naos.MessageBus.Core
 {
     using System.Threading.Tasks;
-
-    using Its.Log.Instrumentation;
-
+    using Naos.Logging.Domain;
     using Naos.MessageBus.Domain;
 
     /// <summary>
@@ -20,13 +18,13 @@ namespace Naos.MessageBus.Core
         /// <inheritdoc cref="MessageHandlerBase{T}" />
         public override async Task HandleAsync(WaitMessage message)
         {
-            using (var activity = Log.Enter(() => new { Message = message, TimeToWait = message.TimeToWait }))
+            using (var activity = Log.With(() => new { Message = message, TimeToWait = message.TimeToWait }))
             {
-                activity.Trace("Starting to wait.");
+                activity.Write(() => "Starting to wait.");
 
                 await Task.Delay(message.TimeToWait);
 
-                activity.Trace("Finished waiting.");
+                activity.Write(() => "Finished waiting.");
             }
         }
     }

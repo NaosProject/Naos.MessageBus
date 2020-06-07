@@ -9,9 +9,7 @@ namespace Naos.MessageBus.Core
     using System;
     using System.Runtime.ExceptionServices;
     using System.Threading.Tasks;
-
-    using Its.Log.Instrumentation;
-
+    using Naos.Logging.Domain;
     using Naos.MessageBus.Domain;
     using OBeautifulCode.Representation.System;
     using OBeautifulCode.Serialization;
@@ -24,7 +22,7 @@ namespace Naos.MessageBus.Core
         /// <inheritdoc cref="MessageHandlerBase{T}" />
         public override async Task HandleAsync(ThrowsExceptionMessage message)
         {
-            Log.Write(new LogEntry(message.Description, message));
+            Log.Write(() => message, message.Description);
 
             var exception = message.SerializedExceptionToThrow.DeserializePayloadUsingSpecificFactory<Exception>(this.SerializerFactory);
 

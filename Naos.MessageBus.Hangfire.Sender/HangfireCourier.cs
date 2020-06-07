@@ -13,8 +13,8 @@ namespace Naos.MessageBus.Hangfire.Sender
     using System.Text.RegularExpressions;
     using global::Hangfire;
     using global::Hangfire.States;
-    using Its.Log.Instrumentation;
     using Naos.Cron;
+    using Naos.Logging.Domain;
     using Naos.MessageBus.Domain;
     using OBeautifulCode.Assertion.Recipes;
     using OBeautifulCode.Representation.System;
@@ -64,7 +64,7 @@ namespace Naos.MessageBus.Hangfire.Sender
         {
             // run this with retries because it will sometimes fail due to high load/high connection count
             Using.LinearBackOff(TimeSpan.FromSeconds(5))
-                .WithReporter(_ => Log.Write(new { Message = Invariant($"Retried a failure in connecting to Hangfire Persistence: {_.Message}"), Exception = _ }))
+                .WithReporter(_ => Log.Write(() => new { Message = Invariant($"Retried a failure in connecting to Hangfire Persistence: {_.Message}"), Exception = _ }))
                 .WithMaxRetries(this.retryCount)
                 .Run(() => GlobalConfiguration.Configuration.UseSqlServerStorage(this.courierPersistenceConnectionConfiguration.ToSqlServerConnectionString()))
                 .Now();

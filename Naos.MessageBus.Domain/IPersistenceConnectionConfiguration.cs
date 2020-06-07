@@ -8,9 +8,7 @@ namespace Naos.MessageBus.Domain
 {
     using System.Security;
     using System.Text;
-
     using Spritely.Recipes;
-
     using static System.FormattableString;
 
     /// <summary>

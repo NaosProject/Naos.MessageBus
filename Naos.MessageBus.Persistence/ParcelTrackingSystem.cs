@@ -10,10 +10,10 @@ namespace Naos.MessageBus.Persistence
     using System.Collections.Generic;
     using System.Linq;
     using System.Threading.Tasks;
-    using Its.Log.Instrumentation;
     using Microsoft.Its.Domain;
     using Microsoft.Its.Domain.Sql;
     using Naos.Cron;
+    using Naos.Logging.Domain;
     using Naos.MessageBus.Domain;
     using Naos.MessageBus.Persistence.NaosRecipes.ItsDomain;
     using Naos.Telemetry.Domain;
@@ -186,11 +186,11 @@ namespace Naos.MessageBus.Persistence
                         .WithReporter(
                             _ =>
                                 Log.Write(
-                                    new
-                                        {
-                                            Message = Invariant($"Retried a failure in updating MessageBusPersistence from {nameof(IParcelTrackingSystem)} ({nameof(this.FetchShipmentAsync)}): {_.Message}"),
-                                            Exception = _,
-                                        }))
+                                    () => new
+                                          {
+                                              Message = Invariant($"Retried a failure in updating MessageBusPersistence from {nameof(IParcelTrackingSystem)} ({nameof(this.FetchShipmentAsync)}): {_.Message}"),
+                                              Exception = _,
+                                          }))
                         .WithMaxRetries(this.retryCount)
                         .RunAsync(() => this.configuration.Repository<Shipment>().GetLatest(parcelId))
                         .Now();
@@ -205,11 +205,11 @@ namespace Naos.MessageBus.Persistence
                     .WithReporter(
                         _ =>
                             Log.Write(
-                                new
-                                    {
-                                        Message = Invariant($"Retried a failure in updating MessageBusPersistence from {nameof(IParcelTrackingSystem)} ({nameof(this.SaveShipmentAsync)}): {_.Message}"),
-                                        Exception = _,
-                                    }))
+                                () => new
+                                      {
+                                          Message = Invariant($"Retried a failure in updating MessageBusPersistence from {nameof(IParcelTrackingSystem)} ({nameof(this.SaveShipmentAsync)}): {_.Message}"),
+                                          Exception = _,
+                                      }))
                     .WithMaxRetries(this.retryCount)
                     .RunAsync(() => this.configuration.Repository<Shipment>().Save(shipment))
                     .Now();
@@ -224,13 +224,13 @@ namespace Naos.MessageBus.Persistence
                         .WithReporter(
                             _ =>
                                 Log.Write(
-                                    new
-                                        {
-                                            Message =
-                                            Invariant(
-                                                $"Retried a failure in updating MessageBusPersistence from {nameof(IParcelTrackingSystem)} ({nameof(this.GetTrackingReportAsync)}): {_.Message}"),
-                                            Exception = _,
-                                        }))
+                                    () => new
+                                          {
+                                              Message =
+                                                  Invariant(
+                                                      $"Retried a failure in updating MessageBusPersistence from {nameof(IParcelTrackingSystem)} ({nameof(this.GetTrackingReportAsync)}): {_.Message}"),
+                                              Exception = _,
+                                          }))
                         .WithMaxRetries(this.retryCount)
                         .RunAsync(
                             () =>
@@ -274,13 +274,13 @@ namespace Naos.MessageBus.Persistence
                         .WithReporter(
                             _ =>
                                 Log.Write(
-                                    new
-                                        {
-                                            Message =
-                                            Invariant(
-                                                $"Retried a failure in updating MessageBusPersistence from {nameof(IParcelTrackingSystem)} ({nameof(this.GetLatestTopicStatusReportAsync)}): {_.Message}"),
-                                            Exception = _,
-                                        }))
+                                    () => new
+                                          {
+                                              Message =
+                                                  Invariant(
+                                                      $"Retried a failure in updating MessageBusPersistence from {nameof(IParcelTrackingSystem)} ({nameof(this.GetLatestTopicStatusReportAsync)}): {_.Message}"),
+                                              Exception = _,
+                                          }))
                         .WithMaxRetries(this.retryCount)
                         .RunAsync(
                             () =>

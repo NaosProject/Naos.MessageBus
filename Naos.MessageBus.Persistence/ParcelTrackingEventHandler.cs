@@ -12,9 +12,9 @@ namespace Naos.MessageBus.Persistence
     using System.Data.SqlClient;
     using System.Linq;
     using System.Reflection;
-    using Its.Log.Instrumentation;
     using Microsoft.Its.Domain;
     using Naos.Cron;
+    using Naos.Logging.Domain;
     using Naos.MessageBus.Domain;
     using OBeautifulCode.Assertion.Recipes;
     using OBeautifulCode.Representation.System;
@@ -125,14 +125,14 @@ namespace Naos.MessageBus.Persistence
             Using.LinearBackOff(TimeSpan.FromSeconds(5))
                 .WithReporter(
                     _ =>
-                        Log.Write(
-                            new
-                                {
-                                    Message =
-                                    Invariant(
-                                        $"Retried a failure in updating MessageBusPersistence from EventHandler ({nameof(Shipment.EnvelopeResendRequested)}): {_.Message}"),
-                                    Exception = _,
-                                }))
+                        Log.Write(() =>
+                                      new
+                                      {
+                                          Message =
+                                              Invariant(
+                                                  $"Retried a failure in updating MessageBusPersistence from EventHandler ({nameof(Shipment.EnvelopeResendRequested)}): {_.Message}"),
+                                          Exception = _,
+                                      }))
                 .WithMaxRetries(this.retryCount)
                 .Run(
                     () =>
@@ -171,13 +171,13 @@ namespace Naos.MessageBus.Persistence
                     .WithReporter(
                         _ =>
                             Log.Write(
-                                new
-                                    {
-                                        Message =
-                                        Invariant(
-                                            $"Retried a failure in updating MessageBusPersistence from EventHandler ({nameof(Shipment.EnvelopeSent)}:CheckForRecurringSchedule): {_.Message}"),
-                                        Exception = _,
-                                    }))
+                                () => new
+                                      {
+                                          Message =
+                                              Invariant(
+                                                  $"Retried a failure in updating MessageBusPersistence from EventHandler ({nameof(Shipment.EnvelopeSent)}:CheckForRecurringSchedule): {_.Message}"),
+                                          Exception = _,
+                                      }))
                     .WithMaxRetries(this.retryCount)
                     .Run(
                         () =>
@@ -217,13 +217,13 @@ namespace Naos.MessageBus.Persistence
                 .WithReporter(
                     _ =>
                         Log.Write(
-                            new
-                                {
-                                    Message =
-                                    Invariant(
-                                        $"Retried a failure in updating MessageBusPersistence from EventHandler ({nameof(Shipment.EnvelopeSent)}:Save): {_.Message}"),
-                                    Exception = _,
-                                }))
+                            () => new
+                                  {
+                                      Message =
+                                          Invariant(
+                                              $"Retried a failure in updating MessageBusPersistence from EventHandler ({nameof(Shipment.EnvelopeSent)}:Save): {_.Message}"),
+                                      Exception = _,
+                                  }))
                 .WithMaxRetries(this.retryCount)
                 .Run(
                     () =>
@@ -258,13 +258,13 @@ namespace Naos.MessageBus.Persistence
                 .WithReporter(
                     _ =>
                         Log.Write(
-                            new
-                                {
-                                    Message =
-                                    Invariant(
-                                        $"Retried a failure in updating MessageBusPersistence from EventHandler ({nameof(Shipment.EnvelopeDeliveryAborted)}): {_.Message}"),
-                                    Exception = _,
-                                }))
+                            () => new
+                                  {
+                                      Message =
+                                          Invariant(
+                                              $"Retried a failure in updating MessageBusPersistence from EventHandler ({nameof(Shipment.EnvelopeDeliveryAborted)}): {_.Message}"),
+                                      Exception = _,
+                                  }))
                 .WithMaxRetries(this.retryCount)
                 .Run(
                     () =>
@@ -287,13 +287,13 @@ namespace Naos.MessageBus.Persistence
                 .WithReporter(
                     _ =>
                         Log.Write(
-                            new
-                                {
-                                    Message =
-                                    Invariant(
-                                        $"Retried a failure in updating MessageBusPersistence from EventHandler ({nameof(Shipment.EnvelopeDeliveryRejected)}): {_.Message}"),
-                                    Exception = _,
-                                }))
+                            () => new
+                                  {
+                                      Message =
+                                          Invariant(
+                                              $"Retried a failure in updating MessageBusPersistence from EventHandler ({nameof(Shipment.EnvelopeDeliveryRejected)}): {_.Message}"),
+                                      Exception = _,
+                                  }))
                 .WithMaxRetries(this.retryCount)
                 .Run(
                     () =>
@@ -324,13 +324,13 @@ namespace Naos.MessageBus.Persistence
                 .WithReporter(
                     _ =>
                         Log.Write(
-                            new
-                                {
-                                    Message =
-                                    Invariant(
-                                        $"Retried a failure in updating MessageBusPersistence from EventHandler ({nameof(Shipment.EnvelopeDelivered)}): {_.Message}"),
-                                    Exception = _,
-                                }))
+                            () => new
+                                  {
+                                      Message =
+                                          Invariant(
+                                              $"Retried a failure in updating MessageBusPersistence from EventHandler ({nameof(Shipment.EnvelopeDelivered)}): {_.Message}"),
+                                      Exception = _,
+                                  }))
                 .WithMaxRetries(this.retryCount)
                 .Run(
                     () =>
@@ -353,13 +353,13 @@ namespace Naos.MessageBus.Persistence
                 .WithReporter(
                     _ =>
                         Log.Write(
-                            new
-                                {
-                                    Message =
-                                    Invariant(
-                                        $"Retried a failure in updating MessageBusPersistence from EventHandler ({nameof(Shipment.ParcelDelivered)}): {_.Message}"),
-                                    Exception = _,
-                                }))
+                            () => new
+                                  {
+                                      Message =
+                                          Invariant(
+                                              $"Retried a failure in updating MessageBusPersistence from EventHandler ({nameof(Shipment.ParcelDelivered)}): {_.Message}"),
+                                      Exception = _,
+                                  }))
                 .WithMaxRetries(this.retryCount)
                 .Run(
                     () =>
@@ -382,13 +382,13 @@ namespace Naos.MessageBus.Persistence
                 .WithReporter(
                     _ =>
                         Log.Write(
-                            new
-                                {
-                                    Message =
-                                    Invariant(
-                                        $"Retried a failure in updating MessageBusPersistence from EventHandler ({nameof(Shipment.TopicBeingAffected)}): {_.Message}"),
-                                    Exception = _,
-                                }))
+                            () => new
+                                  {
+                                      Message =
+                                          Invariant(
+                                              $"Retried a failure in updating MessageBusPersistence from EventHandler ({nameof(Shipment.TopicBeingAffected)}): {_.Message}"),
+                                      Exception = _,
+                                  }))
                 .WithMaxRetries(this.retryCount)
                 .Run(
                     () =>
@@ -447,13 +447,13 @@ namespace Naos.MessageBus.Persistence
                 .WithReporter(
                     _ =>
                         Log.Write(
-                            new
-                                {
-                                    Message =
-                                    Invariant(
-                                        $"Retried a failure in updating MessageBusPersistence from EventHandler ({nameof(Shipment.TopicWasAffected)}): {_.Message}"),
-                                    Exception = _,
-                                }))
+                            () => new
+                                  {
+                                      Message =
+                                          Invariant(
+                                              $"Retried a failure in updating MessageBusPersistence from EventHandler ({nameof(Shipment.TopicWasAffected)}): {_.Message}"),
+                                      Exception = _,
+                                  }))
                 .WithMaxRetries(this.retryCount)
                 .Run(
                     () =>
