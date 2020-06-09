@@ -29,7 +29,6 @@ namespace Naos.Bootstrapper
     using OBeautifulCode.Collection.Recipes;
     using OBeautifulCode.Representation.System;
     using OBeautifulCode.Serialization;
-    using OBeautifulCode.Serialization.Json;
     using static System.FormattableString;
 
     /// <summary>
@@ -40,10 +39,17 @@ namespace Naos.Bootstrapper
     [System.CodeDom.Compiler.GeneratedCode("Naos.Bootstrapper.Recipes.Console", "See package version number")]
     public abstract class ConsoleAbstractionBase
     {
+        private static IReadOnlyCollection<TypeRepresentation> globalTypeRepresentationsOfExceptionsToOmitStackTraceFrom = new List<TypeRepresentation>();
+
         /// <summary>
-        /// Gets the exception types that should fail but NOT print the stack trace as the message is sufficient to understand the issue (useful for input failures). 
+        /// Updates the type representations of exceptions to omit stack trace from.
         /// </summary>
-        protected static IReadOnlyCollection<TypeRepresentation> ExceptionTypeRepresentationsToOnlyPrintMessage { get; set; } = new TypeRepresentation[0];
+        /// <param name="typeRepresentationsOfExceptionsToOmitStackTraceFrom">The type representations of exceptions to omit stack trace from.</param>
+        public static void UpdateTypeRepresentationsOfExceptionsToOmitStackTraceFrom(
+            IReadOnlyCollection<TypeRepresentation> typeRepresentationsOfExceptionsToOmitStackTraceFrom)
+        {
+            globalTypeRepresentationsOfExceptionsToOmitStackTraceFrom = typeRepresentationsOfExceptionsToOmitStackTraceFrom;
+        }
 
         /// <summary>
         /// Performs the entry point pre-checks; custom as well as 'RequiresElevatedPrivileges'.
@@ -62,17 +68,22 @@ namespace Naos.Bootstrapper
         }
 
         /// <summary>
+        /// Gets the exception types that should fail but NOT print the stack trace as the message is sufficient to understand the issue (useful for input failures). 
+        /// </summary>
+        public virtual IReadOnlyCollection<TypeRepresentation> ExceptionTypeRepresentationsToOnlyPrintMessage => new TypeRepresentation[0];
+
+        /// <summary>
+        /// Gets a value indicating whether or not the application requires elevated privileges (ADMIN).
+        /// </summary>
+        protected virtual bool RequiresElevatedPrivileges => false;
+
+        /// <summary>
         /// Extensible item to add additional pre-checks to be evaluated before the CLAP interface launches.
         /// </summary>
         protected virtual void CustomPerformEntryPointPreChecks()
         {
             /* no-op but can be overridden in order to perform checks before activating the CLAP interface and throw an exception. */
         }
-
-        /// <summary>
-        /// Gets a value indicating whether or not the application requires elevated privileges (ADMIN).
-        /// </summary>
-        protected virtual bool RequiresElevatedPrivileges => false;
 
         /// <summary>
         /// Entry point to simulate a failure.
@@ -143,7 +154,7 @@ namespace Naos.Bootstrapper
     #pragma warning restore CS3001 // Argument type is not CLS-compliant
         {
             new { context }.Must().NotBeNull();
-            var typeDescriptionComparer = new VersionlessTypeRepresentationEqualityComparer();
+            var typeRepresentationEqualityComparer = new VersionlessTypeRepresentationEqualityComparer();
 
             // change color to red
             var originalColor = Console.ForegroundColor;
@@ -155,7 +166,7 @@ namespace Naos.Bootstrapper
                 Console.WriteLine("Failure parsing command line arguments.  Run the exe with the 'help' command for usage.");
                 Console.WriteLine("   " + context.Exception.Message);
             }
-            else if ((ExceptionTypeRepresentationsToOnlyPrintMessage ?? new TypeRepresentation[0]).Any(_ => typeDescriptionComparer.Equals(_, context.Exception.GetType().ToRepresentation())))
+            else if ((globalTypeRepresentationsOfExceptionsToOmitStackTraceFrom ?? new TypeRepresentation[0]).Any(_ => typeRepresentationEqualityComparer.Equals(_, context.Exception.GetType().ToRepresentation())))
             {
                 Console.WriteLine("Failure during execution; configured to omit stack trace.");
                 Console.WriteLine(string.Empty);

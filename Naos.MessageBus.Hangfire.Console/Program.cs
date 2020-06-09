@@ -14,10 +14,9 @@ namespace Naos.MessageBus.Hangfire.Console
 #endif
 {
     using System;
-
     using CLAP;
-
     using Its.Log.Instrumentation;
+    using Naos.Bootstrapper;
 
     /// <summary>
     /// Main entry point of application.
@@ -39,7 +38,10 @@ namespace Naos.MessageBus.Hangfire.Console
                 WriteAsciiArt(Console.WriteLine);
 
                 // ConsoleAbstraction must derive from ConsoleAbstractionBase which is provided in the Bootstrapper recipes, it contains the implementation of this method.
-                new ConsoleAbstraction().PerformEntryPointPreChecks();
+                var consoleAbstraction = new ConsoleAbstraction();
+                ConsoleAbstractionBase.UpdateTypeRepresentationsOfExceptionsToOmitStackTraceFrom(consoleAbstraction.ExceptionTypeRepresentationsToOnlyPrintMessage);
+
+                consoleAbstraction.PerformEntryPointPreChecks();
 
                 /*---------------------------------------------------------------------------*
                  * This is just a pass through to the CLAP implementation of the harness,    *

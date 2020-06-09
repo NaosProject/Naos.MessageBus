@@ -37,7 +37,7 @@ namespace Naos.MessageBus.Domain
                                                                                                          .Assembly.GetExportedTypes()
                                                                                                          .Where(
                                                                                                               _ => !_.IsGenericType
-                                                                                                                && _.IsAssignableTo(typeof(IMessage)))
+                                                                                                                && _.IsAssignableTo(typeof(IMessage)) && _ != typeof(IMessage))
                                                                                                          .Select(_ => _.ToTypeToRegisterForJson()))
                                                                                                  .ToList();
 
