@@ -24,10 +24,10 @@ namespace Naos.MessageBus.Test
 
     using Xunit;
 
-    public class TrackingSystemTests
+    public static class TrackingSystemTests
     {
         [Fact(Skip = "This is for testing against a database.")]
-        public async Task Do()
+        public static async Task Do()
         {
             var messages = new List<LogEntry>();
             Log.EntryPosted += (sender, args) => messages.Add(args.LogEntry);
