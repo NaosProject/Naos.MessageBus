@@ -32,14 +32,8 @@ namespace Naos.MessageBus.Domain
                                                                                                     typeof(MessageBusLaunchConfiguration).ToTypeToRegisterForJson(),
                                                                                                     typeof(HandlerFactoryConfiguration).ToTypeToRegisterForJson(),
                                                                                                     typeof(UnitOfWorkResult).ToTypeToRegisterForJson(),
-                                                                                                }.Concat(
-                                                                                                      typeof(IMessage)
-                                                                                                         .Assembly.GetExportedTypes()
-                                                                                                         .Where(
-                                                                                                              _ => !_.IsGenericType
-                                                                                                                && _.IsAssignableTo(typeof(IMessage)) && _ != typeof(IMessage))
-                                                                                                         .Select(_ => _.ToTypeToRegisterForJson()))
-                                                                                                 .ToList();
+                                                                                                    typeof(IMessage).ToTypeToRegisterForJson(),
+                                                                                                };
 
         /// <inheritdoc />
         protected override IReadOnlyCollection<JsonSerializationConfigurationType> DependentJsonSerializationConfigurationTypes => new[]
