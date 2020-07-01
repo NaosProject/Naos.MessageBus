@@ -128,7 +128,7 @@ namespace Naos.MessageBus.Test
                               };
 
             // act & assert
-            testCode.ShouldThrow<InvalidOperationException>().WithMessage("Unable to resolve the specified TypeRepresentation (Not real.Not Real, Not reaL, Version=not real).  These assemblies are not loaded: Not reaL.");
+            testCode.ShouldThrow<FileLoadException>();
         }
 
         [Fact]
