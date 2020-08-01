@@ -189,7 +189,7 @@ namespace Naos.MessageBus.Core
 
             Log.Write(() => Invariant($"Loaded handler; {trackingCode}, Type: {handler.GetType().FullName}"));
 
-            // WARNING: this method change the state of the objects passed in!!!
+            // WARNING: this method changes the state of the objects passed in!!!
             this.PrepareHandler(trackingCode, handler);
 
             using (var activity = Log.With(() => new { TrackingCode = trackingCode, MessageDescription = messageToHandle.Description, HandlerType = handler.GetType() }))
@@ -197,8 +197,9 @@ namespace Naos.MessageBus.Core
                 try
                 {
                     activity.Write(() => "Handling message (calling Handle on selected Handler).");
+                    var handleAsyncTask = handler.HandleAsync(messageToHandle);
 
-                    Run.TaskUntilCompletion(handler.HandleAsync(messageToHandle));
+                    Run.TaskUntilCompletion(handleAsyncTask);
                 }
                 catch (Exception ex)
                 {
