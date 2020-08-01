@@ -200,6 +200,7 @@ namespace Naos.MessageBus.Core
                     var handleAsyncTask = handler.HandleAsync(messageToHandle);
 
                     Run.TaskUntilCompletion(handleAsyncTask);
+                    activity.Write(() => "Handling message completed.");
                 }
                 catch (Exception ex)
                 {

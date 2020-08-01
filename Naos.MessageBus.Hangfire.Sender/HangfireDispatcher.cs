@@ -6,8 +6,9 @@
 
 namespace Naos.MessageBus.Hangfire.Sender
 {
+    using System;
     using System.ComponentModel;
-
+    using Naos.Logging.Domain;
     using Naos.MessageBus.Domain;
 
     /// <summary>
@@ -39,10 +40,15 @@ namespace Naos.MessageBus.Hangfire.Sender
         [DisplayName("{0}")]
         public void HangfireDispatch(string displayName, string trackingCodeSerializedString, string parcelSerializedString, string channelSerializedString)
         {
-            var trackingCode = trackingCodeSerializedString.FromHangfireSerializedString<TrackingCode>();
-            var parcel = parcelSerializedString.FromHangfireSerializedString<Parcel>();
-            var channel = channelSerializedString.FromHangfireSerializedString<IChannel>();
-            this.dispatcher.Dispatch(displayName, trackingCode, parcel, channel);
+            using (var activity = Log.With(() => trackingCodeSerializedString))
+            {
+                activity.Write(() => FormattableString.Invariant($"{nameof(this.HangfireDispatch)} started."));
+                var trackingCode = trackingCodeSerializedString.FromHangfireSerializedString<TrackingCode>();
+                var parcel = parcelSerializedString.FromHangfireSerializedString<Parcel>();
+                var channel = channelSerializedString.FromHangfireSerializedString<IChannel>();
+                this.dispatcher.Dispatch(displayName, trackingCode, parcel, channel);
+                activity.Write(() => FormattableString.Invariant($"{nameof(this.HangfireDispatch)} ended."));
+            }
         }
     }
 }
