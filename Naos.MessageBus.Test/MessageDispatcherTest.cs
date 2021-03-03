@@ -108,7 +108,7 @@ namespace Naos.MessageBus.Test
             var jsoner = PostOffice.DefaultSerializer;
 
             var seedValueAsJson = jsoner.SerializeToString(firstMessage.SeedValue);
-            Assert.Equal(seedValueAsJson, sharedPropertySet.Properties.Single().SerializedValue.SerializedPayload);
+            Assert.Equal(seedValueAsJson, sharedPropertySet.Properties.Single().SerializedValue.GetSerializedPayloadAsEncodedString());
 
             var secondTrackingCode = new TrackingCode { EnvelopeId = "2" };
             dispatcher.Dispatch("Second Message", secondTrackingCode, newParcel, channel);
@@ -147,11 +147,10 @@ namespace Naos.MessageBus.Test
                                                     "2",
                                                     "No work",
                                                     channel,
-                                                    new DescribedSerialization(
+                                                    new StringDescribedSerialization(
                                                         new TypeRepresentation("Not Real Space", "Not Real Name", "Not Real AQN", "Not Real Version", new List<TypeRepresentation>()),
-                                                        "Not Real Payload",
-                                                        PostOffice.MessageSerializerRepresentation, 
-                                                        SerializationFormat.String)),
+                                                        PostOffice.MessageSerializerRepresentation,
+                                                        "Not Real Payload")),
                                             };
 
             var parcel = new Parcel { Envelopes = envelopesFromSequence };

@@ -22,8 +22,8 @@ namespace Naos.MessageBus.Domain
         /// <param name="id">Id of envelope.</param>
         /// <param name="description">Description of envelope.</param>
         /// <param name="address">Channel envelope is addressed to.</param>
-        /// <param name="serializedMessage">Message in <see cref="DescribedSerialization" />.</param>
-        public Envelope(string id, string description, IChannel address, DescribedSerialization serializedMessage)
+        /// <param name="serializedMessage">Message in <see cref="DescribedSerializationBase" />.</param>
+        public Envelope(string id, string description, IChannel address, DescribedSerializationBase serializedMessage)
         {
             new { id }.AsArg().Must().NotBeNullNorWhiteSpace();
             new { serializedMessage }.AsArg().Must().NotBeNull();
@@ -45,9 +45,9 @@ namespace Naos.MessageBus.Domain
         public string Description { get; private set; }
 
         /// <summary>
-        /// Gets the message as a <see cref="DescribedSerialization" />.
+        /// Gets the message as a <see cref="DescribedSerializationBase" />.
         /// </summary>
-        public DescribedSerialization SerializedMessage { get; private set; }
+        public DescribedSerializationBase SerializedMessage { get; private set; }
 
         /// <summary>
         /// Gets the channel the message should be broadcasted on.

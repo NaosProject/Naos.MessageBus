@@ -40,7 +40,7 @@ namespace Naos.MessageBus.Domain
         /// <summary>
         /// Initializes a new instance of the <see cref="ShareManager"/> class.
         /// </summary>
-        /// <param name="serializerFactory">Serializer factory for <see cref="DescribedSerialization" /> use.</param>
+        /// <param name="serializerFactory">Serializer factory for <see cref="DescribedSerializationBase" /> use.</param>
         public ShareManager(ISerializerFactory serializerFactory)
         {
             new { serializerFactory }.AsArg().Must().NotBeNull();
@@ -148,7 +148,7 @@ namespace Naos.MessageBus.Domain
 
                     var payloadTypeRepresentation = (propertyValue?.GetType() ?? prop.PropertyType).ToRepresentation();
                     var propertyValueSerialized = this.serializer.SerializeToString(propertyValue);
-                    var valueAsDescribedSerialization = new DescribedSerialization(payloadTypeRepresentation, propertyValueSerialized, serializerRepresentation, SerializationFormat.String);
+                    var valueAsDescribedSerialization = new StringDescribedSerialization(payloadTypeRepresentation, serializerRepresentation, propertyValueSerialized);
                     var propertyEntry = new SharedProperty(propertyName, valueAsDescribedSerialization);
 
                     entry.Properties.Add(propertyEntry);

@@ -49,7 +49,7 @@ namespace Naos.MessageBus.Test
         {
             // arrange
             var channel = new SimpleChannel("Monkey");
-            channel.SetPropertyValue<string>(nameof(SimpleChannel.Name), null);
+            channel.SetPropertyValue(nameof(SimpleChannel.Name), null);
             Action testCode = () => HangfireCourier.ThrowIfInvalidChannel(channel);
 
             // act & assert

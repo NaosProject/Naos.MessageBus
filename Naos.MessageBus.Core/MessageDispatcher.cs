@@ -176,7 +176,7 @@ namespace Naos.MessageBus.Core
             // WARNING: this method change the state of the objects passed in!!!
             this.PrepareMessage(trackingCode, messageToHandle, parcel.SharedInterfaceStates);
             var deliveredEnvelope = messageToHandle.ToAddressedMessage(address).ToEnvelope(this.envelopeMachine, firstEnvelope.Id);
-            Log.Write(() => Invariant($"Delivered Envelope Channel: {deliveredEnvelope.Address}, Type: {deliveredEnvelope.SerializedMessage.PayloadTypeRepresentation}, Payload: {deliveredEnvelope.SerializedMessage.SerializedPayload}"));
+            Log.Write(() => Invariant($"Delivered Envelope Channel: {deliveredEnvelope.Address}, Type: {deliveredEnvelope.SerializedMessage.PayloadTypeRepresentation}, Payload: {deliveredEnvelope.SerializedMessage.GetSerializedPayloadAsEncodedString()}"));
 
             var messageType = messageToHandle.GetType();
 

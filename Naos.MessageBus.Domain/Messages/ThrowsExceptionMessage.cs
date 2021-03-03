@@ -19,6 +19,6 @@ namespace Naos.MessageBus.Domain
         /// <summary>
         /// Gets or sets the exception to be thrown.
         /// </summary>
-        public DescribedSerialization SerializedExceptionToThrow { get; set; }
+        public DescribedSerializationBase SerializedExceptionToThrow { get; set; }
     }
 }

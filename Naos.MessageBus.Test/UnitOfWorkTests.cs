@@ -30,7 +30,7 @@ namespace Naos.MessageBus.Test
             var serializer = new ObcJsonSerializer(configurationType.ToJsonSerializationConfigurationType());
             var details = new TestDetailsImplementation { Property = A.Dummy<string>() };
             var description = new SerializerRepresentation(SerializationKind.Json, configurationType.ToRepresentation());
-            var described = new DescribedSerialization(typeof(TestDetailsBase).ToRepresentation(), serializer.SerializeToString(details), description, SerializationFormat.String);
+            var described = new StringDescribedSerialization(typeof(TestDetailsBase).ToRepresentation(), description, serializer.SerializeToString(details));
 
             var expected = new UnitOfWorkResult
             {

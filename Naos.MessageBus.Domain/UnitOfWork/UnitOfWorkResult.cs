@@ -26,6 +26,6 @@ namespace Naos.MessageBus.Domain
         /// <summary>
         /// Gets or sets details about the outcome serialized with description.
         /// </summary>
-        public DescribedSerialization Details { get; set; }
+        public DescribedSerializationBase Details { get; set; }
     }
 }

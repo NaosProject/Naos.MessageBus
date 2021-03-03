@@ -109,11 +109,10 @@ namespace Naos.MessageBus.Test
                               {
                                   var sharedPropertyEntry = new SharedProperty(
                                       "FilePath",
-                                      new DescribedSerialization(
+                                      new StringDescribedSerialization(
                                           new TypeRepresentation("Not real", "Not Real", "Not reaL", "not real", new TypeRepresentation[0]),
-                                          "Value",
                                           ShareManager.SharedPropertySerializerRepresentation,
-                                          SerializationFormat.String));
+                                          "Value"));
 
                                   shareManager.ApplySharedInterfaceState(
                                       new SharedInterfaceState
