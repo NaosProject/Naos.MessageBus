@@ -16,6 +16,7 @@ namespace Naos.MessageBus.Core
     using Naos.Recipes.RunWithRetry;
     using Naos.Telemetry.Domain;
     using OBeautifulCode.Assertion.Recipes;
+    using OBeautifulCode.Execution.Recipes;
     using OBeautifulCode.Representation.System;
     using static System.FormattableString;
 
@@ -199,7 +200,7 @@ namespace Naos.MessageBus.Core
                     activity.Write(() => "Handling message (calling Handle on selected Handler).");
                     var handleAsyncTask = handler.HandleAsync(messageToHandle);
 
-                    Run.TaskUntilCompletion(handleAsyncTask);
+                    handleAsyncTask.RunUntilCompletion();
                     activity.Write(() => "Handling message completed.");
                 }
                 catch (Exception ex)
