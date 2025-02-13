@@ -10,6 +10,7 @@ namespace Naos.MessageBus.Core
     using System.Collections.Concurrent;
     using System.Collections.Generic;
     using System.Linq;
+    using System.Threading.Tasks;
     using Naos.Logging.Domain;
     using Naos.MessageBus.Domain;
     using Naos.MessageBus.Domain.Exceptions;
@@ -198,9 +199,8 @@ namespace Naos.MessageBus.Core
                 try
                 {
                     activity.Write(() => "Handling message (calling Handle on selected Handler).");
-                    var handleAsyncTask = handler.HandleAsync(messageToHandle);
-
-                    handleAsyncTask.RunUntilCompletion();
+                    Func<Task> handleAsyncFunc = () => handler.HandleAsync(messageToHandle);
+                    handleAsyncFunc.ExecuteSynchronously();
                     activity.Write(() => "Handling message completed.");
                 }
                 catch (Exception ex)
