@@ -404,7 +404,7 @@ namespace Naos.MessageBus.Test
 
             var envelopeMachine = Factory.GetEnvelopeMachine();
             var shareManager = Factory.GetShareManager();
-            HandlerToolshed.InitializeSerializerFactory(() => SerializerFactory.Instance);
+            HandlerToolshed.InitializeSerializerFactory(() => SerializerFactories.Standard);
             HandlerToolshed.InitializeCompressorFactory(() => CompressorFactory.Instance);
             var handlerInterfaceToImplementationTypeMap = new Dictionary<Type, Type> { { typeof(ThrowsExceptionMessage), typeof(ThrowsExceptionMessageHandler) } };
             var handlerBuilder = new MappedTypeHandlerFactory(handlerInterfaceToImplementationTypeMap);
@@ -432,14 +432,18 @@ namespace Naos.MessageBus.Test
             var parcel = new Parcel
             {
                 Envelopes =
-                                     new[]
-                                         {
-                                             new ThrowsExceptionMessage()
-                                                 {
-                                                     SerializedExceptionToThrow = exception.ToDescribedSerialization(PostOffice.MessageSerializerRepresentation, SerializationFormat.String),
-                                                 }.ToAddressedMessage(
-                                                     monitoredChannel).ToEnvelope(envelopeMachine),
-                                         },
+                    new[]
+                    {
+                        new ThrowsExceptionMessage
+                        {
+                            SerializedExceptionToThrow =
+                                exception.ToDescribedSerializationUsingSpecificFactory(
+                                    PostOffice.MessageSerializerRepresentation,
+                                    SerializerFactories.Standard,
+                                    SerializationFormat.String),
+                        }.ToAddressedMessage(
+                            monitoredChannel).ToEnvelope(envelopeMachine),
+                    },
             };
 
             dispatcher.Dispatch("Parcel", new TrackingCode(), parcel, monitoredChannel);
@@ -459,7 +463,7 @@ namespace Naos.MessageBus.Test
 
             var envelopeMachine = Factory.GetEnvelopeMachine();
             var shareManager = Factory.GetShareManager();
-            HandlerToolshed.InitializeSerializerFactory(() => SerializerFactory.Instance);
+            HandlerToolshed.InitializeSerializerFactory(() => SerializerFactories.Standard);
             HandlerToolshed.InitializeCompressorFactory(() => CompressorFactory.Instance);
             var handlerInterfaceToImplementationTypeMap = new Dictionary<Type, Type> { { typeof(ThrowsExceptionMessage), typeof(ThrowsExceptionMessageHandler) } };
             var handlerBuilder = new MappedTypeHandlerFactory(handlerInterfaceToImplementationTypeMap);

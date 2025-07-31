@@ -83,7 +83,7 @@ namespace Naos.MessageBus.Hangfire.Harness
         {
             var activeMessageTracker = new InMemoryActiveMessageTracker();
 
-            var serializerFactory = SerializerFactory.Instance;
+            var serializerFactory = SerializerFactories.Standard;
             var envelopeMachine = new EnvelopeMachine(PostOffice.MessageSerializerRepresentation, serializerFactory);
 
             var courier = new HangfireCourier(connectionConfig.CourierPersistenceConnectionConfiguration, envelopeMachine);

@@ -255,7 +255,10 @@ namespace OBeautifulCode.Serialization.Recipes
             SerializationFormat serializationFormat,
             object objectToSerialize)
         {
-            var result = objectToSerialize.ToDescribedSerialization(serializerRepresentation, serializationFormat);
+            var result = objectToSerialize.ToDescribedSerializationUsingSpecificFactory(
+                serializerRepresentation,
+                SerializerFactories.Standard,
+                serializationFormat);
 
             return result;
         }
@@ -263,7 +266,8 @@ namespace OBeautifulCode.Serialization.Recipes
         private static T Deserialize<T>(
             DescribedSerializationBase describedSerialization)
         {
-            var result = describedSerialization.DeserializePayload<T>();
+            var result = describedSerialization.DeserializePayloadUsingSpecificFactory<T>(
+                SerializerFactories.Standard);
 
             return result;
         }
@@ -273,7 +277,7 @@ namespace OBeautifulCode.Serialization.Recipes
             SerializationFormat serializationFormat,
             T objectToSerialize)
         {
-            var serializer = SerializerFactory.Instance.BuildSerializer(serializerRepresentation);
+            var serializer = SerializerFactories.Standard.BuildSerializer(serializerRepresentation);
 
             var describedSerialization = objectToSerialize.ToDescribedSerializationUsingSpecificSerializer(serializer, serializationFormat);
 

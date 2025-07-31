@@ -26,7 +26,7 @@ namespace Naos.MessageBus.Test
         [Fact]
         public static void GetAndApplySharedPropertySet_ShareContractOfIntArray_CanBeExtractedAndApplied()
         {
-            var shareManager = new ShareManager(SerializerFactory.Instance);
+            var shareManager = new ShareManager(SerializerFactories.Standard);
             var testHandler = new ShareArrayOfIntHandler { IntArray = new[] { 1, 2, 3 } };
             var testMessage = new ShareArrayOfIntMessage();
 
@@ -39,7 +39,7 @@ namespace Naos.MessageBus.Test
         [Fact]
         public static void GetAndApplySharedPropertySet_ShareContractOfComplexType_CanBeExtractedAndApplied()
         {
-            var shareManager = new ShareManager(SerializerFactory.Instance);
+            var shareManager = new ShareManager(SerializerFactories.Standard);
             var testHandler = new TestComplexShareHandler { ComplexShareObject = new ComplexShareObject("we did it!"), OtherProp = "monkey" };
             var testMessage = new TestComplexShareMessage();
 
@@ -53,7 +53,7 @@ namespace Naos.MessageBus.Test
         [Fact]
         public static void GetAndApplySharedPropertySet_ShareContractOfString_CanBeExtractedAndApplied()
         {
-            var shareManager = new ShareManager(SerializerFactory.Instance);
+            var shareManager = new ShareManager(SerializerFactories.Standard);
             var testHandler = new CopyFileHandler() { FilePath = "This should be set on the message" };
             var testMessage = new DeleteFileMessage();
 
@@ -66,7 +66,7 @@ namespace Naos.MessageBus.Test
         [Fact]
         public static void GetAndApplySharedPropertySet_ShareContractOfInt_CanBeExtractedAndApplied()
         {
-            var shareManager = new ShareManager(SerializerFactory.Instance);
+            var shareManager = new ShareManager(SerializerFactories.Standard);
             var testHandler = new CountHandler() { Count = 15 };
             var testMessage = new CountMessage();
 
@@ -79,7 +79,7 @@ namespace Naos.MessageBus.Test
         [Fact]
         public static void GetAndApplySharedPropertySet_ShareContractOfEnum_CanBeExtractedAndApplied()
         {
-            var shareManager = new ShareManager(SerializerFactory.Instance);
+            var shareManager = new ShareManager(SerializerFactories.Standard);
             var testHandler = new FirstEnumHandler() { EnumValueToShare = MyEnumeration.OtherOtherValue };
             var testMessage = new SecondEnumMessage();
 
@@ -93,7 +93,7 @@ namespace Naos.MessageBus.Test
         public static void GetSharedPropertySetFromShareObject_SourceNull_Throws()
         {
             // Arrange
-            var shareManager = new ShareManager(SerializerFactory.Instance);
+            var shareManager = new ShareManager(SerializerFactories.Standard);
             Action testCode = () => shareManager.GetSharedInterfaceStates(null, PostOffice.MessageSerializerRepresentation.SerializationConfigType);
 
             // Act & Assert
@@ -104,7 +104,7 @@ namespace Naos.MessageBus.Test
         public static void ApplySharedPropertySetToShareObject_InvalidType_Throws()
         {
             // arrange
-            var shareManager = new ShareManager(SerializerFactory.Instance);
+            var shareManager = new ShareManager(SerializerFactories.Standard);
             Action testCode = () =>
                               {
                                   var sharedPropertyEntry = new SharedProperty(
@@ -134,7 +134,7 @@ namespace Naos.MessageBus.Test
         public static void ApplySharedPropertySetToShareObject_TargetNull_Throws()
         {
             // arrange
-            var shareManager = new ShareManager(SerializerFactory.Instance);
+            var shareManager = new ShareManager(SerializerFactories.Standard);
             Action testCode = () =>
             {
                 shareManager.ApplySharedInterfaceState(new SharedInterfaceState(), null);
@@ -148,7 +148,7 @@ namespace Naos.MessageBus.Test
         public static void ApplySharedPropertySetToShareObject_PropertySetNull_Throws()
         {
             // arrange
-            var shareManager = new ShareManager(SerializerFactory.Instance);
+            var shareManager = new ShareManager(SerializerFactories.Standard);
             Action testCode = () =>
             {
                 shareManager.ApplySharedInterfaceState(null, new CopyFileMessage());
@@ -162,7 +162,7 @@ namespace Naos.MessageBus.Test
         public static void ApplySharedProperties_Source_Throws()
         {
             // arrange
-            var shareManager = new ShareManager(SerializerFactory.Instance);
+            var shareManager = new ShareManager(SerializerFactories.Standard);
             Action testCode = () =>
             {
                 shareManager.ApplySharedProperties(null, new CopyFileMessage());
@@ -176,7 +176,7 @@ namespace Naos.MessageBus.Test
         public static void ApplySharedProperties_Target_Throws()
         {
             // arrange
-            var shareManager = new ShareManager(SerializerFactory.Instance);
+            var shareManager = new ShareManager(SerializerFactories.Standard);
             Action testCode = () =>
             {
                 shareManager.ApplySharedProperties(null, new CopyFileMessage());
@@ -189,7 +189,7 @@ namespace Naos.MessageBus.Test
         [Fact]
         public static void ApplySharedProperties_ValidMatch_PropertiesSet()
         {
-            var shareManager = new ShareManager(SerializerFactory.Instance);
+            var shareManager = new ShareManager(SerializerFactories.Standard);
             var testHandler = new CopyFileHandler() { FilePath = "This should be set on the message" };
             var testMessage = new DeleteFileMessage();
 
@@ -201,7 +201,7 @@ namespace Naos.MessageBus.Test
         [Fact]
         public static void ApplySharedProperties_ValidMatchOnEnum_PropertiesSet()
         {
-            var shareManager = new ShareManager(SerializerFactory.Instance);
+            var shareManager = new ShareManager(SerializerFactories.Standard);
             var testHandler = new FirstEnumHandler { EnumValueToShare = MyEnumeration.OtherValue };
             var testMessage = new SecondEnumMessage();
 

@@ -31,7 +31,7 @@ namespace Naos.MessageBus.Persistence
         {
             new { envelope }.AsArg().Must().NotBeNull();
 
-            return envelope.SerializedMessage.DeserializePayload<T>();
+            return envelope.SerializedMessage.DeserializePayloadUsingSpecificFactory<T>(SerializerFactories.Standard);
         }
 
         /// <summary>

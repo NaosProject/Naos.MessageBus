@@ -27,7 +27,10 @@ namespace Naos.MessageBus.Test
             var firstDescription = "description1";
             var firstChannel = new SimpleChannel("channel1");
             var message = new NullMessage();
-            var firstMessageDescribed = message.ToDescribedSerialization(PostOffice.MessageSerializerRepresentation, SerializationFormat.String);
+            var firstMessageDescribed = message.ToDescribedSerializationUsingSpecificFactory(
+                PostOffice.MessageSerializerRepresentation,
+                SerializerFactories.Standard,
+                SerializationFormat.String);
 
             var first = new Envelope(firstId, firstDescription, firstChannel, firstMessageDescribed);
 
@@ -70,7 +73,10 @@ namespace Naos.MessageBus.Test
             var firstDescription = "description1";
             var firstChannel = new SimpleChannel("channel1");
             var message = new NullMessage();
-            var firstMessageDescribed = message.ToDescribedSerialization(PostOffice.MessageSerializerRepresentation, SerializationFormat.String);
+            var firstMessageDescribed = message.ToDescribedSerializationUsingSpecificFactory(
+                PostOffice.MessageSerializerRepresentation,
+                SerializerFactories.Standard,
+                SerializationFormat.String);
 
             var first = new Envelope(firstId, firstDescription, firstChannel, firstMessageDescribed);
 
@@ -96,7 +102,10 @@ namespace Naos.MessageBus.Test
             var firstDescription = "description1";
             var firstChannel = new SimpleChannel("channel1");
             var message = new NullMessage();
-            var firstMessageDescribed = message.ToDescribedSerialization(PostOffice.MessageSerializerRepresentation, SerializationFormat.String);
+            var firstMessageDescribed = message.ToDescribedSerializationUsingSpecificFactory(
+                PostOffice.MessageSerializerRepresentation,
+                SerializerFactories.Standard,
+                SerializationFormat.String);
 
             var first = new Envelope(firstId, firstDescription, firstChannel, firstMessageDescribed);
 
@@ -122,7 +131,10 @@ namespace Naos.MessageBus.Test
             var firstDescription = "description1";
             var firstChannel = new SimpleChannel("channel1");
             var message = new NullMessage();
-            var firstMessageDescribed = message.ToDescribedSerialization(PostOffice.MessageSerializerRepresentation, SerializationFormat.String);
+            var firstMessageDescribed = message.ToDescribedSerializationUsingSpecificFactory(
+                PostOffice.MessageSerializerRepresentation,
+                SerializerFactories.Standard,
+                SerializationFormat.String);
 
             var first = new Envelope(firstId, firstDescription, firstChannel, firstMessageDescribed);
 
@@ -148,7 +160,10 @@ namespace Naos.MessageBus.Test
             var firstDescription = "description1";
             var firstChannel = new SimpleChannel("channel1");
             var firstMessage = new NullMessage();
-            var firstMessageDescribed = firstMessage.ToDescribedSerialization(PostOffice.MessageSerializerRepresentation, SerializationFormat.String);
+            var firstMessageDescribed = firstMessage.ToDescribedSerializationUsingSpecificFactory(
+                PostOffice.MessageSerializerRepresentation,
+                SerializerFactories.Standard,
+                SerializationFormat.String);
 
             var first = new Envelope(firstId, firstDescription, firstChannel, firstMessageDescribed);
 
@@ -156,7 +171,10 @@ namespace Naos.MessageBus.Test
             var secondDescription = firstDescription;
             var secondChannel = firstChannel;
             var secondMessage = new AbortIfNoDependencyTopicsAffectedMessage();
-            var secondMessageDescribed = secondMessage.ToDescribedSerialization(PostOffice.MessageSerializerRepresentation, SerializationFormat.String);
+            var secondMessageDescribed = secondMessage.ToDescribedSerializationUsingSpecificFactory(
+                PostOffice.MessageSerializerRepresentation,
+                SerializerFactories.Standard,
+                SerializationFormat.String);
 
             var second = new Envelope(secondId, secondDescription, secondChannel, secondMessageDescribed);
 
@@ -175,7 +193,10 @@ namespace Naos.MessageBus.Test
             var firstDescription = "description1";
             var firstChannel = new SimpleChannel("channel1");
             var firstMessage = new RecurringHeaderMessage();
-            var firstMessageDescribed = firstMessage.ToDescribedSerialization(PostOffice.MessageSerializerRepresentation, SerializationFormat.String);
+            var firstMessageDescribed = firstMessage.ToDescribedSerializationUsingSpecificFactory(
+                PostOffice.MessageSerializerRepresentation,
+                SerializerFactories.Standard,
+                SerializationFormat.String);
 
             var first = new Envelope(firstId, firstDescription, firstChannel, firstMessageDescribed);
 
@@ -183,7 +204,10 @@ namespace Naos.MessageBus.Test
             var secondDescription = firstDescription;
             var secondChannel = firstChannel;
             var secondMessage = new NullMessage();
-            var secondMessageDescribed = secondMessage.ToDescribedSerialization(PostOffice.MessageSerializerRepresentation, SerializationFormat.String);
+            var secondMessageDescribed = secondMessage.ToDescribedSerializationUsingSpecificFactory(
+                PostOffice.MessageSerializerRepresentation,
+                SerializerFactories.Standard,
+                SerializationFormat.String);
 
             var second = new Envelope(secondId, secondDescription, secondChannel, secondMessageDescribed);
 

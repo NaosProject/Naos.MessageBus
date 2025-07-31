@@ -43,7 +43,7 @@ namespace Naos.MessageBus.Test
             var serializedUnitOfWork = messageBusSerializer.SerializeToString(expected);
             var actual = messageBusSerializer.Deserialize<UnitOfWorkResult>(serializedUnitOfWork);
 
-            var actualDetails = actual.Details.DeserializePayload();
+            var actualDetails = actual.Details.DeserializePayloadUsingSpecificFactory(SerializerFactories.Standard);
             actualDetails.Should().BeOfType<TestDetailsImplementation>();
             (actualDetails as TestDetailsImplementation).Property.Should().Be(details.Property);
         }
