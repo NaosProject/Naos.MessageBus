@@ -439,6 +439,7 @@ namespace Naos.MessageBus.Test
                             SerializedExceptionToThrow =
                                 exception.ToDescribedSerializationUsingSpecificFactory(
                                     PostOffice.MessageSerializerRepresentation,
+                                    SerializerRepresentationSelectionStrategy.UseRepresentationOfSerializerBuiltByFactory,
                                     SerializerFactories.Standard,
                                     SerializationFormat.String),
                         }.ToAddressedMessage(

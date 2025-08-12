@@ -29,6 +29,7 @@ namespace Naos.MessageBus.Test
             var message = new NullMessage();
             var firstMessageDescribed = message.ToDescribedSerializationUsingSpecificFactory(
                 PostOffice.MessageSerializerRepresentation,
+                SerializerRepresentationSelectionStrategy.UseRepresentationOfSerializerBuiltByFactory,
                 SerializerFactories.Standard,
                 SerializationFormat.String);
 
@@ -75,6 +76,7 @@ namespace Naos.MessageBus.Test
             var message = new NullMessage();
             var firstMessageDescribed = message.ToDescribedSerializationUsingSpecificFactory(
                 PostOffice.MessageSerializerRepresentation,
+                SerializerRepresentationSelectionStrategy.UseRepresentationOfSerializerBuiltByFactory,
                 SerializerFactories.Standard,
                 SerializationFormat.String);
 
@@ -104,6 +106,7 @@ namespace Naos.MessageBus.Test
             var message = new NullMessage();
             var firstMessageDescribed = message.ToDescribedSerializationUsingSpecificFactory(
                 PostOffice.MessageSerializerRepresentation,
+                SerializerRepresentationSelectionStrategy.UseRepresentationOfSerializerBuiltByFactory,
                 SerializerFactories.Standard,
                 SerializationFormat.String);
 
@@ -133,6 +136,7 @@ namespace Naos.MessageBus.Test
             var message = new NullMessage();
             var firstMessageDescribed = message.ToDescribedSerializationUsingSpecificFactory(
                 PostOffice.MessageSerializerRepresentation,
+                SerializerRepresentationSelectionStrategy.UseRepresentationOfSerializerBuiltByFactory,
                 SerializerFactories.Standard,
                 SerializationFormat.String);
 
@@ -162,6 +166,7 @@ namespace Naos.MessageBus.Test
             var firstMessage = new NullMessage();
             var firstMessageDescribed = firstMessage.ToDescribedSerializationUsingSpecificFactory(
                 PostOffice.MessageSerializerRepresentation,
+                SerializerRepresentationSelectionStrategy.UseRepresentationOfSerializerBuiltByFactory,
                 SerializerFactories.Standard,
                 SerializationFormat.String);
 
@@ -173,6 +178,7 @@ namespace Naos.MessageBus.Test
             var secondMessage = new AbortIfNoDependencyTopicsAffectedMessage();
             var secondMessageDescribed = secondMessage.ToDescribedSerializationUsingSpecificFactory(
                 PostOffice.MessageSerializerRepresentation,
+                SerializerRepresentationSelectionStrategy.UseRepresentationOfSerializerBuiltByFactory,
                 SerializerFactories.Standard,
                 SerializationFormat.String);
 
@@ -195,6 +201,7 @@ namespace Naos.MessageBus.Test
             var firstMessage = new RecurringHeaderMessage();
             var firstMessageDescribed = firstMessage.ToDescribedSerializationUsingSpecificFactory(
                 PostOffice.MessageSerializerRepresentation,
+                SerializerRepresentationSelectionStrategy.UseRepresentationOfSerializerBuiltByFactory,
                 SerializerFactories.Standard,
                 SerializationFormat.String);
 
@@ -206,6 +213,7 @@ namespace Naos.MessageBus.Test
             var secondMessage = new NullMessage();
             var secondMessageDescribed = secondMessage.ToDescribedSerializationUsingSpecificFactory(
                 PostOffice.MessageSerializerRepresentation,
+                SerializerRepresentationSelectionStrategy.UseRepresentationOfSerializerBuiltByFactory,
                 SerializerFactories.Standard,
                 SerializationFormat.String);
 

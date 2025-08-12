@@ -105,6 +105,7 @@ namespace Naos.MessageBus.Domain
 
             var serializedMessage = addressedMessage.Message.ToDescribedSerializationUsingSpecificFactory(
                 localSerializerRepresentation,
+                SerializerRepresentationSelectionStrategy.UseRepresentationOfSerializerBuiltByFactory,
                 this.serializerFactory,
                 SerializationFormat.String);
 
