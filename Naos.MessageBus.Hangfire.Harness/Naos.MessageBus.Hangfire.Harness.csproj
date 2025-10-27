@@ -94,51 +94,51 @@
     <Reference Include="MongoDB.Bson, Version=2.4.4.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\MongoDB.Bson.2.4.4\lib\net45\MongoDB.Bson.dll</HintPath>
     </Reference>
-    <Reference Include="Naos.Configuration.Domain, Version=1.0.30.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Naos.Configuration.Domain.1.0.30\lib\net462\Naos.Configuration.Domain.dll</HintPath>
+    <Reference Include="Naos.Configuration.Domain, Version=1.0.31.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Naos.Configuration.Domain.1.0.31\lib\net462\Naos.Configuration.Domain.dll</HintPath>
     </Reference>
-    <Reference Include="Naos.Cron, Version=1.0.39.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Naos.Cron.1.0.39\lib\net462\Naos.Cron.dll</HintPath>
+    <Reference Include="Naos.Cron, Version=1.0.41.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Naos.Cron.1.0.41\lib\net462\Naos.Cron.dll</HintPath>
     </Reference>
-    <Reference Include="Naos.Cron.Serialization.Json, Version=1.0.39.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Naos.Cron.Serialization.Json.1.0.39\lib\net462\Naos.Cron.Serialization.Json.dll</HintPath>
+    <Reference Include="Naos.Cron.Serialization.Json, Version=1.0.41.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Naos.Cron.Serialization.Json.1.0.41\lib\net462\Naos.Cron.Serialization.Json.dll</HintPath>
     </Reference>
-    <Reference Include="Naos.Diagnostics.Domain, Version=1.3.51.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Naos.Diagnostics.Domain.1.3.51\lib\net462\Naos.Diagnostics.Domain.dll</HintPath>
+    <Reference Include="Naos.Diagnostics.Domain, Version=1.3.53.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Naos.Diagnostics.Domain.1.3.53\lib\net462\Naos.Diagnostics.Domain.dll</HintPath>
     </Reference>
-    <Reference Include="Naos.Logging.Domain, Version=1.0.87.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Naos.Logging.Domain.1.0.87\lib\net462\Naos.Logging.Domain.dll</HintPath>
+    <Reference Include="Naos.Logging.Domain, Version=1.0.89.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Naos.Logging.Domain.1.0.89\lib\net462\Naos.Logging.Domain.dll</HintPath>
     </Reference>
-    <Reference Include="Naos.Logging.Persistence, Version=1.0.87.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Naos.Logging.Persistence.1.0.87\lib\net462\Naos.Logging.Persistence.dll</HintPath>
+    <Reference Include="Naos.Logging.Persistence, Version=1.0.89.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Naos.Logging.Persistence.1.0.89\lib\net462\Naos.Logging.Persistence.dll</HintPath>
     </Reference>
-    <Reference Include="Naos.Telemetry.Domain, Version=1.0.34.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Naos.Telemetry.Domain.1.0.34\lib\net462\Naos.Telemetry.Domain.dll</HintPath>
+    <Reference Include="Naos.Telemetry.Domain, Version=1.0.35.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Naos.Telemetry.Domain.1.0.35\lib\net462\Naos.Telemetry.Domain.dll</HintPath>
     </Reference>
     <Reference Include="Newtonsoft.Json, Version=9.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
       <HintPath>..\packages\Newtonsoft.Json.9.0.1\lib\net45\Newtonsoft.Json.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="OBeautifulCode.Compression, Version=1.0.27.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\OBeautifulCode.Compression.1.0.27\lib\net462\OBeautifulCode.Compression.dll</HintPath>
+    <Reference Include="OBeautifulCode.Compression, Version=1.0.30.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\OBeautifulCode.Compression.1.0.30\lib\net462\OBeautifulCode.Compression.dll</HintPath>
     </Reference>
-    <Reference Include="OBeautifulCode.Representation.System, Version=1.0.67.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\OBeautifulCode.Representation.System.1.0.67\lib\net462\OBeautifulCode.Representation.System.dll</HintPath>
+    <Reference Include="OBeautifulCode.Representation.System, Version=1.0.70.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\OBeautifulCode.Representation.System.1.0.70\lib\net462\OBeautifulCode.Representation.System.dll</HintPath>
     </Reference>
-    <Reference Include="OBeautifulCode.Serialization, Version=1.0.148.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\OBeautifulCode.Serialization.1.0.148\lib\net462\OBeautifulCode.Serialization.dll</HintPath>
+    <Reference Include="OBeautifulCode.Serialization, Version=1.0.151.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\OBeautifulCode.Serialization.1.0.151\lib\net462\OBeautifulCode.Serialization.dll</HintPath>
     </Reference>
-    <Reference Include="OBeautifulCode.Serialization.Bson, Version=1.0.148.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\OBeautifulCode.Serialization.Bson.1.0.148\lib\net462\OBeautifulCode.Serialization.Bson.dll</HintPath>
+    <Reference Include="OBeautifulCode.Serialization.Bson, Version=1.0.151.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\OBeautifulCode.Serialization.Bson.1.0.151\lib\net462\OBeautifulCode.Serialization.Bson.dll</HintPath>
     </Reference>
-    <Reference Include="OBeautifulCode.Serialization.Json, Version=1.0.148.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\OBeautifulCode.Serialization.Json.1.0.148\lib\net462\OBeautifulCode.Serialization.Json.dll</HintPath>
+    <Reference Include="OBeautifulCode.Serialization.Json, Version=1.0.151.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\OBeautifulCode.Serialization.Json.1.0.151\lib\net462\OBeautifulCode.Serialization.Json.dll</HintPath>
     </Reference>
-    <Reference Include="OBeautifulCode.Serialization.PropertyBag, Version=1.0.148.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\OBeautifulCode.Serialization.PropertyBag.1.0.148\lib\net462\OBeautifulCode.Serialization.PropertyBag.dll</HintPath>
+    <Reference Include="OBeautifulCode.Serialization.PropertyBag, Version=1.0.151.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\OBeautifulCode.Serialization.PropertyBag.1.0.151\lib\net462\OBeautifulCode.Serialization.PropertyBag.dll</HintPath>
     </Reference>
-    <Reference Include="OBeautifulCode.Type, Version=1.0.139.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\OBeautifulCode.Type.1.0.139\lib\net462\OBeautifulCode.Type.dll</HintPath>
+    <Reference Include="OBeautifulCode.Type, Version=1.0.153.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\OBeautifulCode.Type.1.0.153\lib\net462\OBeautifulCode.Type.dll</HintPath>
     </Reference>
     <Reference Include="Owin, Version=1.0.0.0, Culture=neutral, PublicKeyToken=f0ebd12fd5e55cc5, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
@@ -374,9 +374,9 @@
       <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
     </PropertyGroup>
     <Error Condition="!Exists('..\packages\MSBuild.Microsoft.VisualStudio.Web.targets.14.0.0.3\build\MSBuild.Microsoft.VisualStudio.Web.targets.props')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\MSBuild.Microsoft.VisualStudio.Web.targets.14.0.0.3\build\MSBuild.Microsoft.VisualStudio.Web.targets.props'))" />
-    <Error Condition="!Exists('..\packages\Naos.Build.Analyzers.1.55.57\build\Naos.Build.Analyzers.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Naos.Build.Analyzers.1.55.57\build\Naos.Build.Analyzers.targets'))" />
+    <Error Condition="!Exists('..\packages\Naos.Build.Analyzers.1.55.58\build\Naos.Build.Analyzers.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Naos.Build.Analyzers.1.55.58\build\Naos.Build.Analyzers.targets'))" />
   </Target>
-  <Import Project="..\packages\Naos.Build.Analyzers.1.55.57\build\Naos.Build.Analyzers.targets" Condition="Exists('..\packages\Naos.Build.Analyzers.1.55.57\build\Naos.Build.Analyzers.targets')" />
+  <Import Project="..\packages\Naos.Build.Analyzers.1.55.58\build\Naos.Build.Analyzers.targets" Condition="Exists('..\packages\Naos.Build.Analyzers.1.55.58\build\Naos.Build.Analyzers.targets')" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it.
        Other similar extension points exist, see Microsoft.Common.targets.
   <Target Name="BeforeBuild">
