@@ -11,6 +11,7 @@ namespace Naos.MessageBus.Core
     using System.Threading.Tasks;
 
     using Naos.MessageBus.Domain;
+    using OBeautifulCode.Execution.Recipes;
 
     /// <summary>
     /// No implementation handler to handle NullMessages.
@@ -54,9 +55,10 @@ namespace Naos.MessageBus.Core
             this.TopicStatusReports = message.TopicsToFetchAndShareStatusReportsFrom.Select(
                 topic =>
                     {
-                        var latestReport = tracker.GetLatestTopicStatusReportAsync(topic, message.Filter ?? TopicStatus.None);
-                        latestReport.Wait();
-                        var latest = latestReport.Result;
+                        Func<Task<TopicStatusReport>> getTopicStaticReportFunc = () => tracker.GetLatestTopicStatusReportAsync(topic, message.Filter ?? TopicStatus.None);
+
+                        var latest = getTopicStaticReportFunc.ExecuteSynchronously();
+
                         return latest;
                     }).ToArray();
 

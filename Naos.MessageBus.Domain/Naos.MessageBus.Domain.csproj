@@ -121,6 +121,8 @@
     <Compile Include=".recipes\OBeautifulCode.Equality\ObjectEqualityComparer.cs" />
     <Compile Include=".recipes\OBeautifulCode.Equality\ReadOnlyDictionaryEqualityComparer.cs" />
     <Compile Include=".recipes\OBeautifulCode.Equality\ReferenceEqualityComparer{T}.cs" />
+    <Compile Include=".recipes\OBeautifulCode.Execution\AsyncContext.cs" />
+    <Compile Include=".recipes\OBeautifulCode.Execution\TaskExtensions.cs" />
     <Compile Include=".recipes\OBeautifulCode.Math\ThreadSafeRandom.cs" />
     <Compile Include=".recipes\OBeautifulCode.Reflection\AccessModifier.cs" />
     <Compile Include=".recipes\OBeautifulCode.Reflection\BindingFlagsFor.cs" />

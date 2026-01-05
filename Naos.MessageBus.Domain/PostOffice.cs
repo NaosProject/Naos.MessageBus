@@ -9,8 +9,10 @@ namespace Naos.MessageBus.Domain
     using System;
     using System.Collections.Generic;
     using System.Linq;
+    using System.Threading.Tasks;
     using Naos.Cron;
     using OBeautifulCode.Assertion.Recipes;
+    using OBeautifulCode.Execution.Recipes;
     using OBeautifulCode.Representation.System;
     using OBeautifulCode.Serialization;
     using OBeautifulCode.Serialization.Json;
@@ -145,7 +147,9 @@ namespace Naos.MessageBus.Domain
         /// <inheritdoc />
         public void Resend(TrackingCode trackingCode)
         {
-            this.parcelTrackingSystem.ResendAsync(trackingCode).Wait();
+            Func<Task> resendFunc = () => this.parcelTrackingSystem.ResendAsync(trackingCode);
+
+            resendFunc.ExecuteSynchronously();
         }
 
         /// <inheritdoc />
@@ -192,7 +196,11 @@ namespace Naos.MessageBus.Domain
             var address = firstEnvelope.Address == null || NullChannelAndTopicAffectedMessageTypeComparer.Equals(firstEnvelope.Address.GetType(), typeof(NullChannel))
                               ? this.unaddressedMailRouter.FindAddress(parcel)
                               : firstEnvelope.Address;
-            this.parcelTrackingSystem.UpdateSentAsync(trackingCode, parcel, address, recurringSchedule).Wait();
+
+            Func<Task> updateSentFunc = () => this.parcelTrackingSystem.UpdateSentAsync(trackingCode, parcel, address, recurringSchedule);
+
+            updateSentFunc.ExecuteSynchronously();
+
             return trackingCode;
         }
 

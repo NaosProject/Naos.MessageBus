@@ -127,9 +127,19 @@ namespace Naos.MessageBus.Core
                     throw new RecurringParcelEncounteredException(firstEnvelope.Description);
                 }
 
-                void AttemptingCallback() => this.parcelTrackingSystem.UpdateAttemptingAsync(trackingCode, this.harnessDiagnosticsTelemetry).Wait();
+                void AttemptingCallback()
+                {
+                    Func<Task> updateAttemptingFunc = () => this.parcelTrackingSystem.UpdateAttemptingAsync(trackingCode, this.harnessDiagnosticsTelemetry);
 
-                void DeliveredCallback(Envelope deliveredEnvelope) => this.parcelTrackingSystem.UpdateDeliveredAsync(trackingCode, deliveredEnvelope).Wait();
+                    updateAttemptingFunc.ExecuteSynchronously();
+                }
+
+                void DeliveredCallback(Envelope deliveredEnvelope)
+                {
+                    Func<Task> updateDeliveredFunc = () => this.parcelTrackingSystem.UpdateDeliveredAsync(trackingCode, deliveredEnvelope);
+
+                    updateDeliveredFunc.ExecuteSynchronously();
+                }
 
                 this.InternalDispatch(parcel, address, trackingCode, firstEnvelope, AttemptingCallback, DeliveredCallback);
             }
@@ -144,7 +154,10 @@ namespace Naos.MessageBus.Core
             catch (AbortParcelDeliveryException abortParcelDeliveryException)
             {
                 Log.Write(() => Invariant($"Aborted parcel delivery; {nameof(TrackingCode)}: {trackingCode}, Exception: {abortParcelDeliveryException}"));
-                this.parcelTrackingSystem.UpdateAbortedAsync(trackingCode, abortParcelDeliveryException.Reason).Wait();
+
+                Func<Task> updateAbortedFunc = () => this.parcelTrackingSystem.UpdateAbortedAsync(trackingCode, abortParcelDeliveryException.Reason);
+
+                updateAbortedFunc.ExecuteSynchronously();
 
                 if (abortParcelDeliveryException.Reschedule)
                 {
@@ -155,7 +168,11 @@ namespace Naos.MessageBus.Core
             catch (Exception ex)
             {
                 Log.Write(() => ex);
-                this.parcelTrackingSystem.UpdateRejectedAsync(trackingCode, ex).Wait();
+
+                Func<Task> updateRejectedFunc = () => this.parcelTrackingSystem.UpdateRejectedAsync(trackingCode, ex);
+
+                updateRejectedFunc.ExecuteSynchronously();
+
                 throw;
             }
             finally
